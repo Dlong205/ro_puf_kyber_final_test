@@ -1,0 +1,2436 @@
+Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2020.1 (lin64) Build 2902540 Wed May 27 19:54:35 MDT 2020
+| Date         : Sun Aug 23 18:14:13 2026
+| Host         : donglong-P7xxTM-1 running 64-bit Ubuntu 22.04.5 LTS
+| Command      : report_timing_summary -max_paths 10 -file Kyber_System_Top_timing_summary_routed.rpt -pb Kyber_System_Top_timing_summary_routed.pb -rpx Kyber_System_Top_timing_summary_routed.rpx -warn_on_violation
+| Design       : Kyber_System_Top
+| Device       : 7z020-clg400
+| Speed File   : -2  PRODUCTION 1.12 2019-11-22
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Summary Report
+
+------------------------------------------------------------------------------------------------
+| Timer Settings
+| --------------
+------------------------------------------------------------------------------------------------
+
+  Enable Multi Corner Analysis               :  Yes
+  Enable Pessimism Removal                   :  Yes
+  Pessimism Removal Resolution               :  Nearest Common Node
+  Enable Input Delay Default Clock           :  No
+  Enable Preset / Clear Arcs                 :  No
+  Disable Flight Delays                      :  No
+  Ignore I/O Paths                           :  No
+  Timing Early Launch at Borrowing Latches   :  No
+  Borrow Time for Max Delay Exceptions       :  Yes
+  Merge Timing Exceptions                    :  Yes
+
+  Corner  Analyze    Analyze    
+  Name    Max Paths  Min Paths  
+  ------  ---------  ---------  
+  Slow    Yes        Yes        
+  Fast    Yes        Yes        
+
+
+
+check_timing report
+
+Table of Contents
+-----------------
+1. checking no_clock (384)
+2. checking constant_clock (0)
+3. checking pulse_width_clock (0)
+4. checking unconstrained_internal_endpoints (192)
+5. checking no_input_delay (1)
+6. checking no_output_delay (3)
+7. checking multiple_clock (0)
+8. checking generated_clocks (0)
+9. checking loops (32)
+10. checking partial_input_delay (0)
+11. checking partial_output_delay (0)
+12. checking latch_loops (0)
+
+1. checking no_clock (384)
+--------------------------
+ There are 64 register/latch pins with no clock driven by root clock pin: u_puf/ctrl_inst/FSM_onehot_state_reg[2]/Q (HIGH)
+
+ There are 64 register/latch pins with no clock driven by root clock pin: u_puf/ctrl_inst/FSM_onehot_state_reg[4]/Q (HIGH)
+
+ There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[1]/Q (HIGH)
+
+ There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[2]/Q (HIGH)
+
+ There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[3]/Q (HIGH)
+
+ There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[4]/Q (HIGH)
+
+ There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[5]/Q (HIGH)
+
+ There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[6]/Q (HIGH)
+
+ There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[7]/Q (HIGH)
+
+ There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[8]/Q (HIGH)
+
+
+2. checking constant_clock (0)
+------------------------------
+ There are 0 register/latch pins with constant_clock.
+
+
+3. checking pulse_width_clock (0)
+---------------------------------
+ There are 0 register/latch pins which need pulse_width check
+
+
+4. checking unconstrained_internal_endpoints (192)
+--------------------------------------------------
+ There are 192 pins that are not constrained for maximum delay. (HIGH)
+
+ There are 0 pins that are not constrained for maximum delay due to constant clock.
+
+
+5. checking no_input_delay (1)
+------------------------------
+ There is 1 input port with no input delay specified. (HIGH)
+
+ There are 0 input ports with no input delay but user has a false path constraint.
+
+
+6. checking no_output_delay (3)
+-------------------------------
+ There are 3 ports with no output delay specified. (HIGH)
+
+ There are 0 ports with no output delay but user has a false path constraint
+
+ There are 0 ports with no output delay but with a timing clock defined on it or propagating through it
+
+
+7. checking multiple_clock (0)
+------------------------------
+ There are 0 register/latch pins with multiple clocks.
+
+
+8. checking generated_clocks (0)
+--------------------------------
+ There are 0 generated clocks that are not connected to a clock source.
+
+
+9. checking loops (32)
+----------------------
+ There are 32 combinational loops in the design. (HIGH)
+
+
+10. checking partial_input_delay (0)
+------------------------------------
+ There are 0 input ports with partial input delay specified.
+
+
+11. checking partial_output_delay (0)
+-------------------------------------
+ There are 0 ports with partial output delay specified.
+
+
+12. checking latch_loops (0)
+----------------------------
+ There are 0 combinational latch loops in the design through latch input
+
+
+
+------------------------------------------------------------------------------------------------
+| Design Timing Summary
+| ---------------------
+------------------------------------------------------------------------------------------------
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+      1.675        0.000                      0                56912        0.041        0.000                      0                56912        8.870        0.000                       0                 21769  
+
+
+All user specified timing constraints are met.
+
+
+------------------------------------------------------------------------------------------------
+| Clock Summary
+| -------------
+------------------------------------------------------------------------------------------------
+
+Clock      Waveform(ns)       Period(ns)      Frequency(MHz)
+-----      ------------       ----------      --------------
+CLK100MHZ  {0.000 10.000}     20.000          50.000          
+
+
+------------------------------------------------------------------------------------------------
+| Intra Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+CLK100MHZ           1.675        0.000                      0                44252        0.041        0.000                      0                44252        8.870        0.000                       0                 21769  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group         From Clock         To Clock               WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------         ----------         --------               -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+**async_default**  CLK100MHZ          CLK100MHZ                9.434        0.000                      0                12660        1.616        0.000                      0                12660  
+
+
+------------------------------------------------------------------------------------------------
+| Timing Details
+| --------------
+------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------------
+From Clock:  CLK100MHZ
+  To Clock:  CLK100MHZ
+
+Setup :            0  Failing Endpoints,  Worst Slack        1.675ns,  Total Violation        0.000ns
+Hold  :            0  Failing Endpoints,  Worst Slack        0.041ns,  Total Violation        0.000ns
+PW    :            0  Failing Endpoints,  Worst Slack        8.870ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             1.675ns  (required time - arrival time)
+  Source:                 u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1507]/D
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        18.316ns  (logic 0.484ns (2.643%)  route 17.832ns (97.357%))
+  Logic Levels:           1  (LUT5=1)
+  Clock Path Skew:        -0.006ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.608ns = ( 24.608 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.970ns
+    Clock Pessimism Removal (CPR):    0.357ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.620     4.970    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y107        FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y107        FDCE (Prop_fdce_C_Q)         0.379     5.349 r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/Q
+                         net (fo=1621, routed)       17.832    23.181    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg_reg[1568][1]
+    SLICE_X103Y106       LUT5 (Prop_lut5_I0_O)        0.105    23.286 r  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg[1507]_i_1/O
+                         net (fo=1, routed)           0.000    23.286    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst_n_94
+    SLICE_X103Y106       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1507]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.503    24.608    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X103Y106       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1507]/C
+                         clock pessimism              0.357    24.964    
+                         clock uncertainty           -0.035    24.929    
+    SLICE_X103Y106       FDCE (Setup_fdce_C_D)        0.032    24.961    u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1507]
+  -------------------------------------------------------------------
+                         required time                         24.961    
+                         arrival time                         -23.286    
+  -------------------------------------------------------------------
+                         slack                                  1.675    
+
+Slack (MET) :             1.693ns  (required time - arrival time)
+  Source:                 u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[805]/D
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        18.353ns  (logic 0.484ns (2.637%)  route 17.869ns (97.363%))
+  Logic Levels:           1  (LUT5=1)
+  Clock Path Skew:        0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.663ns = ( 24.663 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.970ns
+    Clock Pessimism Removal (CPR):    0.357ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.620     4.970    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y107        FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y107        FDCE (Prop_fdce_C_Q)         0.379     5.349 r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/Q
+                         net (fo=1621, routed)       17.869    23.218    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg_reg[1568][1]
+    SLICE_X111Y122       LUT5 (Prop_lut5_I0_O)        0.105    23.323 r  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg[805]_i_1/O
+                         net (fo=1, routed)           0.000    23.323    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst_n_796
+    SLICE_X111Y122       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[805]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.558    24.663    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X111Y122       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[805]/C
+                         clock pessimism              0.357    25.019    
+                         clock uncertainty           -0.035    24.984    
+    SLICE_X111Y122       FDCE (Setup_fdce_C_D)        0.032    25.016    u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[805]
+  -------------------------------------------------------------------
+                         required time                         25.016    
+                         arrival time                         -23.323    
+  -------------------------------------------------------------------
+                         slack                                  1.693    
+
+Slack (MET) :             1.794ns  (required time - arrival time)
+  Source:                 u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1570]/D
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        18.237ns  (logic 0.484ns (2.654%)  route 17.753ns (97.346%))
+  Logic Levels:           1  (LUT4=1)
+  Clock Path Skew:        -0.006ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.608ns = ( 24.608 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.970ns
+    Clock Pessimism Removal (CPR):    0.357ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.620     4.970    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y107        FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y107        FDCE (Prop_fdce_C_Q)         0.379     5.349 r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/Q
+                         net (fo=1621, routed)       17.753    23.102    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg_reg[1568][1]
+    SLICE_X102Y105       LUT4 (Prop_lut4_I0_O)        0.105    23.207 r  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg[1570]_i_1/O
+                         net (fo=1, routed)           0.000    23.207    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst_n_31
+    SLICE_X102Y105       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1570]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.503    24.608    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X102Y105       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1570]/C
+                         clock pessimism              0.357    24.964    
+                         clock uncertainty           -0.035    24.929    
+    SLICE_X102Y105       FDCE (Setup_fdce_C_D)        0.072    25.001    u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1570]
+  -------------------------------------------------------------------
+                         required time                         25.001    
+                         arrival time                         -23.207    
+  -------------------------------------------------------------------
+                         slack                                  1.794    
+
+Slack (MET) :             1.802ns  (required time - arrival time)
+  Source:                 u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1571]/D
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        18.233ns  (logic 0.484ns (2.655%)  route 17.749ns (97.345%))
+  Logic Levels:           1  (LUT4=1)
+  Clock Path Skew:        -0.006ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.608ns = ( 24.608 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.970ns
+    Clock Pessimism Removal (CPR):    0.357ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.620     4.970    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y107        FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y107        FDCE (Prop_fdce_C_Q)         0.379     5.349 r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/Q
+                         net (fo=1621, routed)       17.749    23.098    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg_reg[1568][1]
+    SLICE_X102Y105       LUT4 (Prop_lut4_I0_O)        0.105    23.203 r  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg[1571]_i_1/O
+                         net (fo=1, routed)           0.000    23.203    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst_n_30
+    SLICE_X102Y105       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1571]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.503    24.608    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X102Y105       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1571]/C
+                         clock pessimism              0.357    24.964    
+                         clock uncertainty           -0.035    24.929    
+    SLICE_X102Y105       FDCE (Setup_fdce_C_D)        0.076    25.005    u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1571]
+  -------------------------------------------------------------------
+                         required time                         25.005    
+                         arrival time                         -23.203    
+  -------------------------------------------------------------------
+                         slack                                  1.802    
+
+Slack (MET) :             1.828ns  (required time - arrival time)
+  Source:                 u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1315]/D
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        18.204ns  (logic 0.484ns (2.659%)  route 17.720ns (97.341%))
+  Logic Levels:           1  (LUT5=1)
+  Clock Path Skew:        -0.005ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.609ns = ( 24.609 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.970ns
+    Clock Pessimism Removal (CPR):    0.357ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.620     4.970    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y107        FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y107        FDCE (Prop_fdce_C_Q)         0.379     5.349 r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/Q
+                         net (fo=1621, routed)       17.720    23.069    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg_reg[1568][1]
+    SLICE_X104Y107       LUT5 (Prop_lut5_I0_O)        0.105    23.174 r  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg[1315]_i_1/O
+                         net (fo=1, routed)           0.000    23.174    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst_n_286
+    SLICE_X104Y107       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1315]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.504    24.609    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X104Y107       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1315]/C
+                         clock pessimism              0.357    24.965    
+                         clock uncertainty           -0.035    24.930    
+    SLICE_X104Y107       FDCE (Setup_fdce_C_D)        0.072    25.002    u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1315]
+  -------------------------------------------------------------------
+                         required time                         25.002    
+                         arrival time                         -23.174    
+  -------------------------------------------------------------------
+                         slack                                  1.828    
+
+Slack (MET) :             1.841ns  (required time - arrival time)
+  Source:                 u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1347]/D
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        18.195ns  (logic 0.484ns (2.660%)  route 17.711ns (97.340%))
+  Logic Levels:           1  (LUT5=1)
+  Clock Path Skew:        -0.005ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.609ns = ( 24.609 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.970ns
+    Clock Pessimism Removal (CPR):    0.357ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.620     4.970    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y107        FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y107        FDCE (Prop_fdce_C_Q)         0.379     5.349 r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/Q
+                         net (fo=1621, routed)       17.711    23.060    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg_reg[1568][1]
+    SLICE_X104Y107       LUT5 (Prop_lut5_I0_O)        0.105    23.165 r  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg[1347]_i_1/O
+                         net (fo=1, routed)           0.000    23.165    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst_n_254
+    SLICE_X104Y107       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1347]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.504    24.609    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X104Y107       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1347]/C
+                         clock pessimism              0.357    24.965    
+                         clock uncertainty           -0.035    24.930    
+    SLICE_X104Y107       FDCE (Setup_fdce_C_D)        0.076    25.006    u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1347]
+  -------------------------------------------------------------------
+                         required time                         25.006    
+                         arrival time                         -23.165    
+  -------------------------------------------------------------------
+                         slack                                  1.841    
+
+Slack (MET) :             1.944ns  (required time - arrival time)
+  Source:                 u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[260]/D
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        18.145ns  (logic 0.484ns (2.667%)  route 17.661ns (97.333%))
+  Logic Levels:           1  (LUT5=1)
+  Clock Path Skew:        0.050ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.664ns = ( 24.664 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.970ns
+    Clock Pessimism Removal (CPR):    0.357ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.620     4.970    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y107        FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y107        FDCE (Prop_fdce_C_Q)         0.379     5.349 r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/Q
+                         net (fo=1621, routed)       17.661    23.010    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg_reg[1568][1]
+    SLICE_X108Y119       LUT5 (Prop_lut5_I0_O)        0.105    23.115 r  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg[260]_i_1/O
+                         net (fo=1, routed)           0.000    23.115    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst_n_1341
+    SLICE_X108Y119       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[260]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.559    24.664    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X108Y119       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[260]/C
+                         clock pessimism              0.357    25.020    
+                         clock uncertainty           -0.035    24.985    
+    SLICE_X108Y119       FDCE (Setup_fdce_C_D)        0.074    25.059    u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[260]
+  -------------------------------------------------------------------
+                         required time                         25.059    
+                         arrival time                         -23.115    
+  -------------------------------------------------------------------
+                         slack                                  1.944    
+
+Slack (MET) :             1.958ns  (required time - arrival time)
+  Source:                 u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[101]/D
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        18.131ns  (logic 0.484ns (2.670%)  route 17.647ns (97.330%))
+  Logic Levels:           1  (LUT5=1)
+  Clock Path Skew:        0.050ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.664ns = ( 24.664 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.970ns
+    Clock Pessimism Removal (CPR):    0.357ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.620     4.970    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y107        FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y107        FDCE (Prop_fdce_C_Q)         0.379     5.349 r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/Q
+                         net (fo=1621, routed)       17.647    22.996    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg_reg[1568][1]
+    SLICE_X108Y119       LUT5 (Prop_lut5_I0_O)        0.105    23.101 r  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg[101]_i_1/O
+                         net (fo=1, routed)           0.000    23.101    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst_n_1500
+    SLICE_X108Y119       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[101]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.559    24.664    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X108Y119       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[101]/C
+                         clock pessimism              0.357    25.020    
+                         clock uncertainty           -0.035    24.985    
+    SLICE_X108Y119       FDCE (Setup_fdce_C_D)        0.074    25.059    u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[101]
+  -------------------------------------------------------------------
+                         required time                         25.059    
+                         arrival time                         -23.101    
+  -------------------------------------------------------------------
+                         slack                                  1.958    
+
+Slack (MET) :             1.982ns  (required time - arrival time)
+  Source:                 u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1442]/D
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        18.009ns  (logic 0.484ns (2.688%)  route 17.525ns (97.312%))
+  Logic Levels:           1  (LUT5=1)
+  Clock Path Skew:        -0.006ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.608ns = ( 24.608 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.970ns
+    Clock Pessimism Removal (CPR):    0.357ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.620     4.970    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y107        FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y107        FDCE (Prop_fdce_C_Q)         0.379     5.349 r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/Q
+                         net (fo=1621, routed)       17.525    22.874    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg_reg[1568][1]
+    SLICE_X105Y109       LUT5 (Prop_lut5_I0_O)        0.105    22.979 r  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg[1442]_i_1/O
+                         net (fo=1, routed)           0.000    22.979    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst_n_159
+    SLICE_X105Y109       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1442]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.503    24.608    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X105Y109       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1442]/C
+                         clock pessimism              0.357    24.964    
+                         clock uncertainty           -0.035    24.929    
+    SLICE_X105Y109       FDCE (Setup_fdce_C_D)        0.033    24.962    u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1442]
+  -------------------------------------------------------------------
+                         required time                         24.962    
+                         arrival time                         -22.979    
+  -------------------------------------------------------------------
+                         slack                                  1.982    
+
+Slack (MET) :             1.985ns  (required time - arrival time)
+  Source:                 u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1410]/D
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        18.005ns  (logic 0.484ns (2.688%)  route 17.521ns (97.312%))
+  Logic Levels:           1  (LUT5=1)
+  Clock Path Skew:        -0.006ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.608ns = ( 24.608 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.970ns
+    Clock Pessimism Removal (CPR):    0.357ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.620     4.970    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y107        FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y107        FDCE (Prop_fdce_C_Q)         0.379     5.349 r  u_soc/u_kyber_axi/S/hash/keccak_inst/FSM_onehot_perm_state_reg[1]/Q
+                         net (fo=1621, routed)       17.521    22.870    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg_reg[1568][1]
+    SLICE_X105Y109       LUT5 (Prop_lut5_I0_O)        0.105    22.975 r  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg[1410]_i_1/O
+                         net (fo=1, routed)           0.000    22.975    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst_n_191
+    SLICE_X105Y109       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1410]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.503    24.608    u_soc/u_kyber_axi/S/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X105Y109       FDCE                                         r  u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1410]/C
+                         clock pessimism              0.357    24.964    
+                         clock uncertainty           -0.035    24.929    
+    SLICE_X105Y109       FDCE (Setup_fdce_C_D)        0.032    24.961    u_soc/u_kyber_axi/S/hash/keccak_inst/state_reg_reg[1410]
+  -------------------------------------------------------------------
+                         required time                         24.961    
+                         arrival time                         -22.975    
+  -------------------------------------------------------------------
+                         slack                                  1.985    
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             0.041ns  (arrival time - required time)
+  Source:                 u_soc/u_kyber_axi/S/endp_r_reg[31]/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/endp_r_reg[63]_srl32___u_soc_u_kyber_axi_S_endp_r_reg_r_30/D
+                            (rising edge-triggered cell SRLC32E clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        0.240ns  (logic 0.141ns (58.643%)  route 0.099ns (41.357%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.016ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.005ns
+    Source Clock Delay      (SCD):    1.490ns
+    Clock Pessimism Removal (CPR):    0.499ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.561     1.490    u_soc/u_kyber_axi/S/CLK100MHZ_IBUF_BUFG
+    SLICE_X39Y42         FDRE                                         r  u_soc/u_kyber_axi/S/endp_r_reg[31]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X39Y42         FDRE (Prop_fdre_C_Q)         0.141     1.631 r  u_soc/u_kyber_axi/S/endp_r_reg[31]/Q
+                         net (fo=1, routed)           0.099     1.730    u_soc/u_kyber_axi/S/endp_r_reg_n_1_[31]
+    SLICE_X36Y42         SRLC32E                                      r  u_soc/u_kyber_axi/S/endp_r_reg[63]_srl32___u_soc_u_kyber_axi_S_endp_r_reg_r_30/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.828     2.005    u_soc/u_kyber_axi/S/CLK100MHZ_IBUF_BUFG
+    SLICE_X36Y42         SRLC32E                                      r  u_soc/u_kyber_axi/S/endp_r_reg[63]_srl32___u_soc_u_kyber_axi_S_endp_r_reg_r_30/CLK
+                         clock pessimism             -0.499     1.506    
+    SLICE_X36Y42         SRLC32E (Hold_srlc32e_CLK_D)
+                                                      0.183     1.689    u_soc/u_kyber_axi/S/endp_r_reg[63]_srl32___u_soc_u_kyber_axi_S_endp_r_reg_r_30
+  -------------------------------------------------------------------
+                         required time                         -1.689    
+                         arrival time                           1.730    
+  -------------------------------------------------------------------
+                         slack                                  0.041    
+
+Slack (MET) :             0.046ns  (arrival time - required time)
+  Source:                 u_soc/u_kyber_axi/C/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out_reg[606]/C
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[606]/D
+                            (rising edge-triggered cell FDCE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        0.399ns  (logic 0.186ns (46.585%)  route 0.213ns (53.415%))
+  Logic Levels:           1  (LUT5=1)
+  Clock Path Skew:        0.261ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.084ns
+    Source Clock Delay      (SCD):    1.566ns
+    Clock Pessimism Removal (CPR):    0.256ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.637     1.566    u_soc/u_kyber_axi/C/hash/keccak_inst/algo_inst/STEP_MAPPING_5/CLK100MHZ_IBUF_BUFG
+    SLICE_X49Y104        FDCE                                         r  u_soc/u_kyber_axi/C/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out_reg[606]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X49Y104        FDCE (Prop_fdce_C_Q)         0.141     1.707 r  u_soc/u_kyber_axi/C/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out_reg[606]/Q
+                         net (fo=2, routed)           0.213     1.921    u_soc/u_kyber_axi/C/hash/keccak_inst/algo_inst/STEP_MAPPING_5/algo_out[606]
+    SLICE_X51Y101        LUT5 (Prop_lut5_I2_O)        0.045     1.966 r  u_soc/u_kyber_axi/C/hash/keccak_inst/algo_inst/STEP_MAPPING_5/state_reg[606]_i_1__0/O
+                         net (fo=1, routed)           0.000     1.966    u_soc/u_kyber_axi/C/hash/keccak_inst/algo_inst_n_994
+    SLICE_X51Y101        FDCE                                         r  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[606]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.907     2.084    u_soc/u_kyber_axi/C/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X51Y101        FDCE                                         r  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[606]/C
+                         clock pessimism             -0.256     1.828    
+    SLICE_X51Y101        FDCE (Hold_fdce_C_D)         0.092     1.920    u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[606]
+  -------------------------------------------------------------------
+                         required time                         -1.920    
+                         arrival time                           1.966    
+  -------------------------------------------------------------------
+                         slack                                  0.046    
+
+Slack (MET) :             0.056ns  (arrival time - required time)
+  Source:                 u_soc/u_kyber_axi/C/dout_reg[22]/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/DIADI[22]
+                            (rising edge-triggered cell RAMB36E1 clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        0.267ns  (logic 0.164ns (61.506%)  route 0.103ns (38.494%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.056ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.047ns
+    Source Clock Delay      (SCD):    1.493ns
+    Clock Pessimism Removal (CPR):    0.498ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.564     1.493    u_soc/u_kyber_axi/C/CLK100MHZ_IBUF_BUFG
+    SLICE_X32Y45         FDRE                                         r  u_soc/u_kyber_axi/C/dout_reg[22]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y45         FDRE (Prop_fdre_C_Q)         0.164     1.657 r  u_soc/u_kyber_axi/C/dout_reg[22]/Q
+                         net (fo=1, routed)           0.103     1.760    u_soc/u_kyber_axi/S/IFIFO/inst/wr_data[22]
+    RAMB36_X2Y9          RAMB36E1                                     r  u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/DIADI[22]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.870     2.047    u_soc/u_kyber_axi/S/IFIFO/inst/CLK100MHZ_IBUF_BUFG
+    RAMB36_X2Y9          RAMB36E1                                     r  u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/CLKARDCLK
+                         clock pessimism             -0.498     1.549    
+    RAMB36_X2Y9          RAMB36E1 (Hold_ramb36e1_CLKARDCLK_DIADI[22])
+                                                      0.155     1.704    u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg
+  -------------------------------------------------------------------
+                         required time                         -1.704    
+                         arrival time                           1.760    
+  -------------------------------------------------------------------
+                         slack                                  0.056    
+
+Slack (MET) :             0.057ns  (arrival time - required time)
+  Source:                 u_soc/u_kyber_axi/C/dout_reg[24]/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/DIADI[24]
+                            (rising edge-triggered cell RAMB36E1 clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        0.267ns  (logic 0.164ns (61.506%)  route 0.103ns (38.494%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.055ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.047ns
+    Source Clock Delay      (SCD):    1.494ns
+    Clock Pessimism Removal (CPR):    0.498ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.565     1.494    u_soc/u_kyber_axi/C/CLK100MHZ_IBUF_BUFG
+    SLICE_X32Y47         FDRE                                         r  u_soc/u_kyber_axi/C/dout_reg[24]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y47         FDRE (Prop_fdre_C_Q)         0.164     1.658 r  u_soc/u_kyber_axi/C/dout_reg[24]/Q
+                         net (fo=1, routed)           0.103     1.761    u_soc/u_kyber_axi/S/IFIFO/inst/wr_data[24]
+    RAMB36_X2Y9          RAMB36E1                                     r  u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/DIADI[24]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.870     2.047    u_soc/u_kyber_axi/S/IFIFO/inst/CLK100MHZ_IBUF_BUFG
+    RAMB36_X2Y9          RAMB36E1                                     r  u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/CLKARDCLK
+                         clock pessimism             -0.498     1.549    
+    RAMB36_X2Y9          RAMB36E1 (Hold_ramb36e1_CLKARDCLK_DIADI[24])
+                                                      0.155     1.704    u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg
+  -------------------------------------------------------------------
+                         required time                         -1.704    
+                         arrival time                           1.761    
+  -------------------------------------------------------------------
+                         slack                                  0.057    
+
+Slack (MET) :             0.057ns  (arrival time - required time)
+  Source:                 u_soc/u_kyber_axi/C/dout_reg[26]/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/DIADI[26]
+                            (rising edge-triggered cell RAMB36E1 clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        0.267ns  (logic 0.164ns (61.506%)  route 0.103ns (38.494%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.055ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.047ns
+    Source Clock Delay      (SCD):    1.494ns
+    Clock Pessimism Removal (CPR):    0.498ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.565     1.494    u_soc/u_kyber_axi/C/CLK100MHZ_IBUF_BUFG
+    SLICE_X32Y47         FDRE                                         r  u_soc/u_kyber_axi/C/dout_reg[26]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y47         FDRE (Prop_fdre_C_Q)         0.164     1.658 r  u_soc/u_kyber_axi/C/dout_reg[26]/Q
+                         net (fo=1, routed)           0.103     1.761    u_soc/u_kyber_axi/S/IFIFO/inst/wr_data[26]
+    RAMB36_X2Y9          RAMB36E1                                     r  u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/DIADI[26]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.870     2.047    u_soc/u_kyber_axi/S/IFIFO/inst/CLK100MHZ_IBUF_BUFG
+    RAMB36_X2Y9          RAMB36E1                                     r  u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/CLKARDCLK
+                         clock pessimism             -0.498     1.549    
+    RAMB36_X2Y9          RAMB36E1 (Hold_ramb36e1_CLKARDCLK_DIADI[26])
+                                                      0.155     1.704    u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg
+  -------------------------------------------------------------------
+                         required time                         -1.704    
+                         arrival time                           1.761    
+  -------------------------------------------------------------------
+                         slack                                  0.057    
+
+Slack (MET) :             0.058ns  (arrival time - required time)
+  Source:                 u_soc/u_kyber_axi/C/dout_reg[3]/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/DIADI[3]
+                            (rising edge-triggered cell RAMB36E1 clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        0.267ns  (logic 0.164ns (61.345%)  route 0.103ns (38.655%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.055ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.047ns
+    Source Clock Delay      (SCD):    1.494ns
+    Clock Pessimism Removal (CPR):    0.498ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.565     1.494    u_soc/u_kyber_axi/C/CLK100MHZ_IBUF_BUFG
+    SLICE_X32Y48         FDRE                                         r  u_soc/u_kyber_axi/C/dout_reg[3]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y48         FDRE (Prop_fdre_C_Q)         0.164     1.658 r  u_soc/u_kyber_axi/C/dout_reg[3]/Q
+                         net (fo=1, routed)           0.103     1.761    u_soc/u_kyber_axi/S/IFIFO/inst/wr_data[3]
+    RAMB36_X2Y9          RAMB36E1                                     r  u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/DIADI[3]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.870     2.047    u_soc/u_kyber_axi/S/IFIFO/inst/CLK100MHZ_IBUF_BUFG
+    RAMB36_X2Y9          RAMB36E1                                     r  u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/CLKARDCLK
+                         clock pessimism             -0.498     1.549    
+    RAMB36_X2Y9          RAMB36E1 (Hold_ramb36e1_CLKARDCLK_DIADI[3])
+                                                      0.155     1.704    u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg
+  -------------------------------------------------------------------
+                         required time                         -1.704    
+                         arrival time                           1.761    
+  -------------------------------------------------------------------
+                         slack                                  0.058    
+
+Slack (MET) :             0.058ns  (arrival time - required time)
+  Source:                 u_soc/u_kyber_axi/C/dout_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/DIADI[4]
+                            (rising edge-triggered cell RAMB36E1 clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        0.268ns  (logic 0.164ns (61.116%)  route 0.104ns (38.884%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.056ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.047ns
+    Source Clock Delay      (SCD):    1.493ns
+    Clock Pessimism Removal (CPR):    0.498ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.564     1.493    u_soc/u_kyber_axi/C/CLK100MHZ_IBUF_BUFG
+    SLICE_X32Y45         FDRE                                         r  u_soc/u_kyber_axi/C/dout_reg[4]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y45         FDRE (Prop_fdre_C_Q)         0.164     1.657 r  u_soc/u_kyber_axi/C/dout_reg[4]/Q
+                         net (fo=1, routed)           0.104     1.761    u_soc/u_kyber_axi/S/IFIFO/inst/wr_data[4]
+    RAMB36_X2Y9          RAMB36E1                                     r  u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/DIADI[4]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.870     2.047    u_soc/u_kyber_axi/S/IFIFO/inst/CLK100MHZ_IBUF_BUFG
+    RAMB36_X2Y9          RAMB36E1                                     r  u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/CLKARDCLK
+                         clock pessimism             -0.498     1.549    
+    RAMB36_X2Y9          RAMB36E1 (Hold_ramb36e1_CLKARDCLK_DIADI[4])
+                                                      0.155     1.704    u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg
+  -------------------------------------------------------------------
+                         required time                         -1.704    
+                         arrival time                           1.761    
+  -------------------------------------------------------------------
+                         slack                                  0.058    
+
+Slack (MET) :             0.058ns  (arrival time - required time)
+  Source:                 u_soc/u_kyber_axi/C/dout_reg[6]/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/DIADI[6]
+                            (rising edge-triggered cell RAMB36E1 clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        0.268ns  (logic 0.164ns (61.116%)  route 0.104ns (38.884%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.056ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.047ns
+    Source Clock Delay      (SCD):    1.493ns
+    Clock Pessimism Removal (CPR):    0.498ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.564     1.493    u_soc/u_kyber_axi/C/CLK100MHZ_IBUF_BUFG
+    SLICE_X32Y45         FDRE                                         r  u_soc/u_kyber_axi/C/dout_reg[6]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y45         FDRE (Prop_fdre_C_Q)         0.164     1.657 r  u_soc/u_kyber_axi/C/dout_reg[6]/Q
+                         net (fo=1, routed)           0.104     1.761    u_soc/u_kyber_axi/S/IFIFO/inst/wr_data[6]
+    RAMB36_X2Y9          RAMB36E1                                     r  u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/DIADI[6]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.870     2.047    u_soc/u_kyber_axi/S/IFIFO/inst/CLK100MHZ_IBUF_BUFG
+    RAMB36_X2Y9          RAMB36E1                                     r  u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/CLKARDCLK
+                         clock pessimism             -0.498     1.549    
+    RAMB36_X2Y9          RAMB36E1 (Hold_ramb36e1_CLKARDCLK_DIADI[6])
+                                                      0.155     1.704    u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg
+  -------------------------------------------------------------------
+                         required time                         -1.704    
+                         arrival time                           1.761    
+  -------------------------------------------------------------------
+                         slack                                  0.058    
+
+Slack (MET) :             0.058ns  (arrival time - required time)
+  Source:                 u_soc/u_kyber_axi/reg_seed_m_reg[6][21]/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/C/m_reg[213]/D
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        0.415ns  (logic 0.209ns (50.390%)  route 0.206ns (49.610%))
+  Logic Levels:           1  (LUT5=1)
+  Clock Path Skew:        0.264ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.993ns
+    Source Clock Delay      (SCD):    1.476ns
+    Clock Pessimism Removal (CPR):    0.253ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.547     1.476    u_soc/u_kyber_axi/CLK100MHZ_IBUF_BUFG
+    SLICE_X50Y66         FDRE                                         r  u_soc/u_kyber_axi/reg_seed_m_reg[6][21]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X50Y66         FDRE (Prop_fdre_C_Q)         0.164     1.640 r  u_soc/u_kyber_axi/reg_seed_m_reg[6][21]/Q
+                         net (fo=2, routed)           0.206     1.846    u_soc/u_kyber_axi/C/ntt/flat_seed_m[213]
+    SLICE_X48Y67         LUT5 (Prop_lut5_I0_O)        0.045     1.891 r  u_soc/u_kyber_axi/C/ntt/NTT_core_Client_LUT5_126/O
+                         net (fo=1, routed)           0.000     1.891    u_soc/u_kyber_axi/C/ntt_n_78
+    SLICE_X48Y67         FDRE                                         r  u_soc/u_kyber_axi/C/m_reg[213]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.816     1.993    u_soc/u_kyber_axi/C/CLK100MHZ_IBUF_BUFG
+    SLICE_X48Y67         FDRE                                         r  u_soc/u_kyber_axi/C/m_reg[213]/C
+                         clock pessimism             -0.253     1.740    
+    SLICE_X48Y67         FDRE (Hold_fdre_C_D)         0.092     1.832    u_soc/u_kyber_axi/C/m_reg[213]
+  -------------------------------------------------------------------
+                         required time                         -1.832    
+                         arrival time                           1.891    
+  -------------------------------------------------------------------
+                         slack                                  0.058    
+
+Slack (MET) :             0.059ns  (arrival time - required time)
+  Source:                 u_soc/u_kyber_axi/C/dout_reg[19]/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/DIADI[19]
+                            (rising edge-triggered cell RAMB36E1 clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             CLK100MHZ
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        0.268ns  (logic 0.164ns (61.116%)  route 0.104ns (38.884%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.055ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.047ns
+    Source Clock Delay      (SCD):    1.494ns
+    Clock Pessimism Removal (CPR):    0.498ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.565     1.494    u_soc/u_kyber_axi/C/CLK100MHZ_IBUF_BUFG
+    SLICE_X32Y48         FDRE                                         r  u_soc/u_kyber_axi/C/dout_reg[19]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y48         FDRE (Prop_fdre_C_Q)         0.164     1.658 r  u_soc/u_kyber_axi/C/dout_reg[19]/Q
+                         net (fo=1, routed)           0.104     1.762    u_soc/u_kyber_axi/S/IFIFO/inst/wr_data[19]
+    RAMB36_X2Y9          RAMB36E1                                     r  u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/DIADI[19]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.870     2.047    u_soc/u_kyber_axi/S/IFIFO/inst/CLK100MHZ_IBUF_BUFG
+    RAMB36_X2Y9          RAMB36E1                                     r  u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg/CLKARDCLK
+                         clock pessimism             -0.498     1.549    
+    RAMB36_X2Y9          RAMB36E1 (Hold_ramb36e1_CLKARDCLK_DIADI[19])
+                                                      0.155     1.704    u_soc/u_kyber_axi/S/IFIFO/inst/mem_reg
+  -------------------------------------------------------------------
+                         required time                         -1.704    
+                         arrival time                           1.762    
+  -------------------------------------------------------------------
+                         slack                                  0.059    
+
+
+
+
+
+Pulse Width Checks
+--------------------------------------------------------------------------------------
+Clock Name:         CLK100MHZ
+Waveform(ns):       { 0.000 10.000 }
+Period(ns):         20.000
+Sources:            { CLK100MHZ }
+
+Check Type        Corner  Lib Pin             Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location      Pin
+Min Period        n/a     RAMB36E1/CLKARDCLK  n/a            2.472         20.000      17.528     RAMB36_X4Y10  u_soc/memory_inst/memory_reg_2/CLKARDCLK
+Min Period        n/a     RAMB36E1/CLKARDCLK  n/a            2.472         20.000      17.528     RAMB36_X4Y9   u_soc/memory_inst/memory_reg_3/CLKARDCLK
+Min Period        n/a     RAMB36E1/CLKARDCLK  n/a            2.472         20.000      17.528     RAMB36_X0Y8   u_soc/u_kyber_axi/C/DFIFO/inst/mem_reg/CLKARDCLK
+Min Period        n/a     RAMB36E1/CLKARDCLK  n/a            2.472         20.000      17.528     RAMB36_X2Y8   u_soc/u_kyber_axi/C/IFIFO/inst/mem_reg/CLKARDCLK
+Min Period        n/a     RAMB36E1/CLKARDCLK  n/a            2.472         20.000      17.528     RAMB36_X1Y8   u_soc/u_kyber_axi/C/OFIFO/inst/mem_reg/CLKARDCLK
+Min Period        n/a     RAMB18E1/CLKARDCLK  n/a            2.472         20.000      17.528     RAMB18_X4Y26  u_soc/u_kyber_axi/S/hash/ififo_inst/inst/mem_reg/CLKARDCLK
+Min Period        n/a     RAMB18E1/CLKBWRCLK  n/a            2.472         20.000      17.528     RAMB18_X4Y26  u_soc/u_kyber_axi/S/hash/ififo_inst/inst/mem_reg/CLKBWRCLK
+Min Period        n/a     RAMB18E1/CLKARDCLK  n/a            2.472         20.000      17.528     RAMB18_X2Y24  u_soc/u_kyber_axi/C/hash/ififo_inst/inst/mem_reg/CLKARDCLK
+Min Period        n/a     RAMB18E1/CLKBWRCLK  n/a            2.472         20.000      17.528     RAMB18_X2Y24  u_soc/u_kyber_axi/C/hash/ififo_inst/inst/mem_reg/CLKBWRCLK
+Min Period        n/a     RAMB36E1/CLKARDCLK  n/a            2.472         20.000      17.528     RAMB36_X3Y5   u_soc/u_kyber_axi/S/hash/ofifo0_inst/inst/mem_reg/CLKARDCLK
+Low Pulse Width   Slow    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X90Y42  u_soc/u_peripherals/rx_fifo_reg_0_15_0_5/RAMA/CLK
+Low Pulse Width   Fast    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X90Y42  u_soc/u_peripherals/rx_fifo_reg_0_15_0_5/RAMA/CLK
+Low Pulse Width   Slow    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X90Y42  u_soc/u_peripherals/rx_fifo_reg_0_15_0_5/RAMA_D1/CLK
+Low Pulse Width   Fast    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X90Y42  u_soc/u_peripherals/rx_fifo_reg_0_15_0_5/RAMA_D1/CLK
+Low Pulse Width   Slow    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X90Y42  u_soc/u_peripherals/rx_fifo_reg_0_15_0_5/RAMB/CLK
+Low Pulse Width   Fast    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X90Y42  u_soc/u_peripherals/rx_fifo_reg_0_15_0_5/RAMB/CLK
+Low Pulse Width   Slow    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X90Y42  u_soc/u_peripherals/rx_fifo_reg_0_15_0_5/RAMB_D1/CLK
+Low Pulse Width   Fast    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X90Y42  u_soc/u_peripherals/rx_fifo_reg_0_15_0_5/RAMB_D1/CLK
+Low Pulse Width   Slow    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X90Y42  u_soc/u_peripherals/rx_fifo_reg_0_15_0_5/RAMC/CLK
+Low Pulse Width   Fast    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X90Y42  u_soc/u_peripherals/rx_fifo_reg_0_15_0_5/RAMC/CLK
+High Pulse Width  Slow    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X96Y56  u_soc/cpu/cpuregs_reg_r1_0_31_18_23/RAMA/CLK
+High Pulse Width  Slow    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X96Y56  u_soc/cpu/cpuregs_reg_r1_0_31_18_23/RAMA_D1/CLK
+High Pulse Width  Slow    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X96Y56  u_soc/cpu/cpuregs_reg_r1_0_31_18_23/RAMB/CLK
+High Pulse Width  Slow    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X96Y56  u_soc/cpu/cpuregs_reg_r1_0_31_18_23/RAMB_D1/CLK
+High Pulse Width  Slow    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X96Y56  u_soc/cpu/cpuregs_reg_r1_0_31_18_23/RAMC/CLK
+High Pulse Width  Slow    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X96Y56  u_soc/cpu/cpuregs_reg_r1_0_31_18_23/RAMC_D1/CLK
+High Pulse Width  Slow    RAMS32/CLK          n/a            1.130         10.000      8.870      SLICE_X96Y56  u_soc/cpu/cpuregs_reg_r1_0_31_18_23/RAMD/CLK
+High Pulse Width  Slow    RAMS32/CLK          n/a            1.130         10.000      8.870      SLICE_X96Y56  u_soc/cpu/cpuregs_reg_r1_0_31_18_23/RAMD_D1/CLK
+High Pulse Width  Slow    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X96Y58  u_soc/cpu/cpuregs_reg_r1_0_31_24_29/RAMA/CLK
+High Pulse Width  Slow    RAMD32/CLK          n/a            1.130         10.000      8.870      SLICE_X96Y58  u_soc/cpu/cpuregs_reg_r1_0_31_24_29/RAMA_D1/CLK
+
+
+
+---------------------------------------------------------------------------------------------------
+Path Group:  **async_default**
+From Clock:  CLK100MHZ
+  To Clock:  CLK100MHZ
+
+Setup :            0  Failing Endpoints,  Worst Slack        9.434ns,  Total Violation        0.000ns
+Hold  :            0  Failing Endpoints,  Worst Slack        1.616ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             9.434ns  (required time - arrival time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1520]/CLR
+                            (recovery check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        10.186ns  (logic 0.484ns (4.752%)  route 9.702ns (95.248%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        -0.013ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.524ns = ( 24.524 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.794ns
+    Clock Pessimism Removal (CPR):    0.258ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.444     4.794    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.379     5.173 r  por_done_reg/Q
+                         net (fo=817, routed)         2.295     7.468    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.105     7.573 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       7.407    14.980    u_soc/u_kyber_axi/C/hash/keccak_inst/Str_out_reg[0]
+    SLICE_X27Y131        FDCE                                         f  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1520]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.419    24.524    u_soc/u_kyber_axi/C/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X27Y131        FDCE                                         r  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1520]/C
+                         clock pessimism              0.258    24.781    
+                         clock uncertainty           -0.035    24.746    
+    SLICE_X27Y131        FDCE (Recov_fdce_C_CLR)     -0.331    24.415    u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1520]
+  -------------------------------------------------------------------
+                         required time                         24.415    
+                         arrival time                         -14.980    
+  -------------------------------------------------------------------
+                         slack                                  9.434    
+
+Slack (MET) :             9.434ns  (required time - arrival time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1552]/CLR
+                            (recovery check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        10.186ns  (logic 0.484ns (4.752%)  route 9.702ns (95.248%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        -0.013ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.524ns = ( 24.524 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.794ns
+    Clock Pessimism Removal (CPR):    0.258ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.444     4.794    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.379     5.173 r  por_done_reg/Q
+                         net (fo=817, routed)         2.295     7.468    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.105     7.573 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       7.407    14.980    u_soc/u_kyber_axi/C/hash/keccak_inst/Str_out_reg[0]
+    SLICE_X27Y131        FDCE                                         f  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1552]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.419    24.524    u_soc/u_kyber_axi/C/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X27Y131        FDCE                                         r  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1552]/C
+                         clock pessimism              0.258    24.781    
+                         clock uncertainty           -0.035    24.746    
+    SLICE_X27Y131        FDCE (Recov_fdce_C_CLR)     -0.331    24.415    u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1552]
+  -------------------------------------------------------------------
+                         required time                         24.415    
+                         arrival time                         -14.980    
+  -------------------------------------------------------------------
+                         slack                                  9.434    
+
+Slack (MET) :             9.434ns  (required time - arrival time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1553]/CLR
+                            (recovery check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        10.186ns  (logic 0.484ns (4.752%)  route 9.702ns (95.248%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        -0.013ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.524ns = ( 24.524 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.794ns
+    Clock Pessimism Removal (CPR):    0.258ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.444     4.794    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.379     5.173 r  por_done_reg/Q
+                         net (fo=817, routed)         2.295     7.468    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.105     7.573 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       7.407    14.980    u_soc/u_kyber_axi/C/hash/keccak_inst/Str_out_reg[0]
+    SLICE_X27Y131        FDCE                                         f  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1553]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.419    24.524    u_soc/u_kyber_axi/C/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X27Y131        FDCE                                         r  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1553]/C
+                         clock pessimism              0.258    24.781    
+                         clock uncertainty           -0.035    24.746    
+    SLICE_X27Y131        FDCE (Recov_fdce_C_CLR)     -0.331    24.415    u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1553]
+  -------------------------------------------------------------------
+                         required time                         24.415    
+                         arrival time                         -14.980    
+  -------------------------------------------------------------------
+                         slack                                  9.434    
+
+Slack (MET) :             9.562ns  (required time - arrival time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1425]/CLR
+                            (recovery check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        10.061ns  (logic 0.484ns (4.811%)  route 9.577ns (95.189%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        -0.011ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.526ns = ( 24.526 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.794ns
+    Clock Pessimism Removal (CPR):    0.258ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.444     4.794    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.379     5.173 r  por_done_reg/Q
+                         net (fo=817, routed)         2.295     7.468    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.105     7.573 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       7.282    14.855    u_soc/u_kyber_axi/C/hash/keccak_inst/Str_out_reg[0]
+    SLICE_X28Y129        FDCE                                         f  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1425]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.421    24.526    u_soc/u_kyber_axi/C/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X28Y129        FDCE                                         r  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1425]/C
+                         clock pessimism              0.258    24.783    
+                         clock uncertainty           -0.035    24.748    
+    SLICE_X28Y129        FDCE (Recov_fdce_C_CLR)     -0.331    24.417    u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1425]
+  -------------------------------------------------------------------
+                         required time                         24.417    
+                         arrival time                         -14.855    
+  -------------------------------------------------------------------
+                         slack                                  9.562    
+
+Slack (MET) :             9.566ns  (required time - arrival time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1392]/CLR
+                            (recovery check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        10.057ns  (logic 0.484ns (4.813%)  route 9.573ns (95.187%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        -0.011ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.526ns = ( 24.526 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.794ns
+    Clock Pessimism Removal (CPR):    0.258ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.444     4.794    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.379     5.173 r  por_done_reg/Q
+                         net (fo=817, routed)         2.295     7.468    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.105     7.573 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       7.278    14.851    u_soc/u_kyber_axi/C/hash/keccak_inst/Str_out_reg[0]
+    SLICE_X29Y129        FDCE                                         f  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1392]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.421    24.526    u_soc/u_kyber_axi/C/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X29Y129        FDCE                                         r  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1392]/C
+                         clock pessimism              0.258    24.783    
+                         clock uncertainty           -0.035    24.748    
+    SLICE_X29Y129        FDCE (Recov_fdce_C_CLR)     -0.331    24.417    u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1392]
+  -------------------------------------------------------------------
+                         required time                         24.417    
+                         arrival time                         -14.851    
+  -------------------------------------------------------------------
+                         slack                                  9.566    
+
+Slack (MET) :             9.566ns  (required time - arrival time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1424]/CLR
+                            (recovery check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        10.057ns  (logic 0.484ns (4.813%)  route 9.573ns (95.187%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        -0.011ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.526ns = ( 24.526 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.794ns
+    Clock Pessimism Removal (CPR):    0.258ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.444     4.794    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.379     5.173 r  por_done_reg/Q
+                         net (fo=817, routed)         2.295     7.468    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.105     7.573 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       7.278    14.851    u_soc/u_kyber_axi/C/hash/keccak_inst/Str_out_reg[0]
+    SLICE_X29Y129        FDCE                                         f  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1424]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.421    24.526    u_soc/u_kyber_axi/C/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X29Y129        FDCE                                         r  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1424]/C
+                         clock pessimism              0.258    24.783    
+                         clock uncertainty           -0.035    24.748    
+    SLICE_X29Y129        FDCE (Recov_fdce_C_CLR)     -0.331    24.417    u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[1424]
+  -------------------------------------------------------------------
+                         required time                         24.417    
+                         arrival time                         -14.851    
+  -------------------------------------------------------------------
+                         slack                                  9.566    
+
+Slack (MET) :             9.566ns  (required time - arrival time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[656]/CLR
+                            (recovery check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        10.057ns  (logic 0.484ns (4.813%)  route 9.573ns (95.187%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        -0.011ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.526ns = ( 24.526 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.794ns
+    Clock Pessimism Removal (CPR):    0.258ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.444     4.794    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.379     5.173 r  por_done_reg/Q
+                         net (fo=817, routed)         2.295     7.468    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.105     7.573 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       7.278    14.851    u_soc/u_kyber_axi/C/hash/keccak_inst/Str_out_reg[0]
+    SLICE_X29Y129        FDCE                                         f  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[656]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.421    24.526    u_soc/u_kyber_axi/C/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X29Y129        FDCE                                         r  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[656]/C
+                         clock pessimism              0.258    24.783    
+                         clock uncertainty           -0.035    24.748    
+    SLICE_X29Y129        FDCE (Recov_fdce_C_CLR)     -0.331    24.417    u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[656]
+  -------------------------------------------------------------------
+                         required time                         24.417    
+                         arrival time                         -14.851    
+  -------------------------------------------------------------------
+                         slack                                  9.566    
+
+Slack (MET) :             9.566ns  (required time - arrival time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[688]/CLR
+                            (recovery check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        10.057ns  (logic 0.484ns (4.813%)  route 9.573ns (95.187%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        -0.011ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.526ns = ( 24.526 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.794ns
+    Clock Pessimism Removal (CPR):    0.258ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.444     4.794    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.379     5.173 r  por_done_reg/Q
+                         net (fo=817, routed)         2.295     7.468    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.105     7.573 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       7.278    14.851    u_soc/u_kyber_axi/C/hash/keccak_inst/Str_out_reg[0]
+    SLICE_X29Y129        FDCE                                         f  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[688]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.421    24.526    u_soc/u_kyber_axi/C/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X29Y129        FDCE                                         r  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[688]/C
+                         clock pessimism              0.258    24.783    
+                         clock uncertainty           -0.035    24.748    
+    SLICE_X29Y129        FDCE (Recov_fdce_C_CLR)     -0.331    24.417    u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[688]
+  -------------------------------------------------------------------
+                         required time                         24.417    
+                         arrival time                         -14.851    
+  -------------------------------------------------------------------
+                         slack                                  9.566    
+
+Slack (MET) :             9.575ns  (required time - arrival time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[657]/CLR
+                            (recovery check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        10.048ns  (logic 0.484ns (4.817%)  route 9.564ns (95.183%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        -0.010ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.527ns = ( 24.527 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.794ns
+    Clock Pessimism Removal (CPR):    0.258ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.444     4.794    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.379     5.173 r  por_done_reg/Q
+                         net (fo=817, routed)         2.295     7.468    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.105     7.573 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       7.269    14.842    u_soc/u_kyber_axi/C/hash/keccak_inst/Str_out_reg[0]
+    SLICE_X31Y130        FDCE                                         f  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[657]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.422    24.527    u_soc/u_kyber_axi/C/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X31Y130        FDCE                                         r  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[657]/C
+                         clock pessimism              0.258    24.784    
+                         clock uncertainty           -0.035    24.749    
+    SLICE_X31Y130        FDCE (Recov_fdce_C_CLR)     -0.331    24.418    u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[657]
+  -------------------------------------------------------------------
+                         required time                         24.418    
+                         arrival time                         -14.842    
+  -------------------------------------------------------------------
+                         slack                                  9.575    
+
+Slack (MET) :             9.575ns  (required time - arrival time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[720]/CLR
+                            (recovery check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        10.048ns  (logic 0.484ns (4.817%)  route 9.564ns (95.183%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        -0.010ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.527ns = ( 24.527 - 20.000 ) 
+    Source Clock Delay      (SCD):    4.794ns
+    Clock Pessimism Removal (CPR):    0.258ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.444     4.794    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.379     5.173 r  por_done_reg/Q
+                         net (fo=817, routed)         2.295     7.468    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.105     7.573 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       7.269    14.842    u_soc/u_kyber_axi/C/hash/keccak_inst/Str_out_reg[0]
+    SLICE_X31Y130        FDCE                                         f  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[720]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                     20.000    20.000 r  
+    N18                                               0.000    20.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    20.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       1.422    24.527    u_soc/u_kyber_axi/C/hash/keccak_inst/CLK100MHZ_IBUF_BUFG
+    SLICE_X31Y130        FDCE                                         r  u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[720]/C
+                         clock pessimism              0.258    24.784    
+                         clock uncertainty           -0.035    24.749    
+    SLICE_X31Y130        FDCE (Recov_fdce_C_CLR)     -0.331    24.418    u_soc/u_kyber_axi/C/hash/keccak_inst/state_reg_reg[720]
+  -------------------------------------------------------------------
+                         required time                         24.418    
+                         arrival time                         -14.842    
+  -------------------------------------------------------------------
+                         slack                                  9.575    
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             1.616ns  (arrival time - required time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_kdf/seed_out_reg[158]/CLR
+                            (removal check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Removal (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        1.853ns  (logic 0.186ns (10.036%)  route 1.667ns (89.964%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        0.304ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.060ns
+    Source Clock Delay      (SCD):    1.508ns
+    Clock Pessimism Removal (CPR):    0.248ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.579     1.508    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.141     1.649 r  por_done_reg/Q
+                         net (fo=817, routed)         1.198     2.847    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.045     2.892 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       0.469     3.361    u_kdf/Str_out_reg[0]
+    SLICE_X104Y40        FDCE                                         f  u_kdf/seed_out_reg[158]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.883     2.060    u_kdf/CLK100MHZ_IBUF_BUFG
+    SLICE_X104Y40        FDCE                                         r  u_kdf/seed_out_reg[158]/C
+                         clock pessimism             -0.248     1.812    
+    SLICE_X104Y40        FDCE (Remov_fdce_C_CLR)     -0.067     1.745    u_kdf/seed_out_reg[158]
+  -------------------------------------------------------------------
+                         required time                         -1.745    
+                         arrival time                           3.361    
+  -------------------------------------------------------------------
+                         slack                                  1.616    
+
+Slack (MET) :             1.616ns  (arrival time - required time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_kdf/seed_out_reg[190]/CLR
+                            (removal check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Removal (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        1.853ns  (logic 0.186ns (10.036%)  route 1.667ns (89.964%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        0.304ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.060ns
+    Source Clock Delay      (SCD):    1.508ns
+    Clock Pessimism Removal (CPR):    0.248ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.579     1.508    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.141     1.649 r  por_done_reg/Q
+                         net (fo=817, routed)         1.198     2.847    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.045     2.892 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       0.469     3.361    u_kdf/Str_out_reg[0]
+    SLICE_X104Y40        FDCE                                         f  u_kdf/seed_out_reg[190]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.883     2.060    u_kdf/CLK100MHZ_IBUF_BUFG
+    SLICE_X104Y40        FDCE                                         r  u_kdf/seed_out_reg[190]/C
+                         clock pessimism             -0.248     1.812    
+    SLICE_X104Y40        FDCE (Remov_fdce_C_CLR)     -0.067     1.745    u_kdf/seed_out_reg[190]
+  -------------------------------------------------------------------
+                         required time                         -1.745    
+                         arrival time                           3.361    
+  -------------------------------------------------------------------
+                         slack                                  1.616    
+
+Slack (MET) :             1.616ns  (arrival time - required time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_kdf/seed_out_reg[62]/CLR
+                            (removal check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Removal (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        1.853ns  (logic 0.186ns (10.036%)  route 1.667ns (89.964%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        0.304ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.060ns
+    Source Clock Delay      (SCD):    1.508ns
+    Clock Pessimism Removal (CPR):    0.248ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.579     1.508    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.141     1.649 r  por_done_reg/Q
+                         net (fo=817, routed)         1.198     2.847    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.045     2.892 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       0.469     3.361    u_kdf/Str_out_reg[0]
+    SLICE_X104Y40        FDCE                                         f  u_kdf/seed_out_reg[62]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.883     2.060    u_kdf/CLK100MHZ_IBUF_BUFG
+    SLICE_X104Y40        FDCE                                         r  u_kdf/seed_out_reg[62]/C
+                         clock pessimism             -0.248     1.812    
+    SLICE_X104Y40        FDCE (Remov_fdce_C_CLR)     -0.067     1.745    u_kdf/seed_out_reg[62]
+  -------------------------------------------------------------------
+                         required time                         -1.745    
+                         arrival time                           3.361    
+  -------------------------------------------------------------------
+                         slack                                  1.616    
+
+Slack (MET) :             1.616ns  (arrival time - required time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_kdf/seed_out_reg[68]/CLR
+                            (removal check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Removal (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        1.853ns  (logic 0.186ns (10.036%)  route 1.667ns (89.964%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        0.304ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.060ns
+    Source Clock Delay      (SCD):    1.508ns
+    Clock Pessimism Removal (CPR):    0.248ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.579     1.508    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.141     1.649 r  por_done_reg/Q
+                         net (fo=817, routed)         1.198     2.847    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.045     2.892 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       0.469     3.361    u_kdf/Str_out_reg[0]
+    SLICE_X104Y40        FDCE                                         f  u_kdf/seed_out_reg[68]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.883     2.060    u_kdf/CLK100MHZ_IBUF_BUFG
+    SLICE_X104Y40        FDCE                                         r  u_kdf/seed_out_reg[68]/C
+                         clock pessimism             -0.248     1.812    
+    SLICE_X104Y40        FDCE (Remov_fdce_C_CLR)     -0.067     1.745    u_kdf/seed_out_reg[68]
+  -------------------------------------------------------------------
+                         required time                         -1.745    
+                         arrival time                           3.361    
+  -------------------------------------------------------------------
+                         slack                                  1.616    
+
+Slack (MET) :             1.616ns  (arrival time - required time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_kdf/seed_out_reg[94]/CLR
+                            (removal check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Removal (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        1.853ns  (logic 0.186ns (10.036%)  route 1.667ns (89.964%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        0.304ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.060ns
+    Source Clock Delay      (SCD):    1.508ns
+    Clock Pessimism Removal (CPR):    0.248ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.579     1.508    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.141     1.649 r  por_done_reg/Q
+                         net (fo=817, routed)         1.198     2.847    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.045     2.892 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       0.469     3.361    u_kdf/Str_out_reg[0]
+    SLICE_X104Y40        FDCE                                         f  u_kdf/seed_out_reg[94]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.883     2.060    u_kdf/CLK100MHZ_IBUF_BUFG
+    SLICE_X104Y40        FDCE                                         r  u_kdf/seed_out_reg[94]/C
+                         clock pessimism             -0.248     1.812    
+    SLICE_X104Y40        FDCE (Remov_fdce_C_CLR)     -0.067     1.745    u_kdf/seed_out_reg[94]
+  -------------------------------------------------------------------
+                         required time                         -1.745    
+                         arrival time                           3.361    
+  -------------------------------------------------------------------
+                         slack                                  1.616    
+
+Slack (MET) :             1.641ns  (arrival time - required time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_kdf/seed_out_reg[126]/CLR
+                            (removal check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Removal (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        1.853ns  (logic 0.186ns (10.036%)  route 1.667ns (89.964%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        0.304ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.060ns
+    Source Clock Delay      (SCD):    1.508ns
+    Clock Pessimism Removal (CPR):    0.248ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.579     1.508    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.141     1.649 r  por_done_reg/Q
+                         net (fo=817, routed)         1.198     2.847    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.045     2.892 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       0.469     3.361    u_kdf/Str_out_reg[0]
+    SLICE_X105Y40        FDCE                                         f  u_kdf/seed_out_reg[126]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.883     2.060    u_kdf/CLK100MHZ_IBUF_BUFG
+    SLICE_X105Y40        FDCE                                         r  u_kdf/seed_out_reg[126]/C
+                         clock pessimism             -0.248     1.812    
+    SLICE_X105Y40        FDCE (Remov_fdce_C_CLR)     -0.092     1.720    u_kdf/seed_out_reg[126]
+  -------------------------------------------------------------------
+                         required time                         -1.720    
+                         arrival time                           3.361    
+  -------------------------------------------------------------------
+                         slack                                  1.641    
+
+Slack (MET) :             1.641ns  (arrival time - required time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_kdf/seed_out_reg[222]/CLR
+                            (removal check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Removal (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        1.853ns  (logic 0.186ns (10.036%)  route 1.667ns (89.964%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        0.304ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.060ns
+    Source Clock Delay      (SCD):    1.508ns
+    Clock Pessimism Removal (CPR):    0.248ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.579     1.508    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.141     1.649 r  por_done_reg/Q
+                         net (fo=817, routed)         1.198     2.847    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.045     2.892 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       0.469     3.361    u_kdf/Str_out_reg[0]
+    SLICE_X105Y40        FDCE                                         f  u_kdf/seed_out_reg[222]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.883     2.060    u_kdf/CLK100MHZ_IBUF_BUFG
+    SLICE_X105Y40        FDCE                                         r  u_kdf/seed_out_reg[222]/C
+                         clock pessimism             -0.248     1.812    
+    SLICE_X105Y40        FDCE (Remov_fdce_C_CLR)     -0.092     1.720    u_kdf/seed_out_reg[222]
+  -------------------------------------------------------------------
+                         required time                         -1.720    
+                         arrival time                           3.361    
+  -------------------------------------------------------------------
+                         slack                                  1.641    
+
+Slack (MET) :             1.641ns  (arrival time - required time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_kdf/seed_out_reg[30]/CLR
+                            (removal check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Removal (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        1.853ns  (logic 0.186ns (10.036%)  route 1.667ns (89.964%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        0.304ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.060ns
+    Source Clock Delay      (SCD):    1.508ns
+    Clock Pessimism Removal (CPR):    0.248ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.579     1.508    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.141     1.649 r  por_done_reg/Q
+                         net (fo=817, routed)         1.198     2.847    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.045     2.892 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       0.469     3.361    u_kdf/Str_out_reg[0]
+    SLICE_X105Y40        FDCE                                         f  u_kdf/seed_out_reg[30]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.883     2.060    u_kdf/CLK100MHZ_IBUF_BUFG
+    SLICE_X105Y40        FDCE                                         r  u_kdf/seed_out_reg[30]/C
+                         clock pessimism             -0.248     1.812    
+    SLICE_X105Y40        FDCE (Remov_fdce_C_CLR)     -0.092     1.720    u_kdf/seed_out_reg[30]
+  -------------------------------------------------------------------
+                         required time                         -1.720    
+                         arrival time                           3.361    
+  -------------------------------------------------------------------
+                         slack                                  1.641    
+
+Slack (MET) :             1.641ns  (arrival time - required time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_kdf/seed_out_reg[31]/CLR
+                            (removal check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Removal (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        1.853ns  (logic 0.186ns (10.036%)  route 1.667ns (89.964%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        0.304ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.060ns
+    Source Clock Delay      (SCD):    1.508ns
+    Clock Pessimism Removal (CPR):    0.248ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.579     1.508    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.141     1.649 r  por_done_reg/Q
+                         net (fo=817, routed)         1.198     2.847    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.045     2.892 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       0.469     3.361    u_kdf/Str_out_reg[0]
+    SLICE_X105Y40        FDCE                                         f  u_kdf/seed_out_reg[31]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.883     2.060    u_kdf/CLK100MHZ_IBUF_BUFG
+    SLICE_X105Y40        FDCE                                         r  u_kdf/seed_out_reg[31]/C
+                         clock pessimism             -0.248     1.812    
+    SLICE_X105Y40        FDCE (Remov_fdce_C_CLR)     -0.092     1.720    u_kdf/seed_out_reg[31]
+  -------------------------------------------------------------------
+                         required time                         -1.720    
+                         arrival time                           3.361    
+  -------------------------------------------------------------------
+                         slack                                  1.641    
+
+Slack (MET) :             1.654ns  (arrival time - required time)
+  Source:                 por_done_reg/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_kdf/seed_out_reg[36]/CLR
+                            (removal check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Path Group:             **async_default**
+  Path Type:              Removal (Min at Fast Process Corner)
+  Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
+  Data Path Delay:        1.890ns  (logic 0.186ns (9.841%)  route 1.704ns (90.159%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        0.303ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.059ns
+    Source Clock Delay      (SCD):    1.508ns
+    Clock Pessimism Removal (CPR):    0.248ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.579     1.508    CLK100MHZ_IBUF_BUFG
+    SLICE_X83Y64         FDRE                                         r  por_done_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y64         FDRE (Prop_fdre_C_Q)         0.141     1.649 r  por_done_reg/Q
+                         net (fo=817, routed)         1.198     2.847    u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X101Y54        LUT1 (Prop_lut1_I0_O)        0.045     2.892 f  u_soc/u_kyber_axi/S/hash/keccak_inst/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=14572, routed)       0.506     3.398    u_kdf/Str_out_reg[0]
+    SLICE_X102Y39        FDCE                                         f  u_kdf/seed_out_reg[36]/CLR
+  -------------------------------------------------------------------    -------------------
+
+                         (clock CLK100MHZ rise edge)
+                                                      0.000     0.000 r  
+    N18                                               0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=21772, routed)       0.882     2.059    u_kdf/CLK100MHZ_IBUF_BUFG
+    SLICE_X102Y39        FDCE                                         r  u_kdf/seed_out_reg[36]/C
+                         clock pessimism             -0.248     1.811    
+    SLICE_X102Y39        FDCE (Remov_fdce_C_CLR)     -0.067     1.744    u_kdf/seed_out_reg[36]
+  -------------------------------------------------------------------
+                         required time                         -1.744    
+                         arrival time                           3.398    
+  -------------------------------------------------------------------
+                         slack                                  1.654    
+
+
+
+
+

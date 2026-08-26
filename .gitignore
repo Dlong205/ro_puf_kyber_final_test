@@ -1,0 +1,16 @@
+*.vcd
+*.fst
+*.wdb
+*.log
+*.pb
+*.jou
+sim_output.txt
+obj_dir/
+*.gch
+*.o
+*.a
+*.sim/
+*.runs/
+*.hw/
+.Xil/
+xsim.dir/
