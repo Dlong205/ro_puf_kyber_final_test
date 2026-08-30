@@ -6,8 +6,7 @@ Ngày kiểm tra: 2026-08-30. Đây là hồ sơ nguồn gốc kỹ thuật, kh�
 
 | Thành phần | Nguồn gốc được khai báo | Bằng chứng hiện có | Trạng thái phát hành |
 |---|---|---|---|
-| RTL Keccak/SHA3 dùng bởi Kyber và KDF | Chủ dự án Đồng Trường Long tự viết | Xác nhận của chủ dự án; lịch sử Git cục bộ ghi các file tại lần import dự án | Thuộc dự án; còn phải chọn top-level license và chốt ranh giới từng file |
-| RTL Kyber cũ không thuộc Keccak | Clone từ `tuandat081125/Kyber`, được cho biết là dựa trên CRYSTALS-Kyber | Đã ghi URL và commit nguồn; repo trung gian không có license | Chỉ đánh giá nội bộ; chặn phân phối công khai |
+| RTL Keccak/SHA3 dùng bởi Kyber và KDF | Chủ dự án Đồng Trường Long | Xác nhận của chủ dự án; lịch sử Git cục bộ ghi các file tại lần import dự án | Thuộc dự án; còn phải chọn top-level license và chốt ranh giới từng file |
 | Implementation/đặc tả CRYSTALS-Kyber chính thức | `pq-crystals/kyber` | Repo chính thức và thông báo CC0-hoặc-Apache-2.0 | Đã ghi điều khoản upstream; phải chứng minh phạm vi áp dụng theo từng file |
 | RTL tích hợp, firmware, host và test | Code mới và sửa đổi thuộc dự án | Lịch sử dự án cục bộ | Chờ top-level license tương thích |
 
