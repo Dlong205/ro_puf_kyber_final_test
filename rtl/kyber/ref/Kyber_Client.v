@@ -154,7 +154,12 @@ always @* case(state)
 	6'h 15: next_state = ready_pk ? 6'h 19 : state;
 	6'h 16: next_state = rot_ctr == 3'h 7 ? state + 1'h 1 : state;
 	6'h 17: next_state = 6'h 10;
-	6'h 18: next_state = squeeze_ctr == 6'h 3F || fifo_GENA_ctr[7] ? 6'h 22 : state;
+	// Rejection sampling has data-dependent output density.  A fixed 64-word
+	// squeeze window can leave fewer than the 128 packed coefficient words
+	// required by the NTT (observed as 124/128 on a valid seed), after which
+	// both endpoints wait forever for ready_c.  The SHAKE adapter can extend
+	// across rate blocks, so finish only when the coefficient FIFO is complete.
+	6'h 18: next_state = fifo_GENA_ctr[7] ? 6'h 22 : state;
 	6'h 19: next_state = data_ctr == din_ctr_end && data_rnd_ctr == din_rnd_end && decode_req_r1 ? state + 1'h 1 : state;
 	6'h 1a: next_state = rot_ctr == 3'h 7 ? state + 1'h 1 : state;
 	6'h 1b: next_state = ififo_empty ? state + 1'h 1 : state;
@@ -542,8 +547,8 @@ hash_core_Client hash(
 .keccak_init_hard((state == 6'h1) || (state == 6'h19) || (state == 6'h22)),
 .squeeze_init(squeeze_init_early),
 .extend(extend),
-.patt_bit(patt_bit),
-.eta3_bit(eta3_bit),
+.patt_bit((state == 6'h 18) ? 1'b0 : patt_bit),
+.eta3_bit((state == 6'h 18) ? 1'b0 : eta3_bit),
 .absorb_ctr_r1(absorb_ctr_r1),
 .keccak_ctr(keccak_ctr),
 .squeeze_ctr(squeeze_ctr),

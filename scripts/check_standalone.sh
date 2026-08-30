@@ -42,6 +42,7 @@ if grep -R -n -F '/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZ
     --exclude-dir=.Xil \
     --exclude-dir=build \
     --exclude-dir=release \
+    --exclude-dir=reports \
     --exclude-dir=obj_dir \
     --exclude-dir=obj_dir_axi \
     --exclude-dir=rtl_tcq0 \
@@ -59,3 +60,4 @@ echo "PASS: required files are present"
 echo "PASS: no symbolic links"
 echo "PASS: no XCI generated IP"
 echo "PASS: no dependency on the original project path"
+echo "INFO: generated Vivado reports are excluded because their headers record the generation path"

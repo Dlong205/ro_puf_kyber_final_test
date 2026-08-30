@@ -10,7 +10,10 @@ int main(int argc, char** argv) {
     Verilated::commandArgs(argc, argv);
     Vaxi_wrapper_tb dut;
 
-    const int max_cycles = 1000000;
+    // The default 32-vector regression exits early.  The larger ceiling also
+    // permits +STRESS_COUNT=1024 qualification runs without rebuilding the
+    // harness or accidentally timing out the C++ driver first.
+    const int max_cycles = 40000000;
     for (int cycle = 0; cycle < max_cycles && !Verilated::gotFinish(); ++cycle) {
         dut.clk = 0;
         dut.eval();

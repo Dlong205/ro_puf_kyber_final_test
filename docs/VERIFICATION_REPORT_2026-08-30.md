@@ -1,73 +1,104 @@
-# Báo cáo xác minh regression — 2026-08-30
+# Báo cáo xác minh RC3 — 2026-08-30
 
-Báo cáo này ghi kết quả chạy trực tiếp trên worktree dựa trên commit `c4811ac`.
-Các test được chạy tuần tự để giới hạn RAM; không chạy lại Vivado synthesis hoặc
-implementation trong đợt này. Bitstream và report timing/DRC được kiểm tra từ
-artifact RC2 đã commit.
+Báo cáo ghi kết quả chạy trực tiếp trên worktree phát triển từ commit `6d9218f`.
+Mọi tác vụ nặng chạy tuần tự (`-j1`); Vivado dùng một worker và tối đa hai thread.
 
 ## Môi trường
 
-- Hệ điều hành: Linux `6.8.0-138-generic`, x86-64
-- Verilator: `5.050`, revision `v5.050-60-g3d2421f3b`
-- Python: `3.10.12`
-- Cách chạy: `make -j1 regression`
+- Linux `6.8.0-138-generic`, x86-64
+- Verilator `5.050`, revision `v5.050-60-g3d2421f3b`
+- Python `3.10.12`
+- Vivado `2020.1`, part `xc7z020clg400-2`
+- Board JTAG: `xc7z020_1`, Digilent `260515110006`
+- UART: `/dev/ttyUSB1`, 115200 8N1
 
-## Kết quả
+## Regression chức năng
 
-| Bài kiểm tra | Kết quả | Bằng chứng chính |
+| Bài kiểm tra | Kết quả | Bằng chứng |
 |---|---|---|
-| RO-PUF controller | PASS | Tất cả test busy/done, deterministic digital model và mid-operation reset đạt |
-| BCH fuzzy extractor | PASS | 12/12: enroll, clean, 1 lỗi, 8 lỗi, từ chối 12 lỗi và determinism |
-| SHAKE256 KDF known-answer | PASS | Input 24 byte `00..17`, output 64 byte khớp từng bit với Python `hashlib.shake_256` |
-| Kyber-512 cũ functional loopback | PASS | `K_server == K_client`, hoàn thành tại cycle 15.188 |
-| Kyber AXI wrapper | PASS | 32 giao dịch logic; 6 raw mismatch thuộc 5 giao dịch được retry; tối đa 3 attempt |
-| Full firmware/UART pipeline | PASS | RO-PUF -> FE -> KDF -> Kyber hoàn thành sau 952.479 cycle; release mode không xuất secret và đã zeroize |
-| Standalone source check | PASS | Đủ file, không symlink, không `.xci`, không phụ thuộc đường dẫn workspace cũ |
-| Internal release check | PASS | Artifact, timing, DRC, provenance và standalone invariant đạt |
-| Artifact checksum | PASS | Bitstream và firmware khớp `ARTIFACTS.sha256` |
+| RO-PUF controller/CDC | PASS | busy/done, digital model và mid-operation reset |
+| BCH fuzzy extractor | PASS | 12/12 gồm clean, max-noise và over-noise reject |
+| SHAKE256 KDF KAT | PASS | 24-byte input, 64-byte output khớp `hashlib.shake_256` |
+| Kyber-512 functional loopback | PASS | shared key bằng nhau, cycle 15.316 |
+| Kyber AXI single-attempt | PASS | 32 giao dịch, raw mismatch 0, max attempts 1 |
+| Kyber codec round-trip | PASS | encode Client/decode Server giữ đúng coefficient |
+| Kyber raw gate dài | PASS | 1.024/1.024, mismatch 0, recovered 0, max attempts 1 |
+| Full firmware/UART pipeline | PASS | 952.496 cycle, không xuất secret, zeroize đạt |
+| Standalone audit | PASS | đủ file, không symlink, `.xci` hay dependency source ngoài |
+| Internal release check | PASS | regression, gate 1.024 vector, artifact, timing, DRC và provenance |
 
-Lệnh xác minh bổ sung:
+Lệnh chính:
 
 ```sh
-./scripts/release_check.sh --internal
-sha256sum -c ARTIFACTS.sha256
-git diff --check
+make -j1 regression
+make -j1 kyber-long
 ```
 
-Checksum đã xác nhận:
+## Lỗi được tìm và sửa
+
+Stress với message seed thay đổi từng phát hiện Client state `0x18` và Server
+state `0x2f` rời cửa sổ sinh ma trận theo counter cycle trước khi rejection
+sampling điền đủ 128 word. NTT state `0x06`, `0x0b` hoặc `0x26` sau đó tăng
+counter khi FIFO trống và có thể chờ vô hạn hoặc dùng thiếu coefficient.
+
+RC3 sửa bằng cách:
+
+1. Giữ matrix pattern trong đúng state sinh ma trận.
+2. Chỉ kết thúc sau khi `fifo_GENA_ctr[7]` xác nhận đủ dữ liệu.
+3. Chỉ tăng NTT coefficient counter khi FIFO không empty.
+4. Chờ đủ word thứ 128 trước khi chuyển state.
+5. Loại bỏ retry khỏi firmware và testbench để lỗi raw không bị che.
+
+Vector tái hiện trực tiếp và toàn bộ 1.024 vector đều PASS sau sửa.
+
+## Implementation FPGA
+
+| Chỉ số | Kết quả |
+|---|---:|
+| Clock constraint | 20,000 ns (50 MHz) |
+| WNS/TNS | `+4,371 ns` / `0 ns` |
+| WHS/THS | `+0,056 ns` / `0 ns` |
+| Slice LUT | 51.738/53.200 (`97,25%`) |
+| Slice register | 30.546/106.400 (`28,71%`) |
+| BRAM tile | 23,5/140 (`16,79%`) |
+| DSP | 4/220 (`1,82%`) |
+| Failed/unrouted net | 0 |
+| DRC error | 0 |
+
+165 warning DRC đã phân loại: 4 `DPOP-2` do DSP NTT chưa pipeline MREG; 32
+`LUTLP-2` là vòng RO có chủ ý; 128 `PDCN-1569` là input LUT RO không dùng; một
+`ZPS7-1` vì thiết kế pure-PL không instantiate PS7.
+
+## Test phần cứng
+
+Bitstream được nạp volatile, sau đó INFO, enroll và reconstruct đều PASS. Ba run
+stress độc lập:
+
+| Run | Pass/Fail | Latency | Throughput |
+|---|---:|---:|---:|
+| 100 | 100/0 | 28,527 ms | 35,054 giao dịch/s |
+| 1.000 | 1.000/0 | 28,458 ms | 35,139 giao dịch/s |
+| 10.000 | 10.000/0 | 28,914 ms | 34,585 giao dịch/s |
+
+Run 10.000 kéo dài 289,143 s và không có timeout, protocol error hay key mismatch.
+
+## Artifact
 
 ```text
-e85e3f2bd0206485aa636b56b9256aae9a38255ab29179f6fb20e37d6b4abdfb  Kyber_System_Top.bit
-9f7555fb515593f5c6a0d3b80283b9f81f7acd756cc35118c99b6dcaea3f45bf  firmware/firmware.hex
+c78724fd9007d21791caf654b8fe8f08a44653bfa028e6a15af80d7425f04d89  Kyber_System_Top.bit
+d8774e78d37c8fbc34d799426ce7a0150715569217bb921df3c0c1519348ec8e  firmware/firmware.hex
 ```
 
-## Thay đổi độ tin cậy của test
+## Phạm vi tiêu chuẩn
 
-- KDF mismatch/timeout nay dùng `$fatal(1, ...)`, tránh CI báo thành công giả.
-- Fuzzy-extractor failure/timeout nay dùng `$fatal(1, ...)`.
-- Bài Kyber được ghi đúng là functional loopback, không còn nhãn “Full KAT”.
-- Standalone checker bỏ qua build/cache/log artifact đã được `.gitignore`, nhưng
-  vẫn quét toàn bộ source và tài liệu được phân phối.
-
-## Phạm vi FIPS
-
-Kết quả SHAKE256 chỉ bao phủ một vector cố định của interface KDF 192-bit sang
-512-bit. Nó chứng minh đường dữ liệu này khớp reference FIPS 202, nhưng chưa phải
-bộ kiểm tra đầy đủ SHA3/SHAKE với multi-block và các biên rate.
-
-Bài Kyber chỉ kiểm tra hai endpoint RTL cũ tạo cùng shared key. Nó không so sánh
-encapsulation key, decapsulation key, ciphertext và shared secret với vector
-ML-KEM chính thức; do đó chưa chứng minh tương thích FIPS 203 ML-KEM-512 và
-không phải chứng nhận FIPS 140-3.
-
-Raw mismatch xuất hiện trong AXI stress vẫn là lỗi chức năng đã biết của core
-Kyber cũ. Retry làm 32 giao dịch logic hoàn thành nhưng không biến raw core thành
-một implementation ML-KEM đã xác minh.
+KAT hiện tại chứng minh đường KDF SHAKE256 cụ thể khớp FIPS 202 reference. Chưa
+có bộ SHA3/SHAKE multi-block đầy đủ. Kyber test không đối chiếu key/ciphertext/
+shared secret với vector ML-KEM chính thức, nên không chứng minh FIPS 203 hoặc
+FIPS 140-3.
 
 ## Kết luận
 
-Snapshot đạt regression kỹ thuật nội bộ và kiểm tra artifact RC2. Trạng thái phù
-hợp là **ứng viên nghiên cứu/đánh giá nội bộ**. Public release vẫn bị chặn bởi
-quyền phân phối Kyber RTL/top-level license; production security release còn bị
-chặn bởi raw Kyber mismatch, thiếu FIPS 203 KAT, qualification PUF và đánh giá
-side-channel/fault.
+RC3 đạt cổng kỹ thuật FPGA nội bộ và đủ bằng chứng để bắt đầu nhánh ASIC backend
+song song với việc giữ FPGA làm golden reference. Waveform trình bày và video
+demo được hoãn. Public release vẫn bị chặn bởi license; production release bị
+chặn bởi ML-KEM KAT, qualification PUF nhiều điều kiện và security review.

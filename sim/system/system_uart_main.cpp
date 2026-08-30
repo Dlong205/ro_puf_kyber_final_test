@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
         std::printf("[SYSTEM] Firmware banner received\n");
 
         uart_send(dut, 0x00);
-        const std::array<uint8_t, 5> info{{'K', 'P', 1, 1, 0x0e}};
+        const std::array<uint8_t, 5> info{{'K', 'P', 1, 2, 0x06}};
         for (uint8_t byte : info) expect_byte(dut, byte, "firmware info");
         std::printf("[SYSTEM] Release protocol/capabilities passed\n");
 

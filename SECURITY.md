@@ -1,27 +1,34 @@
 # Trạng thái bảo mật
 
-Ứng viên phát hành này dành cho nghiên cứu FPGA và đánh giá kỹ thuật. Nó không
-phải module mật mã cho production và không tuyên bố đạt FIPS, Common Criteria
-hoặc khả năng chống side-channel.
+`0.1.0-rc3` là ứng viên nghiên cứu/đánh giá FPGA. Thiết kế không tuyên bố đạt
+FIPS 203, FIPS 140-3, Common Criteria, constant-time hay khả năng chống
+side-channel/fault-injection.
 
-Firmware mặc định được build với `RELEASE_BUILD=1`. Nó không xuất Kyber shared
-secret qua UART, chỉ báo trạng thái match/fail và yêu cầu zeroize seed Kyber,
-sticky status và trạng thái core sau mỗi thao tác. Bản chẩn đoán
-`RELEASE_BUILD=0` cố ý xuất khóa và không được phân phối như bitstream release.
+Firmware mặc định dùng `RELEASE_BUILD=1`: chỉ trả match/fail, không xuất shared
+secret qua UART, và zeroize seed/status/key Kyber sau mỗi giao dịch. Bản chẩn
+đoán `RELEASE_BUILD=0` cố ý có thể xuất khóa và không được dùng làm artifact
+release.
 
-Seed message theo session được diversify bằng output KDF từ PUF, counter cục bộ
-theo lần boot và cycle counter của RISC-V. Cơ chế này giảm lặp input trong cùng
-một lần boot nhưng không phải TRNG đã được đặc trưng hoặc DRBG được phê duyệt.
-Production cần nguồn entropy đã xác nhận và thiết kế sinh số ngẫu nhiên đã review.
+Mỗi lần boot, message seed được diversify từ KDF output của PUF, session counter
+và cycle counter RISC-V. Cơ chế này tránh lặp input đơn giản trong một boot,
+nhưng không phải TRNG đã đặc trưng hay DRBG được phê duyệt. Sản phẩm thực tế cần
+nguồn entropy và thiết kế sinh số ngẫu nhiên được xác minh độc lập.
 
-Kyber core cũ được nhập có raw key mismatch phụ thuộc vector và có thể bị treo.
-Giao thức 1.1 dùng wrapper reset/retry tối đa 16 lần để tăng availability ở mức
-logic. Cách xử lý này không sửa raw core, không chứng minh FIPS 203 ML-KEM-512
-và không thay thế đánh giá mật mã độc lập.
+RC3 đã bỏ hoàn toàn retry Kyber. Các lỗi FIFO starvation/underfill của NTT/SHAKE
+được sửa ở RTL và được kiểm tra bằng 1.024 giao dịch raw single-attempt trong mô
+phỏng cùng 10.000 giao dịch end-to-end trên board, đều không lỗi. Kết quả này làm
+tăng độ tin cậy chức năng nhưng không chứng minh mọi input, không phải formal
+verification và không biến core Kyber cũ thành FIPS 203 ML-KEM-512.
 
 Helper data RO-PUF là dữ liệu công khai nhưng gắn với board/lần enroll. Không
-đóng gói file cục bộ như `helper.bin` hoặc `hardware_helper.bin` vào release chung.
+commit các file như `helper.bin`, `hardware_helper.bin` hoặc bản helper dùng khi
+bring-up.
 
-Các khoảng trống trước production gồm: đặc trưng PUF trên nhiều board; test góc
-điện áp, nhiệt độ và power-cycle; phân tích side-channel/fault-injection;
-constant-time; KAT thuật toán chính thức và review mật mã độc lập.
+Các khoảng trống trước production:
+
+1. Đặc trưng PUF trên nhiều board và nhiều power-cycle ở các góc điện áp/nhiệt độ.
+2. Đo entropy, reliability, intra/inter-device Hamming distance và aging.
+3. Đối chiếu ML-KEM-512 KAT chính thức hoặc thay core bằng implementation được review.
+4. Phân tích constant-time, side-channel, fault-injection và vòng đời secret.
+5. Formal/property verification cho FIFO, FSM và các điều kiện liveness.
+6. Giải quyết quyền phân phối và top-level license trước public release.

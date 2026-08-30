@@ -1,181 +1,145 @@
 # RO-PUF + Fuzzy Extractor + Kyber-512 cũ trên Zynq-7020
 
-> **Ứng viên phát hành kỹ thuật nội bộ `0.1.0-rc2`.** Chỉ sử dụng repo này
-> cho nghiên cứu, đánh giá và cộng tác trong nhóm riêng tư. Việc phát hành công
-> khai đang bị chặn cho đến khi có quyền phân phối lại Kyber RTL và giấy phép
-> cấp cao nhất tương thích. Đây không phải triển khai FIPS 203 ML-KEM.
+> **Ứng viên phát hành kỹ thuật nội bộ `0.1.0-rc3`.** Repo dành cho nghiên
+> cứu, đánh giá và cộng tác trong nhóm riêng tư. Phát hành công khai đang bị
+> chặn bởi quyền phân phối Kyber RTL và top-level license. Đây không phải triển
+> khai FIPS 203 ML-KEM và không phải module mật mã production.
 
-Repo này là một bản triển khai độc lập, chỉ dùng PL, gồm chuỗi xử lý:
+Thiết kế pure RTL, chỉ dùng PL, thực hiện chuỗi:
 
 ```text
 RO-PUF -> BCH fuzzy extractor -> SHAKE256 KDF -> Kyber-512 cũ
-       -> firmware PicoRV32 -> giao thức UART với máy chủ
+       -> firmware PicoRV32 -> UART host
 ```
 
-Thiết kế không cần Xilinx IP sinh tự động (`.xci`) và không dùng Zynq PS. Source,
-testbench, firmware release, report đã xác nhận và bitstream RC2 được lưu đầy đủ
-để thành viên khác có thể đọc, mô phỏng, build lại và thử nghiệm mà không phụ
-thuộc workspace phát triển cũ.
+Không có Xilinx IP sinh tự động (`.xci`) và không dùng Zynq PS. Source RTL,
+testbench, firmware, constraint, report Vivado, bitstream và host tool đều nằm
+trong repo độc lập này.
 
-## Trạng thái RC2
+## Trạng thái RC3
 
-| Hạng mục | Trạng thái |
+| Hạng mục | Kết quả |
 |---|---|
-| FPGA đích | `XC7Z020-2CLG400I`, part Vivado `xc7z020clg400-2` |
-| Clock PL | 50 MHz tại chân N18 |
-| UART | 115200 baud, RX W8, TX W9 |
-| Regression RTL/test | PASS |
-| KAT tham chiếu SHAKE256 | PASS một vector cố định, khớp từng bit |
-| Timing sau route | PASS, WNS +4.108 ns, WHS +0.048 ns |
-| DRC sau route | PASS, 0 lỗi |
-| Stress trên board | PASS, 1.000/1.000 và 10.000/10.000 giao dịch logic |
-| Phân phối công khai | **BỊ CHẶN**, xem `NOTICE.md` |
-| Phát hành sản phẩm/bảo mật | **CHƯA SẴN SÀNG**, xem `docs/RELEASE_READINESS.md` |
+| FPGA | `XC7Z020-2CLG400I`, Vivado part `xc7z020clg400-2` |
+| Clock PL | 50 MHz tại N18 |
+| UART | 115200 8N1, RX W8, TX W9 |
+| Regression RTL/full-system | PASS |
+| SHAKE256 KDF KAT | PASS, khớp từng bit với Python `hashlib.shake_256` |
+| Kyber raw single-attempt gate | PASS 1.024/1.024, mismatch 0, retry 0 |
+| Full-system simulation | PASS, 952.496 cycle |
+| Timing sau route | PASS, WNS `+4,371 ns`, WHS `+0,056 ns`, TNS/THS `0` |
+| Route/DRC | 0 net chưa route, 0 lỗi DRC |
+| Stress phần cứng | PASS 100/100, 1.000/1.000 và 10.000/10.000 |
+| Hiệu năng board | `28,914 ms/giao dịch`, `34,585 giao dịch/s` ở run 10.000 |
+| Public release | **BỊ CHẶN**, xem `NOTICE.md` |
 
-Thiết kế gần đầy chip: 51.774/53.200 Slice LUT (97,32%), 23,5 BRAM tile và
-4 DSP. Mọi thay đổi ảnh hưởng placement, fanout hoặc timing đều có rủi ro cao và
-phải chạy implementation lại trước khi dùng bitstream mới. RC2 chỉ được xác nhận
-ở 50 MHz; report hiện tại cho thấy không thể chỉ đổi constraint để chạy 100 MHz.
+Implementation dùng 51.738/53.200 Slice LUT (`97,25%`), 30.546 register,
+23,5 BRAM tile và 4 DSP. Thiết kế gần đầy chip; mọi thay đổi RTL phải chạy lại
+implementation. RC3 chỉ được xác nhận ở 50 MHz. Margin hiện tại không đủ để chỉ
+đổi constraint lên 100 MHz.
 
-## Cấu trúc repo
+## Cấu trúc
 
-- `rtl/`: toàn bộ Verilog/SystemVerilog tổng hợp được, chia theo khối chức năng
-- `sim/`: test RO-PUF, fuzzy extractor, KDF, Kyber/AXI và system/UART
-- `firmware/`: source PicoRV32 và ảnh release `firmware.hex`
-- `constraints/`: chân board, clock và constraint implementation
-- `scripts/`: tạo project Vivado, build, nạp board, kiểm tra và đóng gói
-- `host/`: công cụ UART enroll/reconstruct/stress
-- `reports/`: report synthesis/implementation RC2 đã xác nhận
-- `docs/`: giao thức, nguồn gốc, bring-up board, bằng chứng test và đánh giá release
-- `Kyber_System_Top.bit`: bitstream RC2 đã xác nhận để nạp volatile
-- `ARTIFACTS.sha256`: checksum của các artifact nhị phân được commit
+- `rtl/`: RTL tổng hợp được cho SoC, PUF, BCH, KDF, Kyber và Keccak
+- `sim/`: testbench RO-PUF, BCH, KDF, Kyber/AXI/codec và full-system UART
+- `firmware/`: firmware PicoRV32 release và ảnh `firmware.hex`
+- `constraints/`: pin/clock/placement cho board XC7Z020
+- `scripts/`: tạo project, build, program, audit và đóng gói
+- `host/`: host UART enroll/reconstruct/stress
+- `reports/`: report synthesis và post-route RC3
+- `docs/`: giao thức, nguồn gốc, bring-up, xác minh và mức sẵn sàng
+- `Kyber_System_Top.bit`: bitstream RC3 nạp volatile
+- `ARTIFACTS.sha256`: checksum bitstream và firmware
 
-Sản phẩm build, object mô phỏng, helper data PUF cục bộ và cache Python được loại
-bỏ bằng `.gitignore`.
+Build/cache, waveform, helper data PUF gắn với board và dữ liệu local khác được
+loại bằng `.gitignore`.
 
-## Chuẩn bị môi trường
+## Mô phỏng và kiểm tra
 
-Các công cụ khuyến nghị:
-
-- GNU Make, Bash, Python 3 và trình biên dịch C++
-- Verilator để chạy mô phỏng
-- `riscv64-unknown-elf-gcc` và `riscv64-unknown-elf-objcopy` để build firmware
-- Xilinx Vivado 2020.1 để synthesis, implementation hoặc nạp FPGA
-
-Sau khi clone, kiểm tra snapshot và checksum:
+Yêu cầu khuyến nghị: GNU Make, Bash, Python 3, Verilator, C++ compiler và
+RISC-V GCC toolchain. Chạy tuần tự để tránh dùng quá nhiều RAM:
 
 ```sh
 make check
 sha256sum -c ARTIFACTS.sha256
-```
-
-Chạy toàn bộ regression nhẹ, tuần tự:
-
-```sh
 make -j1 regression
+make -j1 kyber-long
 ```
 
-Hoặc chạy từng giai đoạn:
+`kyber-long` là cổng bắt buộc của internal release: 1.024 message seed khác
+nhau, mỗi giao dịch đúng một attempt, không retry. Có thể chạy từng khối bằng
+`make ro-puf`, `make fuzzy`, `make kdf`, `make kyber`, `make axi`,
+`make kyber-codec` và `make system`.
 
-```sh
-make ro-puf
-make fuzzy
-make kdf
-make kyber
-make axi
-make system
-```
+Firmware mặc định dùng `RELEASE_BUILD=1`: không truyền shared secret qua UART.
+Bản `RELEASE_BUILD=0` chỉ dùng chẩn đoán và không được commit/phân phối như
+artifact release.
 
-`make system` sẽ build firmware release khi cần. Firmware mặc định chỉ báo kết
-quả khớp khóa server/client và không truyền shared secret qua UART. Có thể tạo
-bản chẩn đoán bằng `make -C firmware clean all RELEASE_BUILD=0`, nhưng tuyệt đối
-không commit hoặc phân phối ảnh chẩn đoán đó như artifact release.
+## Build Vivado
 
-Kết quả regression gần nhất, môi trường chạy, checksum và giới hạn phạm vi FIPS
-được ghi tại `docs/VERIFICATION_REPORT_2026-08-30.md`.
-
-## Build lại bằng Vivado
-
-Tạo project mới từ source trong repo, không nhập XPR cũ:
+Vivado 2020.1:
 
 ```sh
 make vivado-project
-make synth
-make impl
+make -j1 impl
 ```
 
-Script cố ý chỉ dùng một worker Vivado để hạn chế RAM. Nếu Vivado không nằm
-trong `PATH`, truyền đường dẫn trực tiếp, ví dụ:
+Nếu Vivado không nằm trong `PATH`:
 
 ```sh
-make impl VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
+make -j1 impl VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
 ```
 
-Bitstream build lại nằm tại:
+Script giới hạn một worker và tối đa hai thread. Bitstream mới nằm ở
+`build/vivado/kyber_ro_puf_zynq7020.runs/impl_1/Kyber_System_Top.bit`.
+Không thay artifact gốc nếu timing/DRC chưa PASS.
 
-```text
-build/vivado/kyber_ro_puf_zynq7020.runs/impl_1/Kyber_System_Top.bit
-```
+## Nạp và kiểm tra board
 
-Phải so sánh report và checksum với bằng chứng RC2 trước khi thay bitstream ở
-thư mục gốc. `make release-check` ưu tiên kiểm tra bitstream vừa build nếu có;
-nếu không, script kiểm tra `Kyber_System_Top.bit` đã commit.
-
-## Nạp và thử board
-
-Kết nối đúng một thiết bị XC7Z020 qua JTAG rồi chạy:
+Kết nối đúng một XC7Z020 qua JTAG:
 
 ```sh
-make program
+make program VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
+python3 host/uart_host.py --port /dev/ttyUSB1 info
+python3 host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin enroll
+python3 host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin reconstruct
+python3 host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin stress --count 10000
 ```
 
-Script chỉ nạp cấu hình FPGA volatile, không ghi QSPI flash. Nó ưu tiên bitstream
-vừa implementation và dùng bitstream RC2 ở thư mục gốc nếu chưa build lại.
+`make program` chỉ nạp PL volatile, không ghi QSPI. Helper data là dữ liệu công
+khai nhưng gắn với từng board/lần enroll; giữ nó ngoài repo. Xem
+`docs/HARDWARE_BRINGUP.md` và `docs/HARDWARE_TEST_REPORT_RC3_2026-08-30.md`.
 
-Kiểm tra giao thức UART và chạy stress ngắn:
+## Phạm vi FIPS và giới hạn
 
-```sh
-python3 host/uart_host.py --port /dev/ttyUSB0 info
-python3 host/uart_host.py --port /dev/ttyUSB0 --helper helper.bin enroll
-python3 host/uart_host.py --port /dev/ttyUSB0 --helper helper.bin reconstruct
-python3 host/uart_host.py --port /dev/ttyUSB0 --helper helper.bin stress --count 100
-```
+KDF SHAKE256 đã có một known-answer test khớp FIPS 202 reference. Đây chưa phải
+bộ vector đầy đủ cho SHA3/SHAKE multi-block. Kyber test chỉ kiểm tra hai endpoint
+RTL cũ tạo cùng shared key; chưa đối chiếu key/ciphertext/shared secret với vector
+ML-KEM chính thức. Vì vậy không gọi thiết kế là FIPS 203 ML-KEM-512.
 
-`helper.bin` là dữ liệu công khai nhưng gắn với từng board/lần enroll, phải giữ
-cục bộ và đã được Git bỏ qua. Xem `docs/HARDWARE_BRINGUP.md` để biết cách đấu dây,
-response mong đợi và quy trình stress đầy đủ.
+Các lỗi underfill/starvation Kyber được tìm thấy trong stress đã được sửa bằng
+handshake FIFO và điều kiện kết thúc dựa trên số coefficient thực nhận. Gate
+1.024 vector và board 10.000 vòng hiện không còn mismatch/timeout, nhưng không
+thay thế formal verification, KAT ML-KEM hoặc review mật mã độc lập.
 
-## Giới hạn quan trọng
+RO-PUF còn thiếu qualification nhiều board, cold/warm power-cycle, điện áp,
+nhiệt độ, aging, entropy/uniqueness và side-channel/fault-injection. Xem
+`SECURITY.md`, `docs/RELEASE_READINESS.md`, `NOTICE.md` và
+`docs/PROVENANCE.md`.
 
-Kyber core cũ được nhập có raw key mismatch phụ thuộc vector và đôi khi bị treo.
-Giao thức 1.1 zeroize rồi thử lại với input `m` mới, tối đa 16 lần. Kết quả
-10.000/10.000 chỉ xác nhận wrapper availability ở mức giao dịch logic, không
-chứng minh raw core luôn đúng.
+## Git nội bộ
 
-RO-PUF cũng chưa được qualification đầy đủ: còn thiếu test nhiều board, nhiều
-lần ngắt/cấp nguồn vật lý, góc điện áp/nhiệt độ, đánh giá entropy và phân tích
-side-channel/fault. Xem `docs/RELEASE_READINESS.md`, `SECURITY.md`, `NOTICE.md`
-và `docs/PROVENANCE.md` trước khi đổi nhãn hoặc phạm vi phát hành.
-
-## Quy trình Git cho nhóm
-
-Repo này đã tồn tại thì **không chạy `git init` lại**. Sau khi thay đổi và kiểm
-tra, dùng:
-
-```sh
-git status
-git diff --check
-git add .
-git commit -m "Cập nhật RO-PUF Kyber Zynq-7020 RC2"
-git push origin main
-```
-
-Trước mỗi release phần cứng, chạy regression, build lại bằng Vivado, xem
-`git diff`, cập nhật report/checksum/bằng chứng test rồi chạy:
+Không chạy `git init` lại. Trước khi commit:
 
 ```sh
 ./scripts/release_check.sh --internal
+sha256sum -c ARTIFACTS.sha256
+git diff --check
+git status
+git add .
+git commit -m "Hoàn thiện FPGA RC3 cho RO-PUF và Kyber-512"
+git push origin main
 ```
 
-Chỉ đẩy RC2 lên repo **private/internal** cho đến khi các cổng license trong
-`NOTICE.md` được giải quyết.
+Chỉ push RC3 vào repo private/internal cho đến khi hoàn thành các cổng license
+trong `NOTICE.md`.

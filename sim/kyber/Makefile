@@ -18,6 +18,8 @@ TOP_MODULE = kat_wrapper
 SIM_EXE = V$(TOP_MODULE)
 AXI_TOP = axi_wrapper_tb
 AXI_EXE = V$(AXI_TOP)
+CODEC_TOP = codec_roundtrip_tb
+CODEC_EXE = V$(CODEC_TOP)
 
 COMMON_SRCS = ../../rtl/common/generic_blk_mem_wrapper.sv \
               ../../rtl/common/generic_c_shift_ram_wrapper.sv \
@@ -76,8 +78,24 @@ axi: obj_dir_axi/$(AXI_EXE)
 	@echo "=== Running Kyber-512 AXI register/handshake verification ==="
 	@obj_dir_axi/$(AXI_EXE)
 
+strict-raw: obj_dir_axi/$(AXI_EXE)
+	@echo "=== Running strict single-attempt Kyber raw gate (no retry) ==="
+	@obj_dir_axi/$(AXI_EXE) +STRICT_RAW
+
+strict-raw-long: obj_dir_axi/$(AXI_EXE)
+	@echo "=== Running extended 1024-vector strict raw Kyber gate ==="
+	@obj_dir_axi/$(AXI_EXE) +STRICT_RAW +STRESS_COUNT=1024
+
+obj_dir_codec/$(CODEC_EXE): ../../rtl/common/generic_fifo.sv ../../rtl/kyber/ref/fifo_wrappers.v ../../rtl/kyber/ref/encode_Client.v ../../rtl/kyber/ref/decode_Server.v tb_codec_main.cpp codec_roundtrip_tb.sv
+	$(VERILATOR) $(VERILATOR_FLAGS) --Mdir obj_dir_codec --top-module $(CODEC_TOP) ../../rtl/common/generic_fifo.sv ../../rtl/kyber/ref/fifo_wrappers.v ../../rtl/kyber/ref/encode_Client.v ../../rtl/kyber/ref/decode_Server.v tb_codec_main.cpp codec_roundtrip_tb.sv
+	$(MAKE) -C obj_dir_codec -f V$(CODEC_TOP).mk V$(CODEC_TOP)
+
+codec: obj_dir_codec/$(CODEC_EXE)
+	@echo "=== Running Kyber ciphertext u codec round-trip ==="
+	@obj_dir_codec/$(CODEC_EXE)
+
 clean:
-	rm -rf obj_dir obj_dir_axi
+	rm -rf obj_dir obj_dir_axi obj_dir_codec
 	rm -f waveform.vcd
 
-.PHONY: kat axi clean
+.PHONY: kat axi strict-raw strict-raw-long codec clean

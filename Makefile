@@ -1,7 +1,7 @@
 VIVADO ?= vivado
 XPR := build/vivado/kyber_ro_puf_zynq7020.xpr
 
-.PHONY: check firmware ro-puf fuzzy kdf kyber axi system regression vivado-project synth impl program release-check package-internal clean
+.PHONY: check firmware ro-puf fuzzy kdf kyber axi kyber-strict kyber-long kyber-codec system regression vivado-project synth impl program release-check package-internal clean
 
 check:
 	@./scripts/check_standalone.sh
@@ -24,10 +24,19 @@ kyber:
 axi:
 	$(MAKE) -C sim/kyber axi
 
+kyber-strict:
+	$(MAKE) -C sim/kyber strict-raw
+
+kyber-long:
+	$(MAKE) -C sim/kyber strict-raw-long
+
+kyber-codec:
+	$(MAKE) -C sim/kyber codec
+
 system: firmware
 	$(MAKE) -C sim/system sim
 
-regression: ro-puf fuzzy kdf kyber axi system check
+regression: ro-puf fuzzy kdf kyber axi kyber-strict kyber-codec system check
 
 vivado-project:
 	$(VIVADO) -mode batch -nolog -nojournal -source scripts/create_project.tcl

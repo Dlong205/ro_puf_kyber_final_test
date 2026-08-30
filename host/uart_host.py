@@ -15,7 +15,7 @@ import os
 
 BAUD = 115200
 TIMEOUT = 10  # seconds
-KYBER_RESPONSE_TIMEOUT = 45  # Covers the firmware's bounded retry window.
+KYBER_RESPONSE_TIMEOUT = 15  # Covers one bounded Kyber hardware attempt.
 
 CMD_INFO   = 0x00
 CMD_ENROLL = 0x01
@@ -101,7 +101,7 @@ def do_info(ser):
     print(f"    Shared-secret export: {'enabled (diagnostic)' if capabilities & 1 else 'disabled (release)'}")
     print(f"    Session diversification: {'yes' if capabilities & 2 else 'no'}")
     print(f"    Kyber zeroize command: {'yes' if capabilities & 4 else 'no'}")
-    print(f"    Bounded Kyber retry: {'yes' if capabilities & 8 else 'no'}")
+    print(f"    Legacy Kyber retry flag: {'yes' if capabilities & 8 else 'no'}")
     return major == 1
 
 
@@ -190,9 +190,7 @@ def do_reconstruct(ser, helper_file, helper_data=None, verbose=True):
     # STATUS_FAIL immediately after C (FE failure) or F (Kyber failure).
     progress = ""
     for marker in "ABCDEFG":
-        # A raw Kyber attempt may be reset and retried after marker F. Keep
-        # normal UART operations responsive while allowing the bounded retry
-        # window only for the final Kyber marker.
+        # The final Kyber stage has its own bounded hardware watchdog.
         previous_timeout = ser.timeout
         if marker == "G":
             ser.timeout = KYBER_RESPONSE_TIMEOUT
@@ -252,6 +250,10 @@ def do_reconstruct(ser, helper_file, helper_data=None, verbose=True):
 
 def do_stress(ser, count, helper_file):
     """Run enroll once, then reconstruct N times."""
+    if count <= 0:
+        print("[-] Stress count must be greater than zero")
+        return False
+
     print(f"[*] Stress test: {count} iterations")
     
     # First do enroll
@@ -264,6 +266,7 @@ def do_stress(ser, count, helper_file):
     fail_count = 0
     reference_key = None
     aborted = False
+    stress_started = time.perf_counter()
     
     for i in range(count):
         key = do_reconstruct(ser, helper_file, helper, verbose=False)
@@ -289,6 +292,7 @@ def do_stress(ser, count, helper_file):
         if aborted:
             break
     
+    elapsed = time.perf_counter() - stress_started
     print(f"\n=== STRESS TEST RESULTS ===")
     attempted = pass_count + fail_count
     print(f"  Requested: {count}")
@@ -296,6 +300,9 @@ def do_stress(ser, count, helper_file):
     print(f"  Pass:   {pass_count}")
     print(f"  Fail:   {fail_count}")
     print(f"  Rate:   {pass_count/attempted*100:.2f}%")
+    print(f"  Reconstruct time: {elapsed:.3f} s")
+    print(f"  Average latency:  {elapsed/attempted*1000:.3f} ms/transaction")
+    print(f"  Throughput:       {attempted/elapsed:.3f} transaction/s")
     
     if fail_count == 0:
         print("  *** ALL PASSED ***")

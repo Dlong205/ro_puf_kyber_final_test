@@ -216,7 +216,10 @@ always @* case(state)
 	6'h 2c: next_state = NTT_finish ? state + 1'h 1 : state;
 	6'h 2d: next_state = 6'h 5;
 	6'h 2e: next_state = squeeze_ctr == 4'h f ? 6'h 3 : state;
-	6'h 2f: next_state = squeeze_ctr == 6'h 1f ? state + 1'h 1 : state;
+	// Drain the final CCA matrix XOF until rejection sampling has emitted all
+	// 128 packed words.  A fixed 32-cycle tail can leave the NTT permanently
+	// waiting for the last data-dependent coefficients.
+	6'h 2f: next_state = fifo_GENA_ctr[7] ? state + 1'h 1 : state;
 	6'h 30: next_state = NTT_finish ? equal ? 6'h 7 : 6'h 9 : state;
 	6'h 31: next_state = squeeze_ctr == 3'h 7 ? 6'h 0 : state;
 	6'h 3e: next_state = rot_ctr == 3'h 7 ? state + 1'h 1 : state;
@@ -484,7 +487,7 @@ always @(*) case(state)
 	// sampling matrix data, so it must explicitly continue the XOF stream.
 	6'h 14, 6'h 18, 6'h 21 : extend = 1'h 1;
 	6'h 2b : extend = 1'h 1;
-	6'h 2e : extend = 1'h 1;
+	6'h 2e, 6'h 2f : extend = 1'h 1;
 	6'h 31 : extend = 1'h 1;
 	default : extend = 1'h 0;
 endcase
@@ -754,8 +757,8 @@ hash_core_Server hash(
 				  (state == 6'h30 && next_state != state)),
 .squeeze_init(squeeze_init_early),
 .extend(extend),
-.patt_bit(patt_bit),
-.eta3_bit(eta3_bit),
+.patt_bit((state == 6'h 2f) ? 1'b0 : patt_bit),
+.eta3_bit((state == 6'h 2f) ? 1'b0 : eta3_bit),
 .absorb_ctr_r1(absorb_ctr_r1),
 .keccak_ctr(keccak_ctr),
 .squeeze_ctr(squeeze_ctr),

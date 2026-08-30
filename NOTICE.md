@@ -1,6 +1,6 @@
 # Thông báo nguồn gốc và quyền phân phối
 
-Phiên bản ứng viên phát hành: `0.1.0-rc2`.
+Phiên bản ứng viên phát hành: `0.1.0-rc3`.
 
 ## Thành phần đã xác định điều khoản
 
@@ -14,17 +14,18 @@ Phiên bản ứng viên phát hành: `0.1.0-rc2`.
 ## Nguồn gốc Kyber và Keccak
 
 Chủ dự án xác nhận RTL Keccak/SHA3 dùng trong luồng Kyber là code thuộc dự án và
-do chủ dự án viết. Phần Kyber cũ không thuộc Keccak được clone từ
-`https://github.com/tuandat081125/Kyber.git`, commit nguồn cục bộ
-`0bb04eee36396c3e9b93cf83c835ac07f1d05338`; tác giả repo là đồng nghiệp của
-dự án và cho biết thiết kế được phát triển với sự tham khảo CRYSTALS-Kyber.
+do chủ dự án viết. Phần Kyber cũ không thuộc Keccak được clone qua
+`https://github.com/tuandat081125/Kyber.git`, commit
+`0bb04eee36396c3e9b93cf83c835ac07f1d05338`. Đối chiếu source xác định nền RTL
+là `https://github.com/xingyf14/CRYSTALS-KYBER`, commit
+`70aaad3bbf8265e94f68241683b000bf9d4894bb`.
 
 Implementation CRYSTALS-Kyber chính thức tại `https://github.com/pq-crystals/kyber`
 được cung cấp theo CC0 hoặc Apache-2.0. License đó không tự động chứng minh quyền
-đối với cách thể hiện Verilog độc lập trong repo trung gian. Repo Tuấn Đạt không
-có license tại lần kiểm tra lại ngày 2026-08-30. Vì vậy việc phân phối công khai
-source và bitstream vẫn bị chặn cho đến khi tác giả RTL thêm license hoặc cung
-cấp quyền rõ ràng và lưu tại `LICENSES/KYBER-PERMISSION.txt`.
+đối với cách thể hiện Verilog trong hai repo RTL. Repo Xing/Li chỉ nêu mục đích
+học thuật; repo trung gian không có license rõ ràng tại lần kiểm tra ngày
+2026-08-30. Vì vậy phân phối công khai source/bitstream vẫn bị chặn cho đến khi
+các tác giả RTL cung cấp quyền rõ ràng tại `LICENSES/KYBER-PERMISSION.txt`.
 
 Xem `docs/PROVENANCE.md` để biết ranh giới thành phần, nguồn và bằng chứng còn
 thiếu trước khi phát hành công khai.

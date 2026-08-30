@@ -1,5 +1,24 @@
 # Lịch sử thay đổi
 
+## 0.1.0-rc3 — 2026-08-30
+
+- Loại bỏ retry Kyber khỏi firmware/giao thức; protocol lên v1.2, capability
+  release `0x06`, mỗi giao dịch chỉ chạy đúng một attempt.
+- Sửa liveness NTT Client/Server: counter chỉ tiến khi FIFO có dữ liệu và state
+  kết thúc sau khi nhận đủ coefficient thay vì dựa vào cửa sổ cycle cố định.
+- Sửa cửa sổ SHAKE matrix generation ở Client state `0x18` và Server state
+  `0x2f`; giữ pattern ở matrix mode đến khi `fifo_GENA_ctr` đủ 128 word.
+- Bổ sung codec round-trip test, chẩn đoán starvation và cổng release raw
+  single-attempt 1.024 vector.
+- PASS toàn bộ regression, full-system 952.496 cycle, raw gate 1.024/1.024,
+  mismatch 0, recovered 0, max attempts 1.
+- Build lại XC7Z020 ở 50 MHz: WNS `+4,371 ns`, WHS `+0,056 ns`, 0 lỗi DRC,
+  51.738/53.200 LUT, 30.546 register, 23,5 BRAM tile và 4 DSP.
+- Nạp lại board và PASS 100/100, 1.000/1.000, 10.000/10.000 giao dịch;
+  run 10.000 đạt 28,914 ms/giao dịch và 34,585 giao dịch/s.
+- Bitstream RC3 SHA-256:
+  `c78724fd9007d21791caf654b8fe8f08a44653bfa028e6a15af80d7425f04d89`.
+
 ## 0.1.0-rc2 — 2026-08-30
 
 - Bổ sung capability `0x08` của giao thức 1.1 cho cơ chế Kyber retry nội bộ có giới hạn.

@@ -21,7 +21,7 @@
 #endif
 
 #define PROTOCOL_MAJOR 1
-#define PROTOCOL_MINOR 1
+#define PROTOCOL_MINOR 2
 
 #define CMD_INFO   0x00
 #define CMD_ENROLL 0x01
@@ -34,7 +34,6 @@
 #define CAP_KEY_EXPORT     (1u << 0)
 #define CAP_SESSION_DIVERSIFICATION (1u << 1)
 #define CAP_KYBER_ZEROIZE  (1u << 2)
-#define CAP_KYBER_RETRY    (1u << 3)
 
 #define ERR_UART_TIMEOUT  0x01
 #define ERR_PUF_TIMEOUT   0x02
@@ -53,7 +52,7 @@
 #define HW_TIMEOUT      20000000u
 #define KYBER_TIMEOUT    2000000u
 #define UART_TIMEOUT    50000000u
-#define KYBER_MAX_ATTEMPTS 16u
+#define KYBER_MAX_ATTEMPTS 1u
 
 static uint32_t session_counter;
 
@@ -90,9 +89,8 @@ static int wait_sys_status(uint32_t mask) {
 }
 
 static int wait_kyber_done(void) {
-    // A normal KEM finishes far below this bound. Keep a shorter Kyber-only
-    // watchdog so a rare stuck legacy-core input can be reset and retried
-    // without blocking the UART protocol for tens of seconds per attempt.
+    // A normal KEM finishes far below this bound.  A timeout is a hard
+    // transaction failure; release firmware never retries a different seed.
     for (uint32_t timeout = 0; timeout < KYBER_TIMEOUT; timeout++) {
         uint32_t status = KYBER_STATUS;
         if (status & KYBER_ST_CONFIG_ERROR)
@@ -137,8 +135,7 @@ static void send_failure(uint8_t code, int clear_kyber) {
 
 static void process_info(void) {
     uint8_t capabilities = CAP_SESSION_DIVERSIFICATION |
-                           CAP_KYBER_ZEROIZE |
-                           CAP_KYBER_RETRY;
+                           CAP_KYBER_ZEROIZE;
 #if !RELEASE_BUILD
     capabilities |= CAP_KEY_EXPORT;
 #endif
@@ -229,8 +226,8 @@ static void process_recon(void) {
     uart_putchar('E');
 
     // d and z are stable root-key-derived seeds. m is diversified for every
-    // transaction and retry using the secret KDF output, a monotonic in-boot
-    // counter and the cycle counter. This prevents same-boot KEM randomness
+    // transaction using the secret KDF output, a monotonic in-boot counter
+    // and the cycle counter. This prevents same-boot KEM randomness
     // reuse. It is not a substitute for a characterized TRNG in production.
     uint32_t session_mix = mix32(KDF_SEED(0) ^ read_cycle() ^ ++session_counter);
     uart_putchar('F');
@@ -262,9 +259,7 @@ static void process_recon(void) {
                 send_failure(ERR_KYBER_CONFIG, 1);
                 return;
             }
-            // Some seed combinations can stall the imported legacy core.
-            // Treat that raw attempt like a mismatch: reset both cores and
-            // try a freshly diversified m, within the same bounded budget.
+            // Do not mask a core failure by trying a different message seed.
             final_attempt_timed_out = 1;
             continue;
         }

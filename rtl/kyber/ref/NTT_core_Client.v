@@ -88,7 +88,12 @@ always @(*) case(state)
 				next_state = state + 1'h 1;
 			else				
 				next_state = 4'h 1;		
-	4'h 6 : next_state = ctr_k == 7'h 7f ? state + 1'h 1 : state;
+	// Hold both the counter and the state at the last coefficient until the
+	// rejection-sampling FIFO actually supplies that word.  Advancing the
+	// state while fifo0_empty leaves ctr_k at 127 and collapses the following
+	// 128-cycle accumulation phase to a single cycle.
+	4'h 6 : next_state = (ctr_k == 7'h 7f) & ~fifo0_empty ?
+				state + 1'h 1 : state;
 	4'h 7 : next_state = ctr_k == 7'h 7f ? state + 1'h 1 : state;
 	4'h 8 : next_state = ctr_col == k_1 ? state + 1'h 1 : 4'h 6;
 	4'h 9 : next_state = flag_j ? state + 1'h 1 : state;

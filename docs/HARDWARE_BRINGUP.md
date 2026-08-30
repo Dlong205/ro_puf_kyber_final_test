@@ -1,108 +1,91 @@
 # Hướng dẫn bring-up phần cứng XC7Z020
 
-Quy trình này chỉ nạp cấu hình PL volatile. Nó không sửa QSPI flash và không
-instantiate Xilinx IP sinh tự động.
+Quy trình chỉ nạp cấu hình PL volatile, không ghi QSPI và không dùng Xilinx IP
+sinh tự động.
 
-## Artifact hiện tại
+## Artifact RC3
 
 - Part: `xc7z020clg400-2`
-- Clock vào: 50 MHz tại `N18`
-- Bitstream build: `build/vivado/kyber_ro_puf_zynq7020.runs/impl_1/Kyber_System_Top.bit`
-- SHA-256: `e85e3f2bd0206485aa636b56b9256aae9a38255ab29179f6fb20e37d6b4abdfb`
-- Kích thước: 4.045.676 byte
-- Setup sau route: WNS `+4.108 ns`, TNS `0 ns`
-- Hold sau route: WHS `+0.048 ns`, THS `0 ns`
-- Tài nguyên LUT: 51.774/53.200 (`97,32%`)
+- Clock: 50 MHz tại N18
+- Bitstream: `Kyber_System_Top.bit`, 4.045.676 byte
+- SHA-256: `c78724fd9007d21791caf654b8fe8f08a44653bfa028e6a15af80d7425f04d89`
+- Timing: WNS `+4,371 ns`, WHS `+0,056 ns`, TNS/THS `0`
+- LUT: 51.738/53.200 (`97,25%`)
+- Protocol: 1.2, release capability `0x06`, không retry
 
 ## Đấu dây
 
-Dùng USB-to-UART 3,3 V và đấu chéo hai tín hiệu UART:
+Dùng USB-UART mức 3,3 V:
 
-| Tín hiệu board | Chân XC7Z020 | Header mở rộng | Nối với adapter |
+| Board | Chân FPGA | Header | Adapter |
 |---|---:|---:|---|
-| `UART_TXD` | W9 | J24 chân 13 | RX |
-| `UART_RXD` | W8 | J24 chân 11 | TX |
-| GND | GND board | chân GND đã ghi trong tài liệu | GND |
+| `UART_TXD` | W9 | J24-13 | RX |
+| `UART_RXD` | W8 | J24-11 | TX |
+| GND | GND | GND | GND |
 
-Không nối tín hiệu UART 5 V vào chân PL. JTAG và USB-UART là hai kết nối riêng;
-cần cả hai để chạy kiểm tra đầy đủ.
+Không nối UART 5 V vào PL. JTAG và USB-UART là hai kết nối riêng. LED1/K16 báo
+hoạt động UART TX; LED2/J16 báo giao dịch Kyber hoàn tất. Reset power-on kéo dài
+65.536 cycle; hai phím PL không reset thiết kế trong image này.
 
-Hai LED chỉ dùng chẩn đoán:
-
-- LED1/K16: sáng hoặc nhấp nháy khi UART TX hoạt động.
-- LED2/J16: được bật khi giao dịch Kyber hoàn thành.
-
-Reset hiện là power-on reset tự động kéo dài 65.536 cycle. Hai phím PL không reset
-thiết kế trong bản build này.
-
-## Nạp qua JTAG
-
-Cấp nguồn board, nối JTAG và xác nhận Vivado thấy đúng một XC7Z020. Từ thư mục
-gốc dự án, chạy:
+## Nạp JTAG
 
 ```sh
+sha256sum -c ARTIFACTS.sha256
 make program VIVADO=/media/donglong/tools/Xilinx/Vivado/2020.1/bin/vivado
 ```
 
-Kết quả thành công kết thúc bằng `PROGRAM_PASS`. Nạp lại là thao tác volatile an
-toàn; ảnh mất khi tắt nguồn board.
-
-Nếu Vivado thấy adapter Digilent nhưng báo `No devices detected on target`, cầu
-USB/JTAG đã xuất hiện nhưng FPGA không nằm trong scan chain. Kiểm tra nguồn board,
-đầu nối/hướng cáp JTAG và jumper JTAG/boot-mode, sau đó power-cycle rồi chạy lại
-`make program`. Trường hợp này từng xảy ra ngày 2026-08-30 trước khi test RC1.
+Thành công kết thúc bằng `PROGRAM_PASS`. Nếu JTAG thấy adapter nhưng không thấy
+device, kiểm tra nguồn, hướng cáp và jumper JTAG/boot-mode rồi power-cycle.
 
 ## Smoke test UART
 
-Cài PySerial nếu cần rồi xác định cổng adapter, thường là `/dev/ttyUSB0` hoặc
-`/dev/ttyACM0`. Cấu hình UART: 115200, 8 bit dữ liệu, không parity, một stop bit.
-
-Enroll và lưu 33 byte helper data công khai:
+UART 115200 8N1. Xác nhận firmware trước:
 
 ```sh
-python3 host/uart_host.py --port /dev/ttyUSB0 --helper helper.bin enroll
+python3 host/uart_host.py --port /dev/ttyUSB1 info
 ```
 
-Reconstruct đọc file đó, tái tạo PUF key, sinh seed SHAKE256, chạy loopback
-server/client Kyber-512 cũ và kiểm tra kết quả. Giao thức 1.1 tự động retry raw
-key mismatch hoặc watchdog stall bằng `m` mới, tối đa 16 attempt. Firmware release
-mặc định chỉ trả cờ thành công và không xuất shared secret:
+Response release mong đợi: protocol 1.2, capability `0x06`, shared-secret export
+tắt, session diversification và zeroize bật, retry flag tắt.
+
+Giữ helper bên ngoài repo:
 
 ```sh
-python3 host/uart_host.py --port /dev/ttyUSB0 --helper helper.bin reconstruct
+python3 host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin enroll
+python3 host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin reconstruct
 ```
 
-Firmware chỉ gửi `START` một lần sau reset FPGA nên mặc định host không bắt buộc
-đợi chuỗi này. Khi cần chẩn đoán startup, chạy lệnh trước lúc reset/nạp FPGA và
-thêm `--wait-start`.
+Reconstruct thành công phải đi qua marker `ABCDEFG` và trả success không kèm
+secret trong release mode. Kyber chỉ chạy một attempt; timeout/mismatch trở thành
+lỗi giao dịch nhìn thấy được, sau đó core được zeroize.
 
-## Lộ trình kiểm tra độ tin cậy
+## Stress
 
-Trước hết chạy stress ngắn trong cùng một lần cấp nguồn:
+Chạy theo nấc, không mở hai host cùng một cổng UART:
 
 ```sh
-python3 host/uart_host.py --port /dev/ttyUSB0 --helper helper.bin stress --count 100
+python3 -u host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin stress --count 100
+python3 -u host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin stress --count 1000
+python3 -u host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin stress --count 10000
 ```
 
-Sau đó test nhiều power-cycle vật lý và cuối cùng chạy dài:
-
-```sh
-python3 host/uart_host.py --port /dev/ttyUSB0 --helper helper.bin stress --count 10000
-```
-
-Không xem mô phỏng hoặc một lần reconstruct thành công là qualification RO-PUF.
-Phải ghi lỗi reconstruct qua cold/warm start và toàn dải điện áp/nhiệt độ dự kiến.
+RC3 tham chiếu PASS lần lượt 100/100, 1.000/1.000 và 10.000/10.000. Run dài có
+latency 28,914 ms/giao dịch, throughput 34,585 giao dịch/s. Khi host báo timeout,
+không tiếp tục gửi lệnh lên luồng mất đồng bộ; nạp lại bitstream rồi chạy INFO.
 
 ## Warning implementation đã biết
 
-- 32 warning `LUTLP-2` là các vòng ring oscillator có chủ ý và đã constraint.
-- 128 warning `PDCN-1569` đến từ routing LUT của RO được cố ý giữ lại và input
-  phương trình LUT logic không dùng.
-- Bốn warning `DPOP-2` cho biết bộ nhân NTT của Kyber không dùng pipeline MREG
-  trong DSP. Chúng không gây lỗi timing ở 50 MHz.
-- 28 warning `REQP-1839/1840` cũ về reset bất đồng bộ nối BRAM đã được xử lý bằng
-  reset đồng bộ cho thanh ghi sequencer/status SHA3/Kyber liên quan. Xác nhận số
-  lượng bằng 0 trong report DRC sau route của RC.
-- `ZPS7-1` là dự kiến với thiết kế chỉ PL không dùng PS7; clock PL ngoài đi qua N18
-  và cấu hình được nạp bằng JTAG.
-- LUT dùng 97,32%, nên dư địa routing/tính năng rất ít dù implementation hiện đạt timing.
+- 32 `LUTLP-2`: 32 vòng ring oscillator có chủ ý, đã constraint.
+- 128 `PDCN-1569`: input LUT không dùng trong cấu trúc RO được giữ.
+- 4 `DPOP-2`: DSP NTT không dùng MREG; timing 50 MHz vẫn đạt.
+- 1 `ZPS7-1`: dự kiến vì thiết kế pure-PL không dùng PS7.
+- `REQP-1839/1840`: 0 sau khi reset sequencer/status liên quan BRAM được đồng bộ.
+
+Thiết kế dùng 97,25% LUT nên không tăng clock hay thêm logic mà không chạy lại
+implementation/timing/DRC.
+
+## Qualification còn thiếu
+
+Một run dài không thay thế test cold/warm power-cycle, nhiều board, điện áp,
+nhiệt độ, aging, entropy/uniqueness hoặc side-channel/fault-injection. Ghi rõ
+điều kiện nguồn/nhiệt khi thực hiện các chiến dịch tiếp theo.

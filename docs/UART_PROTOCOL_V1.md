@@ -1,4 +1,4 @@
-# Giao thức UART v1.1
+# Giao thức UART v1.2
 
 UART dùng 115200 baud, 8 bit dữ liệu, không parity, một stop bit. Các word helper
 nhiều byte và word key chẩn đoán dùng little-endian. Sau reset, thiết bị gửi banner
@@ -25,9 +25,9 @@ ASCII `START` đúng một lần rồi nhận command một byte.
 
 Response: `4B 50 <major> <minor> <capabilities>` (`KP`, phiên bản, cờ tính năng).
 
-Capability bit 0 là xuất key chẩn đoán, bit 1 là diversify theo session, bit 2 là
-Kyber zeroize và bit 3 là Kyber retry nội bộ có giới hạn. Response release v1.1
-là `4B 50 01 01 0E`.
+Capability bit 0 là xuất key chẩn đoán, bit 1 là diversify theo session và bit 2
+là Kyber zeroize. Bit 3 từng biểu thị retry trong v1.1 nhưng đã bỏ ở v1.2 sau khi
+sửa lỗi raw NTT. Response release v1.2 là `4B 50 01 02 06`.
 
 ## `01` — ENROLL
 
@@ -41,9 +41,8 @@ thất bại, response là `FF <code>` và không có helper data theo sau.
    từ `0` đến `7`.
 3. Host gửi byte helper cuối. Thiết bị ACK bằng ASCII `8`.
 4. Thiết bị gửi marker tiến độ `ABCDEFG` khi các giai đoạn PUF, BCH, KDF và Kyber
-   tiến triển. Giữa `F` và `G`, firmware có thể zeroize rồi retry raw key mismatch
-   hoặc watchdog timeout của Kyber cũ với `m` mới, tối đa tổng cộng 16 attempt.
-   Khi lỗi, marker tiếp theo có thể được thay bằng `FF <code>`.
+   tiến triển. Kyber chỉ chạy đúng một attempt. Khi timeout hoặc key mismatch,
+   marker tiếp theo được thay bằng `FF <code>` và core được zeroize.
 5. Thành công trả `AA <result-flags>`. Firmware release trả flag `00` và không có
    key. Firmware chẩn đoán có thể trả flag `01` rồi 32 byte key.
 
@@ -51,6 +50,5 @@ Sau thành công hoặc bất kỳ lỗi giai đoạn Kyber nào, firmware yêu 
 seed và status Kyber. Ứng dụng host nên dùng `host/uart_host.py` thay vì tự triển
 khai byte handshake này.
 
-Retry là biện pháp availability cho raw key mismatch/stall phụ thuộc vector của
-Kyber core thử nghiệm được nhập. Nó không làm core tuân thủ FIPS 203 ML-KEM và
-không được hiểu là bằng chứng mật mã.
+Việc bỏ retry làm mọi lỗi raw trở thành lỗi giao dịch nhìn thấy được. Điều này
+không biến core Kyber cũ thành FIPS 203 ML-KEM và không phải chứng nhận mật mã.

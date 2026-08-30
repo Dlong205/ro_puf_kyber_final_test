@@ -7,6 +7,11 @@ mode="${1:-public}"
 cd "$root_dir"
 ./scripts/check_standalone.sh
 
+# A release candidate must pass the deterministic single-attempt Kyber gate;
+# the normal AXI test also remains in regression for register/handshake checks.
+make -j1 regression
+make -j1 kyber-long
+
 test -s VERSION || { echo "ERROR: VERSION is missing" >&2; exit 1; }
 test -s LICENSES/GPL-3.0-only.txt || { echo "ERROR: GPL text missing" >&2; exit 1; }
 test -s LICENSES/BSD-2-Clause-BCH.txt || { echo "ERROR: BCH license missing" >&2; exit 1; }

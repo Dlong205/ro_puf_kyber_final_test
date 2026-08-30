@@ -103,7 +103,12 @@ always @(*) case(state)
 	5'h 8 : next_state = flag_j & flag_k & ctr_i[1] ? state + 1'h 1 : 5'h 7;
 	5'h 9 : next_state = flag_j ? state + 1'h 1 : state;
 	5'h a : next_state = ~fifo0_empty ? state + 1'h 1 : state;
-	5'h b : next_state = ctr_k == 7'h 7f ? state + 1'h 1 : state;
+	// Matrix coefficients are supplied by a rejection-sampling FIFO.  Keep
+	// both the state and ctr_k on the final coefficient until a real word is
+	// available; otherwise ctr_k wraps to zero while the FSM is still waiting
+	// and a sparse stream can stretch this phase past the firmware watchdog.
+	5'h b : next_state = (ctr_k == 7'h 7f) & ~fifo0_empty ?
+			state + 1'h 1 : state;
 	5'h c : next_state = ctr_k == 7'h 7f ? state + 1'h 1 : state;
 	5'h d : next_state = ctr_col == k_1 ? ctr_NTT[2:0] == k_1 ? state + 1'h 1 : 5'h 6 : 5'h a;
 	5'h e : next_state = ready_c & DFIFO0_full_eff ? state + 1'h 1 : state;
@@ -173,12 +178,13 @@ endcase
 always @(posedge clk) case(state)
 	6'h 1, 6'h 6 : ctr_k <= 7'h 0;
 	6'h 3, 6'h 8, 6'h 12, 6'h 1a : ctr_k <= flag_k ? 7'h 0 : ctr_k + 1'h 1;
-	6'h b, 6'h c, 6'h 14, 6'h 15, 6'h 16 : ctr_k <= ctr_k + 1'h 1;
+	6'h b, 6'h 26 : ctr_k <= fifo0_empty ? ctr_k : ctr_k + 1'h 1;
+	6'h c, 6'h 14, 6'h 15, 6'h 16 : ctr_k <= ctr_k + 1'h 1;
 	6'h 10, 6'h 1c, 6'h 1e : ctr_k <= ctr_k == 7'h 3f ? 7'h 0 : ctr_k + 1'h 1;
 	6'h 20, 6'h 21, 6'h 22, 6'h 23 : ctr_k <= ctr_k == 7'h 3f ? 7'h 0 : ctr_k + 1'h 1;
 	6'h 28, 6'h 2e : ctr_k <= 7'h 0;
 	6'h 2b, 6'h 35, 6'h 37 : ctr_k <= flag_k ? 7'h 0 : ctr_k + 1'h 1;
-	6'h 26, 6'h 27, 6'h 30, 6'h 31 : ctr_k <= ctr_k + 1'h 1;
+	6'h 27, 6'h 30, 6'h 31 : ctr_k <= ctr_k + 1'h 1;
 	6'h 2d, 6'h 39 : ctr_k <= ctr_k + 1'h 1;
 	6'h 3e, 6'h 3f : ctr_k <= ctr_k == 7'h 3f ? 7'h 0 : ctr_k + 1'h 1;
 	default : ctr_k <= ctr_k;
@@ -454,11 +460,11 @@ always @(*) case(state_r13)
 		wen_RAM0 = 1'h 1;
 		wen_RAM1 = 1'h 1;
 	end
-	5'h 38 : begin
+	6'h 38 : begin
 		wen_RAM0 = 1'h 1;
 		wen_RAM1 = 1'h 0;
 	end
-	5'h 39 : begin
+	6'h 39 : begin
 		wen_RAM0 = 1'h 0;
 		wen_RAM1 = 1'h 1;
 	end

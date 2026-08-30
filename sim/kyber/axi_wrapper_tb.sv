@@ -101,6 +101,8 @@ module axi_wrapper_tb(input logic clk);
     integer stress_raw_failures;
     integer stress_retry_recoveries;
     integer stress_max_attempts;
+    integer stress_count;
+    integer stress_start;
     integer client_noise_reads;
     integer client_noise_empty_reads;
     integer client_noise_overlaps;
@@ -116,6 +118,36 @@ module axi_wrapper_tb(input logic clk);
     logic [31:0] client_e1_checksum;
     logic [31:0] server_e1_checksum;
     logic saw_valid_before_done;
+    logic strict_raw;
+    logic trace_stall;
+    logic [5:0] trace_server_state;
+    logic [5:0] trace_server_ntt_state;
+
+    always @(posedge clk) begin
+        if (trace_stall) begin
+            if ((dut.S.state != trace_server_state) &&
+                ((dut.S.state == 6'h13) || (dut.S.state == 6'h18) ||
+                 (dut.S.state == 6'h2e) || (dut.S.state == 6'h30) ||
+                 (trace_server_state == 6'h18) ||
+                 (trace_server_state == 6'h2e)))
+                $display("[STALL TRACE] t=%0t S %h->%h next=%h gen=%0d sq=%0d kec=%0d patt=%0d/%0d NTT=%h k=%0d empty=%0d",
+                         $time, trace_server_state, dut.S.state,
+                         dut.S.next_state, dut.S.fifo_GENA_ctr,
+                         dut.S.squeeze_ctr, dut.S.keccak_ctr,
+                         dut.S.patt_bit, dut.S.eta3_bit,
+                         dut.S.ntt.state, dut.S.ntt.ctr_k,
+                         dut.S.ofifo0_empty);
+            if ((dut.S.ntt.state != trace_server_ntt_state) &&
+                ((dut.S.ntt.state == 6'h26) ||
+                 (trace_server_ntt_state == 6'h26)))
+                $display("[STALL TRACE] t=%0t S_NTT %h->%h gen=%0d k=%0d empty=%0d",
+                         $time, trace_server_ntt_state, dut.S.ntt.state,
+                         dut.S.fifo_GENA_ctr, dut.S.ntt.ctr_k,
+                         dut.S.ofifo0_empty);
+        end
+        trace_server_state <= dut.S.state;
+        trace_server_ntt_state <= dut.S.ntt.state;
+    end
 
     always @(posedge clk) begin
         if (dut.kyber_core_reset) begin
@@ -204,15 +236,18 @@ module axi_wrapper_tb(input logic clk);
         logic [255:0] local_seed_m;
         begin
             keys_match = 0;
-            for (attempt = 0; attempt < 16 && !keys_match;
+            // Every logical transaction is deliberately single-attempt.  A
+            // retry would mask a functional RTL failure and does not match
+            // the release firmware protocol.
+            for (attempt = 0; attempt < 1 && !keys_match;
                  attempt = attempt + 1) begin
                 local_server_key = 0;
                 local_client_key = 0;
                 local_seed_m = 0;
-                seed_id = tx_id * 16 + attempt;
+                seed_id = tx_id;
 
-                // Match firmware retry semantics: zeroize clears every Kyber
-                // seed, then stable d/z and a fresh m are reloaded.
+                // Zeroize clears every Kyber seed, then stable d/z and a
+                // fresh message seed are reloaded for this transaction.
                 for (word_id = 0; word_id < 8; word_id = word_id + 1) begin
                     axi_write(8'h00 + word_id*4,
                               32'h03020100 + word_id*32'h04040404);
@@ -235,6 +270,17 @@ module axi_wrapper_tb(input logic clk);
                      local_polls = local_polls + 1)
                     axi_read(8'h44, status_word);
                 if (!status_word[2])
+                    $display("[AXI TIMEOUT] TX%0d seed_m=%h S=%h S_NTT=%h S_k=%0d S_fifo0_empty=%0d S_gen=%0d S_sq=%0d S_kec=%0d S_patt=%0d/%0d C=%h C_NTT=%h C_k=%0d C_fifo0_empty=%0d C_gen=%0d C_sq=%0d C_kec=%0d C_patt=%0d/%0d",
+                             tx_id, local_seed_m, dut.S.state,
+                             dut.S.ntt.state, dut.S.ntt.ctr_k,
+                             dut.S.ofifo0_empty, dut.S.fifo_GENA_ctr,
+                             dut.S.squeeze_ctr, dut.S.keccak_ctr,
+                             dut.S.patt_bit, dut.S.eta3_bit, dut.C.state,
+                             dut.C.ntt.state, dut.C.ntt.ctr_k,
+                             dut.C.ofifo0_empty, dut.C.fifo_GENA_ctr,
+                             dut.C.squeeze_ctr, dut.C.keccak_ctr,
+                             dut.C.patt_bit, dut.C.eta3_bit);
+                if (!status_word[2])
                     $fatal(1, "TX%0d attempt%0d timed out",
                            tx_id, attempt + 1);
 
@@ -250,7 +296,7 @@ module axi_wrapper_tb(input logic clk);
                              (local_server_key != 0);
                 if (!keys_match) begin
                     stress_raw_failures = stress_raw_failures + 1;
-                    $display("[AXI RETRY] TX%0d attempt%0d mismatch seed_m=%h server_m=%h client_m=%h e1=%08h/%08h starvation=%0d/%0d",
+                    $display("[AXI RAW] TX%0d attempt%0d mismatch seed_m=%h server_m=%h client_m=%h e1=%08h/%08h starvation=%0d/%0d",
                              tx_id, attempt + 1, local_seed_m,
                              dut.S.m, dut.C.m, client_e1_checksum,
                              server_e1_checksum, client_ntt6_empty_cycles,
@@ -272,6 +318,23 @@ module axi_wrapper_tb(input logic clk);
     endtask
 
     initial begin
+        strict_raw = $test$plusargs("STRICT_RAW");
+        trace_stall = $test$plusargs("TRACE_STALL");
+        stress_start = 0;
+        stress_count = 32;
+        if ($value$plusargs("STRESS_START=%d", stress_start)) begin
+            if (stress_start < 0)
+                $fatal(1, "STRESS_START must not be negative");
+        end
+        if ($value$plusargs("STRESS_COUNT=%d", stress_count)) begin
+            if (stress_count <= 0)
+                $fatal(1, "STRESS_COUNT must be greater than zero");
+        end
+        if (strict_raw)
+            $display("[AXI TB] strict single-attempt gate enabled (retry disabled)");
+        $display("[AXI TB] changing-seed transaction range=%0d..%0d",
+                 stress_start, stress_start + stress_count - 1);
+
         repeat (5) @(posedge clk);
         @(negedge clk);
         resetn = 1;
@@ -366,18 +429,26 @@ module axi_wrapper_tb(input logic clk);
         stress_raw_failures = 0;
         stress_retry_recoveries = 0;
         stress_max_attempts = 0;
-        for (tx = 0; tx < 32; tx = tx + 1) begin
+        for (tx = stress_start; tx < stress_start + stress_count; tx = tx + 1) begin
             run_stress_transaction(tx, saw_valid_before_done);
             if (!saw_valid_before_done)
                 stress_failures = stress_failures + 1;
+            if (((tx - stress_start + 1) % 100) == 0)
+                $display("[AXI TB] completed %0d/%0d changing-seed transactions",
+                         tx - stress_start + 1, stress_count);
         end
-        if (stress_failures != 0)
-            $fatal(1, "AXI changing-seed stress had %0d/32 mismatches",
-                   stress_failures);
+        if (stress_failures != 0) begin
+            if (strict_raw)
+                $fatal(1, "Strict raw Kyber gate failed: %0d/%0d single-attempt mismatches",
+                       stress_failures, stress_count);
+            else
+                $fatal(1, "AXI changing-seed stress had %0d/%0d mismatches",
+                       stress_failures, stress_count);
+        end
 
-        $display("*** KYBER-512 AXI WRAPPER PASS (%0d polls, 32 logical transactions, raw mismatches=%0d, recovered=%0d, max_attempts=%0d) ***",
-                 polls, stress_raw_failures, stress_retry_recoveries,
-                 stress_max_attempts);
+        $display("*** KYBER-512 AXI WRAPPER PASS (%0d polls, %0d logical transactions, raw mismatches=%0d, recovered=%0d, max_attempts=%0d) ***",
+                 polls, stress_count, stress_raw_failures,
+                 stress_retry_recoveries, stress_max_attempts);
         $finish;
     end
 endmodule
