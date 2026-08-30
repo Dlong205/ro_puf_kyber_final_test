@@ -29,7 +29,7 @@ module Kyber_System_Top(
     
     // ==========================================
     // Power-On Reset (POR) — tự động nhả reset sau khi FPGA boot
-    // Giữ reset 65536 cycles (~655µs @ 100MHz), sau đó tự động RUN.
+    // Giữ reset 65536 cycles (~1.31 ms @ 50 MHz), sau đó tự động RUN.
     // SW[0] = 0 (down) sẽ ép reset thủ công bất kỳ lúc nào.
     // ==========================================
     reg [15:0] por_cnt = 0;
@@ -45,20 +45,24 @@ module Kyber_System_Top(
     wire rst_n = por_done; // Auto-run after POR, SW[0] freed for other use
     wire rx = UART_RXD;
     wire tx;
+    wire tx_active;
+    wire kyber_done;
+    wire [263:0] puf_resp;
+    wire [191:0] fe_key;
+    wire [511:0] kyber_seed;
     assign UART_TXD = tx;
 
     // Shared Secret Output (Internal)
     (* keep = "true" *) wire [255:0] shared_secret_K;
     
     // LED[0]: UART TX Active
-    // LED[1]: XOR reduction of Kyber Shared Secret (to prevent logic optimization)
+    // LED[1]: Kyber completion status. Never expose a function of secret data.
     assign LED[0] = tx_active;
-    assign LED[1] = ^shared_secret_K;
+    assign LED[1] = kyber_done;
 
     // ==========================================
     // 1. RISC-V SoC Core (PicoRV32 + Firmware + Peripherals)
     // ==========================================
-    wire tx_active;
     wire puf_start_r, fe_start_r, fe_mode_r, kdf_start_r;
     wire puf_done, fe_done, fe_success, kdf_done;
     // SoC-FE helper data connections
@@ -71,6 +75,8 @@ module Kyber_System_Top(
         .rx(rx),
         .tx(tx),
         .tx_active(tx_active),
+        .kyber_done(kyber_done),
+        .kyber_shared_secret(shared_secret_K),
         .puf_start(puf_start_r),
         .fe_start(fe_start_r),
         .fe_mode(fe_mode_r),
@@ -83,10 +89,6 @@ module Kyber_System_Top(
         .helper_in(helper_fe_to_soc),
         .kdf_seed(kyber_seed)
     );
-
-    wire [263:0] puf_resp;
-    wire [191:0] fe_key;
-    wire [511:0] kyber_seed;
 
     // ==========================================
     // 4. RO PUF Module
@@ -130,28 +132,7 @@ module Kyber_System_Top(
         .seed_out(kyber_seed)
     );
 
-    // ==========================================
-    // 7. Kyber Server Core (Post-Quantum) - BYPASSED FOR A7-35T TESTING
-    // ==========================================
-    // Kyber_Server u_kyber_server (
-    //     .clk(clk),
-    //     .rst(~rst_n),
-    //     .start(kyber_start_r),
-    //     .wen(1'b0),
-    //     .k(3'd2),
-    //     .ready_c(1'b1),
-    //     .req_pk(req_pk),
-    //     .din(din_pk),
-    //     .ready_pk(ready_pk),
-    //     .req_c(req_c),
-    //     .valid(valid_c),
-    //     .dout(dout_c),
-    //     .seed_d(kyber_seed[255:0]),
-    //     .seed_z(kyber_seed[511:256]),
-    //     .K(shared_secret_K)
-    // );
-    
-    // Kyber bypassed: map KDF output directly to shared_secret for LED[1]
-    assign shared_secret_K = kyber_seed[255:0];
+    // The full Kyber-512 Server/Client loopback is instantiated inside
+    // riscv_soc and controlled by firmware through its AXI-Lite registers.
 
 endmodule

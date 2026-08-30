@@ -30,6 +30,11 @@ module kp_ro_cell #(
                 end else begin
                     div_cnt <= div_cnt + 1;
                 end
+            end else begin
+                // Match the disabled hardware RO: restart from a defined
+                // phase so repeated challenges are deterministic in RTL sim.
+                o <= 1'b0;
+                div_cnt <= 16'd0;
             end
         end
     `else

@@ -1,16 +1,34 @@
-*.vcd
-*.fst
-*.wdb
+# Vivado projects and generated products
+build/
+release/
+.Xil/
+*.jou
 *.log
 *.pb
-*.jou
-sim_output.txt
-obj_dir/
-*.gch
-*.o
-*.a
-*.sim/
-*.runs/
-*.hw/
-.Xil/
-xsim.dir/
+*.wdb
+*.vcd
+*.str
+webtalk*.jou
+webtalk*.log
+
+# Verilator and generated simulation sources
+sim/*/obj_dir*/
+sim/fuzzy_extractor/rtl_tcq0/
+sim/fuzzy_extractor/tb_fuzzy_extractor_main.cpp
+
+# Firmware intermediates; firmware.hex is intentionally tracked
+firmware/firmware.bin
+firmware/firmware.elf
+firmware/.mode_*
+
+# Local board enrollment artifacts and caches
+helper.bin
+hardware_helper.bin
+*.helper.bin
+**/__pycache__/
+*.py[cod]
+
+# Editor/OS noise
+.DS_Store
+*~
+*.swp

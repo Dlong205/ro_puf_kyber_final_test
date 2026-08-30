@@ -1,0 +1,896 @@
+Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+-------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2020.1 (lin64) Build 2902540 Wed May 27 19:54:35 MDT 2020
+| Date         : Sun Aug 30 05:31:08 2026
+| Host         : donglong-P7xxTM-1 running 64-bit Ubuntu 22.04.5 LTS
+| Command      : report_drc -file /home/donglong/Documents/Duy_prj/KYBER_RO_PUF_ZYNQ7020_STANDALONE/reports/post_route_drc.rpt
+| Design       : Kyber_System_Top
+| Device       : xc7z020clg400-2
+| Speed File   : -2
+| Design State : Fully Routed
+-------------------------------------------------------------------------------------------------------------------------------
+
+Report DRC
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: netlist
+          Floorplan: impl_1
+      Design limits: <entire design considered>
+           Ruledeck: default
+             Max violations: <unlimited>
+             Violations found: 165
++-----------+----------+----------------------------+------------+
+| Rule      | Severity | Description                | Violations |
++-----------+----------+----------------------------+------------+
+| DPOP-2    | Warning  | MREG Output pipelining     | 4          |
+| LUTLP-2   | Warning  | Combinatorial Loop Allowed | 32         |
+| PDCN-1569 | Warning  | LUT equation term check    | 128        |
+| ZPS7-1    | Warning  | PS7 block required         | 1          |
++-----------+----------+----------------------------+------------+
+
+2. REPORT DETAILS
+-----------------
+DPOP-2#1 Warning
+MREG Output pipelining  
+DSP u_soc/u_kyber_axi/C/ntt/BU/M0/inst/product_reg_reg multiplier stage u_soc/u_kyber_axi/C/ntt/BU/M0/inst/product_reg_reg/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+Related violations: <none>
+
+DPOP-2#2 Warning
+MREG Output pipelining  
+DSP u_soc/u_kyber_axi/C/ntt/BU/M1/inst/product_reg_reg multiplier stage u_soc/u_kyber_axi/C/ntt/BU/M1/inst/product_reg_reg/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+Related violations: <none>
+
+DPOP-2#3 Warning
+MREG Output pipelining  
+DSP u_soc/u_kyber_axi/S/ntt/BU/M0/inst/product_reg_reg multiplier stage u_soc/u_kyber_axi/S/ntt/BU/M0/inst/product_reg_reg/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+Related violations: <none>
+
+DPOP-2#4 Warning
+MREG Output pipelining  
+DSP u_soc/u_kyber_axi/S/ntt/BU/M1/inst/product_reg_reg multiplier stage u_soc/u_kyber_axi/S/ntt/BU/M1/inst/product_reg_reg/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+Related violations: <none>
+
+LUTLP-2#1 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[0].ro0/LUT6_INV0, u_puf/ring0[0].ro0/LUT6_INV1,
+u_puf/ring0[0].ro0/LUT6_INV2, u_puf/ring0[0].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#2 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[10].ro0/LUT6_INV0, u_puf/ring0[10].ro0/LUT6_INV1,
+u_puf/ring0[10].ro0/LUT6_INV2, u_puf/ring0[10].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#3 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[11].ro0/LUT6_INV0, u_puf/ring0[11].ro0/LUT6_INV1,
+u_puf/ring0[11].ro0/LUT6_INV2, u_puf/ring0[11].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#4 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[12].ro0/LUT6_INV0, u_puf/ring0[12].ro0/LUT6_INV1,
+u_puf/ring0[12].ro0/LUT6_INV2, u_puf/ring0[12].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#5 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[13].ro0/LUT6_INV0, u_puf/ring0[13].ro0/LUT6_INV1,
+u_puf/ring0[13].ro0/LUT6_INV2, u_puf/ring0[13].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#6 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[14].ro0/LUT6_INV0, u_puf/ring0[14].ro0/LUT6_INV1,
+u_puf/ring0[14].ro0/LUT6_INV2, u_puf/ring0[14].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#7 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[15].ro0/LUT6_INV0, u_puf/ring0[15].ro0/LUT6_INV1,
+u_puf/ring0[15].ro0/LUT6_INV2, u_puf/ring0[15].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#8 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[1].ro0/LUT6_INV0, u_puf/ring0[1].ro0/LUT6_INV1,
+u_puf/ring0[1].ro0/LUT6_INV2, u_puf/ring0[1].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#9 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[2].ro0/LUT6_INV0, u_puf/ring0[2].ro0/LUT6_INV1,
+u_puf/ring0[2].ro0/LUT6_INV2, u_puf/ring0[2].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#10 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[3].ro0/LUT6_INV0, u_puf/ring0[3].ro0/LUT6_INV1,
+u_puf/ring0[3].ro0/LUT6_INV2, u_puf/ring0[3].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#11 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[4].ro0/LUT6_INV0, u_puf/ring0[4].ro0/LUT6_INV1,
+u_puf/ring0[4].ro0/LUT6_INV2, u_puf/ring0[4].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#12 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[5].ro0/LUT6_INV0, u_puf/ring0[5].ro0/LUT6_INV1,
+u_puf/ring0[5].ro0/LUT6_INV2, u_puf/ring0[5].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#13 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[6].ro0/LUT6_INV0, u_puf/ring0[6].ro0/LUT6_INV1,
+u_puf/ring0[6].ro0/LUT6_INV2, u_puf/ring0[6].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#14 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[7].ro0/LUT6_INV0, u_puf/ring0[7].ro0/LUT6_INV1,
+u_puf/ring0[7].ro0/LUT6_INV2, u_puf/ring0[7].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#15 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[8].ro0/LUT6_INV0, u_puf/ring0[8].ro0/LUT6_INV1,
+u_puf/ring0[8].ro0/LUT6_INV2, u_puf/ring0[8].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#16 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring0[9].ro0/LUT6_INV0, u_puf/ring0[9].ro0/LUT6_INV1,
+u_puf/ring0[9].ro0/LUT6_INV2, u_puf/ring0[9].ro0/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#17 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[0].ro1/LUT6_INV0, u_puf/ring1[0].ro1/LUT6_INV1,
+u_puf/ring1[0].ro1/LUT6_INV2, u_puf/ring1[0].ro1/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#18 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[10].ro1/LUT6_INV0, u_puf/ring1[10].ro1/LUT6_INV1,
+u_puf/ring1[10].ro1/LUT6_INV2, u_puf/ring1[10].ro1/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#19 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[11].ro1/LUT6_INV0, u_puf/ring1[11].ro1/LUT6_INV1,
+u_puf/ring1[11].ro1/LUT6_INV2, u_puf/ring1[11].ro1/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#20 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[12].ro1/LUT6_INV0, u_puf/ring1[12].ro1/LUT6_INV1,
+u_puf/ring1[12].ro1/LUT6_INV2, u_puf/ring1[12].ro1/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#21 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[13].ro1/LUT6_INV0, u_puf/ring1[13].ro1/LUT6_INV1,
+u_puf/ring1[13].ro1/LUT6_INV2, u_puf/ring1[13].ro1/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#22 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[14].ro1/LUT6_INV0, u_puf/ring1[14].ro1/LUT6_INV1,
+u_puf/ring1[14].ro1/LUT6_INV2, u_puf/ring1[14].ro1/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#23 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[15].ro1/LUT6_INV0, u_puf/ring1[15].ro1/LUT6_INV1,
+u_puf/ring1[15].ro1/LUT6_INV2, u_puf/ring1[15].ro1/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#24 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[1].ro1/LUT6_INV0, u_puf/ring1[1].ro1/LUT6_INV1,
+u_puf/ring1[1].ro1/LUT6_INV2, u_puf/ring1[1].ro1/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#25 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[2].ro1/LUT6_INV0, u_puf/ring1[2].ro1/LUT6_INV1,
+u_puf/ring1[2].ro1/LUT6_INV2, u_puf/ring1[2].ro1/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#26 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[3].ro1/LUT6_INV0, u_puf/ring1[3].ro1/LUT6_INV1,
+u_puf/ring1[3].ro1/LUT6_INV2, u_puf/ring1[3].ro1/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#27 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[4].ro1/LUT6_INV0, u_puf/ring1[4].ro1/LUT6_INV1,
+u_puf/ring1[4].ro1/LUT6_INV2, u_puf/ring1[4].ro1/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#28 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[5].ro1/LUT6_INV0, u_puf/ring1[5].ro1/LUT6_INV1,
+u_puf/ring1[5].ro1/LUT6_INV2, u_puf/ring1[5].ro1/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#29 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[6].ro1/LUT6_INV0, u_puf/ring1[6].ro1/LUT6_INV1,
+u_puf/ring1[6].ro1/LUT6_INV2, u_puf/ring1[6].ro1/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#30 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[7].ro1/LUT6_INV0, u_puf/ring1[7].ro1/LUT6_INV1,
+u_puf/ring1[7].ro1/LUT6_INV2, u_puf/ring1[7].ro1/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#31 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[8].ro1/LUT6_INV0, u_puf/ring1[8].ro1/LUT6_INV1,
+u_puf/ring1[8].ro1/LUT6_INV2, u_puf/ring1[8].ro1/LUT6_NAND0.
+Related violations: <none>
+
+LUTLP-2#32 Warning
+Combinatorial Loop Allowed  
+4 LUT cells form a combinatorial loop. This can create a race condition. Timing analysis may not be accurate. The preferred resolution is to modify the design to remove combinatorial logic loops. This loop has been identified in the constraints as being known and understood by use of the ALLOW_COMBINATORIAL_LOOPS property on a net in the loop. The cells in the loop are: u_puf/ring1[9].ro1/LUT6_INV0, u_puf/ring1[9].ro1/LUT6_INV1,
+u_puf/ring1[9].ro1/LUT6_INV2, u_puf/ring1[9].ro1/LUT6_NAND0.
+Related violations: <none>
+
+PDCN-1569#1 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[0].ro0/LUT6_NAND0 (pin u_puf/ring0[0].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#2 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[10].ro0/LUT6_NAND0 (pin u_puf/ring0[10].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#3 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[11].ro0/LUT6_NAND0 (pin u_puf/ring0[11].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#4 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[12].ro0/LUT6_NAND0 (pin u_puf/ring0[12].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#5 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[13].ro0/LUT6_NAND0 (pin u_puf/ring0[13].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#6 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[14].ro0/LUT6_NAND0 (pin u_puf/ring0[14].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#7 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[15].ro0/LUT6_NAND0 (pin u_puf/ring0[15].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#8 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[1].ro0/LUT6_NAND0 (pin u_puf/ring0[1].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#9 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[2].ro0/LUT6_NAND0 (pin u_puf/ring0[2].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#10 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[3].ro0/LUT6_NAND0 (pin u_puf/ring0[3].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#11 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[4].ro0/LUT6_NAND0 (pin u_puf/ring0[4].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#12 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[5].ro0/LUT6_NAND0 (pin u_puf/ring0[5].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#13 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[6].ro0/LUT6_NAND0 (pin u_puf/ring0[6].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#14 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[7].ro0/LUT6_NAND0 (pin u_puf/ring0[7].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#15 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[8].ro0/LUT6_NAND0 (pin u_puf/ring0[8].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#16 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring0[9].ro0/LUT6_NAND0 (pin u_puf/ring0[9].ro0/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#17 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[0].ro1/LUT6_NAND0 (pin u_puf/ring1[0].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#18 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[10].ro1/LUT6_NAND0 (pin u_puf/ring1[10].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#19 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[11].ro1/LUT6_NAND0 (pin u_puf/ring1[11].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#20 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[12].ro1/LUT6_NAND0 (pin u_puf/ring1[12].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#21 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[13].ro1/LUT6_NAND0 (pin u_puf/ring1[13].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#22 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[14].ro1/LUT6_NAND0 (pin u_puf/ring1[14].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#23 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[15].ro1/LUT6_NAND0 (pin u_puf/ring1[15].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#24 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[1].ro1/LUT6_NAND0 (pin u_puf/ring1[1].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#25 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[2].ro1/LUT6_NAND0 (pin u_puf/ring1[2].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#26 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[3].ro1/LUT6_NAND0 (pin u_puf/ring1[3].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#27 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[4].ro1/LUT6_NAND0 (pin u_puf/ring1[4].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#28 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[5].ro1/LUT6_NAND0 (pin u_puf/ring1[5].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#29 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[6].ro1/LUT6_NAND0 (pin u_puf/ring1[6].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#30 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[7].ro1/LUT6_NAND0 (pin u_puf/ring1[7].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#31 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[8].ro1/LUT6_NAND0 (pin u_puf/ring1[8].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#32 Warning
+LUT equation term check  
+Used physical LUT pin 'A4' of cell u_puf/ring1[9].ro1/LUT6_NAND0 (pin u_puf/ring1[9].ro1/LUT6_NAND0/I2) is not included in the LUT equation: 'O6=(A6*A5)'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#33 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[0].ro0/LUT6_INV0 (pin u_puf/ring0[0].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#34 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[0].ro0/LUT6_INV1 (pin u_puf/ring0[0].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#35 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[0].ro0/LUT6_INV2 (pin u_puf/ring0[0].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#36 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[10].ro0/LUT6_INV0 (pin u_puf/ring0[10].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#37 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[10].ro0/LUT6_INV1 (pin u_puf/ring0[10].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#38 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[10].ro0/LUT6_INV2 (pin u_puf/ring0[10].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#39 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[11].ro0/LUT6_INV0 (pin u_puf/ring0[11].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#40 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[11].ro0/LUT6_INV1 (pin u_puf/ring0[11].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#41 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[11].ro0/LUT6_INV2 (pin u_puf/ring0[11].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#42 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[12].ro0/LUT6_INV0 (pin u_puf/ring0[12].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#43 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[12].ro0/LUT6_INV1 (pin u_puf/ring0[12].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#44 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[12].ro0/LUT6_INV2 (pin u_puf/ring0[12].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#45 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[13].ro0/LUT6_INV0 (pin u_puf/ring0[13].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#46 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[13].ro0/LUT6_INV1 (pin u_puf/ring0[13].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#47 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[13].ro0/LUT6_INV2 (pin u_puf/ring0[13].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#48 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[14].ro0/LUT6_INV0 (pin u_puf/ring0[14].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#49 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[14].ro0/LUT6_INV1 (pin u_puf/ring0[14].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#50 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[14].ro0/LUT6_INV2 (pin u_puf/ring0[14].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#51 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[15].ro0/LUT6_INV0 (pin u_puf/ring0[15].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#52 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[15].ro0/LUT6_INV1 (pin u_puf/ring0[15].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#53 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[15].ro0/LUT6_INV2 (pin u_puf/ring0[15].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#54 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[1].ro0/LUT6_INV0 (pin u_puf/ring0[1].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#55 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[1].ro0/LUT6_INV1 (pin u_puf/ring0[1].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#56 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[1].ro0/LUT6_INV2 (pin u_puf/ring0[1].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#57 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[2].ro0/LUT6_INV0 (pin u_puf/ring0[2].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#58 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[2].ro0/LUT6_INV1 (pin u_puf/ring0[2].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#59 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[2].ro0/LUT6_INV2 (pin u_puf/ring0[2].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#60 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[3].ro0/LUT6_INV0 (pin u_puf/ring0[3].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#61 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[3].ro0/LUT6_INV1 (pin u_puf/ring0[3].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#62 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[3].ro0/LUT6_INV2 (pin u_puf/ring0[3].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#63 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[4].ro0/LUT6_INV0 (pin u_puf/ring0[4].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#64 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[4].ro0/LUT6_INV1 (pin u_puf/ring0[4].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#65 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[4].ro0/LUT6_INV2 (pin u_puf/ring0[4].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#66 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[5].ro0/LUT6_INV0 (pin u_puf/ring0[5].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#67 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[5].ro0/LUT6_INV1 (pin u_puf/ring0[5].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#68 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[5].ro0/LUT6_INV2 (pin u_puf/ring0[5].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#69 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[6].ro0/LUT6_INV0 (pin u_puf/ring0[6].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#70 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[6].ro0/LUT6_INV1 (pin u_puf/ring0[6].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#71 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[6].ro0/LUT6_INV2 (pin u_puf/ring0[6].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#72 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[7].ro0/LUT6_INV0 (pin u_puf/ring0[7].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#73 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[7].ro0/LUT6_INV1 (pin u_puf/ring0[7].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#74 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[7].ro0/LUT6_INV2 (pin u_puf/ring0[7].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#75 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[8].ro0/LUT6_INV0 (pin u_puf/ring0[8].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#76 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[8].ro0/LUT6_INV1 (pin u_puf/ring0[8].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#77 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[8].ro0/LUT6_INV2 (pin u_puf/ring0[8].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#78 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[9].ro0/LUT6_INV0 (pin u_puf/ring0[9].ro0/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#79 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[9].ro0/LUT6_INV1 (pin u_puf/ring0[9].ro0/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#80 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring0[9].ro0/LUT6_INV2 (pin u_puf/ring0[9].ro0/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#81 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[0].ro1/LUT6_INV0 (pin u_puf/ring1[0].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#82 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[0].ro1/LUT6_INV1 (pin u_puf/ring1[0].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#83 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[0].ro1/LUT6_INV2 (pin u_puf/ring1[0].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#84 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[10].ro1/LUT6_INV0 (pin u_puf/ring1[10].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#85 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[10].ro1/LUT6_INV1 (pin u_puf/ring1[10].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#86 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[10].ro1/LUT6_INV2 (pin u_puf/ring1[10].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#87 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[11].ro1/LUT6_INV0 (pin u_puf/ring1[11].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#88 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[11].ro1/LUT6_INV1 (pin u_puf/ring1[11].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#89 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[11].ro1/LUT6_INV2 (pin u_puf/ring1[11].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#90 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[12].ro1/LUT6_INV0 (pin u_puf/ring1[12].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#91 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[12].ro1/LUT6_INV1 (pin u_puf/ring1[12].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#92 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[12].ro1/LUT6_INV2 (pin u_puf/ring1[12].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#93 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[13].ro1/LUT6_INV0 (pin u_puf/ring1[13].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#94 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[13].ro1/LUT6_INV1 (pin u_puf/ring1[13].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#95 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[13].ro1/LUT6_INV2 (pin u_puf/ring1[13].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#96 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[14].ro1/LUT6_INV0 (pin u_puf/ring1[14].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#97 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[14].ro1/LUT6_INV1 (pin u_puf/ring1[14].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#98 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[14].ro1/LUT6_INV2 (pin u_puf/ring1[14].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#99 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[15].ro1/LUT6_INV0 (pin u_puf/ring1[15].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#100 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[15].ro1/LUT6_INV1 (pin u_puf/ring1[15].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#101 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[15].ro1/LUT6_INV2 (pin u_puf/ring1[15].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#102 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[1].ro1/LUT6_INV0 (pin u_puf/ring1[1].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#103 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[1].ro1/LUT6_INV1 (pin u_puf/ring1[1].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#104 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[1].ro1/LUT6_INV2 (pin u_puf/ring1[1].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#105 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[2].ro1/LUT6_INV0 (pin u_puf/ring1[2].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#106 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[2].ro1/LUT6_INV1 (pin u_puf/ring1[2].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#107 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[2].ro1/LUT6_INV2 (pin u_puf/ring1[2].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#108 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[3].ro1/LUT6_INV0 (pin u_puf/ring1[3].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#109 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[3].ro1/LUT6_INV1 (pin u_puf/ring1[3].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#110 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[3].ro1/LUT6_INV2 (pin u_puf/ring1[3].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#111 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[4].ro1/LUT6_INV0 (pin u_puf/ring1[4].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#112 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[4].ro1/LUT6_INV1 (pin u_puf/ring1[4].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#113 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[4].ro1/LUT6_INV2 (pin u_puf/ring1[4].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#114 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[5].ro1/LUT6_INV0 (pin u_puf/ring1[5].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#115 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[5].ro1/LUT6_INV1 (pin u_puf/ring1[5].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#116 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[5].ro1/LUT6_INV2 (pin u_puf/ring1[5].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#117 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[6].ro1/LUT6_INV0 (pin u_puf/ring1[6].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#118 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[6].ro1/LUT6_INV1 (pin u_puf/ring1[6].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#119 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[6].ro1/LUT6_INV2 (pin u_puf/ring1[6].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#120 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[7].ro1/LUT6_INV0 (pin u_puf/ring1[7].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#121 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[7].ro1/LUT6_INV1 (pin u_puf/ring1[7].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#122 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[7].ro1/LUT6_INV2 (pin u_puf/ring1[7].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#123 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[8].ro1/LUT6_INV0 (pin u_puf/ring1[8].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#124 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[8].ro1/LUT6_INV1 (pin u_puf/ring1[8].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#125 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[8].ro1/LUT6_INV2 (pin u_puf/ring1[8].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#126 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[9].ro1/LUT6_INV0 (pin u_puf/ring1[9].ro1/LUT6_INV0/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#127 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[9].ro1/LUT6_INV1 (pin u_puf/ring1[9].ro1/LUT6_INV1/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#128 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell u_puf/ring1[9].ro1/LUT6_INV2 (pin u_puf/ring1[9].ro1/LUT6_INV2/I1) is not included in the LUT equation: 'O6=((~A6))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+ZPS7-1#1 Warning
+PS7 block required  
+The PS7 cell must be used in this Zynq design in order to enable correct default configuration.
+Related violations: <none>
+
+

@@ -2,7 +2,9 @@
 
 module kp_puf_top #(
     parameter int BIT_COUNT = 264,
-    parameter int REF_CYCLES = 255
+    parameter int REF_CYCLES = 255,
+    parameter int RESET_CYCLES = 8,
+    parameter int SETTLE_CYCLES = 2
 )(
     input  logic        clk,
     input  logic        rst_n,
@@ -19,11 +21,15 @@ module kp_puf_top #(
     logic        mux0_out, mux1_out;
     logic [31:0] cnt0, cnt1;
     logic        winner;
+    (* ASYNC_REG = "TRUE" *) logic winner_meta;
+    (* ASYNC_REG = "TRUE" *) logic winner_sync;
     logic        lfsr_done;
 
     kp_puf_control #(
         .BIT_COUNT(BIT_COUNT),
-        .REF_CYCLES(REF_CYCLES)
+        .REF_CYCLES(REF_CYCLES),
+        .RESET_CYCLES(RESET_CYCLES),
+        .SETTLE_CYCLES(SETTLE_CYCLES)
     ) ctrl_inst (
         .clk      (clk),
         .rst_n    (rst_n),
@@ -116,13 +122,26 @@ module kp_puf_top #(
         .winner (winner)
     );
 
+    // The RO counters are asynchronous to clk.  The FSM first disables both
+    // ROs and waits SETTLE_CYCLES; this two-flop path then transfers the now
+    // stable comparator result into the system-clock domain before capture.
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            winner_meta <= 1'b0;
+            winner_sync <= 1'b0;
+        end else begin
+            winner_meta <= winner;
+            winner_sync <= winner_meta;
+        end
+    end
+
     kp_shiftReg #(
         .WIDTH(BIT_COUNT)
     ) shiftreg_inst (
         .clk   (clk),
         .rst_n (rst_n),
         .en    (sr_en),
-        .s_in  (winner),
+        .s_in  (winner_sync),
         .p_out (response)
     );
 

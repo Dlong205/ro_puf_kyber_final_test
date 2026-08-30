@@ -1,0 +1,438 @@
+`timescale 1ns / 1ps
+
+// Registered 128x12 ROM matching the original dist_mem_gen_5 IP.
+module dist_mem_gen_5 (
+    input  wire        clk,
+    input  wire [6:0]  a,
+    output reg  [11:0] qspo
+);
+    function automatic [11:0] rom_value(input [6:0] addr);
+        begin
+            case (addr)
+                7'd0: rom_value = 12'h001;
+                7'd1: rom_value = 12'h6c1;
+                7'd2: rom_value = 12'ha14;
+                7'd3: rom_value = 12'hcd9;
+                7'd4: rom_value = 12'ha52;
+                7'd5: rom_value = 12'h276;
+                7'd6: rom_value = 12'h769;
+                7'd7: rom_value = 12'h350;
+                7'd8: rom_value = 12'h426;
+                7'd9: rom_value = 12'h77f;
+                7'd10: rom_value = 12'h0c1;
+                7'd11: rom_value = 12'h31d;
+                7'd12: rom_value = 12'hae2;
+                7'd13: rom_value = 12'hcbc;
+                7'd14: rom_value = 12'h239;
+                7'd15: rom_value = 12'h6d2;
+                7'd16: rom_value = 12'h128;
+                7'd17: rom_value = 12'h98f;
+                7'd18: rom_value = 12'h53b;
+                7'd19: rom_value = 12'h5c4;
+                7'd20: rom_value = 12'hbe6;
+                7'd21: rom_value = 12'h038;
+                7'd22: rom_value = 12'h8c0;
+                7'd23: rom_value = 12'h535;
+                7'd24: rom_value = 12'h592;
+                7'd25: rom_value = 12'h82e;
+                7'd26: rom_value = 12'h217;
+                7'd27: rom_value = 12'hb42;
+                7'd28: rom_value = 12'h959;
+                7'd29: rom_value = 12'hb3f;
+                7'd30: rom_value = 12'h7b6;
+                7'd31: rom_value = 12'h335;
+                7'd32: rom_value = 12'h121;
+                7'd33: rom_value = 12'h14b;
+                7'd34: rom_value = 12'hcb5;
+                7'd35: rom_value = 12'h6dc;
+                7'd36: rom_value = 12'h4ad;
+                7'd37: rom_value = 12'h900;
+                7'd38: rom_value = 12'h8e5;
+                7'd39: rom_value = 12'h807;
+                7'd40: rom_value = 12'h28a;
+                7'd41: rom_value = 12'h7b9;
+                7'd42: rom_value = 12'h9d1;
+                7'd43: rom_value = 12'h278;
+                7'd44: rom_value = 12'hb31;
+                7'd45: rom_value = 12'h021;
+                7'd46: rom_value = 12'h528;
+                7'd47: rom_value = 12'h77b;
+                7'd48: rom_value = 12'h90f;
+                7'd49: rom_value = 12'h59b;
+                7'd50: rom_value = 12'h327;
+                7'd51: rom_value = 12'h1c4;
+                7'd52: rom_value = 12'h59e;
+                7'd53: rom_value = 12'hb34;
+                7'd54: rom_value = 12'h5fe;
+                7'd55: rom_value = 12'h962;
+                7'd56: rom_value = 12'ha57;
+                7'd57: rom_value = 12'ha39;
+                7'd58: rom_value = 12'h5c9;
+                7'd59: rom_value = 12'h288;
+                7'd60: rom_value = 12'h9aa;
+                7'd61: rom_value = 12'hc26;
+                7'd62: rom_value = 12'h4cb;
+                7'd63: rom_value = 12'h38e;
+                7'd64: rom_value = 12'h011;
+                7'd65: rom_value = 12'hac9;
+                7'd66: rom_value = 12'h247;
+                7'd67: rom_value = 12'ha59;
+                7'd68: rom_value = 12'h665;
+                7'd69: rom_value = 12'h2d3;
+                7'd70: rom_value = 12'h8f0;
+                7'd71: rom_value = 12'h44c;
+                7'd72: rom_value = 12'h581;
+                7'd73: rom_value = 12'ha66;
+                7'd74: rom_value = 12'hcd1;
+                7'd75: rom_value = 12'h0e9;
+                7'd76: rom_value = 12'h2f4;
+                7'd77: rom_value = 12'h86c;
+                7'd78: rom_value = 12'hbc7;
+                7'd79: rom_value = 12'hbea;
+                7'd80: rom_value = 12'h6a7;
+                7'd81: rom_value = 12'h673;
+                7'd82: rom_value = 12'hae5;
+                7'd83: rom_value = 12'h6fd;
+                7'd84: rom_value = 12'h737;
+                7'd85: rom_value = 12'h3b8;
+                7'd86: rom_value = 12'h5b5;
+                7'd87: rom_value = 12'ha7f;
+                7'd88: rom_value = 12'h3ab;
+                7'd89: rom_value = 12'h904;
+                7'd90: rom_value = 12'h985;
+                7'd91: rom_value = 12'h954;
+                7'd92: rom_value = 12'h2dd;
+                7'd93: rom_value = 12'h921;
+                7'd94: rom_value = 12'h10c;
+                7'd95: rom_value = 12'h281;
+                7'd96: rom_value = 12'h630;
+                7'd97: rom_value = 12'h8fa;
+                7'd98: rom_value = 12'h7f5;
+                7'd99: rom_value = 12'hc94;
+                7'd100: rom_value = 12'h177;
+                7'd101: rom_value = 12'h9f5;
+                7'd102: rom_value = 12'h82a;
+                7'd103: rom_value = 12'h66d;
+                7'd104: rom_value = 12'h427;
+                7'd105: rom_value = 12'h13f;
+                7'd106: rom_value = 12'had5;
+                7'd107: rom_value = 12'h2f5;
+                7'd108: rom_value = 12'h833;
+                7'd109: rom_value = 12'h231;
+                7'd110: rom_value = 12'h9a2;
+                7'd111: rom_value = 12'ha22;
+                7'd112: rom_value = 12'haf4;
+                7'd113: rom_value = 12'h444;
+                7'd114: rom_value = 12'h193;
+                7'd115: rom_value = 12'h402;
+                7'd116: rom_value = 12'h477;
+                7'd117: rom_value = 12'h866;
+                7'd118: rom_value = 12'had7;
+                7'd119: rom_value = 12'h376;
+                7'd120: rom_value = 12'h6ba;
+                7'd121: rom_value = 12'h4bc;
+                7'd122: rom_value = 12'h752;
+                7'd123: rom_value = 12'h405;
+                7'd124: rom_value = 12'h83e;
+                7'd125: rom_value = 12'hb77;
+                7'd126: rom_value = 12'h375;
+                7'd127: rom_value = 12'h86a;
+                default: rom_value = 12'h000;
+            endcase
+        end
+    endfunction
+
+    always @(posedge clk) qspo <= rom_value(a);
+endmodule
+
+// Registered 128x12 ROM matching the original dist_mem_gen_6 IP.
+module dist_mem_gen_6 (
+    input  wire        clk,
+    input  wire [6:0]  a,
+    output reg  [11:0] qspo
+);
+    function automatic [11:0] rom_value(input [6:0] addr);
+        begin
+            case (addr)
+                7'd0: rom_value = 12'h001;
+                7'd1: rom_value = 12'h640;
+                7'd2: rom_value = 12'h028;
+                7'd3: rom_value = 12'h2ed;
+                7'd4: rom_value = 12'h9b1;
+                7'd5: rom_value = 12'h598;
+                7'd6: rom_value = 12'ha8b;
+                7'd7: rom_value = 12'h2af;
+                7'd8: rom_value = 12'h62f;
+                7'd9: rom_value = 12'hac8;
+                7'd10: rom_value = 12'h045;
+                7'd11: rom_value = 12'h21f;
+                7'd12: rom_value = 12'h9e4;
+                7'd13: rom_value = 12'hc40;
+                7'd14: rom_value = 12'h582;
+                7'd15: rom_value = 12'h8db;
+                7'd16: rom_value = 12'h9cc;
+                7'd17: rom_value = 12'h54b;
+                7'd18: rom_value = 12'h1c2;
+                7'd19: rom_value = 12'h3a8;
+                7'd20: rom_value = 12'h1bf;
+                7'd21: rom_value = 12'haea;
+                7'd22: rom_value = 12'h4d3;
+                7'd23: rom_value = 12'h76f;
+                7'd24: rom_value = 12'h7cc;
+                7'd25: rom_value = 12'h441;
+                7'd26: rom_value = 12'hcc9;
+                7'd27: rom_value = 12'h11b;
+                7'd28: rom_value = 12'h73d;
+                7'd29: rom_value = 12'h7c6;
+                7'd30: rom_value = 12'h372;
+                7'd31: rom_value = 12'hbd9;
+                7'd32: rom_value = 12'h973;
+                7'd33: rom_value = 12'h836;
+                7'd34: rom_value = 12'h0db;
+                7'd35: rom_value = 12'h357;
+                7'd36: rom_value = 12'ha79;
+                7'd37: rom_value = 12'h738;
+                7'd38: rom_value = 12'h2c8;
+                7'd39: rom_value = 12'h2aa;
+                7'd40: rom_value = 12'h39f;
+                7'd41: rom_value = 12'h703;
+                7'd42: rom_value = 12'h1cd;
+                7'd43: rom_value = 12'h763;
+                7'd44: rom_value = 12'hb3d;
+                7'd45: rom_value = 12'h9da;
+                7'd46: rom_value = 12'h766;
+                7'd47: rom_value = 12'h3f2;
+                7'd48: rom_value = 12'h586;
+                7'd49: rom_value = 12'h7d9;
+                7'd50: rom_value = 12'hce0;
+                7'd51: rom_value = 12'h1d0;
+                7'd52: rom_value = 12'ha89;
+                7'd53: rom_value = 12'h330;
+                7'd54: rom_value = 12'h548;
+                7'd55: rom_value = 12'ha77;
+                7'd56: rom_value = 12'h4fa;
+                7'd57: rom_value = 12'h41c;
+                7'd58: rom_value = 12'h401;
+                7'd59: rom_value = 12'h854;
+                7'd60: rom_value = 12'h625;
+                7'd61: rom_value = 12'h04c;
+                7'd62: rom_value = 12'hbb6;
+                7'd63: rom_value = 12'hbe0;
+                7'd64: rom_value = 12'h497;
+                7'd65: rom_value = 12'h98c;
+                7'd66: rom_value = 12'h18a;
+                7'd67: rom_value = 12'h4c3;
+                7'd68: rom_value = 12'h8fc;
+                7'd69: rom_value = 12'h5af;
+                7'd70: rom_value = 12'h845;
+                7'd71: rom_value = 12'h647;
+                7'd72: rom_value = 12'h98b;
+                7'd73: rom_value = 12'h22a;
+                7'd74: rom_value = 12'h49b;
+                7'd75: rom_value = 12'h88a;
+                7'd76: rom_value = 12'h8ff;
+                7'd77: rom_value = 12'hb6e;
+                7'd78: rom_value = 12'h8bd;
+                7'd79: rom_value = 12'h20d;
+                7'd80: rom_value = 12'h2df;
+                7'd81: rom_value = 12'h35f;
+                7'd82: rom_value = 12'had0;
+                7'd83: rom_value = 12'h4ce;
+                7'd84: rom_value = 12'ha0c;
+                7'd85: rom_value = 12'h22c;
+                7'd86: rom_value = 12'hbc2;
+                7'd87: rom_value = 12'h8da;
+                7'd88: rom_value = 12'h694;
+                7'd89: rom_value = 12'h4d7;
+                7'd90: rom_value = 12'h30c;
+                7'd91: rom_value = 12'hb8a;
+                7'd92: rom_value = 12'h06d;
+                7'd93: rom_value = 12'h50c;
+                7'd94: rom_value = 12'h407;
+                7'd95: rom_value = 12'h6d1;
+                7'd96: rom_value = 12'ha80;
+                7'd97: rom_value = 12'hbf5;
+                7'd98: rom_value = 12'h3e0;
+                7'd99: rom_value = 12'ha24;
+                7'd100: rom_value = 12'h3ad;
+                7'd101: rom_value = 12'h37c;
+                7'd102: rom_value = 12'h3fd;
+                7'd103: rom_value = 12'h956;
+                7'd104: rom_value = 12'h282;
+                7'd105: rom_value = 12'h74c;
+                7'd106: rom_value = 12'h949;
+                7'd107: rom_value = 12'h5ca;
+                7'd108: rom_value = 12'h604;
+                7'd109: rom_value = 12'h21c;
+                7'd110: rom_value = 12'h68e;
+                7'd111: rom_value = 12'h65a;
+                7'd112: rom_value = 12'h117;
+                7'd113: rom_value = 12'h13a;
+                7'd114: rom_value = 12'h495;
+                7'd115: rom_value = 12'ha0d;
+                7'd116: rom_value = 12'hc18;
+                7'd117: rom_value = 12'h030;
+                7'd118: rom_value = 12'h29b;
+                7'd119: rom_value = 12'h780;
+                7'd120: rom_value = 12'h8b5;
+                7'd121: rom_value = 12'h411;
+                7'd122: rom_value = 12'ha2e;
+                7'd123: rom_value = 12'h69c;
+                7'd124: rom_value = 12'h2a8;
+                7'd125: rom_value = 12'haba;
+                7'd126: rom_value = 12'h238;
+                7'd127: rom_value = 12'hcf0;
+                default: rom_value = 12'h000;
+            endcase
+        end
+    endfunction
+
+    always @(posedge clk) qspo <= rom_value(a);
+endmodule
+
+// Registered 128x12 ROM matching the original dist_mem_gen_7 IP.
+module dist_mem_gen_7 (
+    input  wire        clk,
+    input  wire [6:0]  a,
+    output reg  [11:0] qspo
+);
+    function automatic [11:0] rom_value(input [6:0] addr);
+        begin
+            case (addr)
+                7'd0: rom_value = 12'h011;
+                7'd1: rom_value = 12'hcf0;
+                7'd2: rom_value = 12'hac9;
+                7'd3: rom_value = 12'h238;
+                7'd4: rom_value = 12'h247;
+                7'd5: rom_value = 12'haba;
+                7'd6: rom_value = 12'ha59;
+                7'd7: rom_value = 12'h2a8;
+                7'd8: rom_value = 12'h665;
+                7'd9: rom_value = 12'h69c;
+                7'd10: rom_value = 12'h2d3;
+                7'd11: rom_value = 12'ha2e;
+                7'd12: rom_value = 12'h8f0;
+                7'd13: rom_value = 12'h411;
+                7'd14: rom_value = 12'h44c;
+                7'd15: rom_value = 12'h8b5;
+                7'd16: rom_value = 12'h581;
+                7'd17: rom_value = 12'h780;
+                7'd18: rom_value = 12'ha66;
+                7'd19: rom_value = 12'h29b;
+                7'd20: rom_value = 12'hcd1;
+                7'd21: rom_value = 12'h030;
+                7'd22: rom_value = 12'h0e9;
+                7'd23: rom_value = 12'hc18;
+                7'd24: rom_value = 12'h2f4;
+                7'd25: rom_value = 12'ha0d;
+                7'd26: rom_value = 12'h86c;
+                7'd27: rom_value = 12'h495;
+                7'd28: rom_value = 12'hbc7;
+                7'd29: rom_value = 12'h13a;
+                7'd30: rom_value = 12'hbea;
+                7'd31: rom_value = 12'h117;
+                7'd32: rom_value = 12'h6a7;
+                7'd33: rom_value = 12'h65a;
+                7'd34: rom_value = 12'h673;
+                7'd35: rom_value = 12'h68e;
+                7'd36: rom_value = 12'hae5;
+                7'd37: rom_value = 12'h21c;
+                7'd38: rom_value = 12'h6fd;
+                7'd39: rom_value = 12'h604;
+                7'd40: rom_value = 12'h737;
+                7'd41: rom_value = 12'h5ca;
+                7'd42: rom_value = 12'h3b8;
+                7'd43: rom_value = 12'h949;
+                7'd44: rom_value = 12'h5b5;
+                7'd45: rom_value = 12'h74c;
+                7'd46: rom_value = 12'ha7f;
+                7'd47: rom_value = 12'h282;
+                7'd48: rom_value = 12'h3ab;
+                7'd49: rom_value = 12'h956;
+                7'd50: rom_value = 12'h904;
+                7'd51: rom_value = 12'h3fd;
+                7'd52: rom_value = 12'h985;
+                7'd53: rom_value = 12'h37c;
+                7'd54: rom_value = 12'h954;
+                7'd55: rom_value = 12'h3ad;
+                7'd56: rom_value = 12'h2dd;
+                7'd57: rom_value = 12'ha24;
+                7'd58: rom_value = 12'h921;
+                7'd59: rom_value = 12'h3e0;
+                7'd60: rom_value = 12'h10c;
+                7'd61: rom_value = 12'hbf5;
+                7'd62: rom_value = 12'h281;
+                7'd63: rom_value = 12'ha80;
+                7'd64: rom_value = 12'h630;
+                7'd65: rom_value = 12'h6d1;
+                7'd66: rom_value = 12'h8fa;
+                7'd67: rom_value = 12'h407;
+                7'd68: rom_value = 12'h7f5;
+                7'd69: rom_value = 12'h50c;
+                7'd70: rom_value = 12'hc94;
+                7'd71: rom_value = 12'h06d;
+                7'd72: rom_value = 12'h177;
+                7'd73: rom_value = 12'hb8a;
+                7'd74: rom_value = 12'h9f5;
+                7'd75: rom_value = 12'h30c;
+                7'd76: rom_value = 12'h82a;
+                7'd77: rom_value = 12'h4d7;
+                7'd78: rom_value = 12'h66d;
+                7'd79: rom_value = 12'h694;
+                7'd80: rom_value = 12'h427;
+                7'd81: rom_value = 12'h8da;
+                7'd82: rom_value = 12'h13f;
+                7'd83: rom_value = 12'hbc2;
+                7'd84: rom_value = 12'had5;
+                7'd85: rom_value = 12'h22c;
+                7'd86: rom_value = 12'h2f5;
+                7'd87: rom_value = 12'ha0c;
+                7'd88: rom_value = 12'h833;
+                7'd89: rom_value = 12'h4ce;
+                7'd90: rom_value = 12'h231;
+                7'd91: rom_value = 12'had0;
+                7'd92: rom_value = 12'h9a2;
+                7'd93: rom_value = 12'h35f;
+                7'd94: rom_value = 12'ha22;
+                7'd95: rom_value = 12'h2df;
+                7'd96: rom_value = 12'haf4;
+                7'd97: rom_value = 12'h20d;
+                7'd98: rom_value = 12'h444;
+                7'd99: rom_value = 12'h8bd;
+                7'd100: rom_value = 12'h193;
+                7'd101: rom_value = 12'hb6e;
+                7'd102: rom_value = 12'h402;
+                7'd103: rom_value = 12'h8ff;
+                7'd104: rom_value = 12'h477;
+                7'd105: rom_value = 12'h88a;
+                7'd106: rom_value = 12'h866;
+                7'd107: rom_value = 12'h49b;
+                7'd108: rom_value = 12'had7;
+                7'd109: rom_value = 12'h22a;
+                7'd110: rom_value = 12'h376;
+                7'd111: rom_value = 12'h98b;
+                7'd112: rom_value = 12'h6ba;
+                7'd113: rom_value = 12'h647;
+                7'd114: rom_value = 12'h4bc;
+                7'd115: rom_value = 12'h845;
+                7'd116: rom_value = 12'h752;
+                7'd117: rom_value = 12'h5af;
+                7'd118: rom_value = 12'h405;
+                7'd119: rom_value = 12'h8fc;
+                7'd120: rom_value = 12'h83e;
+                7'd121: rom_value = 12'h4c3;
+                7'd122: rom_value = 12'hb77;
+                7'd123: rom_value = 12'h18a;
+                7'd124: rom_value = 12'h375;
+                7'd125: rom_value = 12'h98c;
+                7'd126: rom_value = 12'h86a;
+                7'd127: rom_value = 12'h497;
+                default: rom_value = 12'h000;
+            endcase
+        end
+    endfunction
+
+    always @(posedge clk) qspo <= rom_value(a);
+endmodule
+
+
