@@ -12,7 +12,7 @@
 | Firmware release build với warning là lỗi | PASS |
 | Regression controller RO-PUF | PASS |
 | Regression sửa lỗi/từ chối BCH | PASS |
-| FIPS 202 SHAKE256 KAT | PASS |
+| FIPS 202 SHAKE256 KAT một vector cố định | PASS |
 | Loopback server/client Kyber-512 cũ | PASS |
 | Regression AXI start/restart/key-match/zeroize/retry | PASS |
 | Mô phỏng full-pipeline firmware/UART | PASS |

@@ -25,7 +25,7 @@ thuộc workspace phát triển cũ.
 | Clock PL | 50 MHz tại chân N18 |
 | UART | 115200 baud, RX W8, TX W9 |
 | Regression RTL/test | PASS |
-| KAT tham chiếu SHAKE256 | PASS, khớp từng bit |
+| KAT tham chiếu SHAKE256 | PASS một vector cố định, khớp từng bit |
 | Timing sau route | PASS, WNS +4.108 ns, WHS +0.048 ns |
 | DRC sau route | PASS, 0 lỗi |
 | Stress trên board | PASS, 1.000/1.000 và 10.000/10.000 giao dịch logic |
@@ -90,6 +90,9 @@ make system
 quả khớp khóa server/client và không truyền shared secret qua UART. Có thể tạo
 bản chẩn đoán bằng `make -C firmware clean all RELEASE_BUILD=0`, nhưng tuyệt đối
 không commit hoặc phân phối ảnh chẩn đoán đó như artifact release.
+
+Kết quả regression gần nhất, môi trường chạy, checksum và giới hạn phạm vi FIPS
+được ghi tại `docs/VERIFICATION_REPORT_2026-08-30.md`.
 
 ## Build lại bằng Vivado
 

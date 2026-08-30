@@ -82,13 +82,13 @@ module tb_kdf_kat(input wire clk);
                     else
                         $display("[KDF_KAT]   word[%0d]: got=%08h OK", i, got_w);
                 end
+                $fatal(1, "KDF SHAKE256 known-answer mismatch");
             end
             $finish;
         end
 
         if (cyc > 5000) begin
-            $display("[KDF_KAT] *** TIMEOUT at cycle %0d ***", cyc);
-            $finish;
+            $fatal(1, "KDF SHAKE256 KAT timeout at cycle %0d", cyc);
         end
     end
 

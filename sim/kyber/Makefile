@@ -1,4 +1,4 @@
-# Makefile for Kyber-512 KAT Verification (Verilator)
+# Makefile for Kyber-512 functional loopback verification (Verilator)
 # Usage: make kat
 #        make clean
 
@@ -65,7 +65,7 @@ obj_dir/$(SIM_EXE): $(COMMON_SRCS) $(HASH_CORE_SRCS) $(KYBER_SRCS) $(TB_SRCS)
 	$(MAKE) -C obj_dir -f V$(TOP_MODULE).mk V$(TOP_MODULE)
 
 kat: obj_dir/$(SIM_EXE)
-	@echo "=== Running Kyber-512 Full KAT Verification ==="
+	@echo "=== Running legacy Kyber-512 functional loopback verification ==="
 	@obj_dir/$(SIM_EXE)
 
 obj_dir_axi/$(AXI_EXE): $(COMMON_SRCS) $(HASH_CORE_SRCS) $(KYBER_SRCS) ../../rtl/kyber/kyber_axi_wrapper.v tb_axi_main.cpp axi_wrapper_tb.sv

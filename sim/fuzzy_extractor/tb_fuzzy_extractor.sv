@@ -46,8 +46,7 @@ module tb_fuzzy_extractor;
 
     initial begin
         repeat (200000) @(posedge clk);
-        $display("SIMULATION TIMEOUT");
-        $finish;
+        $fatal(1, "Fuzzy-extractor simulation timeout");
     end
 
     logic [3:0] prev_state;
@@ -151,11 +150,13 @@ module tb_fuzzy_extractor;
         run_op(0, R0, '0);
         check("enroll: helper deterministic", helper_out == H);
 
-        if (failures == 0)
+        if (failures == 0) begin
             $display("ALL %0d TESTS PASSED", tests);
-        else
+            $finish;
+        end else begin
             $display("%0d/%0d TESTS FAILED", failures, tests);
-        $finish;
+            $fatal(1, "Fuzzy-extractor regression failed");
+        end
     end
 
 endmodule
