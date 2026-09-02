@@ -18,13 +18,33 @@ module kp_counter_puf #(
     input  logic cnt_rst,
     output logic [SIZE-1:0] q
 );
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+    // cnt_rst is generated in the system-clock domain while this counter is
+    // clocked by the selected RO.  Assert reset asynchronously (also works
+    // when the RO is stopped), then release it synchronously to the RO clock.
+    wire local_arst_n = rst_n & ~cnt_rst;
+    (* ASYNC_REG = "TRUE" *) logic [1:0] reset_release;
+    (* ASYNC_REG = "TRUE" *) logic en_meta, en_sync;
+    wire domain_rst_n = reset_release[1];
+
+    always_ff @(posedge clk or negedge local_arst_n) begin
+        if (!local_arst_n)
+            reset_release <= 2'b00;
+        else
+            reset_release <= {reset_release[0], 1'b1};
+    end
+
+    // Synchronize count_en before it controls a register in the RO domain.
+    // Both the synchronizer and counter use the locally synchronized reset.
+    always_ff @(posedge clk or negedge domain_rst_n) begin
+        if (!domain_rst_n) begin
+            en_meta <= 1'b0;
+            en_sync <= 1'b0;
             q <= '0;
-        end else if (cnt_rst) begin
-            q <= '0;
-        end else if (en) begin
-            q <= q + 1;
+        end else begin
+            en_meta <= en;
+            en_sync <= en_meta;
+            if (en_sync)
+                q <= q + 1'b1;
         end
     end
 endmodule

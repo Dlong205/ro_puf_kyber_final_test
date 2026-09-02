@@ -6,6 +6,11 @@ root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 required=(
   rtl/top/Kyber_System_Top.sv
   rtl/puf/kp_puf_top.sv
+  rtl/puf/kp_ro_cell.sv
+  rtl/puf/kp_ro_cell_model.sv
+  rtl/puf/kp_ro_cell_xilinx.sv
+  rtl/puf/kp_ro_cell_asic.sv
+  rtl/asic/kp_asic_ro_macro_blackbox.sv
   rtl/fuzzy_extractor/fuzzy_extractor.sv
   rtl/top/kdf_keccak.sv
   rtl/kyber/kyber_axi_wrapper.v

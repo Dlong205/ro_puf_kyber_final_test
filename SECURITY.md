@@ -1,6 +1,6 @@
 # Trạng thái bảo mật
 
-`0.1.0-rc3` là ứng viên nghiên cứu/đánh giá FPGA. Thiết kế không tuyên bố đạt
+`0.1.0-rc4` là ứng viên nghiên cứu/đánh giá FPGA. Thiết kế không tuyên bố đạt
 FIPS 203, FIPS 140-3, Common Criteria, constant-time hay khả năng chống
 side-channel/fault-injection.
 
@@ -14,7 +14,8 @@ và cycle counter RISC-V. Cơ chế này tránh lặp input đơn giản trong m
 nhưng không phải TRNG đã đặc trưng hay DRBG được phê duyệt. Sản phẩm thực tế cần
 nguồn entropy và thiết kế sinh số ngẫu nhiên được xác minh độc lập.
 
-RC3 đã bỏ hoàn toàn retry Kyber. Các lỗi FIFO starvation/underfill của NTT/SHAKE
+RC3 đã bỏ hoàn toàn retry Kyber; RC4 giữ nguyên logic đó và tách các backend
+phụ thuộc FPGA để chuẩn bị cho ASIC. Các lỗi FIFO starvation/underfill của NTT/SHAKE
 được sửa ở RTL và được kiểm tra bằng 1.024 giao dịch raw single-attempt trong mô
 phỏng cùng 10.000 giao dịch end-to-end trên board, đều không lỗi. Kết quả này làm
 tăng độ tin cậy chức năng nhưng không chứng minh mọi input, không phải formal

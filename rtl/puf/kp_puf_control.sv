@@ -129,12 +129,14 @@ module kp_puf_control #(
             S_LOAD: begin
                 lfsr_dv = 1'b1;
                 lfsr_en = 1'b1;
-                ro_en = 1'b1;
+                // Load the challenge while every RO is disabled.
+                ro_en = 1'b0;
                 cnt_rst = 1'b1;
                 busy = 1'b1;
             end
             S_RESET: begin
-                ro_en = 1'b1;
+                // RESET_CYCLES is also the challenge/mux settling window.
+                ro_en = 1'b0;
                 cnt_rst = 1'b1;
                 busy = 1'b1;
             end

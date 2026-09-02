@@ -8,7 +8,7 @@ VERILATOR_FLAGS = --cc --exe --timing \
     -Wno-UNSIGNED -Wno-EOFNEWLINE -Wno-WIDTHTRUNC -Wno-WIDTHEXPAND \
     -Wno-MODDUP -Wno-TIMESCALEMOD -Wno-BLKANDNBLK -Wno-IMPLICIT -Wno-IMPLICITSTATIC \
     -Wno-CASEOVERLAP -Wno-CASEX -Wno-fatal \
-    -DVERILATOR
+    -DVERILATOR -DKP_RO_BEHAVIORAL
 
 TOP_MODULE = tb_kp_puf_simple
 SIM_EXE = V$(TOP_MODULE)
@@ -17,6 +17,7 @@ TB_CPP = tb_kp_puf_main.cpp
 TB_SV  = tb_kp_puf.sv
 
 RTL_SRCS = ../../rtl/puf/kp_ro_cell.sv \
+           ../../rtl/puf/kp_ro_cell_model.sv \
            ../../rtl/puf/kp_puf_cells.sv \
            ../../rtl/puf/kp_puf_control.sv \
            ../../rtl/puf/kp_puf_top.sv

@@ -1,5 +1,27 @@
 # Lịch sử thay đổi
 
+## 0.1.0-rc4 — 2026-09-03
+
+- Tách RO-PUF thành backend mô phỏng, LUT Xilinx và macro ASIC black-box; cô
+  lập toàn bộ `LUT6_L` vào một file dành riêng cho FPGA.
+- Cô lập `CARRY4` BCH vào backend Xilinx và thêm đường so sánh tổng hợp được
+  bằng standard cell khi bật `KP_TARGET_ASIC`.
+- Thay wrapper multiplier NTT mang tên Xilinx bằng phép nhân RTL trung lập;
+  Vivado vẫn infer đúng 4 DSP48E1 mà không instantiate primitive DSP48.
+- Bổ sung reset asynchronous-assert/synchronous-release và đồng bộ enable cho
+  hai counter miền clock RO, cùng cổng `make asic-portability`.
+- PASS full regression, ASIC-generic elaboration, 12/12 ca fuzzy extractor
+  portable, 10.004 vector multiplier và audit netlist 128/128 feedback RO.
+- Build lại XC7Z020 ở 50 MHz: WNS `+3,663 ns`, WHS `+0,056 ns`, 0 lỗi DRC,
+  51.682/53.200 LUT, 30.554 register, 23,5 BRAM tile và 4 DSP.
+- Nạp image mới và PASS INFO, enroll, reconstruct, stress 100/100,
+  1.000/1.000 và 10.000/10.000; run dài đạt 29,119 ms/giao dịch và
+  34,342 giao dịch/s.
+- Bitstream RC4 SHA-256:
+  `bd8153f8ab58f0a704b2f696c54ed1f57d1a31b951d273f547b33926d239f348`.
+- Bổ sung thư mục `phan_cong_nhom/` để tách phạm vi Kyber KEM, lưu khóa, KDF
+  và RO-PUF cho Đạt–Tùng, Minh, Việt Anh và Long.
+
 ## 0.1.0-rc3 — 2026-08-30
 
 - Loại bỏ retry Kyber khỏi firmware/giao thức; protocol lên v1.2, capability

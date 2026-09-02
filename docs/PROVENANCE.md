@@ -55,4 +55,4 @@ thể hiện việc import file không tự nó chứng minh quyền tác giả.
 5. Chọn top-level license tương thích với source RO-PUF chịu GPL và nghĩa vụ của
    mọi thành phần khác.
 
-Cho đến khi hoàn thành các mục này, chỉ chia sẻ RC3 trong repo riêng tư của nhóm.
+Cho đến khi hoàn thành các mục này, chỉ chia sẻ RC4 trong repo riêng tư của nhóm.

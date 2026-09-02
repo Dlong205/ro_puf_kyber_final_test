@@ -3,14 +3,14 @@
 Quy trình chỉ nạp cấu hình PL volatile, không ghi QSPI và không dùng Xilinx IP
 sinh tự động.
 
-## Artifact RC3
+## Artifact RC4
 
 - Part: `xc7z020clg400-2`
 - Clock: 50 MHz tại N18
 - Bitstream: `Kyber_System_Top.bit`, 4.045.676 byte
-- SHA-256: `c78724fd9007d21791caf654b8fe8f08a44653bfa028e6a15af80d7425f04d89`
-- Timing: WNS `+4,371 ns`, WHS `+0,056 ns`, TNS/THS `0`
-- LUT: 51.738/53.200 (`97,25%`)
+- SHA-256: `bd8153f8ab58f0a704b2f696c54ed1f57d1a31b951d273f547b33926d239f348`
+- Timing: WNS `+3,663 ns`, WHS `+0,056 ns`, TNS/THS `0`
+- LUT: 51.682/53.200 (`97,15%`)
 - Protocol: 1.2, release capability `0x06`, không retry
 
 ## Đấu dây
@@ -69,8 +69,8 @@ python3 -u host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin 
 python3 -u host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin stress --count 10000
 ```
 
-RC3 tham chiếu PASS lần lượt 100/100, 1.000/1.000 và 10.000/10.000. Run dài có
-latency 28,914 ms/giao dịch, throughput 34,585 giao dịch/s. Khi host báo timeout,
+RC4 tham chiếu PASS lần lượt 100/100, 1.000/1.000 và 10.000/10.000. Run dài có
+latency 29,119 ms/giao dịch, throughput 34,342 giao dịch/s. Khi host báo timeout,
 không tiếp tục gửi lệnh lên luồng mất đồng bộ; nạp lại bitstream rồi chạy INFO.
 
 ## Warning implementation đã biết
@@ -80,8 +80,10 @@ không tiếp tục gửi lệnh lên luồng mất đồng bộ; nạp lại bi
 - 4 `DPOP-2`: DSP NTT không dùng MREG; timing 50 MHz vẫn đạt.
 - 1 `ZPS7-1`: dự kiến vì thiết kế pure-PL không dùng PS7.
 - `REQP-1839/1840`: 0 sau khi reset sequencer/status liên quan BRAM được đồng bộ.
+- Methodology có 72 `TIMING-17` vì clock RO bất định không được khai báo timing
+  clock; report CDC tự động không thay thế review CDC/RDC cho miền RO.
 
-Thiết kế dùng 97,25% LUT nên không tăng clock hay thêm logic mà không chạy lại
+Thiết kế dùng 97,15% LUT nên không tăng clock hay thêm logic mà không chạy lại
 implementation/timing/DRC.
 
 ## Qualification còn thiếu

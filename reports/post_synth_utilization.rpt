@@ -1,7 +1,7 @@
 Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2020.1 (lin64) Build 2902540 Wed May 27 19:54:35 MDT 2020
-| Date         : Sun Aug 30 17:19:31 2026
+| Date         : Wed Sep  2 23:47:22 2026
 | Host         : donglong-P7xxTM-1 running 64-bit Ubuntu 22.04.5 LTS
 | Command      : report_utilization -file /home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/reports/post_synth_utilization.rpt
 | Design       : Kyber_System_Top
@@ -30,13 +30,13 @@ Table of Contents
 +----------------------------+-------+-------+-----------+-------+
 |          Site Type         |  Used | Fixed | Available | Util% |
 +----------------------------+-------+-------+-----------+-------+
-| Slice LUTs*                | 52268 |   128 |     53200 | 98.25 |
-|   LUT as Logic             | 51710 |   128 |     53200 | 97.20 |
+| Slice LUTs*                | 52207 |   128 |     53200 | 98.13 |
+|   LUT as Logic             | 51649 |   128 |     53200 | 97.08 |
 |   LUT as Memory            |   558 |     0 |     17400 |  3.21 |
 |     LUT as Distributed RAM |    56 |     0 |           |       |
 |     LUT as Shift Register  |   502 |     0 |           |       |
-| Slice Registers            | 30546 |     0 |    106400 | 28.71 |
-|   Register as Flip Flop    | 30546 |     0 |    106400 | 28.71 |
+| Slice Registers            | 30554 |     0 |    106400 | 28.72 |
+|   Register as Flip Flop    | 30554 |     0 |    106400 | 28.72 |
 |   Register as Latch        |     0 |     0 |    106400 |  0.00 |
 | F7 Muxes                   |   824 |     0 |     26600 |  3.10 |
 | F8 Muxes                   |   198 |     0 |     13300 |  1.49 |
@@ -57,7 +57,7 @@ Table of Contents
 | 0     |            _ |       Reset |            - |
 | 0     |          Yes |           - |            - |
 | 14    |          Yes |           - |          Set |
-| 9558  |          Yes |           - |        Reset |
+| 9566  |          Yes |           - |        Reset |
 | 45    |          Yes |         Set |            - |
 | 20929 |          Yes |       Reset |            - |
 +-------+--------------+-------------+--------------+
@@ -153,17 +153,17 @@ Table of Contents
 +----------+-------+---------------------+
 | Ref Name |  Used | Functional Category |
 +----------+-------+---------------------+
-| LUT6     | 22685 |                 LUT |
+| LUT6     | 22684 |                 LUT |
 | FDRE     | 20929 |        Flop & Latch |
-| LUT5     | 16909 |                 LUT |
-| LUT3     | 13360 |                 LUT |
-| FDCE     |  9558 |        Flop & Latch |
-| LUT4     |  6206 |                 LUT |
+| LUT5     | 16843 |                 LUT |
+| LUT3     | 13359 |                 LUT |
+| FDCE     |  9566 |        Flop & Latch |
+| LUT4     |  6207 |                 LUT |
 | LUT2     |  2392 |                 LUT |
 | MUXF7    |   824 |               MuxFx |
 | CARRY4   |   511 |          CarryLogic |
 | SRL16E   |   501 |  Distributed Memory |
-| LUT1     |   298 |                 LUT |
+| LUT1     |   302 |                 LUT |
 | MUXF8    |   198 |               MuxFx |
 | RAMD32   |    84 |  Distributed Memory |
 | FDSE     |    45 |        Flop & Latch |

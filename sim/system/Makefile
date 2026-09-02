@@ -11,7 +11,8 @@ FLAGS = --cc --exe --timing --top-module $(TOP) --Mdir obj_dir \
         -Wno-CASEINCOMPLETE -Wno-MULTITOP -Wno-MULTIDRIVEN \
         -Wno-UNSIGNED -Wno-EOFNEWLINE -Wno-WIDTHTRUNC -Wno-WIDTHEXPAND \
         -Wno-MODDUP -Wno-TIMESCALEMOD -Wno-BLKANDNBLK -Wno-IMPLICIT \
-        -Wno-IMPLICITSTATIC -Wno-CASEOVERLAP -Wno-CASEX -Wno-fatal
+        -Wno-IMPLICITSTATIC -Wno-CASEOVERLAP -Wno-CASEX -Wno-fatal \
+        -DKP_RO_BEHAVIORAL
 
 COMMON_SRCS = ../../rtl/common/generic_blk_mem_wrapper.sv \
               ../../rtl/common/generic_c_shift_ram_wrapper.sv \
@@ -66,6 +67,7 @@ FE_SRCS = $(FE_DIR)/bch_blank_ecc.v \
           $(FE_DIR)/bch_syndrome_method2.v \
           $(FE_DIR)/buff.v \
           $(FE_DIR)/compare_cla.v \
+          $(FE_DIR)/compare_cla_xilinx.v \
           $(FE_DIR)/fifo.v \
           $(FE_DIR)/matrix.v \
           $(FE_DIR)/util.v \
@@ -75,6 +77,7 @@ FE_SRCS = $(FE_DIR)/bch_blank_ecc.v \
           ../fuzzy_extractor/xilinx_carry4_stub.v
 
 PUF_SRCS = ../../rtl/puf/kp_ro_cell.sv \
+           ../../rtl/puf/kp_ro_cell_model.sv \
            ../../rtl/puf/kp_puf_cells.sv \
            ../../rtl/puf/kp_puf_control.sv \
            ../../rtl/puf/kp_puf_top.sv \

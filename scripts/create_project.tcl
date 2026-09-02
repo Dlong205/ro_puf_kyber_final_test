@@ -31,6 +31,7 @@ set sources [list \
     [file join $root_dir rtl soc soc_peripherals.sv] \
     [file join $root_dir rtl soc riscv_soc.sv] \
     [file join $root_dir rtl puf kp_ro_cell.sv] \
+    [file join $root_dir rtl puf kp_ro_cell_xilinx.sv] \
     [file join $root_dir rtl puf kp_puf_cells.sv] \
     [file join $root_dir rtl puf kp_puf_control.sv] \
     [file join $root_dir rtl puf kp_puf_top.sv] \
