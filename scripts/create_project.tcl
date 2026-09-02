@@ -23,6 +23,7 @@ set sources [list \
     [file join $root_dir rtl common generic_c_shift_ram_wrapper.sv] \
     [file join $root_dir rtl common generic_dist_mem_wrapper.sv] \
     [file join $root_dir rtl common keccak_pkg.sv] \
+    [file join $root_dir rtl hash_core fips202_sponge.sv] \
     [file join $root_dir rtl kyber kyber_axi_wrapper.v] \
     [file join $root_dir rtl top kdf_keccak.sv] \
     [file join $root_dir rtl top Kyber_System_Top.sv] \

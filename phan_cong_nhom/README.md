@@ -6,21 +6,25 @@ tránh tồn tại nhiều phiên bản khác nhau của cùng một module.
 
 ## Baseline chung
 
-- Commit nền đã xác nhận: `c3a55be` trên nhánh `codex/asic-portability`.
+- Mốc nền bất biến: tag `fpga-rc4-baseline` tại commit `6f734fc`.
 - FPGA XC7Z020 ở 50 MHz: implementation/timing/DRC PASS, 0 net chưa route.
 - Board: INFO, enroll, reconstruct và stress 10.000/10.000 PASS.
 - Kyber hiện tại là Kyber-512 cũ, chưa phải FIPS 203 ML-KEM-512.
-- KDF SHAKE256 đã có một KAT; bộ kiểm thử FIPS 202 đầy đủ chưa hoàn thành.
+- Bốn primitive FIPS 202 byte-oriented cho ML-KEM đã PASS 50/50 test.
 - Public release vẫn bị chặn bởi quyền phân phối Kyber RTL và top-level license.
 
 ## Phân chia nội dung
 
 | Thành viên | Nội dung | Trạng thái hiện tại | Thư mục |
 |---|---|---|---|
-| Đạt và Tùng | Kyber KEM | Functional baseline PASS; FIPS 203 chưa đạt | [`01_kyber_kem_dat_tung/`](01_kyber_kem_dat_tung/README.md) |
-| Minh | Lưu khóa | Có zeroize và không xuất secret; kiến trúc lưu khóa chưa chốt | [`02_luu_khoa_minh/`](02_luu_khoa_minh/README.md) |
-| Việt Anh | KDF | SHAKE256 KAT PASS; FIPS 202 coverage còn thiếu | [`03_kdf_viet_anh/`](03_kdf_viet_anh/README.md) |
-| Long | RO-PUF | RTL/board/backend split PASS; qualification và ASIC macro còn thiếu | [`04_ro_puf_long/`](04_ro_puf_long/README.md) |
+| Đạt và Tùng | Nghiên cứu Kyber KEM | Functional baseline PASS; lập gap FIPS 203 | [`01_kyber_kem_dat_tung/`](01_kyber_kem_dat_tung/README.md) |
+| Minh | Nghiên cứu lưu khóa | Có zeroize và không xuất secret; kiến trúc lưu khóa chưa chốt | [`02_luu_khoa_minh/`](02_luu_khoa_minh/README.md) |
+| Việt Anh | Nghiên cứu KDF | FIPS 202 byte-oriented PASS 50/50 | [`03_kdf_viet_anh/`](03_kdf_viet_anh/README.md) |
+| Long | Chủ trì toàn bộ implementation | Tích hợp, test, RO-PUF và backend FPGA/ASIC | [`04_ro_puf_long/`](04_ro_puf_long/README.md) |
+
+Các thành viên Đạt, Tùng, Minh và Việt Anh cung cấp nghiên cứu/đối chiếu. Long
+là người thực hiện thay đổi RTL, tích hợp, chạy gate và chốt artifact để tránh
+nhiều nhánh implementation không đồng bộ.
 
 ## Quy tắc làm việc chung
 

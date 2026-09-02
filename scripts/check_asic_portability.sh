@@ -51,6 +51,7 @@ common_sources=(
 )
 
 hash_sources=(
+  "$root_dir/rtl/hash_core/fips202_sponge.sv"
   "$root_dir/rtl/hash_core/ALGORITHM.v"
   "$root_dir/rtl/hash_core/THETA1.v"
   "$root_dir/rtl/hash_core/THETA2_RHO_PI.v"

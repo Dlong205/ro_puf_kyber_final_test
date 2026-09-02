@@ -21,7 +21,8 @@ COMMON_SRCS = ../../rtl/common/generic_blk_mem_wrapper.sv \
               ../../rtl/common/generic_mult.sv \
               ../../rtl/common/generic_fifo.sv
 
-HASH_SRCS = ../../rtl/hash_core/ALGORITHM.v \
+HASH_SRCS = ../../rtl/hash_core/fips202_sponge.sv \
+            ../../rtl/hash_core/ALGORITHM.v \
             ../../rtl/hash_core/THETA1.v \
             ../../rtl/hash_core/THETA2_RHO_PI.v \
             ../../rtl/hash_core/CHI1.v \

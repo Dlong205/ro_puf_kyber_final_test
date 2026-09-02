@@ -13,11 +13,12 @@ package keccak_pkg;
     parameter int CAPACITY_SHAKE_128 = 256;
     parameter int CAPACITY_SHAKE_256 = 512;
     
-    // Mode encoding (matches TOP_MULTI.v)
+    // Canonical mode encoding used by sha3_shake_core and fips202_sponge.
+    // Keep this mapping stable: legacy Kyber adapters depend on it.
     typedef enum logic [1:0] {
         MODE_SHA3_512  = 2'b00,
-        MODE_SHAKE_128 = 2'b01,
-        MODE_SHAKE_256 = 2'b10,
+        MODE_SHAKE_256 = 2'b01,
+        MODE_SHAKE_128 = 2'b10,
         MODE_SHA3_256  = 2'b11
     } mode_t;
     

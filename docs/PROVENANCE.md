@@ -39,9 +39,15 @@ là ứng viên kỹ thuật hiện tại và phải xác nhận từng file tr�
 - `rtl/kyber/ref/sha3_shake_core.v`
 - `rtl/kyber/ref/decode_keccak.v`
 - `rtl/top/kdf_keccak.sv`
+- `rtl/hash_core/fips202_sponge.sv`
 
 Không thêm tên tác giả hoặc SPDX header trước khi xác minh lịch sử; một commit Git
 thể hiện việc import file không tự nó chứng minh quyền tác giả.
+
+Vector byte-oriented trong `sim/fips202/nist_cavp_vectors.txt` là tập con được
+trích từ response file CAVP do NIST công bố. URL, ngày CAVS và checksum hai file
+zip nguồn được ghi trong file vector; `import_nist_cavp.py` là script dự án dùng
+để tái tạo và kiểm tra tập con đó.
 
 ## Bằng chứng cần có để phát hành công khai
 

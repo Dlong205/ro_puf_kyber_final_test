@@ -12,7 +12,8 @@ này phân biệt hoàn thành nội dung triển khai FPGA với public/product
 | Firmware release build | PASS |
 | RO-PUF controller regression | PASS |
 | BCH enroll/correct/reject regression | PASS 12/12 |
-| SHAKE256 KDF KAT | PASS |
+| FIPS 202 byte-oriented cho ML-KEM | PASS 50/50, gồm 20 vector NIST CAVP |
+| SHAKE256 KDF KAT | PASS sau khi tích hợp controller mới |
 | Kyber functional loopback | PASS |
 | AXI start/status/key-match/zeroize | PASS |
 | Kyber single-attempt 1.024 vector | PASS, mismatch 0, retry 0 |
@@ -39,9 +40,10 @@ chứng. Run dài 10.000 đạt 100%, latency trung bình 29,119 ms và throughp
 34,342 giao dịch/s. Primitive LUT6/CARRY4 đã được tách khỏi source list ASIC và
 multiplier NTT không còn phụ thuộc tên/primitive DSP48.
 
-Điều này không đồng nghĩa sản phẩm bảo mật production. SHAKE256 mới có KAT cho
-đường KDF cụ thể; Kyber core là thiết kế cũ và chưa được đối chiếu vector FIPS
-203 ML-KEM-512 chính thức. RO-PUF mới được đo trên một board ở điều kiện phòng.
+Điều này không đồng nghĩa sản phẩm bảo mật production. Bốn primitive FIPS 202
+ML-KEM cần dùng đã PASS regression byte-oriented, nhưng Kyber core vẫn là thiết
+kế cũ và chưa được đối chiếu vector FIPS 203 ML-KEM-512 chính thức. RO-PUF mới
+được đo trên một board ở điều kiện phòng.
 
 ## Điều kiện NO-GO trước public/production release
 

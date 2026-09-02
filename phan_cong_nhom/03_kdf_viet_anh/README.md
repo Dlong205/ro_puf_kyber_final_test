@@ -1,6 +1,6 @@
 # Việt Anh — KDF, Keccak và FIPS 202
 
-## Phạm vi phụ trách
+## Phạm vi nghiên cứu/đối chiếu
 
 - Keccak-f[1600], SHA3/SHAKE padding, absorb/squeeze và byte/bit ordering.
 - SHAKE256 KDF từ khóa fuzzy extractor sang seed dùng bởi Kyber.
@@ -14,27 +14,21 @@
 - Các file Keccak/SHAKE trong `rtl/kyber/ref/`
 - `sim/kdf_kat/`
 
-## Trạng thái RC4
+## Trạng thái hiện tại
 
-- KDF SHAKE256 với input 24 byte: PASS bit-exact so với Python
-  `hashlib.shake_256`.
+- SHA3-256, SHA3-512, SHAKE128 và SHAKE256 byte-oriented: PASS 50/50, gồm
+  20 vector NIST CAVP, biên rate, multi-block, stall và reset.
+- KDF SHAKE256 với input 24 byte: PASS bit-exact sau khi tích hợp sponge mới.
 - Full-system PUF → KDF → Kyber: PASS.
-- Chưa có ma trận KAT đầy đủ cho SHA3-256, SHAKE128, SHAKE256, input rỗng,
-  boundary rate và multi-block.
-- PASS hiện tại không đồng nghĩa toàn bộ Keccak RTL đã được chứng nhận FIPS 202.
+- Chưa hỗ trợ SHA3-224/SHA3-384 hoặc message bit-oriented; PASS không đồng nghĩa
+  triển khai đã được chứng nhận CAVP.
 
 ## Việc tiếp theo
 
-1. Chốt API theo mode SHA3-256/SHAKE128/SHAKE256 và tài liệu hóa rate,
-   suffix/domain bits, padding `pad10*1`, endianness.
-2. Thêm vector NIST cho input rỗng, ngắn, đúng/sát biên rate, multi-block và
-   output squeeze qua nhiều block.
-3. So sánh bit-exact với ít nhất một implementation tham chiếu độc lập.
-4. Kiểm tra reset giữa absorb/squeeze, back-to-back request, valid/ready stall
-   và độ dài không hợp lệ.
-5. Xác định hàm hash/XOF/KDF nào FIPS 203 yêu cầu và thống nhất interface với
-   nhóm Kyber trước khi sửa datapath.
-6. Thêm cổng `make fips202` chạy toàn bộ KAT và đưa vào release-check/CI.
+1. Review mapping FIPS 203 của `H`, `G`, `J`, PRF và XOF sang bốn mode đã chốt.
+2. Đối chiếu endianness/serialization tại ranh giới Keccak ↔ ML-KEM.
+3. Đề xuất thêm vector CAVP hoặc ACVP coverage còn thiếu nếu cần chứng nhận.
+4. Review báo cáo do Long chạy; mọi thay đổi RTL và tích hợp do Long thực hiện.
 
 ## Definition of Done
 
@@ -47,6 +41,7 @@
 ## Lệnh kiểm tra hiện có
 
 ```sh
+make fips202
 make kdf
 make kyber
 make system
