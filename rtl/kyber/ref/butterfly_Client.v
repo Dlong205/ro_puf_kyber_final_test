@@ -175,8 +175,8 @@ always @(posedge clk) begin
 	quo1 <= q1;
 end
 
-mult_gen_0 M0(.CLK(clk),.A(diff_in0_reg),.B(tw_reg[11:0]),.P(prod0));
-mult_gen_0 M1(.CLK(clk),.A(diff_in1_reg),.B(tw_reg[23:12]),.P(prod1));
+ntt_mult_12x12 M0(.CLK(clk),.A(diff_in0_reg),.B(tw_reg[11:0]),.P(prod0));
+ntt_mult_12x12 M1(.CLK(clk),.A(diff_in1_reg),.B(tw_reg[23:12]),.P(prod1));
 reduc R0(.clk(clk),.c(prod0),.d(red0),.q(q0));
 reduc R1(.clk(clk),.c(prod1),.d(red1),.q(q1));
 c_shift_ram_0 S0(.CLK(clk),.D(sum_in0_reg),.Q(sum_in0_sr));

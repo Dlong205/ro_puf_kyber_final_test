@@ -26,8 +26,10 @@ module generic_mult #(
 
 endmodule
 
-// Xilinx mult_gen_0 compatible wrapper
-module mult_gen_0 (
+// Target-neutral one-stage NTT multiplier.  Vivado may infer DSP48 resources;
+// an ASIC synthesizer maps the same unsigned multiply to standard cells or a
+// technology multiplier selected by its own constraints/library mapping.
+module ntt_mult_12x12 (
   input  wire        CLK,
   input  wire [11:0] A,
   input  wire [11:0] B,
@@ -36,7 +38,7 @@ module mult_gen_0 (
   generic_mult #(
     .WIDTH_A(12),
     .WIDTH_B(12)
-  ) inst (
+  ) u_mult (
     .clk(CLK),
     .rst_n(1'b1),
     .en(1'b1),

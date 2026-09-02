@@ -71,6 +71,18 @@ nhau, mỗi giao dịch đúng một attempt, không retry. Có thể chạy t�
 `make ro-puf`, `make fuzzy`, `make kdf`, `make kyber`, `make axi`,
 `make kyber-codec` và `make system`.
 
+Kiểm tra khả năng elaborate RTL ở chế độ ASIC-generic (không đưa `LUT6_L`,
+`CARRY4` hay primitive DSP48 vào source list ASIC):
+
+```sh
+make -j1 asic-portability
+```
+
+RO-PUF đã có backend riêng cho mô phỏng, Xilinx và macro ASIC; BCH có đường so
+sánh portable; multiplier NTT dùng phép nhân RTL trung lập. Đây mới là cổng
+portability, chưa phải ASIC sign-off. Xem `docs/ASIC_PORTABILITY.md` để biết
+contract macro RO và các bước PDK/memory/SDC/DFT/backend còn lại.
+
 Firmware mặc định dùng `RELEASE_BUILD=1`: không truyền shared secret qua UART.
 Bản `RELEASE_BUILD=0` chỉ dùng chẩn đoán và không được commit/phân phối như
 artifact release.

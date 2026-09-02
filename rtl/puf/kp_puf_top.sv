@@ -145,4 +145,20 @@ module kp_puf_top #(
         .p_out (response)
     );
 
+`ifndef SYNTHESIS
+    // Switching the selected oscillator while an RO is active can create a
+    // runt pulse on the muxed clock.  The controller must settle challenge
+    // only while ro_en is low.
+    logic [7:0] challenge_prev;
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            challenge_prev <= '0;
+        end else begin
+            if (ro_en && challenge != challenge_prev)
+                $error("PUF challenge changed while ring oscillators were enabled");
+            challenge_prev <= challenge;
+        end
+    end
+`endif
+
 endmodule

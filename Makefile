@@ -1,7 +1,7 @@
 VIVADO ?= vivado
 XPR := build/vivado/kyber_ro_puf_zynq7020.xpr
 
-.PHONY: check firmware ro-puf fuzzy kdf kyber axi kyber-strict kyber-long kyber-codec system regression vivado-project synth impl program release-check package-internal clean
+.PHONY: check firmware ro-puf fuzzy fuzzy-portable kdf kyber axi kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-elaboration asic-portability vivado-project synth impl program release-check package-internal clean
 
 check:
 	@./scripts/check_standalone.sh
@@ -14,6 +14,9 @@ ro-puf:
 
 fuzzy:
 	$(MAKE) -C sim/fuzzy_extractor sim
+
+fuzzy-portable:
+	$(MAKE) -C sim/fuzzy_extractor portable
 
 kdf:
 	$(MAKE) -C sim/kdf_kat run
@@ -35,6 +38,17 @@ kyber-codec:
 
 system: firmware
 	$(MAKE) -C sim/system sim
+
+ntt-multiplier:
+	$(MAKE) -C sim/portability multiplier
+
+xilinx-ro-lint:
+	$(MAKE) -C sim/portability xilinx-ro-lint
+
+asic-elaboration:
+	@./scripts/check_asic_portability.sh
+
+asic-portability: ro-puf fuzzy-portable ntt-multiplier xilinx-ro-lint asic-elaboration
 
 regression: ro-puf fuzzy kdf kyber axi kyber-strict kyber-codec system check
 
@@ -65,3 +79,4 @@ clean:
 	$(MAKE) -C sim/kdf_kat clean
 	$(MAKE) -C sim/kyber clean
 	$(MAKE) -C sim/system clean
+	$(MAKE) -C sim/portability clean

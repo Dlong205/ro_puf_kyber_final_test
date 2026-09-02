@@ -35,6 +35,7 @@ RTL_SRCS = $(SIM_RTL_DIR)/bch_blank_ecc.v \
            $(SIM_RTL_DIR)/bch_syndrome_method2.v \
            $(SIM_RTL_DIR)/buff.v \
            $(SIM_RTL_DIR)/compare_cla.v \
+           $(SIM_RTL_DIR)/compare_cla_xilinx.v \
            $(SIM_RTL_DIR)/fifo.v \
            $(SIM_RTL_DIR)/matrix.v \
            $(SIM_RTL_DIR)/util.v \
@@ -42,6 +43,9 @@ RTL_SRCS = $(SIM_RTL_DIR)/bch_blank_ecc.v \
            $(SIM_RTL_DIR)/xilinx_encode.v \
            $(SIM_RTL_DIR)/fuzzy_extractor.sv \
            xilinx_carry4_stub.v
+
+PORTABLE_MDIR = obj_dir_portable
+PORTABLE_RTL_SRCS = $(filter-out $(SIM_RTL_DIR)/compare_cla_xilinx.v xilinx_carry4_stub.v,$(RTL_SRCS))
 
 all: sim
 
@@ -84,7 +88,16 @@ sim: $(SIM_EXE)
 	@echo "Running simulation..."
 	@./obj_dir/$(SIM_EXE)
 
-clean:
-	rm -rf obj_dir $(SIM_RTL_DIR) *.vcd $(TB_CPP)
+$(PORTABLE_MDIR)/$(SIM_EXE): $(TB_SV) $(PORTABLE_RTL_SRCS) $(TB_CPP) $(SIM_RTL_STAMP)
+	$(VERILATOR) $(VERILATOR_FLAGS) -DKP_TARGET_ASIC --Mdir $(PORTABLE_MDIR) \
+		--top-module $(TOP_MODULE) $(PORTABLE_RTL_SRCS) $(TB_SV) $(TB_CPP)
+	$(MAKE) -C $(PORTABLE_MDIR) -f V$(TOP_MODULE).mk V$(TOP_MODULE)
 
-.PHONY: all sim clean
+portable: $(PORTABLE_MDIR)/$(SIM_EXE)
+	@echo "Running portable (no CARRY4) simulation..."
+	@./$(PORTABLE_MDIR)/$(SIM_EXE)
+
+clean:
+	rm -rf obj_dir $(PORTABLE_MDIR) $(SIM_RTL_DIR) *.vcd $(TB_CPP)
+
+.PHONY: all sim portable clean
