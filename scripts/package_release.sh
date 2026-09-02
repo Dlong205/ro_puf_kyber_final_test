@@ -19,7 +19,7 @@ mkdir -p "$release_dir"
 archive="$release_dir/$name.tar.gz"
 checksum="$archive.sha256"
 manifest=(.gitattributes .gitignore ARTIFACTS.sha256 CHANGELOG.md LICENSES Makefile NOTICE.md README.md SECURITY.md VERSION
-          constraints docs firmware host rtl scripts sim reports)
+          constraints docs firmware host phan_cong_nhom rtl scripts sim reports)
 if [[ -f LICENSE ]]; then
   manifest+=(LICENSE)
 fi

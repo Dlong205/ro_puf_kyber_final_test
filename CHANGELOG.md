@@ -19,6 +19,8 @@
   34,342 giao dịch/s.
 - Bitstream RC4 SHA-256:
   `bd8153f8ab58f0a704b2f696c54ed1f57d1a31b951d273f547b33926d239f348`.
+- Bổ sung thư mục `phan_cong_nhom/` để tách phạm vi Kyber KEM, lưu khóa, KDF
+  và RO-PUF cho Đạt–Tùng, Minh, Việt Anh và Long.
 
 ## 0.1.0-rc3 — 2026-08-30
 

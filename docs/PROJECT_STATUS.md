@@ -48,3 +48,6 @@ board, lỗi cũ ở khoảng giao dịch 209 không tái hiện trong run 10.00
 Xem `HARDWARE_TEST_REPORT_RC4_2026-09-03.md`. Nhãn phù hợp hiện tại là
 **ứng viên nghiên cứu/kỹ thuật nội bộ**; không phải FIPS 203 ML-KEM-512 hay
 release production.
+
+Phạm vi phụ trách và công việc tiếp theo của Đạt–Tùng, Minh, Việt Anh và Long
+được theo dõi tại [`phan_cong_nhom/`](../phan_cong_nhom/README.md).

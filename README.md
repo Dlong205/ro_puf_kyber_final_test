@@ -49,11 +49,24 @@ implementation. RC4 chỉ được xác nhận ở 50 MHz. Margin hiện tại k
 - `host/`: host UART enroll/reconstruct/stress
 - `reports/`: report synthesis và post-route RC4
 - `docs/`: giao thức, nguồn gốc, bring-up, xác minh và mức sẵn sàng
+- `phan_cong_nhom/`: tiến độ, phạm vi và tiêu chí hoàn thành của từng thành viên
 - `Kyber_System_Top.bit`: bitstream RC4 nạp volatile
 - `ARTIFACTS.sha256`: checksum bitstream và firmware
 
 Build/cache, waveform, helper data PUF gắn với board và dữ liệu local khác được
 loại bằng `.gitignore`.
+
+## Phân công nhóm
+
+| Thành viên | Phụ trách |
+|---|---|
+| Đạt và Tùng | Kyber KEM, kiểm thử single-attempt và lộ trình ML-KEM/FIPS 203 |
+| Minh | Lưu khóa, vòng đời khóa và zeroization |
+| Việt Anh | KDF/Keccak và hoàn thiện bộ kiểm thử FIPS 202 |
+| Long | RO-PUF, CDC, backend FPGA/ASIC và characterization |
+
+Chi tiết, đường dẫn source, bài test và Definition of Done nằm tại
+[`phan_cong_nhom/`](phan_cong_nhom/README.md).
 
 ## Mô phỏng và kiểm tra
 
