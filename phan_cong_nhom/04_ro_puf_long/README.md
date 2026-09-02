@@ -1,7 +1,9 @@
-# Long — RO-PUF
+# Long — Chủ trì implementation và RO-PUF
 
 ## Phạm vi phụ trách
 
+- Thực hiện toàn bộ thay đổi RTL, tích hợp, regression và chốt artifact.
+- Tiếp nhận kết quả nghiên cứu/review từ Đạt, Tùng, Minh và Việt Anh.
 - Ring oscillator, challenge selection, counter, controller và response capture.
 - CDC/RDC giữa system clock và RO clock.
 - Backend mô phỏng, Xilinx và macro ASIC.

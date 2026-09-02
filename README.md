@@ -1,9 +1,13 @@
-# RO-PUF + Fuzzy Extractor + Kyber-512 cũ trên Zynq-7020
+# RO-PUF + Fuzzy Extractor + Kyber/ML-KEM trên Zynq-7020
 
 > **Ứng viên phát hành kỹ thuật nội bộ `0.1.0-rc4`.** Repo dành cho nghiên
 > cứu, đánh giá và cộng tác trong nhóm riêng tư. Phát hành công khai đang bị
 > chặn bởi quyền phân phối Kyber RTL và top-level license. Đây không phải triển
 > khai FIPS 203 ML-KEM và không phải module mật mã production.
+
+Tag `fpga-rc4-baseline` giữ nguyên bitstream FPGA đã xác minh. Nhánh phát triển
+hiện đã hoàn tất cổng FIPS 202 byte-oriented cho bốn primitive ML-KEM cần dùng;
+chưa được gọi là ML-KEM-512 cho đến khi core KEM vượt vector FIPS 203.
 
 Thiết kế pure RTL, chỉ dùng PL, thực hiện chuỗi:
 
@@ -16,7 +20,7 @@ Không có Xilinx IP sinh tự động (`.xci`) và không dùng Zynq PS. Source
 testbench, firmware, constraint, report Vivado, bitstream và host tool đều nằm
 trong repo độc lập này.
 
-## Trạng thái RC4
+## Trạng thái baseline RC4 và nhánh phát triển
 
 | Hạng mục | Kết quả |
 |---|---|
@@ -25,7 +29,8 @@ trong repo độc lập này.
 | UART | 115200 8N1, RX W8, TX W9 |
 | Regression RTL/full-system | PASS |
 | Cổng ASIC portability | PASS, không đưa LUT6/CARRY4/DSP primitive vào source list ASIC |
-| SHAKE256 KDF KAT | PASS, khớp từng bit với Python `hashlib.shake_256` |
+| FIPS 202 cho ML-KEM | PASS 50/50: SHA3-256/512, SHAKE128/256, gồm 20 vector NIST CAVP |
+| SHAKE256 KDF KAT | PASS, KDF mới khớp từng bit với Python `hashlib.shake_256` |
 | Kyber raw single-attempt gate | PASS 1.024/1.024, mismatch 0, retry 0 |
 | Full-system simulation | PASS, 952.496 cycle |
 | Timing sau route | PASS ở 50 MHz, WNS `+3,663 ns`, WHS `+0,056 ns`, TNS/THS `0` |
@@ -60,10 +65,10 @@ loại bằng `.gitignore`.
 
 | Thành viên | Phụ trách |
 |---|---|
-| Đạt và Tùng | Kyber KEM, kiểm thử single-attempt và lộ trình ML-KEM/FIPS 203 |
-| Minh | Lưu khóa, vòng đời khóa và zeroization |
-| Việt Anh | KDF/Keccak và hoàn thiện bộ kiểm thử FIPS 202 |
-| Long | RO-PUF, CDC, backend FPGA/ASIC và characterization |
+| Đạt và Tùng | Nghiên cứu/đối chiếu Kyber KEM và FIPS 203 |
+| Minh | Nghiên cứu lưu khóa và vòng đời khóa |
+| Việt Anh | Nghiên cứu/đối chiếu KDF, Keccak và FIPS 202 |
+| Long | Chủ trì implementation, tích hợp, kiểm thử, RO-PUF và backend FPGA/ASIC |
 
 Chi tiết, đường dẫn source, bài test và Definition of Done nằm tại
 [`phan_cong_nhom/`](phan_cong_nhom/README.md).
@@ -83,7 +88,7 @@ make -j1 kyber-long
 `kyber-long` là cổng bắt buộc của internal release: 1.024 message seed khác
 nhau, mỗi giao dịch đúng một attempt, không retry. Có thể chạy từng khối bằng
 `make ro-puf`, `make fuzzy`, `make kdf`, `make kyber`, `make axi`,
-`make kyber-codec` và `make system`.
+`make fips202`, `make kyber-codec` và `make system`.
 
 Kiểm tra khả năng elaborate RTL ở chế độ ASIC-generic (không đưa `LUT6_L`,
 `CARRY4` hay primitive DSP48 vào source list ASIC):
@@ -138,10 +143,15 @@ khai nhưng gắn với từng board/lần enroll; giữ nó ngoài repo. Xem
 
 ## Phạm vi FIPS và giới hạn
 
-KDF SHAKE256 đã có một known-answer test khớp FIPS 202 reference. Đây chưa phải
-bộ vector đầy đủ cho SHA3/SHAKE multi-block. Kyber test chỉ kiểm tra hai endpoint
-RTL cũ tạo cùng shared key; chưa đối chiếu key/ciphertext/shared secret với vector
-ML-KEM chính thức. Vì vậy không gọi thiết kế là FIPS 203 ML-KEM-512.
+SHA3-256, SHA3-512, SHAKE128 và SHAKE256 đã PASS 50/50 test byte-oriented, gồm
+20 vector lấy từ response file NIST CAVP, các biên rate, absorb/squeeze nhiều
+block, stall và reset. Đây là phạm vi primitive FIPS 202 mà ML-KEM cần; không
+bao gồm SHA3-224/SHA3-384 hay message bit-oriented và không phải chứng nhận
+CAVP/FIPS 140-3. Xem `docs/FIPS202_VERIFICATION_2026-09-03.md`.
+
+Kyber test hiện chỉ kiểm tra hai endpoint RTL cũ tạo cùng shared key; chưa đối
+chiếu `ek`, `dk`, ciphertext và shared secret với vector ML-KEM chính thức. Vì
+vậy chưa gọi thiết kế là FIPS 203 ML-KEM-512.
 
 Các lỗi underfill/starvation Kyber được tìm thấy trong stress đã được sửa bằng
 handshake FIFO và điều kiện kết thúc dựa trên số coefficient thực nhận. Gate

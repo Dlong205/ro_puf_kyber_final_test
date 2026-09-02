@@ -1,11 +1,11 @@
 # Đạt và Tùng — Kyber KEM
 
-## Phạm vi phụ trách
+## Phạm vi nghiên cứu/đối chiếu
 
 - Luồng Kyber Client/Server, NTT, encode/decode, FIFO và AXI wrapper.
 - Tính đúng chức năng, liveness, single-attempt và zeroize giao diện Kyber.
 - Phân tích khoảng cách giữa Kyber-512 cũ và FIPS 203 ML-KEM-512.
-- Vector kiểm thử KEM và phối hợp với KDF khi thay Keccak/domain separation.
+- Đề xuất vector kiểm thử KEM và đối chiếu domain separation với phần KDF.
 
 ## Source và test liên quan
 
@@ -38,6 +38,9 @@
 5. Thêm assertion cho FIFO underflow/overflow, FSM progress, số coefficient và
    quy tắc đúng một attempt.
 6. Rà constant-time, zeroization và nguồn randomness cùng Minh và Việt Anh.
+
+Đạt và Tùng chuẩn bị tài liệu, mapping và nhận xét review. Long thực hiện thay
+đổi RTL, tích hợp test và chốt kết quả trên nhánh chính của dự án.
 
 ## Definition of Done
 

@@ -1,6 +1,6 @@
 # Minh — Lưu khóa và vòng đời khóa
 
-## Phạm vi phụ trách
+## Phạm vi nghiên cứu/đối chiếu
 
 - Kiến trúc lưu/giữ key sau fuzzy extractor và KDF.
 - Quyền truy cập, trạng thái key-valid, zeroization và hành vi khi reset/lỗi.
@@ -38,6 +38,9 @@
    chứng minh secret không xuất hiện trên bus/host ở release mode.
 6. Phối hợp Long về PUF lifecycle, Việt Anh về đầu vào KDF và Đạt–Tùng về
    zeroization key/ciphertext của Kyber.
+
+Minh chuẩn bị threat model, policy và nhận xét review. Long thực hiện RTL,
+firmware, test tích hợp và chốt artifact.
 
 ## Definition of Done
 

@@ -1,10 +1,11 @@
-# Trạng thái xác minh dự án — RC4
+# Trạng thái xác minh dự án — RC4 + nhánh FIPS 202
 
 | Hạng mục | Trạng thái |
 |---|---|
 | Controller/CDC RO-PUF | PASS |
 | BCH fuzzy extractor | PASS 12/12 |
-| SHAKE256 KDF known-answer | PASS, khớp từng bit với FIPS 202 reference |
+| FIPS 202 byte-oriented cho ML-KEM | PASS 50/50, gồm 20 vector NIST CAVP |
+| SHAKE256 KDF known-answer | PASS sau khi chuyển sang sponge mới, cycle 122 |
 | Kyber-512 cũ functional loopback | PASS, cycle 15.316 |
 | AXI register/handshake/zeroize | PASS, 32 giao dịch single-attempt |
 | Kyber raw gate dài | PASS 1.024/1.024, mismatch 0, recovered 0, max attempts 1 |
@@ -45,7 +46,8 @@ board, lỗi cũ ở khoảng giao dịch 209 không tái hiện trong run 10.00
 - Methodology: 72 `TIMING-17` do clock RO bất định; không phải CDC/ASIC sign-off
 - Board run 10.000: 29,119 ms/giao dịch, 34,342 giao dịch/s, Fail 0
 
-Xem `HARDWARE_TEST_REPORT_RC4_2026-09-03.md`. Nhãn phù hợp hiện tại là
+Xem `HARDWARE_TEST_REPORT_RC4_2026-09-03.md` và
+`FIPS202_VERIFICATION_2026-09-03.md`. Nhãn phù hợp hiện tại là
 **ứng viên nghiên cứu/kỹ thuật nội bộ**; không phải FIPS 203 ML-KEM-512 hay
 release production.
 

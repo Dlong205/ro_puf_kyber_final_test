@@ -12,6 +12,7 @@ required=(
   rtl/puf/kp_ro_cell_asic.sv
   rtl/asic/kp_asic_ro_macro_blackbox.sv
   rtl/fuzzy_extractor/fuzzy_extractor.sv
+  rtl/hash_core/fips202_sponge.sv
   rtl/top/kdf_keccak.sv
   rtl/kyber/kyber_axi_wrapper.v
   rtl/kyber/ref/Kyber_Server.v
