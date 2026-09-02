@@ -1,6 +1,6 @@
 # RO-PUF + Fuzzy Extractor + Kyber-512 cũ trên Zynq-7020
 
-> **Ứng viên phát hành kỹ thuật nội bộ `0.1.0-rc3`.** Repo dành cho nghiên
+> **Ứng viên phát hành kỹ thuật nội bộ `0.1.0-rc4`.** Repo dành cho nghiên
 > cứu, đánh giá và cộng tác trong nhóm riêng tư. Phát hành công khai đang bị
 > chặn bởi quyền phân phối Kyber RTL và top-level license. Đây không phải triển
 > khai FIPS 203 ML-KEM và không phải module mật mã production.
@@ -16,7 +16,7 @@ Không có Xilinx IP sinh tự động (`.xci`) và không dùng Zynq PS. Source
 testbench, firmware, constraint, report Vivado, bitstream và host tool đều nằm
 trong repo độc lập này.
 
-## Trạng thái RC3
+## Trạng thái RC4
 
 | Hạng mục | Kết quả |
 |---|---|
@@ -24,18 +24,19 @@ trong repo độc lập này.
 | Clock PL | 50 MHz tại N18 |
 | UART | 115200 8N1, RX W8, TX W9 |
 | Regression RTL/full-system | PASS |
+| Cổng ASIC portability | PASS, không đưa LUT6/CARRY4/DSP primitive vào source list ASIC |
 | SHAKE256 KDF KAT | PASS, khớp từng bit với Python `hashlib.shake_256` |
 | Kyber raw single-attempt gate | PASS 1.024/1.024, mismatch 0, retry 0 |
 | Full-system simulation | PASS, 952.496 cycle |
-| Timing sau route | PASS, WNS `+4,371 ns`, WHS `+0,056 ns`, TNS/THS `0` |
+| Timing sau route | PASS ở 50 MHz, WNS `+3,663 ns`, WHS `+0,056 ns`, TNS/THS `0` |
 | Route/DRC | 0 net chưa route, 0 lỗi DRC |
 | Stress phần cứng | PASS 100/100, 1.000/1.000 và 10.000/10.000 |
-| Hiệu năng board | `28,914 ms/giao dịch`, `34,585 giao dịch/s` ở run 10.000 |
+| Hiệu năng board | `29,119 ms/giao dịch`, `34,342 giao dịch/s` ở run 10.000 |
 | Public release | **BỊ CHẶN**, xem `NOTICE.md` |
 
-Implementation dùng 51.738/53.200 Slice LUT (`97,25%`), 30.546 register,
+Implementation dùng 51.682/53.200 Slice LUT (`97,15%`), 30.554 register,
 23,5 BRAM tile và 4 DSP. Thiết kế gần đầy chip; mọi thay đổi RTL phải chạy lại
-implementation. RC3 chỉ được xác nhận ở 50 MHz. Margin hiện tại không đủ để chỉ
+implementation. RC4 chỉ được xác nhận ở 50 MHz. Margin hiện tại không đủ để chỉ
 đổi constraint lên 100 MHz.
 
 ## Cấu trúc
@@ -46,9 +47,9 @@ implementation. RC3 chỉ được xác nhận ở 50 MHz. Margin hiện tại k
 - `constraints/`: pin/clock/placement cho board XC7Z020
 - `scripts/`: tạo project, build, program, audit và đóng gói
 - `host/`: host UART enroll/reconstruct/stress
-- `reports/`: report synthesis và post-route RC3
+- `reports/`: report synthesis và post-route RC4
 - `docs/`: giao thức, nguồn gốc, bring-up, xác minh và mức sẵn sàng
-- `Kyber_System_Top.bit`: bitstream RC3 nạp volatile
+- `Kyber_System_Top.bit`: bitstream RC4 nạp volatile
 - `ARTIFACTS.sha256`: checksum bitstream và firmware
 
 Build/cache, waveform, helper data PUF gắn với board và dữ liệu local khác được
@@ -120,7 +121,7 @@ python3 host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin str
 
 `make program` chỉ nạp PL volatile, không ghi QSPI. Helper data là dữ liệu công
 khai nhưng gắn với từng board/lần enroll; giữ nó ngoài repo. Xem
-`docs/HARDWARE_BRINGUP.md` và `docs/HARDWARE_TEST_REPORT_RC3_2026-08-30.md`.
+`docs/HARDWARE_BRINGUP.md` và `docs/HARDWARE_TEST_REPORT_RC4_2026-09-03.md`.
 
 ## Phạm vi FIPS và giới hạn
 
@@ -149,9 +150,9 @@ sha256sum -c ARTIFACTS.sha256
 git diff --check
 git status
 git add .
-git commit -m "Hoàn thiện FPGA RC3 cho RO-PUF và Kyber-512"
+git commit -m "Xác nhận FPGA RC4 và khả năng chuyển ASIC"
 git push origin main
 ```
 
-Chỉ push RC3 vào repo private/internal cho đến khi hoàn thành các cổng license
+Chỉ push RC4 vào repo private/internal cho đến khi hoàn thành các cổng license
 trong `NOTICE.md`.

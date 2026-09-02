@@ -1,4 +1,4 @@
-# Trạng thái xác minh dự án — RC3
+# Trạng thái xác minh dự án — RC4
 
 | Hạng mục | Trạng thái |
 |---|---|
@@ -12,12 +12,14 @@
 | Firmware release PicoRV32 | PASS, protocol 1.2, capability `0x06` |
 | Full-system UART/PUF/FE/KDF/Kyber | PASS, 952.496 cycle |
 | Standalone/pure RTL audit | PASS, không symlink, `.xci` hay dependency source ngoài |
+| ASIC portability gate | PASS, ASIC-generic elaboration và primitive vendor đã cô lập |
+| Netlist RO Xilinx | PASS, 128 LUT/128 feedback net/128 constraint loop |
 | Vivado synthesis/implementation | PASS, `xc7z020clg400-2`, không IP sinh tự động |
 | Route | PASS, 0 failed/unrouted/partially-routed net |
-| Timing 50 MHz | PASS, WNS `+4,371 ns`, WHS `+0,056 ns`, TNS/THS `0` |
+| Timing 50 MHz | PASS, WNS `+3,663 ns`, WHS `+0,056 ns`, TNS/THS `0` |
 | DRC | PASS, 0 lỗi; 165 warning đã phân loại |
 | JTAG/INFO/enroll/reconstruct | PASS trên `xc7z020_1` |
-| Stress board RC3 | PASS 100/100, 1.000/1.000 và 10.000/10.000 |
+| Stress board RC4 | PASS 100/100, 1.000/1.000 và 10.000/10.000 |
 | Đặc trưng nhiều board/power-cycle/điện áp/nhiệt độ | CHƯA CHẠY |
 | Public redistribution license | BỊ CHẶN |
 
@@ -33,15 +35,16 @@ Vector từng tái hiện lỗi và toàn bộ dải 1.024 vector nay PASS singl
 board, lỗi cũ ở khoảng giao dịch 209 không tái hiện trong run 10.000 liên tiếp.
 Đây là bằng chứng chức năng mạnh hơn RC2 nhưng chưa phải formal proof hay ML-KEM KAT.
 
-## Định danh artifact RC3
+## Định danh artifact RC4
 
 - Bitstream: `Kyber_System_Top.bit`, 4.045.676 byte
-- SHA-256: `c78724fd9007d21791caf654b8fe8f08a44653bfa028e6a15af80d7425f04d89`
+- SHA-256: `bd8153f8ab58f0a704b2f696c54ed1f57d1a31b951d273f547b33926d239f348`
 - Firmware SHA-256: `d8774e78d37c8fbc34d799426ce7a0150715569217bb921df3c0c1519348ec8e`
-- Tài nguyên: 51.738/53.200 LUT (`97,25%`), 30.546 register, 23,5 BRAM, 4 DSP
+- Tài nguyên: 51.682/53.200 LUT (`97,15%`), 30.554 register, 23,5 BRAM, 4 DSP
 - Warning DRC: 4 `DPOP-2`, 32 `LUTLP-2`, 128 `PDCN-1569`, 1 `ZPS7-1`
-- Board run 10.000: 28,914 ms/giao dịch, 34,585 giao dịch/s, Fail 0
+- Methodology: 72 `TIMING-17` do clock RO bất định; không phải CDC/ASIC sign-off
+- Board run 10.000: 29,119 ms/giao dịch, 34,342 giao dịch/s, Fail 0
 
-Xem `HARDWARE_TEST_REPORT_RC3_2026-08-30.md`. Nhãn phù hợp hiện tại là
+Xem `HARDWARE_TEST_REPORT_RC4_2026-09-03.md`. Nhãn phù hợp hiện tại là
 **ứng viên nghiên cứu/kỹ thuật nội bộ**; không phải FIPS 203 ML-KEM-512 hay
 release production.

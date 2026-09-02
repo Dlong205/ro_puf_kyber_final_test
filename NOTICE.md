@@ -1,6 +1,6 @@
 # Thông báo nguồn gốc và quyền phân phối
 
-Phiên bản ứng viên phát hành: `0.1.0-rc3`.
+Phiên bản ứng viên phát hành: `0.1.0-rc4`.
 
 ## Thành phần đã xác định điều khoản
 

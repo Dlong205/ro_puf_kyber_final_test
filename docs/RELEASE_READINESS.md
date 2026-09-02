@@ -1,4 +1,4 @@
-# Mức độ sẵn sàng phát hành — 0.1.0-rc3
+# Mức độ sẵn sàng phát hành — 0.1.0-rc4
 
 Đích hiện tại là XC7Z020-2CLG400I, pure RTL chỉ PL, clock ngoài 50 MHz. Tài liệu
 này phân biệt hoàn thành nội dung triển khai FPGA với public/production release.
@@ -18,9 +18,11 @@ này phân biệt hoàn thành nội dung triển khai FPGA với public/product
 | Kyber single-attempt 1.024 vector | PASS, mismatch 0, retry 0 |
 | Ciphertext codec round-trip | PASS |
 | Full-system firmware/UART simulation | PASS |
+| Backend FPGA/ASIC và ASIC-generic elaboration | PASS |
+| Audit netlist RO Xilinx | PASS, 128/128 feedback net được constraint |
 | Shared-secret export tắt | PASS |
 | Watchdog có giới hạn, không retry | PASS |
-| Synthesis/place/route/timing | PASS, WNS `+4,371 ns`, WHS `+0,056 ns` |
+| Synthesis/place/route/timing | PASS ở 50 MHz, WNS `+3,663 ns`, WHS `+0,056 ns` |
 | DRC/route | PASS, 0 lỗi, 0 net chưa route |
 | INFO/enroll/reconstruct trên board | PASS |
 | Stress board | PASS 100, 1.000 và 10.000 vòng |
@@ -30,11 +32,12 @@ này phân biệt hoàn thành nội dung triển khai FPGA với public/product
 
 ## Kết luận cho nội dung triển khai FPGA
 
-RC3 đã hoàn thành phần kỹ thuật FPGA cần thiết trước khi chuyển sang ASIC
+RC4 đã hoàn thành phần kỹ thuật FPGA cần thiết trước khi chuyển sang ASIC
 backend: RTL chức năng, regression, cổng stress raw không retry, firmware/host,
 implementation, timing, DRC, bitstream và test end-to-end trên board đều có bằng
-chứng. Run dài 10.000 đạt 100%, latency trung bình 28,914 ms và throughput
-34,585 giao dịch/s.
+chứng. Run dài 10.000 đạt 100%, latency trung bình 29,119 ms và throughput
+34,342 giao dịch/s. Primitive LUT6/CARRY4 đã được tách khỏi source list ASIC và
+multiplier NTT không còn phụ thuộc tên/primitive DSP48.
 
 Điều này không đồng nghĩa sản phẩm bảo mật production. SHAKE256 mới có KAT cho
 đường KDF cụ thể; Kyber core là thiết kế cũ và chưa được đối chiếu vector FIPS
@@ -51,16 +54,20 @@ chứng. Run dài 10.000 đạt 100%, latency trung bình 28,914 ms và throughp
 7. Review constant-time, side-channel, fault-injection và zeroization vật lý.
 8. Bổ sung formal/property verification và CI build tái lập được.
 
-## Định danh implementation RC3
+## Định danh implementation RC4
 
 - Bitstream: `Kyber_System_Top.bit`, 4.045.676 byte
-- SHA-256: `c78724fd9007d21791caf654b8fe8f08a44653bfa028e6a15af80d7425f04d89`
-- Timing: WNS `+4,371 ns`, TNS `0`, WHS `+0,056 ns`, THS `0`
-- Tài nguyên: 51.738/53.200 LUT (`97,25%`), 30.546 register, 23,5 BRAM, 4 DSP
+- SHA-256: `bd8153f8ab58f0a704b2f696c54ed1f57d1a31b951d273f547b33926d239f348`
+- Timing 50 MHz: WNS `+3,663 ns`, TNS `0`, WHS `+0,056 ns`, THS `0`
+- Tài nguyên: 51.682/53.200 LUT (`97,15%`), 30.554 register, 23,5 BRAM, 4 DSP
 - DRC: 0 lỗi; 4 `DPOP-2`, 32 `LUTLP-2`, 128 `PDCN-1569`, 1 `ZPS7-1`
+- Methodology: 72 `TIMING-17` do counter chạy bằng clock RO vật lý bất định,
+  2 `LUTAR-1`, 4 `TIMING-18`, 32 `TIMING-23`; đã phân loại nhưng chưa được coi
+  là CDC/RDC sign-off
 - Giao thức release: 1.2, INFO `4B 50 01 02 06`
 - Board: Digilent `260515110006`, `/dev/ttyUSB1`, stress 10.000/10.000
 
-Trạng thái đúng là **FPGA RC hoàn chỉnh cho nghiên cứu nội bộ**. Public release
+Trạng thái đúng là **FPGA RC hoàn chỉnh cho nghiên cứu nội bộ và baseline chức
+năng cho ASIC**. Public release
 vẫn phải dừng ở license gate; production release còn phải dừng ở qualification
 PUF và xác minh mật mã/bảo mật.

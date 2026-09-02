@@ -69,10 +69,24 @@ Cổng này thực hiện:
 - bổ sung scan/DFT và quyết định cách bypass/cô lập RO trong test mode;
 - chạy synthesis, STA đa corner, formal equivalence, DRC, LVS và xuất GDSII.
 
-Do điều khiển RO-PUF đã thay đổi, artifact RC3 cũ vẫn là baseline FPGA đã xác
-nhận. Muốn phát hành một FPGA artifact mới từ nhánh này phải chạy lại full
-regression, Vivado implementation, timing/DRC và stress board.
+## Xác nhận lại backend FPGA
 
-Ở lần kiểm tra hiện tại Vivado không có trong `PATH` và ổ chứa
-`/media/donglong/tools/Xilinx/Vivado/2020.1/bin/vivado` chưa được mount, nên
-chưa tạo report synthesis/implementation FPGA mới cho nhánh portability.
+Nhánh portability đã được xác nhận lại thành artifact RC4 thay vì chỉ dừng ở
+elaboration:
+
+- full regression và `make -j1 asic-portability`: PASS;
+- Vivado 2020.1 synthesize/place/route/bitstream: PASS, không có `.xci`;
+- post-route 50 MHz: WNS `+3,663 ns`, WHS `+0,056 ns`, TNS/THS `0`;
+- DRC: 0 lỗi; route: 0 failed/unrouted/partial net;
+- netlist RO: 128 LUT, 128 feedback net và 128/128 net có constraint loop;
+- Vivado infer 4 DSP48E1 từ phép nhân RTL trung lập;
+- board XC7Z020: INFO/enroll/reconstruct và stress 100, 1.000, 10.000 đều PASS.
+
+Report methodology vẫn có 72 `TIMING-17` vì hai counter nhận clock từ RO vật
+lý có tần số bất định. `report_cdc` chỉ phân tích đường có clock được khai báo ở
+cả hai phía, vì vậy dòng “All paths are Safely Timed” không phải bằng chứng
+CDC/RDC sign-off cho miền RO. Điều này phải được xử lý bằng clock/macro contract
+và CDC/RDC chuyên dụng khi đã chọn PDK.
+
+Kết quả trên chứng minh việc tách backend không làm hỏng FPGA baseline. Nó chưa
+thay thế macro RO, memory compiler, SDC, synthesis/STA hay physical sign-off ASIC.

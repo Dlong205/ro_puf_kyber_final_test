@@ -1,7 +1,7 @@
 Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2020.1 (lin64) Build 2902540 Wed May 27 19:54:35 MDT 2020
-| Date         : Sun Aug 30 17:19:45 2026
+| Date         : Wed Sep  2 23:47:35 2026
 | Host         : donglong-P7xxTM-1 running 64-bit Ubuntu 22.04.5 LTS
 | Command      : report_timing_summary -file /home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/reports/post_synth_timing.rpt
 | Design       : Kyber_System_Top
@@ -39,10 +39,10 @@ check_timing report
 
 Table of Contents
 -----------------
-1. checking no_clock (448)
+1. checking no_clock (360)
 2. checking constant_clock (0)
 3. checking pulse_width_clock (0)
-4. checking unconstrained_internal_endpoints (192)
+4. checking unconstrained_internal_endpoints (206)
 5. checking no_input_delay (1)
 6. checking no_output_delay (3)
 7. checking multiple_clock (0)
@@ -52,29 +52,25 @@ Table of Contents
 11. checking partial_output_delay (0)
 12. checking latch_loops (0)
 
-1. checking no_clock (448)
+1. checking no_clock (360)
 --------------------------
- There are 64 register/latch pins with no clock driven by root clock pin: u_puf/ctrl_inst/FSM_onehot_state_reg[1]/Q (HIGH)
+ There are 72 register/latch pins with no clock driven by root clock pin: u_puf/ctrl_inst/FSM_onehot_state_reg[3]/Q (HIGH)
 
- There are 64 register/latch pins with no clock driven by root clock pin: u_puf/ctrl_inst/FSM_onehot_state_reg[2]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[1]/Q (HIGH)
 
- There are 64 register/latch pins with no clock driven by root clock pin: u_puf/ctrl_inst/FSM_onehot_state_reg[3]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[2]/Q (HIGH)
 
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[1]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[3]/Q (HIGH)
 
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[2]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[4]/Q (HIGH)
 
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[3]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[5]/Q (HIGH)
 
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[4]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[6]/Q (HIGH)
 
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[5]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[7]/Q (HIGH)
 
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[6]/Q (HIGH)
-
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[7]/Q (HIGH)
-
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[8]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[8]/Q (HIGH)
 
 
 2. checking constant_clock (0)
@@ -87,9 +83,9 @@ Table of Contents
  There are 0 register/latch pins which need pulse_width check
 
 
-4. checking unconstrained_internal_endpoints (192)
+4. checking unconstrained_internal_endpoints (206)
 --------------------------------------------------
- There are 192 pins that are not constrained for maximum delay. (HIGH)
+ There are 206 pins that are not constrained for maximum delay. (HIGH)
 
  There are 0 pins that are not constrained for maximum delay due to constant clock.
 
@@ -351,7 +347,7 @@ Period(ns):         20.000
 Sources:            { CLK100MHZ }
 
 Check Type        Corner  Lib Pin      Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location  Pin
-Min Period        n/a     DSP48E1/CLK  n/a            3.272         20.000      16.728               u_soc/u_kyber_axi/C/ntt/BU/M1/inst/product_reg_reg/CLK
+Min Period        n/a     DSP48E1/CLK  n/a            3.272         20.000      16.728               u_soc/u_kyber_axi/C/ntt/BU/M1/u_mult/product_reg_reg/CLK
 Low Pulse Width   Slow    RAMD32/CLK   n/a            1.130         10.000      8.870                u_soc/cpu/cpuregs_reg_r1_0_31_0_5/RAMA/CLK
 High Pulse Width  Slow    RAMD32/CLK   n/a            1.130         10.000      8.870                u_soc/cpu/cpuregs_reg_r1_0_31_0_5/RAMA/CLK
 
@@ -460,9 +456,9 @@ Slack (MET) :             0.765ns  (arrival time - required time)
                          FDRE                                         r  por_done_reg/C
   -------------------------------------------------------------------    -------------------
                          FDRE (Prop_fdre_C_Q)         0.147     0.836 r  por_done_reg/Q
-                         net (fo=2740, unplaced)      0.188     1.025    u_kdf/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+                         net (fo=2741, unplaced)      0.188     1.025    u_kdf/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
                          LUT1 (Prop_lut1_I0_O)        0.098     1.123 f  u_kdf/keccak_inst/algo_inst/STEP_MAPPING_5/FSM_onehot_launch_state[2]_i_1/O
-                         net (fo=7042, unplaced)      0.389     1.512    u_fe/clear_prefetched_high_word2
+                         net (fo=6978, unplaced)      0.389     1.512    u_fe/clear_prefetched_high_word2
                          FDCE                                         f  u_fe/FSM_sequential_state_reg[0]/CLR
   -------------------------------------------------------------------    -------------------
 

@@ -1,7 +1,7 @@
 Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2020.1 (lin64) Build 2902540 Wed May 27 19:54:35 MDT 2020
-| Date         : Sun Aug 30 17:27:42 2026
+| Date         : Wed Sep  2 23:55:27 2026
 | Host         : donglong-P7xxTM-1 running 64-bit Ubuntu 22.04.5 LTS
 | Command      : report_timing_summary -file /home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/reports/post_route_timing.rpt
 | Design       : Kyber_System_Top
@@ -39,10 +39,10 @@ check_timing report
 
 Table of Contents
 -----------------
-1. checking no_clock (448)
+1. checking no_clock (360)
 2. checking constant_clock (0)
 3. checking pulse_width_clock (0)
-4. checking unconstrained_internal_endpoints (192)
+4. checking unconstrained_internal_endpoints (206)
 5. checking no_input_delay (1)
 6. checking no_output_delay (3)
 7. checking multiple_clock (0)
@@ -52,29 +52,25 @@ Table of Contents
 11. checking partial_output_delay (0)
 12. checking latch_loops (0)
 
-1. checking no_clock (448)
+1. checking no_clock (360)
 --------------------------
- There are 64 register/latch pins with no clock driven by root clock pin: u_puf/ctrl_inst/FSM_onehot_state_reg[1]/Q (HIGH)
+ There are 72 register/latch pins with no clock driven by root clock pin: u_puf/ctrl_inst/FSM_onehot_state_reg[3]/Q (HIGH)
 
- There are 64 register/latch pins with no clock driven by root clock pin: u_puf/ctrl_inst/FSM_onehot_state_reg[2]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[1]/Q (HIGH)
 
- There are 64 register/latch pins with no clock driven by root clock pin: u_puf/ctrl_inst/FSM_onehot_state_reg[3]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[2]/Q (HIGH)
 
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[1]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[3]/Q (HIGH)
 
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[2]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[4]/Q (HIGH)
 
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[3]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[5]/Q (HIGH)
 
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[4]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[6]/Q (HIGH)
 
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[5]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[7]/Q (HIGH)
 
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[6]/Q (HIGH)
-
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[7]/Q (HIGH)
-
- There are 32 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[8]/Q (HIGH)
+ There are 36 register/latch pins with no clock driven by root clock pin: u_puf/lfsr_inst/r_lfsr_reg[8]/Q (HIGH)
 
 
 2. checking constant_clock (0)
@@ -87,9 +83,9 @@ Table of Contents
  There are 0 register/latch pins which need pulse_width check
 
 
-4. checking unconstrained_internal_endpoints (192)
+4. checking unconstrained_internal_endpoints (206)
 --------------------------------------------------
- There are 192 pins that are not constrained for maximum delay. (HIGH)
+ There are 206 pins that are not constrained for maximum delay. (HIGH)
 
  There are 0 pins that are not constrained for maximum delay due to constant clock.
 
@@ -148,7 +144,7 @@ Table of Contents
 
     WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints
     -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------
-      4.371        0.000                      0                83535        0.056        0.000                      0                83535        8.870        0.000                       0                 31169
+      3.663        0.000                      0                83535        0.056        0.000                      0                83535        8.870        0.000                       0                 31169
 
 
 All user specified timing constraints are met.
@@ -171,7 +167,7 @@ CLK100MHZ  {0.000 10.000}     20.000          50.000
 
 Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints
 -----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------
-CLK100MHZ           4.371        0.000                      0                74027        0.056        0.000                      0                74027        8.870        0.000                       0                 31169
+CLK100MHZ           3.663        0.000                      0                74027        0.056        0.000                      0                74027        8.870        0.000                       0                 31169
 
 
 ------------------------------------------------------------------------------------------------
@@ -190,7 +186,7 @@ From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS
 
 Path Group         From Clock         To Clock               WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints
 ----------         ----------         --------               -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------
-**async_default**  CLK100MHZ          CLK100MHZ                7.842        0.000                      0                 9508        0.907        0.000                      0                 9508
+**async_default**  CLK100MHZ          CLK100MHZ                5.753        0.000                      0                 9508        1.281        0.000                      0                 9508
 
 
 ------------------------------------------------------------------------------------------------
@@ -203,7 +199,7 @@ Path Group         From Clock         To Clock               WNS(ns)      TNS(ns
 From Clock:  CLK100MHZ
   To Clock:  CLK100MHZ
 
-Setup :            0  Failing Endpoints,  Worst Slack        4.371ns,  Total Violation        0.000ns
+Setup :            0  Failing Endpoints,  Worst Slack        3.663ns,  Total Violation        0.000ns
 Hold  :            0  Failing Endpoints,  Worst Slack        0.056ns,  Total Violation        0.000ns
 PW    :            0  Failing Endpoints,  Worst Slack        8.870ns,  Total Violation        0.000ns
 ---------------------------------------------------------------------------------------------------
@@ -211,20 +207,20 @@ PW    :            0  Failing Endpoints,  Worst Slack        8.870ns,  Total Vio
 
 Max Delay Paths
 --------------------------------------------------------------------------------------
-Slack (MET) :             4.371ns  (required time - arrival time)
-  Source:                 u_soc/u_kyber_axi/C/hash/ififo_inst/inst/mem_reg/CLKARDCLK
-                            (rising edge-triggered cell RAMB18E1 clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
-  Destination:            u_soc/u_kyber_axi/C/hash/sponge/block_reg_reg[1190]/D
+Slack (MET) :             3.663ns  (required time - arrival time)
+  Source:                 u_soc/u_kyber_axi/S/hash/sponge/wr_idx_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/hash/sponge/block_reg_reg[1036]/D
                             (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
   Path Group:             CLK100MHZ
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
-  Data Path Delay:        15.604ns  (logic 2.440ns (15.637%)  route 13.164ns (84.363%))
-  Logic Levels:           3  (LUT4=1 LUT5=2)
-  Clock Path Skew:        -0.066ns (DCD - SCD + CPR)
-    Destination Clock Delay (DCD):    4.496ns = ( 24.496 - 20.000 )
-    Source Clock Delay      (SCD):    4.819ns
-    Clock Pessimism Removal (CPR):    0.258ns
+  Data Path Delay:        15.961ns  (logic 0.799ns (5.006%)  route 15.162ns (94.994%))
+  Logic Levels:           4  (LUT3=1 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.370ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.330ns = ( 24.330 - 20.000 )
+    Source Clock Delay      (SCD):    4.945ns
+    Clock Pessimism Removal (CPR):    0.246ns
   Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
     Total System Jitter     (TSJ):    0.071ns
     Total Input Jitter      (TIJ):    0.000ns
@@ -240,19 +236,20 @@ Slack (MET) :             4.371ns  (required time - arrival time)
     N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
     BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31168, routed)       1.469     4.819    u_soc/u_kyber_axi/C/hash/ififo_inst/inst/CLK100MHZ_IBUF_BUFG
-    RAMB18_X3Y32         RAMB18E1                                     r  u_soc/u_kyber_axi/C/hash/ififo_inst/inst/mem_reg/CLKARDCLK
+                         net (fo=31168, routed)       1.595     4.945    u_soc/u_kyber_axi/S/hash/sponge/CLK100MHZ_IBUF_BUFG
+    SLICE_X113Y46        FDRE                                         r  u_soc/u_kyber_axi/S/hash/sponge/wr_idx_reg[1]_rep/C
   -------------------------------------------------------------------    -------------------
-    RAMB18_X3Y32         RAMB18E1 (Prop_ramb18e1_CLKARDCLK_DOPADOP[1])
-                                                      2.125     6.944 r  u_soc/u_kyber_axi/C/hash/ififo_inst/inst/mem_reg/DOPADOP[1]
-                         net (fo=1601, routed)       12.062    19.006    u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/DOPADOP[0]
-    SLICE_X31Y147        LUT4 (Prop_lut4_I0_O)        0.105    19.111 r  u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/block_reg[1190]_i_3__0/O
-                         net (fo=1, routed)           0.552    19.663    u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/block_reg10_in[1190]
-    SLICE_X34Y148        LUT5 (Prop_lut5_I0_O)        0.105    19.768 r  u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/block_reg[1190]_i_2__0/O
-                         net (fo=1, routed)           0.551    20.318    u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/block_reg[1190]_i_2__0_n_1
-    SLICE_X34Y148        LUT5 (Prop_lut5_I4_O)        0.105    20.423 r  u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/block_reg[1190]_i_1__0/O
-                         net (fo=1, routed)           0.000    20.423    u_soc/u_kyber_axi/C/hash/sponge/p_1_in[1190]
-    SLICE_X34Y148        FDRE                                         r  u_soc/u_kyber_axi/C/hash/sponge/block_reg_reg[1190]/D
+    SLICE_X113Y46        FDRE (Prop_fdre_C_Q)         0.379     5.324 r  u_soc/u_kyber_axi/S/hash/sponge/wr_idx_reg[1]_rep/Q
+                         net (fo=117, routed)         5.230    10.555    u_soc/u_kyber_axi/S/hash/sponge/wr_idx_reg[1]_rep_n_1
+    SLICE_X29Y53         LUT6 (Prop_lut6_I3_O)        0.105    10.660 f  u_soc/u_kyber_axi/S/hash/sponge/block_reg[1055]_i_3/O
+                         net (fo=34, routed)          4.118    14.777    u_soc/u_kyber_axi/S/hash/sponge/p_3_in[1055]
+    SLICE_X109Y50        LUT3 (Prop_lut3_I2_O)        0.105    14.882 f  u_soc/u_kyber_axi/S/hash/sponge/block_reg[1055]_i_6/O
+                         net (fo=30, routed)          5.330    20.212    u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/block_reg_reg[1025]
+    SLICE_X53Y94         LUT6 (Prop_lut6_I2_O)        0.105    20.317 r  u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/block_reg[1036]_i_2/O
+                         net (fo=1, routed)           0.485    20.802    u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/block_reg[1036]_i_2_n_1
+    SLICE_X53Y95         LUT5 (Prop_lut5_I4_O)        0.105    20.907 r  u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/block_reg[1036]_i_1/O
+                         net (fo=1, routed)           0.000    20.907    u_soc/u_kyber_axi/S/hash/sponge/p_1_in__0[1036]
+    SLICE_X53Y95         FDRE                                         r  u_soc/u_kyber_axi/S/hash/sponge/block_reg_reg[1036]/D
   -------------------------------------------------------------------    -------------------
 
                          (clock CLK100MHZ rise edge)
@@ -262,16 +259,16 @@ Slack (MET) :             4.371ns  (required time - arrival time)
     N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
     BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31168, routed)       1.391    24.496    u_soc/u_kyber_axi/C/hash/sponge/CLK100MHZ_IBUF_BUFG
-    SLICE_X34Y148        FDRE                                         r  u_soc/u_kyber_axi/C/hash/sponge/block_reg_reg[1190]/C
-                         clock pessimism              0.258    24.753
-                         clock uncertainty           -0.035    24.718
-    SLICE_X34Y148        FDRE (Setup_fdre_C_D)        0.076    24.794    u_soc/u_kyber_axi/C/hash/sponge/block_reg_reg[1190]
+                         net (fo=31168, routed)       1.225    24.330    u_soc/u_kyber_axi/S/hash/sponge/CLK100MHZ_IBUF_BUFG
+    SLICE_X53Y95         FDRE                                         r  u_soc/u_kyber_axi/S/hash/sponge/block_reg_reg[1036]/C
+                         clock pessimism              0.246    24.575
+                         clock uncertainty           -0.035    24.540
+    SLICE_X53Y95         FDRE (Setup_fdre_C_D)        0.030    24.570    u_soc/u_kyber_axi/S/hash/sponge/block_reg_reg[1036]
   -------------------------------------------------------------------
-                         required time                         24.794
-                         arrival time                         -20.423
+                         required time                         24.570
+                         arrival time                         -20.907
   -------------------------------------------------------------------
-                         slack                                  4.371
+                         slack                                  3.663
 
 
 
@@ -280,19 +277,19 @@ Slack (MET) :             4.371ns  (required time - arrival time)
 Min Delay Paths
 --------------------------------------------------------------------------------------
 Slack (MET) :             0.056ns  (arrival time - required time)
-  Source:                 u_soc/u_kyber_axi/S/dout_reg[15]/C
+  Source:                 u_soc/u_kyber_axi/S/hash/sponge/wr_idx_reg[0]_rep__1/C
                             (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
-  Destination:            u_soc/u_kyber_axi/C/IFIFO/inst/mem_reg/DIADI[15]
-                            (rising edge-triggered cell RAMB18E1 clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
+  Destination:            u_soc/u_kyber_axi/S/hash/sponge/wr_idx_reg[3]_rep/D
+                            (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
   Path Group:             CLK100MHZ
   Path Type:              Hold (Min at Fast Process Corner)
   Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
-  Data Path Delay:        0.267ns  (logic 0.164ns (61.506%)  route 0.103ns (38.494%))
-  Logic Levels:           0
-  Clock Path Skew:        0.056ns (DCD - SCD - CPR)
-    Destination Clock Delay (DCD):    2.042ns
-    Source Clock Delay      (SCD):    1.487ns
-    Clock Pessimism Removal (CPR):    0.499ns
+  Data Path Delay:        0.413ns  (logic 0.186ns (44.994%)  route 0.227ns (55.006%))
+  Logic Levels:           1  (LUT4=1)
+  Clock Path Skew:        0.265ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.085ns
+    Source Clock Delay      (SCD):    1.572ns
+    Clock Pessimism Removal (CPR):    0.248ns
 
     Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
   -------------------------------------------------------------------    -------------------
@@ -303,12 +300,14 @@ Slack (MET) :             0.056ns  (arrival time - required time)
     N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
     BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31168, routed)       0.558     1.487    u_soc/u_kyber_axi/S/CLK100MHZ_IBUF_BUFG
-    SLICE_X32Y54         FDRE                                         r  u_soc/u_kyber_axi/S/dout_reg[15]/C
+                         net (fo=31168, routed)       0.643     1.572    u_soc/u_kyber_axi/S/hash/sponge/CLK100MHZ_IBUF_BUFG
+    SLICE_X111Y49        FDRE                                         r  u_soc/u_kyber_axi/S/hash/sponge/wr_idx_reg[0]_rep__1/C
   -------------------------------------------------------------------    -------------------
-    SLICE_X32Y54         FDRE (Prop_fdre_C_Q)         0.164     1.651 r  u_soc/u_kyber_axi/S/dout_reg[15]/Q
-                         net (fo=1, routed)           0.103     1.754    u_soc/u_kyber_axi/C/IFIFO/inst/mem_reg_34[15]
-    RAMB18_X2Y21         RAMB18E1                                     r  u_soc/u_kyber_axi/C/IFIFO/inst/mem_reg/DIADI[15]
+    SLICE_X111Y49        FDRE (Prop_fdre_C_Q)         0.141     1.713 r  u_soc/u_kyber_axi/S/hash/sponge/wr_idx_reg[0]_rep__1/Q
+                         net (fo=113, routed)         0.227     1.940    u_soc/u_kyber_axi/S/hash/sponge/wr_idx_reg[0]_rep__1_n_1
+    SLICE_X110Y53        LUT4 (Prop_lut4_I2_O)        0.045     1.985 r  u_soc/u_kyber_axi/S/hash/sponge/wr_idx[3]_rep_i_1/O
+                         net (fo=1, routed)           0.000     1.985    u_soc/u_kyber_axi/S/hash/sponge/wr_idx[3]_rep_i_1_n_1
+    SLICE_X110Y53        FDRE                                         r  u_soc/u_kyber_axi/S/hash/sponge/wr_idx_reg[3]_rep/D
   -------------------------------------------------------------------    -------------------
 
                          (clock CLK100MHZ rise edge)
@@ -318,14 +317,13 @@ Slack (MET) :             0.056ns  (arrival time - required time)
     N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
     BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31168, routed)       0.865     2.042    u_soc/u_kyber_axi/C/IFIFO/inst/CLK100MHZ_IBUF_BUFG
-    RAMB18_X2Y21         RAMB18E1                                     r  u_soc/u_kyber_axi/C/IFIFO/inst/mem_reg/CLKBWRCLK
-                         clock pessimism             -0.499     1.543
-    RAMB18_X2Y21         RAMB18E1 (Hold_ramb18e1_CLKBWRCLK_DIADI[15])
-                                                      0.155     1.698    u_soc/u_kyber_axi/C/IFIFO/inst/mem_reg
+                         net (fo=31168, routed)       0.908     2.085    u_soc/u_kyber_axi/S/hash/sponge/CLK100MHZ_IBUF_BUFG
+    SLICE_X110Y53        FDRE                                         r  u_soc/u_kyber_axi/S/hash/sponge/wr_idx_reg[3]_rep/C
+                         clock pessimism             -0.248     1.837
+    SLICE_X110Y53        FDRE (Hold_fdre_C_D)         0.092     1.929    u_soc/u_kyber_axi/S/hash/sponge/wr_idx_reg[3]_rep
   -------------------------------------------------------------------
-                         required time                         -1.698
-                         arrival time                           1.754
+                         required time                         -1.929
+                         arrival time                           1.985
   -------------------------------------------------------------------
                          slack                                  0.056
 
@@ -340,10 +338,10 @@ Waveform(ns):       { 0.000 10.000 }
 Period(ns):         20.000
 Sources:            { CLK100MHZ }
 
-Check Type        Corner  Lib Pin      Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location       Pin
-Min Period        n/a     DSP48E1/CLK  n/a            3.272         20.000      16.728     DSP48_X2Y32    u_soc/u_kyber_axi/C/ntt/BU/M1/inst/product_reg_reg/CLK
-Low Pulse Width   Slow    RAMD32/CLK   n/a            1.130         10.000      8.870      SLICE_X100Y32  u_soc/cpu/cpuregs_reg_r1_0_31_18_23/RAMA/CLK
-High Pulse Width  Slow    RAMD32/CLK   n/a            1.130         10.000      8.870      SLICE_X100Y29  u_soc/cpu/cpuregs_reg_r1_0_31_0_5/RAMA/CLK
+Check Type        Corner  Lib Pin      Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location      Pin
+Min Period        n/a     DSP48E1/CLK  n/a            3.272         20.000      16.728     DSP48_X3Y5    u_soc/u_kyber_axi/C/ntt/BU/M1/u_mult/product_reg_reg/CLK
+Low Pulse Width   Slow    RAMD32/CLK   n/a            1.130         10.000      8.870      SLICE_X82Y29  u_soc/cpu/cpuregs_reg_r1_0_31_0_5/RAMA/CLK
+High Pulse Width  Slow    RAMD32/CLK   n/a            1.130         10.000      8.870      SLICE_X82Y36  u_soc/cpu/cpuregs_reg_r1_0_31_24_29/RAMA/CLK
 
 
 
@@ -352,27 +350,27 @@ Path Group:  **async_default**
 From Clock:  CLK100MHZ
   To Clock:  CLK100MHZ
 
-Setup :            0  Failing Endpoints,  Worst Slack        7.842ns,  Total Violation        0.000ns
-Hold  :            0  Failing Endpoints,  Worst Slack        0.907ns,  Total Violation        0.000ns
+Setup :            0  Failing Endpoints,  Worst Slack        5.753ns,  Total Violation        0.000ns
+Hold  :            0  Failing Endpoints,  Worst Slack        1.281ns,  Total Violation        0.000ns
 ---------------------------------------------------------------------------------------------------
 
 
 Max Delay Paths
 --------------------------------------------------------------------------------------
-Slack (MET) :             7.842ns  (required time - arrival time)
+Slack (MET) :             5.753ns  (required time - arrival time)
   Source:                 por_done_reg/C
                             (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
-  Destination:            u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/Str_out_reg[1025]/CLR
+  Destination:            u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/Str_out_reg[174]/CLR
                             (recovery check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
   Path Group:             **async_default**
   Path Type:              Recovery (Max at Slow Process Corner)
   Requirement:            20.000ns  (CLK100MHZ rise@20.000ns - CLK100MHZ rise@0.000ns)
-  Data Path Delay:        11.470ns  (logic 0.487ns (4.246%)  route 10.983ns (95.754%))
+  Data Path Delay:        13.782ns  (logic 0.590ns (4.281%)  route 13.192ns (95.719%))
   Logic Levels:           1  (LUT2=1)
-  Clock Path Skew:        -0.159ns (DCD - SCD + CPR)
-    Destination Clock Delay (DCD):    4.470ns = ( 24.470 - 20.000 )
-    Source Clock Delay      (SCD):    4.887ns
-    Clock Pessimism Removal (CPR):    0.258ns
+  Clock Path Skew:        -0.099ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.490ns = ( 24.490 - 20.000 )
+    Source Clock Delay      (SCD):    4.834ns
+    Clock Pessimism Removal (CPR):    0.246ns
   Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
     Total System Jitter     (TSJ):    0.071ns
     Total Input Jitter      (TIJ):    0.000ns
@@ -388,14 +386,14 @@ Slack (MET) :             7.842ns  (required time - arrival time)
     N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, routed)           1.873     3.265    CLK100MHZ_IBUF
     BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.085     3.350 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31168, routed)       1.537     4.887    CLK100MHZ_IBUF_BUFG
-    SLICE_X1Y24          FDRE                                         r  por_done_reg/C
+                         net (fo=31168, routed)       1.484     4.834    CLK100MHZ_IBUF_BUFG
+    SLICE_X17Y46         FDRE                                         r  por_done_reg/C
   -------------------------------------------------------------------    -------------------
-    SLICE_X1Y24          FDRE (Prop_fdre_C_Q)         0.379     5.266 r  por_done_reg/Q
-                         net (fo=2708, routed)        3.185     8.451    u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/por_done
-    SLICE_X48Y91         LUT2 (Prop_lut2_I1_O)        0.108     8.559 f  u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
-                         net (fo=4811, routed)        7.798    16.357    u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/FSM_onehot_launch_state_reg[2]_1
-    SLICE_X99Y46         FDCE                                         f  u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/Str_out_reg[1025]/CLR
+    SLICE_X17Y46         FDRE (Prop_fdre_C_Q)         0.348     5.182 r  por_done_reg/Q
+                         net (fo=2709, routed)        2.377     7.559    u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X108Y38        LUT2 (Prop_lut2_I1_O)        0.242     7.801 f  u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
+                         net (fo=4811, routed)       10.815    18.616    u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/kyber_core_reset
+    SLICE_X49Y136        FDCE                                         f  u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/Str_out_reg[174]/CLR
   -------------------------------------------------------------------    -------------------
 
                          (clock CLK100MHZ rise edge)
@@ -405,16 +403,16 @@ Slack (MET) :             7.842ns  (required time - arrival time)
     N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, routed)           1.701    23.028    CLK100MHZ_IBUF
     BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.077    23.105 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31168, routed)       1.366    24.470    u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/CLK100MHZ_IBUF_BUFG
-    SLICE_X99Y46         FDCE                                         r  u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/Str_out_reg[1025]/C
-                         clock pessimism              0.258    24.728
-                         clock uncertainty           -0.035    24.693
-    SLICE_X99Y46         FDCE (Recov_fdce_C_CLR)     -0.493    24.200    u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/Str_out_reg[1025]
+                         net (fo=31168, routed)       1.385    24.490    u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/CLK100MHZ_IBUF_BUFG
+    SLICE_X49Y136        FDCE                                         r  u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/Str_out_reg[174]/C
+                         clock pessimism              0.246    24.735
+                         clock uncertainty           -0.035    24.700
+    SLICE_X49Y136        FDCE (Recov_fdce_C_CLR)     -0.331    24.369    u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/Str_out_reg[174]
   -------------------------------------------------------------------
-                         required time                         24.200
-                         arrival time                         -16.357
+                         required time                         24.369
+                         arrival time                         -18.616
   -------------------------------------------------------------------
-                         slack                                  7.842
+                         slack                                  5.753
 
 
 
@@ -422,20 +420,20 @@ Slack (MET) :             7.842ns  (required time - arrival time)
 
 Min Delay Paths
 --------------------------------------------------------------------------------------
-Slack (MET) :             0.907ns  (arrival time - required time)
+Slack (MET) :             1.281ns  (arrival time - required time)
   Source:                 por_done_reg/C
                             (rising edge-triggered cell FDRE clocked by CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
-  Destination:            u_kdf/keccak_inst/state_reg_reg[821]/CLR
+  Destination:            u_kdf/FSM_sequential_state_reg[0]/CLR
                             (removal check against rising-edge clock CLK100MHZ  {rise@0.000ns fall@10.000ns period=20.000ns})
   Path Group:             **async_default**
   Path Type:              Removal (Min at Fast Process Corner)
   Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
-  Data Path Delay:        0.851ns  (logic 0.186ns (21.865%)  route 0.665ns (78.135%))
+  Data Path Delay:        1.463ns  (logic 0.227ns (15.521%)  route 1.236ns (84.479%))
   Logic Levels:           1  (LUT1=1)
-  Clock Path Skew:        0.036ns (DCD - SCD - CPR)
-    Destination Clock Delay (DCD):    2.058ns
-    Source Clock Delay      (SCD):    1.541ns
-    Clock Pessimism Removal (CPR):    0.481ns
+  Clock Path Skew:        0.248ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.020ns
+    Source Clock Delay      (SCD):    1.524ns
+    Clock Pessimism Removal (CPR):    0.248ns
 
     Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
   -------------------------------------------------------------------    -------------------
@@ -446,14 +444,14 @@ Slack (MET) :             0.907ns  (arrival time - required time)
     N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, routed)           0.674     0.903    CLK100MHZ_IBUF
     BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.929 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31168, routed)       0.612     1.541    CLK100MHZ_IBUF_BUFG
-    SLICE_X1Y24          FDRE                                         r  por_done_reg/C
+                         net (fo=31168, routed)       0.595     1.524    CLK100MHZ_IBUF_BUFG
+    SLICE_X17Y46         FDRE                                         r  por_done_reg/C
   -------------------------------------------------------------------    -------------------
-    SLICE_X1Y24          FDRE (Prop_fdre_C_Q)         0.141     1.682 r  por_done_reg/Q
-                         net (fo=2708, routed)        0.538     2.220    u_kdf/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
-    SLICE_X5Y22          LUT1 (Prop_lut1_I0_O)        0.045     2.265 f  u_kdf/keccak_inst/algo_inst/STEP_MAPPING_5/FSM_onehot_launch_state[2]_i_1/O
-                         net (fo=7042, routed)        0.126     2.392    u_kdf/keccak_inst/por_done_reg
-    SLICE_X5Y22          FDCE                                         f  u_kdf/keccak_inst/state_reg_reg[821]/CLR
+    SLICE_X17Y46         FDRE (Prop_fdre_C_Q)         0.128     1.652 r  por_done_reg/Q
+                         net (fo=2709, routed)        0.986     2.638    u_kdf/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
+    SLICE_X26Y54         LUT1 (Prop_lut1_I0_O)        0.099     2.737 f  u_kdf/keccak_inst/algo_inst/STEP_MAPPING_5/FSM_onehot_launch_state[2]_i_1/O
+                         net (fo=6978, routed)        0.250     2.986    u_kdf/clear_prefetched_high_word2
+    SLICE_X26Y54         FDCE                                         f  u_kdf/FSM_sequential_state_reg[0]/CLR
   -------------------------------------------------------------------    -------------------
 
                          (clock CLK100MHZ rise edge)
@@ -463,15 +461,15 @@ Slack (MET) :             0.907ns  (arrival time - required time)
     N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, routed)           0.731     1.148    CLK100MHZ_IBUF
     BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.177 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31168, routed)       0.881     2.058    u_kdf/keccak_inst/CLK100MHZ_IBUF_BUFG
-    SLICE_X5Y22          FDCE                                         r  u_kdf/keccak_inst/state_reg_reg[821]/C
-                         clock pessimism             -0.481     1.577
-    SLICE_X5Y22          FDCE (Remov_fdce_C_CLR)     -0.092     1.485    u_kdf/keccak_inst/state_reg_reg[821]
+                         net (fo=31168, routed)       0.843     2.020    u_kdf/CLK100MHZ_IBUF_BUFG
+    SLICE_X26Y54         FDCE                                         r  u_kdf/FSM_sequential_state_reg[0]/C
+                         clock pessimism             -0.248     1.772
+    SLICE_X26Y54         FDCE (Remov_fdce_C_CLR)     -0.067     1.705    u_kdf/FSM_sequential_state_reg[0]
   -------------------------------------------------------------------
-                         required time                         -1.485
-                         arrival time                           2.392
+                         required time                         -1.705
+                         arrival time                           2.986
   -------------------------------------------------------------------
-                         slack                                  0.907
+                         slack                                  1.281
 
 
 
