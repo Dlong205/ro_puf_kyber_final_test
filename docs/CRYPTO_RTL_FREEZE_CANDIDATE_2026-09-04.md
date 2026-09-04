@@ -1,8 +1,8 @@
 # Crypto RTL freeze candidate — 2026-09-04
 
-Trạng thái: **CANDIDATE, chưa phải freeze cuối**. Functional ML-KEM-512/FIPS
-203 và portability ASIC đã PASS; Vivado implementation và board regression của
-RTL mới chưa chạy vì máy hiện không có executable Vivado.
+Trạng thái: **CANDIDATE v2, chưa phải freeze cuối**. Functional
+ML-KEM-512/FIPS 203, portability ASIC và Vivado implementation đã PASS. Board
+regression của RTL mới chưa chạy vì board hiện không xuất hiện trên USB/JTAG.
 
 ## Phạm vi được khóa
 
@@ -39,11 +39,20 @@ tạo manifest mới trước khi backend.
 | ML-KEM-512 Decaps | PASS 25/25 oracle pq-crystals độc lập |
 | Implicit rejection | PASS 175/175, J exact tại 7 vị trí sửa/ciphertext |
 | Timing functional valid/invalid | PASS, cùng 12.287 cycle isolated và 17.338 cycle loopback |
-| Full system | PASS ở 956.548 cycle |
+| KDF SHAKE256 cố định | PASS bit-exact ở 148 cycle |
+| Full system | PASS ở 956.564 cycle |
 | Kyber raw single-attempt | PASS 1.024/1.024, mismatch/retry bằng 0 |
 | ASIC portability | PASS, top elaborates với `KP_TARGET_ASIC` |
 | Freeze manifest | PASS tập file và SHA-256 |
-| Vivado/board RTL mới | **PENDING** |
+| Vivado synthesis/place/route | PASS, 49.909 LUT; timing/route/DRC đạt |
+| Board RTL mới | **PENDING** |
+
+Implementation tương ứng source commit
+`8d2e8cda6d31e04e1557d64ca53d187cd85afc92`, Vivado 2020.1, part
+`xc7z020clg400-2`, clock 50 MHz. Bitstream local 4.045.676 byte có SHA-256
+`183e0af367376ebd7ca6bc2f3747314fd0602306a630af2a2e51858ef1f20e8e`.
+Chi tiết tại
+[`HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md`](HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md).
 
 Chạy lại toàn bộ cổng candidate bằng một lệnh. Makefile ép các pha chạy tuần tự
 kể cả khi lệnh ngoài có tùy chọn `-j`:
@@ -60,13 +69,13 @@ make crypto-freeze-check
 
 ## Điều kiện nâng thành freeze cuối
 
-1. Chạy `make -j1 impl VIVADO=/duong-dan/toi/vivado` trên đúng
-   `xc7z020clg400-2`; synthesis, place/route, timing và DRC phải PASS.
-2. Kiểm tra utilization sau thay đổi BRAM; không dùng báo cáo RC4 để đại diện
-   cho RTL ML-KEM mới.
+1. ~~Chạy Vivado implementation trên đúng `xc7z020clg400-2`.~~ **PASS**.
+2. ~~Kiểm tra utilization riêng của RTL ML-KEM mới.~~ **PASS**, 49.909 LUT,
+   30.649 register, 25 BRAM và 4 DSP sau route.
 3. Nạp bitstream mới, chạy INFO, enroll, reconstruct và stress 10.000 giao dịch
    single-attempt trên board.
-4. Cập nhật report, SHA-256 bitstream và provenance theo đúng commit candidate.
+4. Cập nhật report và SHA-256 bitstream theo đúng commit candidate; chỉ quảng
+   bá artifact root sau khi bước 3 PASS.
 5. Có review độc lập cho serialization, compare/mux rejection, reset và
    zeroization.
 6. Chạy lại `make -j1 crypto-freeze-gate` trên working tree sạch, rồi mới tạo

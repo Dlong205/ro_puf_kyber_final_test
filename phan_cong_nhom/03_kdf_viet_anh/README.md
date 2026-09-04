@@ -18,15 +18,18 @@
 
 - SHA3-256, SHA3-512, SHAKE128 và SHAKE256 byte-oriented: PASS 50/50, gồm
   20 vector NIST CAVP, biên rate, multi-block, stall và reset.
-- KDF SHAKE256 với input 24 byte: PASS bit-exact sau khi tích hợp sponge mới.
-- Full-system PUF → KDF → Kyber: PASS.
+- KDF SHAKE256 fixed-profile 24-byte → 64-byte: PASS bit-exact ở cycle 148.
+- Full-system PUF → KDF → ML-KEM: PASS ở 956.564 cycle.
+- KDF fixed-profile được giữ riêng với controller FIPS 202 tổng quát để giảm
+  LUT; candidate đã fit XC7Z020 ở 49.909 LUT sau route.
 - Chưa hỗ trợ SHA3-224/SHA3-384 hoặc message bit-oriented; PASS không đồng nghĩa
   triển khai đã được chứng nhận CAVP.
 
 ## Việc tiếp theo
 
-1. Review mapping FIPS 203 của `H`, `G`, `J`, PRF và XOF sang bốn mode đã chốt.
-2. Đối chiếu endianness/serialization tại ranh giới Keccak ↔ ML-KEM.
+1. Review độc lập mapping FIPS 203 của `H`, `G`, `J`, PRF và XOF sang bốn mode
+   đã chốt.
+2. Review endianness/serialization tại ranh giới Keccak ↔ ML-KEM.
 3. Đề xuất thêm vector CAVP hoặc ACVP coverage còn thiếu nếu cần chứng nhận.
 4. Review báo cáo do Long chạy; mọi thay đổi RTL và tích hợp do Long thực hiện.
 

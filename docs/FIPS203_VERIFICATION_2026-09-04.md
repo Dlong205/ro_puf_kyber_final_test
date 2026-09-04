@@ -72,8 +72,9 @@ make -j1 asic-elaboration
    độ dài/type riêng ở biên API.
 4. Chưa có formal proof, constant-time gate-level review, leakage/side-channel,
    fault-injection hoặc zeroization physical sign-off.
-5. Bitstream/report RC4 thuộc tag `fpga-rc4-baseline`; RTL ML-KEM mới chưa chạy
-   lại Vivado implementation và chưa test lại trên board.
+5. RTL ML-KEM mới đã PASS Vivado synthesis/place/route/timing/DRC ở 50 MHz và
+   tạo bitstream candidate. JTAG/UART/stress candidate chưa chạy lại trên board;
+   bitstream RC4 ở root vẫn thuộc tag `fpga-rc4-baseline`.
 
 ## Điều kiện freeze RTL mật mã
 
@@ -81,8 +82,8 @@ make -j1 asic-elaboration
   tuyên bố API tổng quát nhận `ek/dk` ngoài.
 - Vector/negative functional, full regression và ASIC portability/elaboration
   của candidate đã PASS.
-- Vivado synth/implementation và board regression của RTL mới phải PASS trước
-  khi nâng candidate thành freeze cuối.
+- Vivado synth/implementation đã PASS; board regression của RTL mới phải PASS
+  trước khi nâng candidate thành freeze cuối.
 - Review độc lập serialization, compare/mux rejection, reset và zeroization.
 - Tạo commit/tag freeze riêng; giữ `fpga-rc4-baseline` bất biến làm oracle.
 

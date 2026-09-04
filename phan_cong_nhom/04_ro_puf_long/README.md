@@ -19,12 +19,16 @@
 - `scripts/inspect_ro_netlist.tcl`
 - `docs/ASIC_PORTABILITY.md`
 
-## Trạng thái RC4
+## Trạng thái hiện tại
 
 - Controller simulation/reset/restart: PASS.
 - Backend behavioral, Xilinx LUT và ASIC macro boundary đã tách.
 - Netlist FPGA có 128 LUT, 128 feedback net và 128/128 loop constraint.
 - Board full pipeline stress 10.000/10.000 PASS trong một phiên test.
+- ML-KEM candidate PASS functional gate, ASIC portability, synthesis,
+  place/route, timing/DRC và tạo bitstream ở 50 MHz.
+- Candidate dùng 49.909/53.200 LUT (`93,81%`), WNS `+2,226 ns`; board
+  regression của candidate còn PENDING.
 - Counter đã dùng asynchronous-assert/synchronous-release và đồng bộ enable.
 - Methodology còn 72 `TIMING-17` vì clock RO vật lý bất định; report CDC tự
   động không phải CDC/RDC sign-off cho miền RO.
@@ -32,15 +36,17 @@
 
 ## Việc tiếp theo
 
-1. Lập protocol đo nhiều board, cold/warm power-cycle, voltage và temperature.
-2. Thu response có định danh điều kiện; tính intra-device HD, inter-device HD,
+1. Nạp bitstream ML-KEM candidate volatile và chạy INFO, enroll, reconstruct,
+   stress 10.000 giao dịch trước khi quảng bá artifact root.
+2. Lập protocol đo nhiều board, cold/warm power-cycle, voltage và temperature.
+3. Thu response có định danh điều kiện; tính intra-device HD, inter-device HD,
    bit-alias, min-entropy và failure rate của fuzzy extractor.
-3. Rà CDC/RDC bằng tool chuyên dụng; chốt handshake/reset và waiver có lý do.
-4. Định nghĩa contract macro ASIC: `en`, `cfg`, `ro_clk`, trạng thái khi disable,
+4. Rà CDC/RDC bằng tool chuyên dụng; chốt handshake/reset và waiver có lý do.
+5. Định nghĩa contract macro ASIC: `en`, `cfg`, `ro_clk`, trạng thái khi disable,
    test/bypass, PVT characterization và timing/power views.
-5. Khi có PDK, dựng macro RO vật lý với keep-out/shielding/placement matching;
+6. Khi có PDK, dựng macro RO vật lý với keep-out/shielding/placement matching;
    không synthesize vòng inverter như logic chuẩn.
-6. Phối hợp Minh về helper/provisioning và tiêu chí reject khi PUF không ổn định.
+7. Phối hợp Minh về helper/provisioning và tiêu chí reject khi PUF không ổn định.
 
 ## Definition of Done
 
