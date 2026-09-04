@@ -45,4 +45,4 @@ df5346cb9dabfdfe8c7c688ce80e58a38f436cec10e3d6977c6d87cc7ad708e1  rtl/kyber/ref/
 903a599e6676ad4e5a9b4daf55ee94717f128a25e47f978800e0f985f7dc8965  rtl/kyber/ref/pattern.v
 95571bcc2662015dab3a796fecd99483ce91a493ddfc7593ae6ec2e626f7904a  rtl/kyber/ref/reduc.v
 93138e8be8ba4c063efa80669eb9d9f068b676e1e365512772e33abfbd0501b9  rtl/kyber/ref/sha3_shake_core.v
-a0361361bfc8b4afff9753a5653e65932b95c9caa840a1fd4871e8a64eb7254a  rtl/top/kdf_keccak.sv
+9a6a4c313c4c72bb1a87e604815c1477086c85becf84ec5d6a5ae7a84c894942  rtl/top/kdf_keccak.sv

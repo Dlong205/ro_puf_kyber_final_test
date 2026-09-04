@@ -15,7 +15,7 @@ VERILATOR_FLAGS = --cc --exe --timing \
 
 TOP_MODULE = tb_kdf_kat
 
-HASH_CORE_SRCS = ../../rtl/hash_core/fips202_sponge.sv \
+HASH_CORE_SRCS = ../../rtl/kyber/ref/keccak_f1600_server.v \
                  ../../rtl/hash_core/ALGORITHM.v \
                  ../../rtl/hash_core/THETA1.v \
                  ../../rtl/hash_core/THETA2_RHO_PI.v \

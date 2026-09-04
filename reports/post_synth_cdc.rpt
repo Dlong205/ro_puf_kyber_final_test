@@ -1,7 +1,7 @@
 Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2020.1 (lin64) Build 2902540 Wed May 27 19:54:35 MDT 2020
-| Date         : Wed Sep  2 23:47:36 2026
+| Date         : Fri Sep  4 09:07:39 2026
 | Host         : donglong-P7xxTM-1 running 64-bit Ubuntu 22.04.5 LTS
 | Command      : report_cdc -details -file /home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/reports/post_synth_cdc.rpt
 | Design       : Kyber_System_Top

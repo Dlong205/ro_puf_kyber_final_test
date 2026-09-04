@@ -1,7 +1,7 @@
 Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2020.1 (lin64) Build 2902540 Wed May 27 19:54:35 MDT 2020
-| Date         : Wed Sep  2 23:47:35 2026
+| Date         : Fri Sep  4 09:07:38 2026
 | Host         : donglong-P7xxTM-1 running 64-bit Ubuntu 22.04.5 LTS
 | Command      : report_timing_summary -file /home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/reports/post_synth_timing.rpt
 | Design       : Kyber_System_Top
@@ -27,11 +27,11 @@ Timing Summary Report
   Borrow Time for Max Delay Exceptions       :  Yes
   Merge Timing Exceptions                    :  Yes
 
-  Corner  Analyze    Analyze
-  Name    Max Paths  Min Paths
-  ------  ---------  ---------
-  Slow    Yes        Yes
-  Fast    Yes        Yes
+  Corner  Analyze    Analyze    
+  Name    Max Paths  Min Paths  
+  ------  ---------  ---------  
+  Slow    Yes        Yes        
+  Fast    Yes        Yes        
 
 
 
@@ -142,9 +142,9 @@ Table of Contents
 | ---------------------
 ------------------------------------------------------------------------------------------------
 
-    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints
-    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------
-     11.928        0.000                      0                83511        0.037        0.000                      0                83511        8.870        0.000                       0                 31169
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+     11.928        0.000                      0                84253        0.037        0.000                      0                84253        8.870        0.000                       0                 31245  
 
 
 All user specified timing constraints are met.
@@ -157,7 +157,7 @@ All user specified timing constraints are met.
 
 Clock      Waveform(ns)       Period(ns)      Frequency(MHz)
 -----      ------------       ----------      --------------
-CLK100MHZ  {0.000 10.000}     20.000          50.000
+CLK100MHZ  {0.000 10.000}     20.000          50.000          
 
 
 ------------------------------------------------------------------------------------------------
@@ -165,9 +165,9 @@ CLK100MHZ  {0.000 10.000}     20.000          50.000
 | -----------------
 ------------------------------------------------------------------------------------------------
 
-Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints
------             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------
-CLK100MHZ          11.928        0.000                      0                74003        0.037        0.000                      0                74003        8.870        0.000                       0                 31169
+Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+CLK100MHZ          11.928        0.000                      0                74787        0.037        0.000                      0                74787        8.870        0.000                       0                 31245  
 
 
 ------------------------------------------------------------------------------------------------
@@ -175,8 +175,8 @@ CLK100MHZ          11.928        0.000                      0                740
 | -----------------
 ------------------------------------------------------------------------------------------------
 
-From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints
-----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
 
 
 ------------------------------------------------------------------------------------------------
@@ -184,9 +184,9 @@ From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS
 | -----------------------
 ------------------------------------------------------------------------------------------------
 
-Path Group         From Clock         To Clock               WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints
-----------         ----------         --------               -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------
-**async_default**  CLK100MHZ          CLK100MHZ               17.701        0.000                      0                 9508        0.765        0.000                      0                 9508
+Path Group         From Clock         To Clock               WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------         ----------         --------               -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+**async_default**  CLK100MHZ          CLK100MHZ               17.701        0.000                      0                 9466        0.765        0.000                      0                 9466  
 
 
 ------------------------------------------------------------------------------------------------
@@ -218,7 +218,7 @@ Slack (MET) :             11.928ns  (required time - arrival time)
   Data Path Delay:        7.935ns  (logic 1.469ns (18.513%)  route 6.466ns (81.487%))
   Logic Levels:           9  (LUT3=1 LUT4=1 LUT6=7)
   Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
-    Destination Clock Delay (DCD):    2.456ns = ( 22.456 - 20.000 )
+    Destination Clock Delay (DCD):    2.456ns = ( 22.456 - 20.000 ) 
     Source Clock Delay      (SCD):    2.707ns
     Clock Pessimism Removal (CPR):    0.106ns
   Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
@@ -230,13 +230,13 @@ Slack (MET) :             11.928ns  (required time - arrival time)
     Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
   -------------------------------------------------------------------    -------------------
                          (clock CLK100MHZ rise edge)
-                                                      0.000     0.000 r
+                                                      0.000     0.000 r  
     N18                                               0.000     0.000 r  CLK100MHZ (IN)
                          net (fo=0)                   0.000     0.000    CLK100MHZ
     N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, unplaced)         0.646     2.038    CLK100MHZ_IBUF
                          BUFG (Prop_bufg_I_O)         0.085     2.123 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31200, unplaced)     0.584     2.707    u_soc/cpu/CLK100MHZ_IBUF_BUFG
+                         net (fo=31276, unplaced)     0.584     2.707    u_soc/cpu/CLK100MHZ_IBUF_BUFG
                          FDRE                                         r  u_soc/cpu/mem_addr_reg[15]/C
   -------------------------------------------------------------------    -------------------
                          FDRE (Prop_fdre_C_Q)         0.397     3.104 f  u_soc/cpu/mem_addr_reg[15]/Q
@@ -263,22 +263,22 @@ Slack (MET) :             11.928ns  (required time - arrival time)
   -------------------------------------------------------------------    -------------------
 
                          (clock CLK100MHZ rise edge)
-                                                     20.000    20.000 r
+                                                     20.000    20.000 r  
     N18                                               0.000    20.000 r  CLK100MHZ (IN)
                          net (fo=0)                   0.000    20.000    CLK100MHZ
     N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, unplaced)         0.613    21.940    CLK100MHZ_IBUF
                          BUFG (Prop_bufg_I_O)         0.077    22.017 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31200, unplaced)     0.439    22.456    u_soc/cpu/CLK100MHZ_IBUF_BUFG
+                         net (fo=31276, unplaced)     0.439    22.456    u_soc/cpu/CLK100MHZ_IBUF_BUFG
                          FDRE                                         r  u_soc/cpu/mem_rdata_q_reg[24]/C
-                         clock pessimism              0.106    22.562
-                         clock uncertainty           -0.035    22.526
+                         clock pessimism              0.106    22.562    
+                         clock uncertainty           -0.035    22.526    
                          FDRE (Setup_fdre_C_D)        0.043    22.569    u_soc/cpu/mem_rdata_q_reg[24]
   -------------------------------------------------------------------
-                         required time                         22.569
-                         arrival time                         -10.642
+                         required time                         22.569    
+                         arrival time                         -10.642    
   -------------------------------------------------------------------
-                         slack                                 11.928
+                         slack                                 11.928    
 
 
 
@@ -295,7 +295,7 @@ Slack (MET) :             0.037ns  (arrival time - required time)
   Path Type:              Hold (Min at Fast Process Corner)
   Requirement:            0.000ns  (CLK100MHZ rise@0.000ns - CLK100MHZ rise@0.000ns)
   Data Path Delay:        0.220ns  (logic 0.147ns (66.849%)  route 0.073ns (33.151%))
-  Logic Levels:           0
+  Logic Levels:           0  
   Clock Path Skew:        0.145ns (DCD - SCD - CPR)
     Destination Clock Delay (DCD):    1.042ns
     Source Clock Delay      (SCD):    0.689ns
@@ -304,13 +304,13 @@ Slack (MET) :             0.037ns  (arrival time - required time)
     Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
   -------------------------------------------------------------------    -------------------
                          (clock CLK100MHZ rise edge)
-                                                      0.000     0.000 r
+                                                      0.000     0.000 r  
     N18                                               0.000     0.000 r  CLK100MHZ (IN)
                          net (fo=0)                   0.000     0.000    CLK100MHZ
     N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, unplaced)         0.320     0.549    CLK100MHZ_IBUF
                          BUFG (Prop_bufg_I_O)         0.026     0.575 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31200, unplaced)     0.114     0.689    u_puf/CLK100MHZ_IBUF_BUFG
+                         net (fo=31276, unplaced)     0.114     0.689    u_puf/CLK100MHZ_IBUF_BUFG
                          FDCE                                         r  u_puf/winner_meta_reg/C
   -------------------------------------------------------------------    -------------------
                          FDCE (Prop_fdce_C_Q)         0.147     0.836 r  u_puf/winner_meta_reg/Q
@@ -319,21 +319,21 @@ Slack (MET) :             0.037ns  (arrival time - required time)
   -------------------------------------------------------------------    -------------------
 
                          (clock CLK100MHZ rise edge)
-                                                      0.000     0.000 r
+                                                      0.000     0.000 r  
     N18                                               0.000     0.000 r  CLK100MHZ (IN)
                          net (fo=0)                   0.000     0.000    CLK100MHZ
     N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, unplaced)         0.337     0.754    CLK100MHZ_IBUF
                          BUFG (Prop_bufg_I_O)         0.029     0.783 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31200, unplaced)     0.259     1.042    u_puf/CLK100MHZ_IBUF_BUFG
+                         net (fo=31276, unplaced)     0.259     1.042    u_puf/CLK100MHZ_IBUF_BUFG
                          FDCE                                         r  u_puf/winner_sync_reg/C
-                         clock pessimism             -0.208     0.834
+                         clock pessimism             -0.208     0.834    
                          FDCE (Hold_fdce_C_D)         0.038     0.872    u_puf/winner_sync_reg
   -------------------------------------------------------------------
-                         required time                         -0.872
-                         arrival time                           0.909
+                         required time                         -0.872    
+                         arrival time                           0.909    
   -------------------------------------------------------------------
-                         slack                                  0.037
+                         slack                                  0.037    
 
 
 
@@ -376,7 +376,7 @@ Slack (MET) :             17.701ns  (required time - arrival time)
   Data Path Delay:        1.832ns  (logic 0.629ns (34.334%)  route 1.203ns (65.666%))
   Logic Levels:           1  (LUT2=1)
   Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
-    Destination Clock Delay (DCD):    2.456ns = ( 22.456 - 20.000 )
+    Destination Clock Delay (DCD):    2.456ns = ( 22.456 - 20.000 ) 
     Source Clock Delay      (SCD):    2.707ns
     Clock Pessimism Removal (CPR):    0.106ns
   Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
@@ -388,39 +388,39 @@ Slack (MET) :             17.701ns  (required time - arrival time)
     Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
   -------------------------------------------------------------------    -------------------
                          (clock CLK100MHZ rise edge)
-                                                      0.000     0.000 r
+                                                      0.000     0.000 r  
     N18                                               0.000     0.000 r  CLK100MHZ (IN)
                          net (fo=0)                   0.000     0.000    CLK100MHZ
     N18                  IBUF (Prop_ibuf_I_O)         1.392     1.392 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, unplaced)         0.646     2.038    CLK100MHZ_IBUF
                          BUFG (Prop_bufg_I_O)         0.085     2.123 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31200, unplaced)     0.584     2.707    u_soc/u_kyber_axi/CLK100MHZ_IBUF_BUFG
+                         net (fo=31276, unplaced)     0.584     2.707    u_soc/u_kyber_axi/CLK100MHZ_IBUF_BUFG
                          FDRE                                         r  u_soc/u_kyber_axi/FSM_onehot_launch_state_reg[2]/C
   -------------------------------------------------------------------    -------------------
                          FDRE (Prop_fdre_C_Q)         0.397     3.104 f  u_soc/u_kyber_axi/FSM_onehot_launch_state_reg[2]/Q
                          net (fo=18, unplaced)        0.419     3.523    u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/Str_out_reg[0]_2
                          LUT2 (Prop_lut2_I0_O)        0.232     3.755 f  u_soc/u_kyber_axi/S/hash/sponge/algo_inst/STEP_MAPPING_5/Str_out[1599]_i_1/O
-                         net (fo=4811, unplaced)      0.784     4.539    u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/kyber_core_reset
+                         net (fo=4916, unplaced)      0.784     4.539    u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/kyber_core_reset
                          FDCE                                         f  u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/Str_out_reg[0]/CLR
   -------------------------------------------------------------------    -------------------
 
                          (clock CLK100MHZ rise edge)
-                                                     20.000    20.000 r
+                                                     20.000    20.000 r  
     N18                                               0.000    20.000 r  CLK100MHZ (IN)
                          net (fo=0)                   0.000    20.000    CLK100MHZ
     N18                  IBUF (Prop_ibuf_I_O)         1.327    21.327 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, unplaced)         0.613    21.940    CLK100MHZ_IBUF
                          BUFG (Prop_bufg_I_O)         0.077    22.017 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31200, unplaced)     0.439    22.456    u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/CLK100MHZ_IBUF_BUFG
+                         net (fo=31276, unplaced)     0.439    22.456    u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/CLK100MHZ_IBUF_BUFG
                          FDCE                                         r  u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/Str_out_reg[0]/C
-                         clock pessimism              0.106    22.562
-                         clock uncertainty           -0.035    22.526
+                         clock pessimism              0.106    22.562    
+                         clock uncertainty           -0.035    22.526    
                          FDCE (Recov_fdce_C_CLR)     -0.287    22.239    u_soc/u_kyber_axi/C/hash/sponge/algo_inst/STEP_MAPPING_5/Str_out_reg[0]
   -------------------------------------------------------------------
-                         required time                         22.239
-                         arrival time                          -4.539
+                         required time                         22.239    
+                         arrival time                          -4.539    
   -------------------------------------------------------------------
-                         slack                                 17.701
+                         slack                                 17.701    
 
 
 
@@ -446,38 +446,38 @@ Slack (MET) :             0.765ns  (arrival time - required time)
     Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
   -------------------------------------------------------------------    -------------------
                          (clock CLK100MHZ rise edge)
-                                                      0.000     0.000 r
+                                                      0.000     0.000 r  
     N18                                               0.000     0.000 r  CLK100MHZ (IN)
                          net (fo=0)                   0.000     0.000    CLK100MHZ
     N18                  IBUF (Prop_ibuf_I_O)         0.229     0.229 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, unplaced)         0.320     0.549    CLK100MHZ_IBUF
                          BUFG (Prop_bufg_I_O)         0.026     0.575 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31200, unplaced)     0.114     0.689    CLK100MHZ_IBUF_BUFG
+                         net (fo=31276, unplaced)     0.114     0.689    CLK100MHZ_IBUF_BUFG
                          FDRE                                         r  por_done_reg/C
   -------------------------------------------------------------------    -------------------
                          FDRE (Prop_fdre_C_Q)         0.147     0.836 r  por_done_reg/Q
                          net (fo=2741, unplaced)      0.188     1.025    u_kdf/keccak_inst/algo_inst/STEP_MAPPING_5/por_done
                          LUT1 (Prop_lut1_I0_O)        0.098     1.123 f  u_kdf/keccak_inst/algo_inst/STEP_MAPPING_5/FSM_onehot_launch_state[2]_i_1/O
-                         net (fo=6978, unplaced)      0.389     1.512    u_fe/clear_prefetched_high_word2
+                         net (fo=6936, unplaced)      0.389     1.512    u_fe/clear_prefetched_high_word2
                          FDCE                                         f  u_fe/FSM_sequential_state_reg[0]/CLR
   -------------------------------------------------------------------    -------------------
 
                          (clock CLK100MHZ rise edge)
-                                                      0.000     0.000 r
+                                                      0.000     0.000 r  
     N18                                               0.000     0.000 r  CLK100MHZ (IN)
                          net (fo=0)                   0.000     0.000    CLK100MHZ
     N18                  IBUF (Prop_ibuf_I_O)         0.417     0.417 r  CLK100MHZ_IBUF_inst/O
                          net (fo=1, unplaced)         0.337     0.754    CLK100MHZ_IBUF
                          BUFG (Prop_bufg_I_O)         0.029     0.783 r  CLK100MHZ_IBUF_BUFG_inst/O
-                         net (fo=31200, unplaced)     0.259     1.042    u_fe/CLK100MHZ_IBUF_BUFG
+                         net (fo=31276, unplaced)     0.259     1.042    u_fe/CLK100MHZ_IBUF_BUFG
                          FDCE                                         r  u_fe/FSM_sequential_state_reg[0]/C
-                         clock pessimism             -0.208     0.834
+                         clock pessimism             -0.208     0.834    
                          FDCE (Remov_fdce_C_CLR)     -0.088     0.746    u_fe/FSM_sequential_state_reg[0]
   -------------------------------------------------------------------
-                         required time                         -0.746
-                         arrival time                           1.512
+                         required time                         -0.746    
+                         arrival time                           1.512    
   -------------------------------------------------------------------
-                         slack                                  0.765
+                         slack                                  0.765    
 
 
 
