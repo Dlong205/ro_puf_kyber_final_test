@@ -61,4 +61,5 @@ zip nguồn được ghi trong file vector; `import_nist_cavp.py` là script d�
 5. Chọn top-level license tương thích với source RO-PUF chịu GPL và nghĩa vụ của
    mọi thành phần khác.
 
-Cho đến khi hoàn thành các mục này, chỉ chia sẻ RC4 trong repo riêng tư của nhóm.
+Cho đến khi hoàn thành các mục này, chỉ chia sẻ các internal RC trong repo riêng
+tư của nhóm; không public source hoặc bitstream ML-KEM.

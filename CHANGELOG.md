@@ -1,5 +1,24 @@
 # Lịch sử thay đổi
 
+## 0.2.0-rc1 — 2026-09-04
+
+- Hoàn thiện đường thuật toán nội bộ ML-KEM-512 theo FIPS 203: KeyGen/Encaps/
+  Decaps PASS 25/25 vector mỗi nhóm và implicit rejection PASS 175/175.
+- Mở rộng FIPS 202 byte-oriented lên 50/50 test; KDF SHAKE256 fixed-profile
+  24-byte → 64-byte PASS bit-exact ở cycle 148.
+- Full-system PUF → fuzzy extractor → KDF → ML-KEM PASS ở 956.564 cycle;
+  raw single-attempt gate PASS 1.024/1.024, mismatch/retry bằng 0.
+- Tối ưu KDF để candidate fit XC7Z020: 49.909 LUT, 30.649 register, 25 BRAM,
+  4 DSP; route đủ, DRC không lỗi và timing 50 MHz đạt WNS `+2,226 ns`.
+- Nạp bitstream candidate volatile trên `xc7z020_1`; INFO, enroll, reconstruct
+  PASS và stress 100/100, 1.000/1.000, 10.000/10.000 không lỗi.
+- Run 10.000 đạt latency trung bình 29,608 ms/giao dịch và throughput
+  33,775 giao dịch/s.
+- Quảng bá bitstream đã test thành `Kyber_System_Top.bit`, SHA-256
+  `183e0af367376ebd7ca6bc2f3747314fd0602306a630af2a2e51858ef1f20e8e`.
+- Public release vẫn bị chặn bởi quyền phân phối RTL nền và top-level license;
+  production còn thiếu review độc lập và qualification PUF.
+
 ## 0.1.0-rc4 — 2026-09-03
 
 - Tách RO-PUF thành backend mô phỏng, LUT Xilinx và macro ASIC black-box; cô

@@ -1,4 +1,4 @@
-# Trạng thái xác minh dự án — RC4 + nhánh ML-KEM-512
+# Trạng thái xác minh dự án — ML-KEM-512 `0.2.0-rc1`
 
 | Hạng mục | Trạng thái |
 |---|---|
@@ -19,15 +19,16 @@
 | Full-system UART/PUF/FE/KDF/ML-KEM | PASS, 956.564 cycle |
 | Standalone/pure RTL audit | PASS, không symlink, `.xci` hay dependency source ngoài |
 | ASIC portability gate | PASS, ASIC-generic elaboration và primitive vendor đã cô lập |
-| Crypto RTL freeze candidate v2 | PASS functional/portability/manifest/Vivado; chờ board mới |
+| Crypto RTL freeze candidate v2 | PASS functional/portability/manifest/Vivado/board; chờ review độc lập |
 | Netlist RO Xilinx | PASS, 128 LUT/128 feedback net/128 constraint loop |
 | Vivado synthesis/implementation | PASS, `xc7z020clg400-2`, không IP sinh tự động |
 | Route | PASS, 0 failed/unrouted/partially-routed net |
 | Timing 50 MHz candidate ML-KEM | PASS, WNS `+2,226 ns`, WHS `+0,034 ns`, TNS/THS `0` |
 | DRC | PASS, 0 lỗi; 165 warning đã phân loại |
-| JTAG/INFO/enroll/reconstruct candidate ML-KEM | **PENDING**, board chưa hiện trên USB |
+| JTAG/INFO/enroll/reconstruct ML-KEM RC1 | PASS trên `xc7z020_1`, protocol 1.2/capability `0x06` |
 | JTAG/INFO/enroll/reconstruct RC4 | PASS trên `xc7z020_1` |
 | Stress board RC4 | PASS 100/100, 1.000/1.000 và 10.000/10.000 |
+| Stress board ML-KEM RC1 | PASS 100/100, 1.000/1.000 và 10.000/10.000 |
 | Đặc trưng nhiều board/power-cycle/điện áp/nhiệt độ | CHƯA CHẠY |
 | Public redistribution license | BỊ CHẶN |
 
@@ -44,9 +45,9 @@ board, lỗi cũ ở khoảng giao dịch 209 không tái hiện trong run 10.00
 Đây là bằng chứng chức năng mạnh hơn RC2. Nhánh phát triển sau RC4 còn bổ sung
 KAT ML-KEM bit-exact và implicit rejection; vẫn chưa phải formal proof.
 
-## Định danh artifact RC4
+## Định danh baseline RC4 bất biến
 
-- Bitstream: `Kyber_System_Top.bit`, 4.045.676 byte
+- Bitstream tại tag `fpga-rc4-baseline`: 4.045.676 byte
 - SHA-256: `bd8153f8ab58f0a704b2f696c54ed1f57d1a31b951d273f547b33926d239f348`
 - Firmware SHA-256: `d8774e78d37c8fbc34d799426ce7a0150715569217bb921df3c0c1519348ec8e`
 - Tài nguyên: 51.682/53.200 LUT (`97,15%`), 30.554 register, 23,5 BRAM, 4 DSP
@@ -54,10 +55,10 @@ KAT ML-KEM bit-exact và implicit rejection; vẫn chưa phải formal proof.
 - Methodology: 72 `TIMING-17` do clock RO bất định; không phải CDC/ASIC sign-off
 - Board run 10.000: 29,119 ms/giao dịch, 34,342 giao dịch/s, Fail 0
 
-## Implementation candidate ML-KEM
+## Artifact ML-KEM `0.2.0-rc1`
 
 - Source commit: `8d2e8cda6d31e04e1557d64ca53d187cd85afc92`
-- Bitstream local: 4.045.676 byte, SHA-256
+- Bitstream `Kyber_System_Top.bit`: 4.045.676 byte, SHA-256
   `183e0af367376ebd7ca6bc2f3747314fd0602306a630af2a2e51858ef1f20e8e`
 - Tài nguyên sau route: 49.909/53.200 LUT (`93,81%`), 30.649 register,
   25 BRAM tile, 4 DSP
@@ -65,8 +66,9 @@ KAT ML-KEM bit-exact và implicit rejection; vẫn chưa phải formal proof.
 - Timing 50 MHz: WNS `+2,226 ns`, WHS `+0,034 ns`, TNS/THS `0`
 - DRC: 0 Error/Critical Warning; 165 warning cùng nhóm đã biết của RC4
 - Audit RO: 128 LUT, 128 feedback net và 128 constraint loop
-- Trạng thái artifact: chưa thay `Kyber_System_Top.bit` RC4 ở root vì chưa
-  hoàn tất test board của candidate
+- Board run 10.000: 29,608 ms/giao dịch, 33,775 giao dịch/s, Fail 0
+- Trạng thái artifact: đã quảng bá lên root sau khi JTAG/INFO/enroll/reconstruct
+  và stress board PASS
 
 Xem `HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md`,
 `HARDWARE_TEST_REPORT_RC4_2026-09-03.md`,
@@ -74,7 +76,7 @@ Xem `HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md`,
 `FIPS203_VERIFICATION_2026-09-04.md`. Nhãn phù hợp của nhánh hiện tại là
 **ML-KEM-512 internal algorithm functional PASS**; không phải chứng nhận
 CAVP/FIPS 140-3 hay release production. API kiểm tra `ek/dk` ngoài, mở rộng
-corpus ngoài sample, review độc lập và regression board candidate vẫn chưa đóng.
+corpus ngoài sample và review độc lập vẫn chưa đóng; board regression đã PASS.
 
 Phạm vi, manifest và điều kiện nâng candidate thành freeze cuối được ghi tại
 [`CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md`](CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md).

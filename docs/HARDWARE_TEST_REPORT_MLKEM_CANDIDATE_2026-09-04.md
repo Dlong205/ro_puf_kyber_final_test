@@ -1,12 +1,11 @@
-# Báo cáo implementation FPGA ML-KEM candidate — 2026-09-04
+# Báo cáo implementation và board ML-KEM RC1 — 2026-09-04
 
 ## Kết luận
 
-RTL candidate đã **PASS synthesis, place, route, timing, DRC và bitstream** cho
-`XC7Z020-2CLG400I` ở 50 MHz. Candidate chưa được nạp/test lại trên board, vì
-board không xuất hiện trong `lsusb` và không có thiết bị `/dev/ttyUSB*` tại thời
-điểm kiểm tra. Vì vậy đây là implementation candidate, chưa phải artifact FPGA
-đã xác nhận end-to-end.
+RTL `0.2.0-rc1` đã **PASS synthesis, place, route, timing, DRC, bitstream và
+board regression** cho `XC7Z020-2CLG400I` ở 50 MHz. Bitstream được nạp volatile
+qua JTAG, INFO/enroll/reconstruct PASS và stress 10.000/10.000 giao dịch không
+có fail/timeout. Artifact đã được quảng bá thành `Kyber_System_Top.bit` ở root.
 
 Nhãn mật mã vẫn là **ML-KEM-512 internal algorithm functional PASS**, không
 phải chứng nhận CAVP, FIPS 140-3 hay chứng nhận sản phẩm.
@@ -15,20 +14,22 @@ phải chứng nhận CAVP, FIPS 140-3 hay chứng nhận sản phẩm.
 
 - Source commit: `8d2e8cda6d31e04e1557d64ca53d187cd85afc92`
 - Nhánh: `codex/fips202-mlkem`
+- Phiên bản artifact: `0.2.0-rc1`
 - Baseline so sánh bất biến: tag `fpga-rc4-baseline`
 - Vivado: 2020.1, build 2902540
 - Part: `xc7z020clg400-2`
 - Top: `Kyber_System_Top`
 - Clock constraint: 20 ns, 50 MHz
 - Xilinx IP sinh tự động: 0 `.xci`, 0 IP instance
-- Bitstream local:
+- Bitstream build:
   `build/vivado/kyber_ro_puf_zynq7020.runs/impl_1/Kyber_System_Top.bit`
+- Artifact check-in: `Kyber_System_Top.bit`, byte-for-byte giống bitstream build
 - Kích thước bitstream: 4.045.676 byte
 - SHA-256 bitstream:
   `183e0af367376ebd7ca6bc2f3747314fd0602306a630af2a2e51858ef1f20e8e`
 
-Bitstream trên chỉ nằm trong thư mục build local. `Kyber_System_Top.bit` ở root
-vẫn là artifact RC4 đã test board và chưa bị thay thế.
+Checksum được khóa trong `ARTIFACTS.sha256`; firmware release giữ SHA-256
+`d8774e78d37c8fbc34d799426ce7a0150715569217bb921df3c0c1519348ec8e`.
 
 ## Lỗi fit đã phát hiện và sửa
 
@@ -105,15 +106,33 @@ Sau khi tối ưu KDF, `make -j1 crypto-freeze-gate` PASS toàn bộ:
 - Kyber raw single-attempt: 1.024/1.024, mismatch/retry bằng 0;
 - ASIC portability/elaboration và freeze manifest: PASS.
 
-## Cổng còn lại trước freeze cuối
+## Kết quả board
 
-1. Kết nối lại board và xác nhận JTAG/UART.
-2. Nạp bitstream candidate volatile, chạy `info`, enroll và reconstruct.
-3. Chạy stress 10.000 giao dịch single-attempt, fail/timeout bằng 0.
-4. Nếu board PASS, quảng bá bitstream candidate thành artifact root, cập nhật
-   `ARTIFACTS.sha256`, version/report và tạo tag freeze cuối.
-5. Hoàn tất review độc lập serialization, compare/mux rejection, reset và
+- JTAG: Digilent `260515110006`
+- Vivado device: `xc7z020_1`
+- UART: CH340 `/dev/ttyUSB1`, 115200 8N1
+- Nạp: volatile PL, không ghi QSPI/flash
+- INFO: protocol 1.2, capability `0x06`, shared-secret export tắt, zeroize bật,
+  retry flag tắt
+- Enroll: PASS, nhận 33 byte helper và chỉ lưu tạm ngoài repository
+- Reconstruct smoke: PASS, marker `ABCDEFG`, server/client key match
+
+| Bài test | Attempt | Pass | Fail | Latency TB | Throughput |
+|---|---:|---:|---:|---:|---:|
+| Stress ngắn | 100 | 100 | 0 | 29,457 ms | 33,948/s |
+| Stress trung bình | 1.000 | 1.000 | 0 | 29,653 ms | 33,724/s |
+| Stress dài | 10.000 | 10.000 | 0 | 29,608 ms | 33,775/s |
+
+Run 10.000 kéo dài 296,079 s. Không có protocol error, timeout, mismatch hoặc
+retry. Helper tạm đã được giữ ngoài working tree và xóa sau khi ghi kết quả.
+
+## Cổng còn lại trước freeze cuối/public release
+
+1. Hoàn tất review độc lập serialization, compare/mux rejection, reset và
    zeroization.
+2. Chạy lại cổng freeze/release trên commit chứa artifact và tài liệu cuối.
+3. Tạo tag crypto RTL freeze sau review; giữ tag `fpga-rc4-baseline` bất biến.
+4. Giải quyết quyền phân phối Kyber RTL và chọn top-level license trước public
+   release.
 
 Các báo cáo nguồn nằm tại `reports/post_synth_*` và `reports/post_route_*`.
-

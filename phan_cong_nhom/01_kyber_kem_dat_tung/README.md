@@ -28,7 +28,7 @@
   nhóm; `ek`, `dk`, ciphertext và shared secret khớp bit-exact.
 - Implicit rejection PASS 175/175; timing valid/invalid bằng nhau trong các
   test hiện có.
-- Candidate PASS Vivado implementation 50 MHz nhưng chưa chạy lại board.
+- Candidate PASS Vivado implementation 50 MHz và board stress 10.000/10.000.
 
 ## Việc tiếp theo
 
@@ -41,7 +41,7 @@
 4. Thêm assertion cho FIFO underflow/overflow, FSM progress, số coefficient và
    quy tắc đúng một attempt.
 5. Rà constant-time, zeroization và nguồn randomness cùng Minh và Việt Anh.
-6. Chạy JTAG/UART và stress 10.000 giao dịch với bitstream candidate.
+6. Review báo cáo JTAG/UART và stress 10.000/10.000 của bitstream candidate.
 
 Đạt và Tùng chuẩn bị tài liệu, mapping và nhận xét review. Long thực hiện thay
 đổi RTL, tích hợp test và chốt kết quả trên nhánh chính của dự án.

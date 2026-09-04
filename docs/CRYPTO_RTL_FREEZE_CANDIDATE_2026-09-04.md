@@ -1,8 +1,8 @@
 # Crypto RTL freeze candidate — 2026-09-04
 
 Trạng thái: **CANDIDATE v2, chưa phải freeze cuối**. Functional
-ML-KEM-512/FIPS 203, portability ASIC và Vivado implementation đã PASS. Board
-regression của RTL mới chưa chạy vì board hiện không xuất hiện trên USB/JTAG.
+ML-KEM-512/FIPS 203, portability ASIC, Vivado implementation và board regression
+đã PASS. Cổng kỹ thuật còn lại trước freeze cuối là review độc lập.
 
 ## Phạm vi được khóa
 
@@ -45,12 +45,14 @@ tạo manifest mới trước khi backend.
 | ASIC portability | PASS, top elaborates với `KP_TARGET_ASIC` |
 | Freeze manifest | PASS tập file và SHA-256 |
 | Vivado synthesis/place/route | PASS, 49.909 LUT; timing/route/DRC đạt |
-| Board RTL mới | **PENDING** |
+| Board RTL mới | PASS INFO/enroll/reconstruct; stress 10.000/10.000 |
 
 Implementation tương ứng source commit
 `8d2e8cda6d31e04e1557d64ca53d187cd85afc92`, Vivado 2020.1, part
 `xc7z020clg400-2`, clock 50 MHz. Bitstream local 4.045.676 byte có SHA-256
 `183e0af367376ebd7ca6bc2f3747314fd0602306a630af2a2e51858ef1f20e8e`.
+Artifact đã được quảng bá thành `Kyber_System_Top.bit` cho version
+`0.2.0-rc1` sau khi board PASS.
 Chi tiết tại
 [`HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md`](HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md).
 
@@ -72,10 +74,10 @@ make crypto-freeze-check
 1. ~~Chạy Vivado implementation trên đúng `xc7z020clg400-2`.~~ **PASS**.
 2. ~~Kiểm tra utilization riêng của RTL ML-KEM mới.~~ **PASS**, 49.909 LUT,
    30.649 register, 25 BRAM và 4 DSP sau route.
-3. Nạp bitstream mới, chạy INFO, enroll, reconstruct và stress 10.000 giao dịch
-   single-attempt trên board.
-4. Cập nhật report và SHA-256 bitstream theo đúng commit candidate; chỉ quảng
-   bá artifact root sau khi bước 3 PASS.
+3. ~~Nạp bitstream mới, chạy INFO, enroll, reconstruct và stress 10.000 giao
+   dịch single-attempt trên board.~~ **PASS**, 10.000/10.000, fail 0.
+4. ~~Cập nhật report, SHA-256 và quảng bá artifact root.~~ **PASS**, version
+   `0.2.0-rc1`.
 5. Có review độc lập cho serialization, compare/mux rejection, reset và
    zeroization.
 6. Chạy lại `make -j1 crypto-freeze-gate` trên working tree sạch, rồi mới tạo

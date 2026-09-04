@@ -1,6 +1,6 @@
 # RO-PUF + Fuzzy Extractor + Kyber/ML-KEM trên Zynq-7020
 
-> **Baseline FPGA `0.1.0-rc4` và nhánh phát triển ML-KEM.** Repo dành cho
+> **Internal FPGA release candidate `0.2.0-rc1` cho ML-KEM-512.** Repo dành cho
 > nghiên cứu, đánh giá và cộng tác trong nhóm riêng tư. Phát hành công khai vẫn
 > bị chặn bởi quyền phân phối Kyber RTL và top-level license. Kết quả hiện tại
 > không phải chứng nhận CAVP/FIPS 140-3 và không phải module mật mã production.
@@ -8,8 +8,8 @@
 Tag `fpga-rc4-baseline` giữ nguyên bitstream FPGA đã xác minh. Nhánh phát triển
 đã hoàn tất cổng FIPS 202 byte-oriented và cổng functional bit-exact đầu tiên
 cho KeyGen, Encaps, Decaps và implicit rejection của ML-KEM-512. RTL mới cũng
-đã synthesis/place/route và tạo bitstream thành công; test board của candidate
-vẫn đang chờ. Xem báo cáo
+đã synthesis/place/route, tạo bitstream và PASS board regression 10.000 giao
+dịch. Xem báo cáo
 [`docs/FIPS203_VERIFICATION_2026-09-04.md`](docs/FIPS203_VERIFICATION_2026-09-04.md)
 và
 [`docs/HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md`](docs/HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md).
@@ -25,7 +25,7 @@ Không có Xilinx IP sinh tự động (`.xci`) và không dùng Zynq PS. Source
 testbench, firmware, constraint, report Vivado, bitstream và host tool đều nằm
 trong repo độc lập này.
 
-## Trạng thái baseline RC4 và nhánh phát triển
+## Trạng thái ML-KEM-512 RC1
 
 | Hạng mục | Kết quả |
 |---|---|
@@ -44,9 +44,9 @@ trong repo độc lập này.
 | Full-system simulation | PASS, 956.564 cycle trên nhánh ML-KEM |
 | Implementation ML-KEM | PASS ở 50 MHz, 49.909 LUT; WNS `+2,226 ns`, WHS `+0,034 ns` |
 | Route/DRC ML-KEM | 70.739/70.739 net route đủ; 0 Error/Critical Warning DRC |
-| Test board candidate ML-KEM | **PENDING**, board chưa được hệ điều hành nhận diện |
+| Test board ML-KEM RC1 | PASS INFO/enroll/reconstruct; stress 100/100, 1.000/1.000, 10.000/10.000 |
 | Stress phần cứng RC4 | PASS 100/100, 1.000/1.000 và 10.000/10.000 |
-| Hiệu năng board RC4 | `29,119 ms/giao dịch`, `34,342 giao dịch/s` ở run 10.000 |
+| Hiệu năng board ML-KEM RC1 | `29,608 ms/giao dịch`, `33,775 giao dịch/s` ở run 10.000 |
 | Public release | **BỊ CHẶN**, xem `NOTICE.md` |
 
 Implementation ML-KEM candidate dùng 49.909/53.200 Slice LUT (`93,81%`),
@@ -67,7 +67,7 @@ constraint lên 100 MHz mà không tái kiến trúc/pipeline và chạy lại s
 - `reports/`: report synthesis và post-route của ML-KEM candidate hiện tại
 - `docs/`: giao thức, nguồn gốc, bring-up, xác minh và mức sẵn sàng
 - `phan_cong_nhom/`: tiến độ, phạm vi và tiêu chí hoàn thành của từng thành viên
-- `Kyber_System_Top.bit`: bitstream RC4 nạp volatile
+- `Kyber_System_Top.bit`: bitstream ML-KEM-512 `0.2.0-rc1` đã test board
 - `ARTIFACTS.sha256`: checksum bitstream và firmware
 
 Build/cache, waveform, helper data PUF gắn với board và dữ liệu local khác được
@@ -141,9 +141,9 @@ make -j1 impl VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
 
 Script giới hạn một worker và tối đa hai thread. Bitstream mới nằm ở
 `build/vivado/kyber_ro_puf_zynq7020.runs/impl_1/Kyber_System_Top.bit`.
-Candidate hiện có SHA-256
+Artifact hiện có SHA-256
 `183e0af367376ebd7ca6bc2f3747314fd0602306a630af2a2e51858ef1f20e8e`.
-Không thay artifact RC4 ở root cho đến khi JTAG/UART/stress của candidate PASS.
+File ở root đã được đối chiếu byte-for-byte với bitstream vừa test board.
 
 ## Nạp và kiểm tra board
 
@@ -159,7 +159,8 @@ python3 host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin str
 
 `make program` chỉ nạp PL volatile, không ghi QSPI. Helper data là dữ liệu công
 khai nhưng gắn với từng board/lần enroll; giữ nó ngoài repo. Xem
-`docs/HARDWARE_BRINGUP.md` và `docs/HARDWARE_TEST_REPORT_RC4_2026-09-03.md`.
+`docs/HARDWARE_BRINGUP.md` và
+`docs/HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md`.
 
 ## Phạm vi FIPS và giới hạn
 
@@ -196,9 +197,9 @@ sha256sum -c ARTIFACTS.sha256
 git diff --check
 git status
 git add .
-git commit -m "Xác nhận FPGA RC4 và khả năng chuyển ASIC"
-git push origin main
+git commit -m "Cập nhật thay đổi đã kiểm tra"
+git push origin HEAD
 ```
 
-Chỉ push RC4 vào repo private/internal cho đến khi hoàn thành các cổng license
+Chỉ push internal RC vào repo private cho đến khi hoàn thành các cổng license
 trong `NOTICE.md`.

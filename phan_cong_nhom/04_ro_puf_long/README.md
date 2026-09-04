@@ -28,7 +28,7 @@
 - ML-KEM candidate PASS functional gate, ASIC portability, synthesis,
   place/route, timing/DRC và tạo bitstream ở 50 MHz.
 - Candidate dùng 49.909/53.200 LUT (`93,81%`), WNS `+2,226 ns`; board
-  regression của candidate còn PENDING.
+  regression PASS 10.000/10.000, fail 0.
 - Counter đã dùng asynchronous-assert/synchronous-release và đồng bộ enable.
 - Methodology còn 72 `TIMING-17` vì clock RO vật lý bất định; report CDC tự
   động không phải CDC/RDC sign-off cho miền RO.
@@ -36,8 +36,7 @@
 
 ## Việc tiếp theo
 
-1. Nạp bitstream ML-KEM candidate volatile và chạy INFO, enroll, reconstruct,
-   stress 10.000 giao dịch trước khi quảng bá artifact root.
+1. Hoàn tất review độc lập và chốt crypto RTL freeze từ candidate đã PASS board.
 2. Lập protocol đo nhiều board, cold/warm power-cycle, voltage và temperature.
 3. Thu response có định danh điều kiện; tính intra-device HD, inter-device HD,
    bit-alias, min-entropy và failure rate của fuzzy extractor.

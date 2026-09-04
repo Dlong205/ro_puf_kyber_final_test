@@ -105,8 +105,8 @@ Kết quả:
 3. Chỉ một tập con CAVP được check-in; đây không phải quy trình cấp chứng nhận.
 4. PASS FIPS 202 không tự chứng nhận toàn bộ ML-KEM; FIPS 203 được xác minh bằng
    bộ cổng riêng trong `FIPS203_VERIFICATION_2026-09-04.md`.
-5. Nhánh ML-KEM đã PASS Vivado implementation nhưng chưa test lại trên board,
-   nên bitstream/report RC4 ở root vẫn được giữ làm baseline.
+5. Nhánh ML-KEM đã PASS Vivado implementation và board regression 10.000/10.000;
+   bitstream RC4 vẫn được giữ bất biến tại tag `fpga-rc4-baseline`.
 
 ## Cổng chuyển sang FIPS 203
 
