@@ -1,7 +1,10 @@
 VIVADO ?= vivado
 XPR := build/vivado/kyber_ro_puf_zynq7020.xpr
 
-.PHONY: check firmware ro-puf fuzzy fuzzy-portable fips202 kdf mlkem kyber kyber-invalid axi kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-elaboration asic-portability crypto-freeze-check crypto-freeze-gate vivado-project synth impl program release-check package-internal clean
+.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy fips202 kdf mlkem kyber kyber-invalid axi kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-elaboration asic-portability crypto-freeze-check crypto-freeze-gate vivado-project synth impl program release-check package-internal clean
+
+PUF_PORT ?= /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
+PUF_SAMPLES ?= 1000
 
 check:
 	@./scripts/check_standalone.sh
@@ -17,6 +20,10 @@ fuzzy:
 
 fuzzy-portable:
 	$(MAKE) -C sim/fuzzy_extractor portable
+
+# Release-mode proxy only: helper variation is not raw-response Hamming distance.
+puf-stability-proxy:
+	python3 -u host/puf_stability_proxy.py --port $(PUF_PORT) --count $(PUF_SAMPLES)
 
 fips202:
 	$(MAKE) -C sim/fips202 run
