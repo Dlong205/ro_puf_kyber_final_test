@@ -1,10 +1,12 @@
 `timescale 1ns/1ps
 
-// Decapsulation harness for the NIST KeyGen tgId=1/tcId=1 key pair.  The
+// Decapsulation harness for the 25 NIST KeyGen tgId=1 key pairs.  The
 // software driver requests/discards ek, supplies an independently generated
 // reference ciphertext, and checks the resulting shared key.
 module mlkem_decap_probe (
     input  wire         clk,
+    input  wire [255:0] seed_d,
+    input  wire [255:0] seed_z,
     input  wire         ct_valid,
     input  wire [31:0]  ct_word,
     output wire         ct_req,
@@ -18,11 +20,6 @@ module mlkem_decap_probe (
     reg start_reg = 1'b0;
     reg [8:0] pk_words = 9'd0;
     integer cycle_count = 0;
-
-    localparam [255:0] SEED_D =
-        256'h0a661a028afb14161d47fbb503858eaf5329b34fe42eb1e492ba72464793b847;
-    localparam [255:0] SEED_Z =
-        256'ha9a044b803773157fa60f78d0117b27f18b1848840c50d8a45bc309e9eb38c1f;
 
     wire ready_pk;
     wire server_valid;
@@ -59,7 +56,7 @@ module mlkem_decap_probe (
         .req_pk(ready_pk), .din(ct_word), .ready_pk(ready_pk),
         .req_c(ct_req), .valid(server_valid),
         .valid_out(server_valid_out), .dout(unused_pk_word),
-        .seed_d(SEED_D), .seed_z(SEED_Z), .K(shared_key),
+        .seed_d(seed_d), .seed_z(seed_z), .K(shared_key),
         .done(server_done)
     );
 endmodule

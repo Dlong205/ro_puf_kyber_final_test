@@ -68,7 +68,7 @@ $(DECAP_OBJ)/V$(DECAP_TOP): $(COMMON) $(HASH) $(KYBER) $(DECAP_TOP).sv mlkem_dec
 		$(COMMON) $(HASH) $(KYBER) mlkem_decap_main.cpp $(DECAP_TOP).sv
 	$(MAKE) -C $(DECAP_OBJ) -f V$(DECAP_TOP).mk V$(DECAP_TOP)
 
-decap: $(DECAP_OBJ)/V$(DECAP_TOP) mlkem512_decap_ref_tc1.txt
+decap: $(DECAP_OBJ)/V$(DECAP_TOP) mlkem512_decap_ref.txt
 	@$(DECAP_OBJ)/V$(DECAP_TOP)
 
 all: keygen encap decap

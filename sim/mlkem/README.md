@@ -20,10 +20,11 @@ Ví dụ vector đầu tiên:
 768 byte ciphertext cùng 32 byte K với NIST ACVP
 `ML-KEM-encapDecap-FIPS203`, toàn bộ `tgId=1`.
 
-`make decap` dùng cặp khóa NIST ở trên, nhưng ciphertext/K được sinh độc lập
-bằng `pq-crystals/kyber` reference commit
-`3edd5af5991927164edd4aacebfcbee00b8064e7`. Test không nối ciphertext từ
-Client sang Server nên bắt được lỗi riêng ở Decaps.
+`make decap` dùng cả 25 cặp khóa NIST KeyGen, nhưng ciphertext/K được sinh độc
+lập bằng `pq-crystals/kyber` reference commit
+`3edd5af5991927164edd4aacebfcbee00b8064e7`. Mỗi ca còn lật bit đầu ciphertext
+và so sánh J với cả pq-crystals lẫn Python `hashlib.shake_256`. Test không nối
+ciphertext từ Client sang Server nên bắt được lỗi riêng ở Decaps.
 
 Vector kỳ vọng nằm trong các file `mlkem512_*` của thư mục này. Chạy tuần tự
 để hạn chế tải máy:
@@ -35,16 +36,22 @@ make -j1 all
 make -C ../kyber -j1 kat-invalid
 ```
 
+Có thể tái tạo `mlkem512_decap_ref.txt` bằng
+`generate_decap_vectors.py`, hai file `internalProjection.json` chính thức của
+NIST và shared library build từ pq-crystals commit đã pin. Script đồng thời
+xác nhận `ek/dk` phần mềm khớp NIST và J phần mềm khớp Python SHAKE256 trước
+khi ghi corpus.
+
 ## Giới hạn hiện tại
 
 Các KAT hiện xác nhận bit-exact KeyGen `ek/dk`, Encaps `c/K`, Decaps hợp lệ và
-implicit rejection `J(z || c)`. Valid/invalid decapsulation có cùng latency
-17.338 cycle trong loopback hiện tại.
+implicit rejection `J(z || c)`. 25 cặp valid/invalid isolated đều có cùng
+latency 12.287 cycle; loopback tích hợp có cùng latency 17.338 cycle.
 
 Đây mới là cổng functional cho thuật toán nội bộ ML-KEM-512, chưa phải chứng
 nhận FIPS/CAVP. KeyGen và Encaps đã bao phủ 25/25 vector AFT ML-KEM-512 trong
-sample NIST; Decaps mới dùng một vector độc lập và chưa có corpus
-Wycheproof/negative mở rộng. Kiến trúc tích hợp tự sinh và giữ khóa bên trong nên chưa
+sample NIST; Decaps/rejection có 25 cặp oracle độc lập nhưng chưa có corpus
+Wycheproof/negative đa dạng. Kiến trúc tích hợp tự sinh và giữ khóa bên trong nên chưa
 có API nạp khóa ngoài và chưa triển khai `encapsulationKeyCheck` /
 `decapsulationKeyCheck`. Quyết định phạm vi API này phải được chốt trước khi
 freeze RTL mật mã.

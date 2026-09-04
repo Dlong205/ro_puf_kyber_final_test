@@ -7,9 +7,9 @@
 | FIPS 202 byte-oriented cho ML-KEM | PASS 50/50, gồm 20 vector NIST CAVP |
 | ML-KEM-512 KeyGen | PASS 25/25 NIST ACVP AFT, `ek`/`dk` bit-exact |
 | ML-KEM-512 Encaps | PASS 25/25 NIST ACVP AFT, ciphertext/K bit-exact |
-| ML-KEM-512 Decaps hợp lệ | PASS vector độc lập pq-crystals, `equal=1` |
-| ML-KEM-512 implicit rejection | PASS `J(z || c_sai)`, `equal=0` |
-| Timing Decaps valid/invalid | PASS, cùng 17.338 cycle ở cấp loopback RTL |
+| ML-KEM-512 Decaps hợp lệ | PASS 25/25 vector độc lập pq-crystals, `equal=1` |
+| ML-KEM-512 implicit rejection | PASS 25/25 `J(z || c_sai)`, `equal=0` |
+| Timing Decaps valid/invalid | PASS: cùng 12.287 cycle isolated; 17.338 cycle loopback |
 | SHAKE256 KDF known-answer | PASS sau khi chuyển sang sponge mới, cycle 122 |
 | ML-KEM-512 integrated functional loopback | PASS, cycle 17.338 |
 | AXI register/handshake/zeroize | PASS, 32 giao dịch single-attempt |

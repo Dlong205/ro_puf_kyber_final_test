@@ -8,9 +8,9 @@
 |---|---|---|
 | KeyGen | NIST ACVP `ML-KEM-keyGen-FIPS203`, tgId 1 | PASS 25/25, `ek` 800 byte và `dk` 1.632 byte bit-exact |
 | Encaps | NIST ACVP `ML-KEM-encapDecap-FIPS203`, tgId 1 | PASS 25/25, ciphertext 768 byte và K 32 byte bit-exact |
-| Decaps hợp lệ | pq-crystals reference trên cặp khóa NIST | PASS K 32 byte, `equal=1` |
-| Implicit rejection | Python `hashlib.shake_256(z || c_sai)` | PASS K 32 byte, `equal=0` |
-| Latency valid/invalid | Loopback RTL | Bằng nhau: 17.338 cycle |
+| Decaps hợp lệ | pq-crystals reference trên 25 cặp khóa NIST | PASS 25/25 K 32 byte, `equal=1` |
+| Implicit rejection | pq-crystals + Python `hashlib.shake_256(z || c_sai)` | PASS 25/25 J 32 byte, `equal=0` |
+| Latency valid/invalid | Isolated / loopback RTL | Bằng nhau: 12.287 / 17.338 cycle |
 
 Nhãn đúng ở milestone này là **ML-KEM-512 internal algorithm functional
 PASS**. Đây không phải chứng nhận CAVP/FIPS 140-3 và chưa phải lý do duy nhất để
@@ -39,8 +39,9 @@ Vector NIST được trích từ sample `internalProjection.json` của kho
 và [Encaps/Decaps](https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/ML-KEM-encapDecap-FIPS203/internalProjection.json).
 File regression đã được check-in để test mặc định không phụ thuộc mạng.
 
-Vector Decaps độc lập dùng `d,z` và `ek/dk` của NIST KeyGen tcId 1, randomness
-`m` cố định, rồi sinh `c,K` bằng pq-crystals reference commit
+25 vector Decaps độc lập dùng `d,z` và `ek/dk` của NIST KeyGen tgId 1,
+randomness `m` tương ứng từ nhóm Encaps tgId 1, rồi sinh `c,K` bằng
+pq-crystals reference commit
 [`3edd5af5991927164edd4aacebfcbee00b8064e7`](https://github.com/pq-crystals/kyber/commit/3edd5af5991927164edd4aacebfcbee00b8064e7).
 Cả `enc_derand` và `dec` phần mềm cho cùng K trước khi vector được đưa vào RTL.
 
@@ -58,9 +59,9 @@ make -j1 asic-elaboration
 
 ## Phạm vi chưa đóng
 
-1. KeyGen và Encaps đã khóa toàn bộ 25 vector AFT ML-KEM-512 có trong sample
-   NIST; Decaps mới có một vector độc lập và một ca implicit rejection. Cần mở
-   rộng Decaps/negative cases và corpus ngoài sample ACVP.
+1. KeyGen/Encaps đã khóa toàn bộ 25 vector AFT ML-KEM-512 trong sample NIST;
+   Decaps/rejection có 25 cặp oracle độc lập. Cần thêm kiểu sửa ciphertext đa
+   vị trí, malformed/API-length cases và corpus ngoài sample ACVP.
 2. Core hiện là kiến trúc KEM tích hợp tự KeyGen và giữ secret nội bộ. Nó không
    nhận `ek/dk` tùy ý từ API, nên chưa có external
    `encapsulationKeyCheck`/`decapsulationKeyCheck` theo Sections 7.2/7.3.
