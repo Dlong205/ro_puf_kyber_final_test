@@ -23,6 +23,7 @@ này phân biệt hoàn thành nội dung triển khai FPGA với public/product
 | Ciphertext codec round-trip | PASS |
 | Full-system firmware/UART simulation | PASS |
 | Backend FPGA/ASIC và ASIC-generic elaboration | PASS |
+| Crypto RTL freeze candidate | PASS regression/manifest; chờ Vivado/board mới |
 | Audit netlist RO Xilinx | PASS, 128/128 feedback net được constraint |
 | Shared-secret export tắt | PASS |
 | Watchdog có giới hạn, không retry | PASS |
@@ -55,7 +56,8 @@ RO-PUF mới được đo trên một board ở điều kiện phòng.
 
 1. Có quyền phân phối RTL Kyber/Xing-Li/Tuấn Đạt bằng văn bản.
 2. Chọn top-level license tương thích cho code thuộc dự án và GPL của RO-PUF.
-3. Mở rộng ML-KEM-512 ACVP KAT/negative cases, chốt API khóa và review độc lập.
+3. Bổ sung corpus ngoài sample ACVP, chốt lại API nếu cần nhập khóa ngoài và
+   thực hiện review độc lập.
 4. Đặc trưng PUF qua nhiều board, cold/warm power-cycle, điện áp, nhiệt độ và aging.
 5. Đo entropy/reliability/uniqueness cùng intra/inter-device Hamming distance.
 6. Dùng entropy source/DRBG đã review thay cho cơ chế diversify thử nghiệm.

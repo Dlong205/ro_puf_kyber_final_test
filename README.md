@@ -88,6 +88,7 @@ make check
 sha256sum -c ARTIFACTS.sha256
 make -j1 regression
 make -j1 kyber-long
+make -j1 crypto-freeze-gate
 ```
 
 `kyber-long` là cổng bắt buộc của internal release: 1.024 message seed khác
@@ -95,6 +96,10 @@ nhau, mỗi giao dịch đúng một attempt, không retry. Có thể chạy t�
 `make ro-puf`, `make fuzzy`, `make fips202`, `make kdf`, `make mlkem`,
 `make kyber`, `make kyber-invalid`, `make axi`, `make kyber-codec` và
 `make system`.
+
+`crypto-freeze-gate` chạy tuần tự toàn bộ regression, cổng 1.024 giao dịch,
+portability ASIC và đối chiếu SHA-256 của tập source mật mã. Manifest hiện là
+freeze candidate; xem `docs/CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md`.
 
 Kiểm tra khả năng elaborate RTL ở chế độ ASIC-generic (không đưa `LUT6_L`,
 `CARRY4` hay primitive DSP48 vào source list ASIC):

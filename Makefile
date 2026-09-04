@@ -1,7 +1,7 @@
 VIVADO ?= vivado
 XPR := build/vivado/kyber_ro_puf_zynq7020.xpr
 
-.PHONY: check firmware ro-puf fuzzy fuzzy-portable fips202 kdf mlkem kyber kyber-invalid axi kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-elaboration asic-portability vivado-project synth impl program release-check package-internal clean
+.PHONY: check firmware ro-puf fuzzy fuzzy-portable fips202 kdf mlkem kyber kyber-invalid axi kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-elaboration asic-portability crypto-freeze-check crypto-freeze-gate vivado-project synth impl program release-check package-internal clean
 
 check:
 	@./scripts/check_standalone.sh
@@ -58,6 +58,16 @@ asic-elaboration:
 	@./scripts/check_asic_portability.sh
 
 asic-portability: ro-puf fuzzy-portable ntt-multiplier xilinx-ro-lint asic-elaboration
+
+crypto-freeze-check:
+	@./scripts/check_crypto_freeze.sh
+
+# Force the complete candidate gate to run serially even if the caller uses -j.
+crypto-freeze-gate:
+	$(MAKE) -j1 regression
+	$(MAKE) -j1 kyber-long
+	$(MAKE) -j1 asic-portability
+	$(MAKE) -j1 crypto-freeze-check
 
 regression: ro-puf fuzzy fips202 kdf mlkem kyber kyber-invalid axi kyber-strict kyber-codec system check
 

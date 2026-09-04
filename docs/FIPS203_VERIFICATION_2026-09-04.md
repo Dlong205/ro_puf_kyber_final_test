@@ -77,9 +77,14 @@ make -j1 asic-elaboration
 
 ## Điều kiện freeze RTL mật mã
 
-- Chốt API: KEM tích hợp chỉ nhận seed hay API tổng quát nhận `ek/dk` ngoài.
-- Mở rộng vector và negative tests theo API đã chốt.
-- Full regression, ASIC portability/elaboration và Vivado synth/implementation
-  của RTL mới đều PASS.
+- Freeze candidate hiện chốt theo phạm vi KEM tích hợp nội bộ nhận seed; chưa
+  tuyên bố API tổng quát nhận `ek/dk` ngoài.
+- Vector/negative functional, full regression và ASIC portability/elaboration
+  của candidate đã PASS.
+- Vivado synth/implementation và board regression của RTL mới phải PASS trước
+  khi nâng candidate thành freeze cuối.
 - Review độc lập serialization, compare/mux rejection, reset và zeroization.
 - Tạo commit/tag freeze riêng; giữ `fpga-rc4-baseline` bất biến làm oracle.
+
+Xem checklist và quy tắc change-control tại
+[`CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md`](CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md).

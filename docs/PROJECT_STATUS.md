@@ -19,6 +19,7 @@
 | Full-system UART/PUF/FE/KDF/ML-KEM | PASS, 956.548 cycle |
 | Standalone/pure RTL audit | PASS, không symlink, `.xci` hay dependency source ngoài |
 | ASIC portability gate | PASS, ASIC-generic elaboration và primitive vendor đã cô lập |
+| Crypto RTL freeze candidate | PASS functional/portability + manifest; chờ Vivado/board mới |
 | Netlist RO Xilinx | PASS, 128 LUT/128 feedback net/128 constraint loop |
 | Vivado synthesis/implementation | PASS, `xc7z020clg400-2`, không IP sinh tự động |
 | Route | PASS, 0 failed/unrouted/partially-routed net |
@@ -57,7 +58,10 @@ Xem `HARDWARE_TEST_REPORT_RC4_2026-09-03.md`,
 `FIPS203_VERIFICATION_2026-09-04.md`. Nhãn phù hợp của nhánh hiện tại là
 **ML-KEM-512 internal algorithm functional PASS**; không phải chứng nhận
 CAVP/FIPS 140-3 hay release production. API kiểm tra `ek/dk` ngoài, mở rộng
-vector, review độc lập và implementation FPGA mới vẫn chưa đóng.
+corpus ngoài sample, review độc lập và implementation FPGA mới vẫn chưa đóng.
+
+Phạm vi, manifest và điều kiện nâng candidate thành freeze cuối được ghi tại
+[`CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md`](CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md).
 
 Phạm vi phụ trách và công việc tiếp theo của Đạt–Tùng, Minh, Việt Anh và Long
 được theo dõi tại [`phan_cong_nhom/`](../phan_cong_nhom/README.md).
