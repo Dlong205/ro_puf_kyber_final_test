@@ -39,6 +39,15 @@ reg fifo1_req, fifo1_req_r10;
 reg req_noise, req_noise_r1, req_noise_r2;
 wire req_noise_r12;
 reg req_noise_done;
+wire fifo1_req_pipe;
+wire fifo1_req_noise_pipe;
+wire fifo1_req_is_noise = fifo1_req &&
+	((state_r2 == 6'h2a) || (state_r2 == 6'h2b) ||
+	 (state_r2 == 6'h34) || (state_r2 == 6'h35));
+reg [6:0] noise_pop_count;
+
+assign fifo1_req_r9 = fifo1_req_pipe &
+	(~fifo1_req_noise_pipe || (noise_pop_count < 7'd64));
 
 reg [23:0] in0_butt, in1_butt, tw_butt;
 wire [23:0] out0_butt, out1_butt;
@@ -130,7 +139,11 @@ always @(*) case(state)
 	
 	6'h 26 : next_state = ctr_k == 7'h 7f & ~fifo0_empty ? state + 1'h 1 : state;
 	6'h 27 : next_state = ctr_k == 7'h 7f ? state + 1'h 1 : state;
-	6'h 28 : next_state = ctr_col == k_1 ? state + 1'h 1 : 6'h 26;
+	// The eta2 RAM loader requires a continuous 64-word stream.  Wait for a
+	// complete e' polynomial before inverse NTT starts draining the FIFO.
+	6'h 28 : next_state = ctr_col == k_1 ?
+				(fifo1_full ? 6'h29 : 6'h3b) : 6'h26;
+	6'h 3b : next_state = fifo1_full ? 6'h29 : state;
 	6'h 29 : next_state = flag_j ? state + 1'h 1 : state;
 	6'h 2b : next_state = flag_j & flag_k & ctr_i[6] ? state + 1'h 1 : 6'h 2a;
 	6'h 2d : next_state = ctr_k == 7'h 3f ? state + 1'h 1 : 6'h 2c;
@@ -141,7 +154,9 @@ always @(*) case(state)
 	6'h 2f : next_state = ready_t ? state + 1'h 1 : state;
 	6'h 30 : next_state = ctr_k == 7'h 7f ? state + 1'h 1 : state;
 	6'h 31 : next_state = ctr_k == 7'h 7f ? state + 1'h 1 : state;
-	6'h 32 : next_state = ctr_col == k_1 ? state + 1'h 1 : 6'h 30;
+	6'h 32 : next_state = ctr_col == k_1 ?
+				(fifo1_full ? 6'h33 : 6'h3c) : 6'h30;
+	6'h 3c : next_state = fifo1_full ? 6'h33 : state;
 	6'h 33 : next_state = flag_j ? state + 1'h 1 : state;
 	6'h 35 : next_state = flag_j & flag_k & ctr_i[5] ? state + 1'h 1 : 6'h 34;	
 	6'h 37 : next_state = flag_j & flag_k & ctr_i[6] ? state + 1'h 1 : 6'h 36;
@@ -309,7 +324,17 @@ always @(posedge clk) begin
 	samp2_q <= samp2[2] ? 12'h cfd + {1'b0,samp2[1:0]} : samp2;
 	samp3_q <= samp3[2] ? 12'h cfd + {1'b0,samp3[1:0]} : samp3;
 end
-always @(posedge clk) begin	
+always @(posedge clk) begin
+	if(rst)
+		noise_pop_count <= 7'd0;
+	else if((state == 6'h29) || (state == 6'h33))
+		noise_pop_count <= 7'd0;
+	else if(fifo1_req_r9 && fifo1_req_noise_pipe && !fifo1_empty)
+		noise_pop_count <= noise_pop_count + 1'b1;
+	else
+		noise_pop_count <= noise_pop_count;
+end
+always @(posedge clk) begin
 	state_r1 <=state;
 	state_r2 <= state_r1;
 	state_r3 <= state_r2;
@@ -324,7 +349,9 @@ always @(posedge clk) begin
 	raddr_RAM2_lsb_r2 <= raddr_RAM2_lsb_r1;
 	req_noise_r1 <= req_noise;
 	req_noise_r2 <= req_noise_r1;
-	fifo1_req_r10 <= fifo1_req_r9;
+	// Preserve the ungated strobe for the final RAM write; only the external
+	// FIFO pop is limited to 64 accepted words.
+	fifo1_req_r10 <= fifo1_req_pipe;
 	ctr_col_r1 <= ctr_col;
 	rdata_RAM_mux0_r1 <= rdata_RAM_mux0;
 	rdata_RAM_mux1_r1 <= rdata_RAM_mux1;
@@ -589,12 +616,10 @@ always @(*) case(state_r2)
 	default : fifo1_req = 1'h 0;
 endcase
 
-// The Client starts before its PRF stream exists, so its 0x1e/0x1f preload
-// cycles consume logical zeros.  During CCA the Server reaches the equivalent
-// 0x3e/0x3f states after PRF data is already available; identify those reads
-// so the wrapper can preserve the FIFO and present the same logical zeros.
-wire fifo1_preload_i = CCA_enc &&
-	((state_r2 == 6'h 3e) || (state_r2 == 6'h 3f));
+// CCA now waits in state 1 until a complete regenerated secret-noise
+// polynomial is buffered, so 0x3e/0x3f must consume real FIFO data.  The old
+// zero-preload compatibility path produced A^T*0 instead of A^T*r.
+wire fifo1_preload_i = 1'b0;
 always @(*) begin
 	if(state_r2 == 5'h f || state_r2 == 5'h 10 || state_r2 == 6'h 30 || state_r13 == 6'h 2c || state_r13 == 6'h 2d)
 		req_D0 = 1'h 1;
@@ -677,7 +702,8 @@ c_shift_ram_2 S3(.CLK(clk),.D(ctr_col),.Q(ctr_col_r12));
 	c_shift_ram_4_6 S6(.CLK(clk),.D(raddr_RAM1),.Q(waddr_RAM1));
 	c_shift_ram_5 S7(.CLK(clk),.D(raddr_RAM2),.Q(waddr_RAM2));
 	c_shift_ram_6 S9(.CLK(clk),.D(rdata_acc),.Q(rdata_acc_r8));
-	c_shift_ram_8 S10(.CLK(clk),.D(fifo1_req),.Q(fifo1_req_r9));
+	c_shift_ram_8 S10(.CLK(clk),.D(fifo1_req),.Q(fifo1_req_pipe));
+	c_shift_ram_8 S10N(.CLK(clk),.D(fifo1_req_is_noise),.Q(fifo1_req_noise_pipe));
 	c_shift_ram_11 S11(.CLK(clk),.D(req_noise_r2),.Q(req_noise_r12));
 	c_shift_ram_8 S12(.CLK(clk),.D(fifo1_preload_i),.Q(fifo1_preload));
 

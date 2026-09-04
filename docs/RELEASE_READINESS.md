@@ -13,6 +13,9 @@ này phân biệt hoàn thành nội dung triển khai FPGA với public/product
 | RO-PUF controller regression | PASS |
 | BCH enroll/correct/reject regression | PASS 12/12 |
 | FIPS 202 byte-oriented cho ML-KEM | PASS 50/50, gồm 20 vector NIST CAVP |
+| ML-KEM-512 KeyGen | PASS 25/25 NIST ACVP AFT, `ek`/`dk` bit-exact |
+| ML-KEM-512 Encaps | PASS 25/25 NIST ACVP AFT, ciphertext/K bit-exact |
+| ML-KEM-512 Decaps và implicit rejection | PASS oracle độc lập; valid/invalid cùng 17.338 cycle |
 | SHAKE256 KDF KAT | PASS sau khi tích hợp controller mới |
 | Kyber functional loopback | PASS |
 | AXI start/status/key-match/zeroize | PASS |
@@ -41,15 +44,17 @@ chứng. Run dài 10.000 đạt 100%, latency trung bình 29,119 ms và throughp
 multiplier NTT không còn phụ thuộc tên/primitive DSP48.
 
 Điều này không đồng nghĩa sản phẩm bảo mật production. Bốn primitive FIPS 202
-ML-KEM cần dùng đã PASS regression byte-oriented, nhưng Kyber core vẫn là thiết
-kế cũ và chưa được đối chiếu vector FIPS 203 ML-KEM-512 chính thức. RO-PUF mới
-được đo trên một board ở điều kiện phòng.
+đã PASS regression byte-oriented. Nhánh phát triển ML-KEM-512 đã đối chiếu
+bit-exact KeyGen/Encaps với toàn bộ 25 vector ML-KEM-512 AFT tương ứng trong
+sample NIST ACVP và Decaps/implicit rejection với oracle độc lập. Decaps vẫn
+mới khóa một vector độc lập, chưa có API kiểm tra khóa ngoài và chưa chạy lại
+FPGA implementation/board. RO-PUF mới được đo trên một board ở điều kiện phòng.
 
 ## Điều kiện NO-GO trước public/production release
 
 1. Có quyền phân phối RTL Kyber/Xing-Li/Tuấn Đạt bằng văn bản.
 2. Chọn top-level license tương thích cho code thuộc dự án và GPL của RO-PUF.
-3. Thay hoặc xác minh core bằng ML-KEM-512 KAT chính thức.
+3. Mở rộng ML-KEM-512 ACVP KAT/negative cases, chốt API khóa và review độc lập.
 4. Đặc trưng PUF qua nhiều board, cold/warm power-cycle, điện áp, nhiệt độ và aging.
 5. Đo entropy/reliability/uniqueness cùng intra/inter-device Hamming distance.
 6. Dùng entropy source/DRBG đã review thay cho cơ chế diversify thử nghiệm.
@@ -69,7 +74,7 @@ kế cũ và chưa được đối chiếu vector FIPS 203 ML-KEM-512 chính th�
 - Giao thức release: 1.2, INFO `4B 50 01 02 06`
 - Board: Digilent `260515110006`, `/dev/ttyUSB1`, stress 10.000/10.000
 
-Trạng thái đúng là **FPGA RC hoàn chỉnh cho nghiên cứu nội bộ và baseline chức
-năng cho ASIC**. Public release
-vẫn phải dừng ở license gate; production release còn phải dừng ở qualification
-PUF và xác minh mật mã/bảo mật.
+Trạng thái đúng là **FPGA RC4 hoàn chỉnh cho nghiên cứu nội bộ, cùng nhánh
+ML-KEM-512 đạt cổng functional ban đầu để tiến tới RTL freeze/ASIC**. Public
+release vẫn phải dừng ở license gate; production release còn phải dừng ở
+qualification PUF và xác minh mật mã/bảo mật.

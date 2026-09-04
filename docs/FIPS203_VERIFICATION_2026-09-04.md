@@ -1,0 +1,81 @@
+# Báo cáo xác minh ML-KEM-512/FIPS 203 — 2026-09-04
+
+## Kết luận hiện tại
+
+Đường thuật toán nội bộ ML-KEM-512 đã vượt cổng functional bit-exact đầu tiên:
+
+| Hạng mục | Oracle | Kết quả |
+|---|---|---|
+| KeyGen | NIST ACVP `ML-KEM-keyGen-FIPS203`, tgId 1 | PASS 25/25, `ek` 800 byte và `dk` 1.632 byte bit-exact |
+| Encaps | NIST ACVP `ML-KEM-encapDecap-FIPS203`, tgId 1 | PASS 25/25, ciphertext 768 byte và K 32 byte bit-exact |
+| Decaps hợp lệ | pq-crystals reference trên cặp khóa NIST | PASS K 32 byte, `equal=1` |
+| Implicit rejection | Python `hashlib.shake_256(z || c_sai)` | PASS K 32 byte, `equal=0` |
+| Latency valid/invalid | Loopback RTL | Bằng nhau: 17.338 cycle |
+
+Nhãn đúng ở milestone này là **ML-KEM-512 internal algorithm functional
+PASS**. Đây không phải chứng nhận CAVP/FIPS 140-3 và chưa phải lý do duy nhất để
+freeze RTL hoặc phát hành production.
+
+## Các lỗi RTL đã sửa
+
+1. Ma trận Encaps được đổi sang thứ tự `AT00, AT01, AT10, AT11` đúng FIPS 203.
+2. NTT Client/Server chờ đủ 64 noise word trước inverse NTT và chỉ pop đúng 64.
+3. Bộ đếm squeeze không reset sớm khi Keccak init, tránh đưa hai word cuối rate
+   cũ sang polynomial noise kế tiếp.
+4. CCA Server dùng đúng lịch patt/eta3/matrix và noise thật thay vì zero preload.
+5. OFIFO public key chỉ đọc trong state truyền; cờ last chặn look-ahead read của
+   FIFO đồng bộ. Public `t` vì vậy quay về đúng word 0 trước CCA reload.
+6. Server lưu nguyên 192 word ciphertext và tính đúng
+   `J(z || c) = SHAKE256(z || c, 32)` khi implicit rejection.
+7. `J(z || c)` chạy ở cả valid và invalid path; mux cuối chọn `K-bar` hoặc J,
+   loại bỏ chênh lệch timing khoảng 310 cycle ở cấp giao thức.
+8. Bộ đệm ciphertext 192 x 32 bit dùng `generic_bram` đọc đồng bộ và prefetch,
+   tránh tiêu tốn thêm LUT trên XC7Z020 đồng thời giữ đường ánh xạ ASIC-generic.
+
+## Nguồn vector và khả năng tái lập
+
+Vector NIST được trích từ sample `internalProjection.json` của kho
+`usnistgov/ACVP-Server`: [KeyGen](https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/ML-KEM-keyGen-FIPS203/internalProjection.json)
+và [Encaps/Decaps](https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/ML-KEM-encapDecap-FIPS203/internalProjection.json).
+File regression đã được check-in để test mặc định không phụ thuộc mạng.
+
+Vector Decaps độc lập dùng `d,z` và `ek/dk` của NIST KeyGen tcId 1, randomness
+`m` cố định, rồi sinh `c,K` bằng pq-crystals reference commit
+[`3edd5af5991927164edd4aacebfcbee00b8064e7`](https://github.com/pq-crystals/kyber/commit/3edd5af5991927164edd4aacebfcbee00b8064e7).
+Cả `enc_derand` và `dec` phần mềm cho cùng K trước khi vector được đưa vào RTL.
+
+Chạy toàn bộ cổng hiện có bằng:
+
+```sh
+make -C sim/mlkem clean
+make -C sim/mlkem -j1 all
+make -C sim/kyber clean
+make -C sim/kyber -j1 kat
+make -C sim/kyber -j1 kat-invalid
+make -j1 fips202
+make -j1 asic-elaboration
+```
+
+## Phạm vi chưa đóng
+
+1. KeyGen và Encaps đã khóa toàn bộ 25 vector AFT ML-KEM-512 có trong sample
+   NIST; Decaps mới có một vector độc lập và một ca implicit rejection. Cần mở
+   rộng Decaps/negative cases và corpus ngoài sample ACVP.
+2. Core hiện là kiến trúc KEM tích hợp tự KeyGen và giữ secret nội bộ. Nó không
+   nhận `ek/dk` tùy ý từ API, nên chưa có external
+   `encapsulationKeyCheck`/`decapsulationKeyCheck` theo Sections 7.2/7.3.
+3. Giao thức stream fixed-size sẽ stall nếu thiếu dữ liệu; chưa có status lỗi
+   độ dài/type riêng ở biên API.
+4. Chưa có formal proof, constant-time gate-level review, leakage/side-channel,
+   fault-injection hoặc zeroization physical sign-off.
+5. Bitstream/report RC4 thuộc tag `fpga-rc4-baseline`; RTL ML-KEM mới chưa chạy
+   lại Vivado implementation và chưa test lại trên board.
+
+## Điều kiện freeze RTL mật mã
+
+- Chốt API: KEM tích hợp chỉ nhận seed hay API tổng quát nhận `ek/dk` ngoài.
+- Mở rộng vector và negative tests theo API đã chốt.
+- Full regression, ASIC portability/elaboration và Vivado synth/implementation
+  của RTL mới đều PASS.
+- Review độc lập serialization, compare/mux rejection, reset và zeroization.
+- Tạo commit/tag freeze riêng; giữ `fpga-rc4-baseline` bất biến làm oracle.

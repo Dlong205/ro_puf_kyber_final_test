@@ -1,7 +1,7 @@
 VIVADO ?= vivado
 XPR := build/vivado/kyber_ro_puf_zynq7020.xpr
 
-.PHONY: check firmware ro-puf fuzzy fuzzy-portable fips202 kdf kyber axi kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-elaboration asic-portability vivado-project synth impl program release-check package-internal clean
+.PHONY: check firmware ro-puf fuzzy fuzzy-portable fips202 kdf mlkem kyber kyber-invalid axi kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-elaboration asic-portability vivado-project synth impl program release-check package-internal clean
 
 check:
 	@./scripts/check_standalone.sh
@@ -24,8 +24,14 @@ fips202:
 kdf:
 	$(MAKE) -C sim/kdf_kat run
 
+mlkem:
+	$(MAKE) -C sim/mlkem -j1 all
+
 kyber:
 	$(MAKE) -C sim/kyber kat
+
+kyber-invalid:
+	$(MAKE) -C sim/kyber kat-invalid
 
 axi:
 	$(MAKE) -C sim/kyber axi
@@ -53,7 +59,7 @@ asic-elaboration:
 
 asic-portability: ro-puf fuzzy-portable ntt-multiplier xilinx-ro-lint asic-elaboration
 
-regression: ro-puf fuzzy fips202 kdf kyber axi kyber-strict kyber-codec system check
+regression: ro-puf fuzzy fips202 kdf mlkem kyber kyber-invalid axi kyber-strict kyber-codec system check
 
 vivado-project:
 	$(VIVADO) -mode batch -nolog -nojournal -source scripts/create_project.tcl
@@ -81,6 +87,7 @@ clean:
 	$(MAKE) -C sim/fuzzy_extractor clean
 	$(MAKE) -C sim/fips202 clean
 	$(MAKE) -C sim/kdf_kat clean
+	$(MAKE) -C sim/mlkem clean
 	$(MAKE) -C sim/kyber clean
 	$(MAKE) -C sim/system clean
 	$(MAKE) -C sim/portability clean

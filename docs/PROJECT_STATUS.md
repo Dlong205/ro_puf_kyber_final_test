@@ -1,17 +1,22 @@
-# Trạng thái xác minh dự án — RC4 + nhánh FIPS 202
+# Trạng thái xác minh dự án — RC4 + nhánh ML-KEM-512
 
 | Hạng mục | Trạng thái |
 |---|---|
 | Controller/CDC RO-PUF | PASS |
 | BCH fuzzy extractor | PASS 12/12 |
 | FIPS 202 byte-oriented cho ML-KEM | PASS 50/50, gồm 20 vector NIST CAVP |
+| ML-KEM-512 KeyGen | PASS 25/25 NIST ACVP AFT, `ek`/`dk` bit-exact |
+| ML-KEM-512 Encaps | PASS 25/25 NIST ACVP AFT, ciphertext/K bit-exact |
+| ML-KEM-512 Decaps hợp lệ | PASS vector độc lập pq-crystals, `equal=1` |
+| ML-KEM-512 implicit rejection | PASS `J(z || c_sai)`, `equal=0` |
+| Timing Decaps valid/invalid | PASS, cùng 17.338 cycle ở cấp loopback RTL |
 | SHAKE256 KDF known-answer | PASS sau khi chuyển sang sponge mới, cycle 122 |
-| Kyber-512 cũ functional loopback | PASS, cycle 15.316 |
+| ML-KEM-512 integrated functional loopback | PASS, cycle 17.338 |
 | AXI register/handshake/zeroize | PASS, 32 giao dịch single-attempt |
 | Kyber raw gate dài | PASS 1.024/1.024, mismatch 0, recovered 0, max attempts 1 |
 | Ciphertext codec round-trip | PASS |
 | Firmware release PicoRV32 | PASS, protocol 1.2, capability `0x06` |
-| Full-system UART/PUF/FE/KDF/Kyber | PASS, 952.496 cycle |
+| Full-system UART/PUF/FE/KDF/ML-KEM | PASS, 956.548 cycle |
 | Standalone/pure RTL audit | PASS, không symlink, `.xci` hay dependency source ngoài |
 | ASIC portability gate | PASS, ASIC-generic elaboration và primitive vendor đã cô lập |
 | Netlist RO Xilinx | PASS, 128 LUT/128 feedback net/128 constraint loop |
@@ -34,7 +39,8 @@ FIFO có dữ liệu. Firmware và testbench không còn retry.
 
 Vector từng tái hiện lỗi và toàn bộ dải 1.024 vector nay PASS single-attempt. Trên
 board, lỗi cũ ở khoảng giao dịch 209 không tái hiện trong run 10.000 liên tiếp.
-Đây là bằng chứng chức năng mạnh hơn RC2 nhưng chưa phải formal proof hay ML-KEM KAT.
+Đây là bằng chứng chức năng mạnh hơn RC2. Nhánh phát triển sau RC4 còn bổ sung
+KAT ML-KEM bit-exact và implicit rejection; vẫn chưa phải formal proof.
 
 ## Định danh artifact RC4
 
@@ -46,10 +52,12 @@ board, lỗi cũ ở khoảng giao dịch 209 không tái hiện trong run 10.00
 - Methodology: 72 `TIMING-17` do clock RO bất định; không phải CDC/ASIC sign-off
 - Board run 10.000: 29,119 ms/giao dịch, 34,342 giao dịch/s, Fail 0
 
-Xem `HARDWARE_TEST_REPORT_RC4_2026-09-03.md` và
-`FIPS202_VERIFICATION_2026-09-03.md`. Nhãn phù hợp hiện tại là
-**ứng viên nghiên cứu/kỹ thuật nội bộ**; không phải FIPS 203 ML-KEM-512 hay
-release production.
+Xem `HARDWARE_TEST_REPORT_RC4_2026-09-03.md`,
+`FIPS202_VERIFICATION_2026-09-03.md` và
+`FIPS203_VERIFICATION_2026-09-04.md`. Nhãn phù hợp của nhánh hiện tại là
+**ML-KEM-512 internal algorithm functional PASS**; không phải chứng nhận
+CAVP/FIPS 140-3 hay release production. API kiểm tra `ek/dk` ngoài, mở rộng
+vector, review độc lập và implementation FPGA mới vẫn chưa đóng.
 
 Phạm vi phụ trách và công việc tiếp theo của Đạt–Tùng, Minh, Việt Anh và Long
 được theo dõi tại [`phan_cong_nhom/`](../phan_cong_nhom/README.md).

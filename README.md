@@ -1,18 +1,19 @@
 # RO-PUF + Fuzzy Extractor + Kyber/ML-KEM trên Zynq-7020
 
-> **Ứng viên phát hành kỹ thuật nội bộ `0.1.0-rc4`.** Repo dành cho nghiên
-> cứu, đánh giá và cộng tác trong nhóm riêng tư. Phát hành công khai đang bị
-> chặn bởi quyền phân phối Kyber RTL và top-level license. Đây không phải triển
-> khai FIPS 203 ML-KEM và không phải module mật mã production.
+> **Baseline FPGA `0.1.0-rc4` và nhánh phát triển ML-KEM.** Repo dành cho
+> nghiên cứu, đánh giá và cộng tác trong nhóm riêng tư. Phát hành công khai vẫn
+> bị chặn bởi quyền phân phối Kyber RTL và top-level license. Kết quả hiện tại
+> không phải chứng nhận CAVP/FIPS 140-3 và không phải module mật mã production.
 
 Tag `fpga-rc4-baseline` giữ nguyên bitstream FPGA đã xác minh. Nhánh phát triển
-hiện đã hoàn tất cổng FIPS 202 byte-oriented cho bốn primitive ML-KEM cần dùng;
-chưa được gọi là ML-KEM-512 cho đến khi core KEM vượt vector FIPS 203.
+đã hoàn tất cổng FIPS 202 byte-oriented và cổng functional bit-exact đầu tiên
+cho KeyGen, Encaps, Decaps và implicit rejection của ML-KEM-512. Xem báo cáo
+[`docs/FIPS203_VERIFICATION_2026-09-04.md`](docs/FIPS203_VERIFICATION_2026-09-04.md).
 
 Thiết kế pure RTL, chỉ dùng PL, thực hiện chuỗi:
 
 ```text
-RO-PUF -> BCH fuzzy extractor -> SHAKE256 KDF -> Kyber-512 cũ
+RO-PUF -> BCH fuzzy extractor -> SHAKE256 KDF -> ML-KEM-512 RTL tích hợp
        -> firmware PicoRV32 -> UART host
 ```
 
@@ -30,9 +31,13 @@ trong repo độc lập này.
 | Regression RTL/full-system | PASS |
 | Cổng ASIC portability | PASS, không đưa LUT6/CARRY4/DSP primitive vào source list ASIC |
 | FIPS 202 cho ML-KEM | PASS 50/50: SHA3-256/512, SHAKE128/256, gồm 20 vector NIST CAVP |
+| ML-KEM-512 KeyGen | PASS 25/25 NIST ACVP: `ek` 800 byte, `dk` 1.632 byte bit-exact |
+| ML-KEM-512 Encaps | PASS 25/25 NIST ACVP: ciphertext 768 byte, K 32 byte bit-exact |
+| ML-KEM-512 Decaps | PASS vector độc lập pq-crystals; implicit rejection khớp Python |
+| Timing valid/invalid | PASS, cùng 17.338 cycle trong loopback RTL |
 | SHAKE256 KDF KAT | PASS, KDF mới khớp từng bit với Python `hashlib.shake_256` |
 | Kyber raw single-attempt gate | PASS 1.024/1.024, mismatch 0, retry 0 |
-| Full-system simulation | PASS, 952.496 cycle |
+| Full-system simulation | PASS, 956.548 cycle trên nhánh ML-KEM |
 | Timing sau route | PASS ở 50 MHz, WNS `+3,663 ns`, WHS `+0,056 ns`, TNS/THS `0` |
 | Route/DRC | 0 net chưa route, 0 lỗi DRC |
 | Stress phần cứng | PASS 100/100, 1.000/1.000 và 10.000/10.000 |
@@ -87,8 +92,9 @@ make -j1 kyber-long
 
 `kyber-long` là cổng bắt buộc của internal release: 1.024 message seed khác
 nhau, mỗi giao dịch đúng một attempt, không retry. Có thể chạy từng khối bằng
-`make ro-puf`, `make fuzzy`, `make kdf`, `make kyber`, `make axi`,
-`make fips202`, `make kyber-codec` và `make system`.
+`make ro-puf`, `make fuzzy`, `make fips202`, `make kdf`, `make mlkem`,
+`make kyber`, `make kyber-invalid`, `make axi`, `make kyber-codec` và
+`make system`.
 
 Kiểm tra khả năng elaborate RTL ở chế độ ASIC-generic (không đưa `LUT6_L`,
 `CARRY4` hay primitive DSP48 vào source list ASIC):
@@ -149,14 +155,17 @@ block, stall và reset. Đây là phạm vi primitive FIPS 202 mà ML-KEM cần;
 bao gồm SHA3-224/SHA3-384 hay message bit-oriented và không phải chứng nhận
 CAVP/FIPS 140-3. Xem `docs/FIPS202_VERIFICATION_2026-09-03.md`.
 
-Kyber test hiện chỉ kiểm tra hai endpoint RTL cũ tạo cùng shared key; chưa đối
-chiếu `ek`, `dk`, ciphertext và shared secret với vector ML-KEM chính thức. Vì
-vậy chưa gọi thiết kế là FIPS 203 ML-KEM-512.
+ML-KEM-512 hiện đã đối chiếu bit-exact `ek`, `dk`, ciphertext và shared secret:
+KeyGen/Encaps PASS toàn bộ 25 vector ML-KEM-512 AFT trong sample chính thức
+NIST ACVP; Decaps dùng ciphertext sinh độc lập bằng pq-crystals reference;
+nhánh ciphertext sai khớp
+`SHAKE256(z || c, 32)`. Đây là cổng functional cho thuật toán nội bộ, chưa phải
+chứng nhận FIPS và chưa bao phủ toàn bộ vector/API kiểm tra khóa ngoài.
 
 Các lỗi underfill/starvation Kyber được tìm thấy trong stress đã được sửa bằng
 handshake FIFO và điều kiện kết thúc dựa trên số coefficient thực nhận. Gate
 1.024 vector và board 10.000 vòng hiện không còn mismatch/timeout, nhưng không
-thay thế formal verification, KAT ML-KEM hoặc review mật mã độc lập.
+thay thế formal verification, mở rộng ACVP KAT hoặc review mật mã độc lập.
 
 RO-PUF còn thiếu qualification nhiều board, cold/warm power-cycle, điện áp,
 nhiệt độ, aging, entropy/uniqueness và side-channel/fault-injection. Xem
