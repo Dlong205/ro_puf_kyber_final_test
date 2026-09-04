@@ -23,6 +23,22 @@ struct RunResult {
     std::vector<uint8_t> key;
 };
 
+struct Mutation {
+    size_t offset;
+    uint8_t mask;
+    const char* oracle_field;
+};
+
+static const Mutation kMutations[] = {
+    {0, 0x01, "INVALID_J_0_01"},
+    {319, 0x80, "INVALID_J_319_80"},
+    {320, 0x01, "INVALID_J_320_01"},
+    {511, 0x80, "INVALID_J_511_80"},
+    {639, 0x80, "INVALID_J_639_80"},
+    {640, 0x01, "INVALID_J_640_01"},
+    {767, 0x80, "INVALID_J_767_80"},
+};
+
 static std::vector<uint8_t> parse_hex(const std::string& text) {
     std::vector<uint8_t> bytes;
     int high = -1;
@@ -167,45 +183,70 @@ int main(int argc, char** argv) {
 
     int min_cycle = 100000;
     int max_cycle = 0;
+    int rejection_count = 0;
     for (const auto& vector : vectors) {
         const auto& d = vector.fields.at("D");
         const auto& z = vector.fields.at("Z");
         const auto& ciphertext = vector.fields.at("C");
         const auto& expected_k = vector.fields.at("K");
-        const auto& expected_j = vector.fields.at("INVALID_J");
         if (d.size() != 32 || z.size() != 32 || ciphertext.size() != 768 ||
-            expected_k.size() != 32 || expected_j.size() != 32) {
+            expected_k.size() != 32) {
             std::fprintf(stderr, "FAIL tcId=%d: malformed Decaps vector\n",
                          vector.tc_id);
             return 2;
         }
 
         const RunResult valid = run_server(d, z, ciphertext);
-        std::vector<uint8_t> invalid_ciphertext = ciphertext;
-        invalid_ciphertext[0] ^= 1;
-        const RunResult invalid = run_server(d, z, invalid_ciphertext);
-        if (valid.cycle < 0 || invalid.cycle < 0) return 1;
-        if (!valid.equal || invalid.equal) {
+        if (valid.cycle < 0) return 1;
+        if (!valid.equal) {
             std::fprintf(stderr,
-                         "FAIL tcId=%d: compare flags valid=%d invalid=%d\n",
-                         vector.tc_id, valid.equal, invalid.equal);
+                         "FAIL tcId=%d: valid ciphertext was rejected\n",
+                         vector.tc_id);
             return 1;
         }
-        if (!compare_key(vector.tc_id, "valid", valid.key, expected_k) ||
-            !compare_key(vector.tc_id, "invalid", invalid.key, expected_j))
+        if (!compare_key(vector.tc_id, "valid", valid.key, expected_k))
             return 1;
-        if (valid.cycle != invalid.cycle) {
-            std::fprintf(stderr,
-                         "FAIL tcId=%d: timing differs valid=%d invalid=%d\n",
-                         vector.tc_id, valid.cycle, invalid.cycle);
-            return 1;
+
+        for (const Mutation& mutation : kMutations) {
+            const auto& expected_j = vector.fields.at(mutation.oracle_field);
+            if (expected_j.size() != 32) {
+                std::fprintf(stderr,
+                             "FAIL tcId=%d: malformed %s oracle\n",
+                             vector.tc_id, mutation.oracle_field);
+                return 2;
+            }
+            std::vector<uint8_t> invalid_ciphertext = ciphertext;
+            invalid_ciphertext[mutation.offset] ^= mutation.mask;
+            const RunResult invalid = run_server(d, z, invalid_ciphertext);
+            if (invalid.cycle < 0) return 1;
+            if (invalid.equal) {
+                std::fprintf(stderr,
+                             "FAIL tcId=%d: mutation offset=%zu mask=%02x accepted\n",
+                             vector.tc_id, mutation.offset, mutation.mask);
+                return 1;
+            }
+            if (!compare_key(vector.tc_id, mutation.oracle_field,
+                             invalid.key, expected_j))
+                return 1;
+            if (valid.cycle != invalid.cycle) {
+                std::fprintf(stderr,
+                             "FAIL tcId=%d: timing differs valid=%d invalid=%d "
+                             "at offset=%zu mask=%02x\n",
+                             vector.tc_id, valid.cycle, invalid.cycle,
+                             mutation.offset, mutation.mask);
+                return 1;
+            }
+            ++rejection_count;
         }
         min_cycle = std::min(min_cycle, valid.cycle);
         max_cycle = std::max(max_cycle, valid.cycle);
     }
 
-    std::printf("PASS: ML-KEM-512 Decaps 25/25 valid and 25/25 implicit-"
+    std::printf("PASS: ML-KEM-512 Decaps 25/25 valid and %d/%d implicit-"
                 "rejection vectors; K/J exact, timing equal (cycles %d..%d)\n",
+                rejection_count,
+                static_cast<int>(vectors.size() *
+                                 (sizeof(kMutations) / sizeof(kMutations[0]))),
                 min_cycle, max_cycle);
     return 0;
 }

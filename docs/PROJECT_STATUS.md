@@ -8,7 +8,7 @@
 | ML-KEM-512 KeyGen | PASS 25/25 NIST ACVP AFT, `ek`/`dk` bit-exact |
 | ML-KEM-512 Encaps | PASS 25/25 NIST ACVP AFT, ciphertext/K bit-exact |
 | ML-KEM-512 Decaps hợp lệ | PASS 25/25 vector độc lập pq-crystals, `equal=1` |
-| ML-KEM-512 implicit rejection | PASS 25/25 `J(z || c_sai)`, `equal=0` |
+| ML-KEM-512 implicit rejection | PASS 175/175 `J(z || c_sai)`, `equal=0` |
 | Timing Decaps valid/invalid | PASS: cùng 12.287 cycle isolated; 17.338 cycle loopback |
 | SHAKE256 KDF known-answer | PASS sau khi chuyển sang sponge mới, cycle 122 |
 | ML-KEM-512 integrated functional loopback | PASS, cycle 17.338 |

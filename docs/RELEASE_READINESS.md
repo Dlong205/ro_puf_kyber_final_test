@@ -15,7 +15,7 @@ này phân biệt hoàn thành nội dung triển khai FPGA với public/product
 | FIPS 202 byte-oriented cho ML-KEM | PASS 50/50, gồm 20 vector NIST CAVP |
 | ML-KEM-512 KeyGen | PASS 25/25 NIST ACVP AFT, `ek`/`dk` bit-exact |
 | ML-KEM-512 Encaps | PASS 25/25 NIST ACVP AFT, ciphertext/K bit-exact |
-| ML-KEM-512 Decaps và implicit rejection | PASS 25/25 + 25/25; K/J exact, timing bằng nhau |
+| ML-KEM-512 Decaps và implicit rejection | PASS 25/25 + 175/175; K/J exact, timing bằng nhau |
 | SHAKE256 KDF KAT | PASS sau khi tích hợp controller mới |
 | Kyber functional loopback | PASS |
 | AXI start/status/key-match/zeroize | PASS |
@@ -46,8 +46,9 @@ multiplier NTT không còn phụ thuộc tên/primitive DSP48.
 Điều này không đồng nghĩa sản phẩm bảo mật production. Bốn primitive FIPS 202
 đã PASS regression byte-oriented. Nhánh phát triển ML-KEM-512 đã đối chiếu
 bit-exact KeyGen/Encaps với toàn bộ 25 vector ML-KEM-512 AFT tương ứng trong
-sample NIST ACVP và 25 cặp Decaps/implicit rejection với oracle độc lập. Thiết
-kế chưa có API kiểm tra khóa ngoài và chưa chạy lại FPGA implementation/board.
+sample NIST ACVP, 25 Decaps hợp lệ và 175 ca implicit rejection với oracle độc
+lập. Thiết kế chưa có API kiểm tra khóa ngoài và chưa chạy lại FPGA
+implementation/board.
 RO-PUF mới được đo trên một board ở điều kiện phòng.
 
 ## Điều kiện NO-GO trước public/production release

@@ -9,7 +9,7 @@
 | KeyGen | NIST ACVP `ML-KEM-keyGen-FIPS203`, tgId 1 | PASS 25/25, `ek` 800 byte và `dk` 1.632 byte bit-exact |
 | Encaps | NIST ACVP `ML-KEM-encapDecap-FIPS203`, tgId 1 | PASS 25/25, ciphertext 768 byte và K 32 byte bit-exact |
 | Decaps hợp lệ | pq-crystals reference trên 25 cặp khóa NIST | PASS 25/25 K 32 byte, `equal=1` |
-| Implicit rejection | pq-crystals + Python `hashlib.shake_256(z || c_sai)` | PASS 25/25 J 32 byte, `equal=0` |
+| Implicit rejection | pq-crystals + Python `hashlib.shake_256(z || c_sai)` | PASS 175/175 J 32 byte, `equal=0` |
 | Latency valid/invalid | Isolated / loopback RTL | Bằng nhau: 12.287 / 17.338 cycle |
 
 Nhãn đúng ở milestone này là **ML-KEM-512 internal algorithm functional
@@ -44,6 +44,9 @@ randomness `m` tương ứng từ nhóm Encaps tgId 1, rồi sinh `c,K` bằng
 pq-crystals reference commit
 [`3edd5af5991927164edd4aacebfcbee00b8064e7`](https://github.com/pq-crystals/kyber/commit/3edd5af5991927164edd4aacebfcbee00b8064e7).
 Cả `enc_derand` và `dec` phần mềm cho cùng K trước khi vector được đưa vào RTL.
+Mỗi ciphertext được sửa tại 7 vị trí đại diện: đầu/cuối hai vùng nén `u`, biên
+giữa hai đa thức của `u`, vị trí giữa và đầu/cuối vùng `v`. Mỗi J rejection
+được kiểm tra chéo bằng pq-crystals và Python SHAKE256 trước khi chạy RTL.
 
 Chạy toàn bộ cổng hiện có bằng:
 
@@ -60,8 +63,8 @@ make -j1 asic-elaboration
 ## Phạm vi chưa đóng
 
 1. KeyGen/Encaps đã khóa toàn bộ 25 vector AFT ML-KEM-512 trong sample NIST;
-   Decaps/rejection có 25 cặp oracle độc lập. Cần thêm kiểu sửa ciphertext đa
-   vị trí, malformed/API-length cases và corpus ngoài sample ACVP.
+   Decaps có 25 cặp oracle độc lập và rejection có 175 ca sửa ciphertext đa vị
+   trí. Cần thêm malformed/API-length cases và corpus ngoài sample ACVP.
 2. Core hiện là kiến trúc KEM tích hợp tự KeyGen và giữ secret nội bộ. Nó không
    nhận `ek/dk` tùy ý từ API, nên chưa có external
    `encapsulationKeyCheck`/`decapsulationKeyCheck` theo Sections 7.2/7.3.

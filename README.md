@@ -33,7 +33,7 @@ trong repo độc lập này.
 | FIPS 202 cho ML-KEM | PASS 50/50: SHA3-256/512, SHAKE128/256, gồm 20 vector NIST CAVP |
 | ML-KEM-512 KeyGen | PASS 25/25 NIST ACVP: `ek` 800 byte, `dk` 1.632 byte bit-exact |
 | ML-KEM-512 Encaps | PASS 25/25 NIST ACVP: ciphertext 768 byte, K 32 byte bit-exact |
-| ML-KEM-512 Decaps | PASS 25/25 valid + 25/25 rejection; K/J khớp oracle độc lập |
+| ML-KEM-512 Decaps | PASS 25/25 valid + 175/175 rejection; K/J khớp oracle độc lập |
 | Timing valid/invalid | PASS, cùng 17.338 cycle trong loopback RTL |
 | SHAKE256 KDF KAT | PASS, KDF mới khớp từng bit với Python `hashlib.shake_256` |
 | Kyber raw single-attempt gate | PASS 1.024/1.024, mismatch 0, retry 0 |
@@ -158,7 +158,7 @@ CAVP/FIPS 140-3. Xem `docs/FIPS202_VERIFICATION_2026-09-03.md`.
 ML-KEM-512 hiện đã đối chiếu bit-exact `ek`, `dk`, ciphertext và shared secret:
 KeyGen/Encaps PASS toàn bộ 25 vector ML-KEM-512 AFT trong sample chính thức
 NIST ACVP; Decaps PASS 25 cặp khóa/ciphertext sinh độc lập bằng pq-crystals
-reference; 25 nhánh ciphertext sai khớp
+reference; 175 nhánh ciphertext sai tại 7 vị trí đại diện khớp
 `SHAKE256(z || c, 32)`. Đây là cổng functional cho thuật toán nội bộ, chưa phải
 chứng nhận FIPS và chưa bao phủ toàn bộ vector/API kiểm tra khóa ngoài.
 

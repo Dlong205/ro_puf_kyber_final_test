@@ -22,9 +22,10 @@ Ví dụ vector đầu tiên:
 
 `make decap` dùng cả 25 cặp khóa NIST KeyGen, nhưng ciphertext/K được sinh độc
 lập bằng `pq-crystals/kyber` reference commit
-`3edd5af5991927164edd4aacebfcbee00b8064e7`. Mỗi ca còn lật bit đầu ciphertext
-và so sánh J với cả pq-crystals lẫn Python `hashlib.shake_256`. Test không nối
-ciphertext từ Client sang Server nên bắt được lỗi riêng ở Decaps.
+`3edd5af5991927164edd4aacebfcbee00b8064e7`. Mỗi ca còn lật bit tại 7 vị trí
+đại diện cho đầu/cuối hai miền nén `u`, `v` và các biên quan trọng, rồi so sánh
+J với cả pq-crystals lẫn Python `hashlib.shake_256`. Test không nối ciphertext
+từ Client sang Server nên bắt được lỗi riêng ở Decaps.
 
 Vector kỳ vọng nằm trong các file `mlkem512_*` của thư mục này. Chạy tuần tự
 để hạn chế tải máy:
@@ -45,7 +46,7 @@ khi ghi corpus.
 ## Giới hạn hiện tại
 
 Các KAT hiện xác nhận bit-exact KeyGen `ek/dk`, Encaps `c/K`, Decaps hợp lệ và
-implicit rejection `J(z || c)`. 25 cặp valid/invalid isolated đều có cùng
+implicit rejection `J(z || c)`. 25 valid và 175 invalid isolated đều có cùng
 latency 12.287 cycle; loopback tích hợp có cùng latency 17.338 cycle.
 
 Đây mới là cổng functional cho thuật toán nội bộ ML-KEM-512, chưa phải chứng
