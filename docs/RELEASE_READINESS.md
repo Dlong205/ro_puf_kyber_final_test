@@ -25,6 +25,8 @@ này phân biệt hoàn thành nội dung triển khai FPGA với public/product
 | Backend FPGA/ASIC và ASIC-generic elaboration | PASS |
 | Crypto RTL freeze candidate v2 | PASS regression/manifest/Vivado/board; chờ review độc lập |
 | Audit netlist RO Xilinx | PASS, 128/128 feedback net được constraint |
+| Tái lập placement/pin/route RO full-SoC | PASS, 2 build sạch khớp fingerprint RC1 |
+| Board regression image route-lock | PASS INFO/enroll/reconstruct và 10.000/10.000; đã restore RC1 |
 | Shared-secret export tắt | PASS |
 | Watchdog có giới hạn, không retry | PASS |
 | Synthesis/place/route/timing ML-KEM | PASS ở 50 MHz, WNS `+2,226 ns`, WHS `+0,034 ns` |
@@ -52,7 +54,9 @@ bit-exact KeyGen/Encaps với toàn bộ 25 vector ML-KEM-512 AFT tương ứng 
 sample NIST ACVP, 25 Decaps hợp lệ và 175 ca implicit rejection với oracle độc
 lập. Candidate đã hoàn tất Vivado implementation và board regression. Thiết kế
 vẫn chưa có API kiểm tra khóa ngoài.
-RO-PUF mới được đo trên một board ở điều kiện phòng.
+RO-PUF mới được đo trên một board ở điều kiện phòng. Route-lock đã đóng rủi ro
+implementation ngẫu nhiên làm đổi miền RO giữa các build full-SoC;
+qualification PVT, same-root và nhiều board vẫn chưa đóng.
 
 ## Điều kiện NO-GO trước public/production release
 

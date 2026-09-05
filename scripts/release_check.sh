@@ -29,6 +29,15 @@ if [[ -s "$rebuilt_bitstream" ]] && ! cmp -s "$bitstream" "$rebuilt_bitstream"; 
 fi
 test -s reports/post_route_timing.rpt || { echo "ERROR: timing report missing" >&2; exit 1; }
 test -s reports/post_route_drc.rpt || { echo "ERROR: DRC report missing" >&2; exit 1; }
+test -s reports/ro_physical_fingerprint.tsv || {
+  echo "ERROR: release RO physical fingerprint missing" >&2
+  exit 1
+}
+cmp -s constraints/ro_physical_fingerprint_rc1_zynq7020.tsv \
+  reports/ro_physical_fingerprint.tsv || {
+  echo "ERROR: release RO placement/pins/routes differ from RC1 physical baseline" >&2
+  exit 1
+}
 
 grep -q "All user specified timing constraints are met" reports/post_route_timing.rpt || {
   echo "ERROR: post-route timing did not pass" >&2

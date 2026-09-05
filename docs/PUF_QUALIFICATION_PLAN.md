@@ -53,13 +53,13 @@ firmware production. Image phải xuất:
 - seed/challenge index, measurement-window và boot/session index;
 - số lỗi BCH đã sửa và cờ over-noise.
 
-XDC release khóa LUT pin và giữ vòng feedback, chưa khóa `LOC/BEL` từng RO.
-Image `Puf_Characterization_Top` dùng map trích từ RC1 và kiểm tra chính xác
-128 LUT × 2 thuộc tính ở synth/post-route. Map chỉ cố định vị trí LUT; chưa
-cố định routing, mux/counter hoặc tải hoạt động của SoC. Vì vậy dataset từ
-image PUF-only phải có SHA-256 bitstream riêng và **không gộp với dataset RC1**.
-Để đo trực tiếp RC1 cần instrumentation tích hợp, đối chiếu routing/loading
-hoặc giải pháp quan sát không làm đổi implementation.
+Full-SoC release hiện khóa theo RC1 cả 128 LUT RO, 8 LUT mux đầu cuối và 128
+route vật lý; hai implementation sạch đã khớp fingerprint. Image
+`Puf_Characterization_Top` vẫn là thiết kế khác: nó chỉ dùng map LOC/BEL 128
+LUT và chưa cố định routing, mux/counter hoặc tải hoạt động của SoC. Vì vậy
+dataset từ image PUF-only phải có SHA-256 bitstream riêng và **không gộp với
+dataset RC1**. Để đo trực tiếp RC1 cần instrumentation tích hợp hoặc phép quan
+sát same-root không làm đổi implementation.
 
 Image chẩn đoán v1 chỉ xuất raw 264 bit qua UART (`INFO=0x00`, `RAW=0x70`).
 Các trường count-margin và số lỗi BCH bên dưới vẫn là hạng mục tiếp theo,

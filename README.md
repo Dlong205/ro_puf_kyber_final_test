@@ -46,6 +46,8 @@ trong repo độc lập này.
 | Full-system simulation | PASS, 956.564 cycle trên nhánh ML-KEM |
 | Implementation ML-KEM | PASS ở 50 MHz, 49.909 LUT; WNS `+2,226 ns`, WHS `+0,034 ns` |
 | Route/DRC ML-KEM | 70.739/70.739 net route đủ; 0 Error/Critical Warning DRC |
+| Tái lập vật lý RO full-SoC | PASS: 136 cell/128 net, 2 build sạch khớp fingerprint RC1 |
+| Test board image route-lock | PASS INFO/enroll/reconstruct; stress 10.000/10.000; sau đó đã nạp lại RC1 |
 | Test board ML-KEM RC1 | PASS INFO/enroll/reconstruct; stress 100/100, 1.000/1.000, 10.000/10.000 |
 | Stress phần cứng RC4 | PASS 100/100, 1.000/1.000 và 10.000/10.000 |
 | Hiệu năng board ML-KEM RC1 | `29,608 ms/giao dịch`, `33,775 giao dịch/s` ở run 10.000 |
@@ -71,7 +73,7 @@ constraint lên 100 MHz mà không tái kiến trúc/pipeline và chạy lại s
 - `docs/`: giao thức, nguồn gốc, bring-up, xác minh và mức sẵn sàng
 - `phan_cong_nhom/`: tiến độ, phạm vi và tiêu chí hoàn thành của từng thành viên
 - `Kyber_System_Top.bit`: bitstream ML-KEM-512 `0.2.0-rc1` đã test board
-- `ARTIFACTS.sha256`: checksum bitstream và firmware
+- `ARTIFACTS.sha256`: checksum bitstream, firmware, physical lock và fingerprint RO
 
 Build/cache, waveform, helper data PUF gắn với board và dữ liệu local khác được
 loại bằng `.gitignore`.
@@ -144,6 +146,10 @@ make -j1 impl VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
 
 Script giới hạn một worker và một thread. Bitstream mới nằm ở
 `build/vivado/kyber_ro_puf_zynq7020.runs/impl_1/Kyber_System_Top.bit`.
+Project full-SoC nạp mặc định physical lock của RC1; sau route, build đối chiếu
+`INIT`, LOC/BEL, pin-map, endpoint và route của toàn bộ miền RO. Sai khác làm
+build thất bại. Bằng chứng và lệnh tái lập nằm tại
+[`docs/RO_PHYSICAL_REPRODUCIBILITY_2026-09-05.md`](docs/RO_PHYSICAL_REPRODUCIBILITY_2026-09-05.md).
 Artifact hiện có SHA-256
 `183e0af367376ebd7ca6bc2f3747314fd0602306a630af2a2e51858ef1f20e8e`.
 File ở root đã được đối chiếu byte-for-byte với bitstream vừa test board.
@@ -168,6 +174,13 @@ khai nhưng gắn với từng board/lần enroll; giữ nó ngoài repo. Xem
 Số thứ tự `ttyUSB` có thể thay đổi sau khi cắm lại cáp. Với adapter CH340 đang
 dùng, đường dẫn ổn định là `/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0`;
 kiểm tra `ls -l /dev/serial/by-id/` trước khi chọn cổng.
+
+Khi thử một candidate cách ly, truyền bitstream chính xác để tránh nạp nhầm:
+
+```sh
+make soc-repro-program SOC_REPRO_RUN=locked_b \
+  VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
+```
 
 ## Kiểm tra độ ổn định RO-PUF
 
@@ -195,7 +208,9 @@ make -j1 program VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
 Image này xuất raw response phục vụ phòng lab. Kết thúc đo phải nạp lại image
 release như lệnh cuối. Host chỉ lưu thống kê và không chủ động ghi raw response. Dataset
 gắn với SHA-256 bitstream PUF-only; LOC/BEL đã khóa nhưng routing/tải SoC chưa
-được bảo toàn, nên chưa suy kết quả đo sang RC1. Count-margin, same-root trên
+được bảo toàn, nên chưa suy kết quả đo sang RC1. Full-SoC hiện đã khóa chính
+xác 136 endpoint/128 route của RC1 cho các build tương lai, nhưng điều đó không
+làm image PUF-only tương đương. Count-margin, same-root trên
 board, PVT và nhiều board vẫn cần thực hiện theo
 [`docs/PUF_QUALIFICATION_PLAN.md`](docs/PUF_QUALIFICATION_PLAN.md).
 

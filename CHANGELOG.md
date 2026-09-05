@@ -1,5 +1,20 @@
 # Lịch sử thay đổi
 
+## Chưa phát hành — 2026-09-05
+
+- Xuất physical lock full-SoC từ routed DCP ML-KEM RC1 đã chấp nhận: cố định
+  128 LUT RO, 8 LUT mux đầu cuối và 128 route vật lý.
+- Thêm fingerprint V2 gồm `INIT`, loại cell, LOC/BEL, pin-map, endpoint và
+  route; build/release dừng nếu miền RO khác baseline.
+- Hai build sạch `locked_a`/`locked_b` khớp chính xác fingerprint RC1; timing
+  50 MHz PASS, fully routed, DRC 0 Error/Critical Warning.
+- `locked_b` PASS board INFO/enroll/reconstruct và stress 100, 1.000,
+  10.000/10.000; sau campaign đã nạp lại bitstream RC1 gốc.
+- Bổ sung build cách ly một worker, nạp bitstream theo đường dẫn chính xác,
+  hash-gate exporter và cổng so sánh hai implementation.
+- Internal release gate và ASIC portability đều PASS; public release vẫn bị
+  chặn bởi license, production vẫn chờ qualification PUF/same-root/PVT.
+
 ## 0.2.0-rc1 — 2026-09-04
 
 - Hoàn thiện đường thuật toán nội bộ ML-KEM-512 theo FIPS 203: KeyGen/Encaps/

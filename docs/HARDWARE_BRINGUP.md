@@ -37,6 +37,16 @@ make program VIVADO=/media/donglong/tools/Xilinx/Vivado/2020.1/bin/vivado
 Thành công kết thúc bằng `PROGRAM_PASS`. Nếu JTAG thấy adapter nhưng không thấy
 device, kiểm tra nguồn, hướng cáp và jumper JTAG/boot-mode rồi power-cycle.
 
+Để nạp một candidate cách ly thay vì bitstream mặc định, luôn chỉ rõ file:
+
+```sh
+make program-bit \
+  BITSTREAM=/duong/dan/tuyet/doi/Kyber_System_Top.bit \
+  VIVADO=/media/donglong/tools/Xilinx/Vivado/2020.1/bin/vivado
+```
+
+Script xác nhận đúng một target và đúng một XC7Z020 trước khi ghi PL.
+
 ## Smoke test UART
 
 UART 115200 8N1. Xác nhận firmware trước:

@@ -11,6 +11,17 @@ LOC/BEL theo RC1 nhưng chưa giữ routing và tải của SoC. Chưa có cold/
 PVT, nhiều board, count-margin, same-root trên image release hoặc ước lượng
 min-entropy có tính helper leakage.
 
+Cập nhật sau campaign: route-lock full-SoC đã được xuất từ RC1 và tái tạo chính
+xác qua hai build độc lập (136 endpoint, 128 route, gồm cả LUT mux nhận `t3`).
+Điều này loại rủi ro route RO đổi giữa các build full-SoC tương lai. Nó không
+làm image PUF-only đã đo trở thành tương đương với RC1 và không thay các gate
+PVT/same-root/entropy bên dưới.
+
+Image tái lập `locked_b` cũng PASS INFO/enroll/reconstruct và stress
+10.000/10.000 trên board, rồi board được nạp lại RC1. Helper enroll giữa hai
+image lệch 30 bit, nằm trong kiểu dao động helper đã biết; đây không phải raw
+HD và không được dùng để tuyên bố same-root.
+
 Review cũng phát hiện giới hạn kiến trúc: 264 output dùng 32 RO vật lý và 255
 challenge duy nhất. Nếu bỏ nhiễu và coi mỗi RO có một tần số vô hướng, output
 so sánh là hàm của thứ tự 32 tần số. Số mẫu so sánh khác nhau không vượt
@@ -113,8 +124,8 @@ same-root trực tiếp trên image tích hợp.
    release.
 4. Chạy ít nhất 100 warm reset, 100 cold power-cycle, PVT an toàn, aging và
    tối thiểu 5 board (nên 10+), luôn gắn dataset với bitstream hash.
-5. Khóa/đối chiếu routing RO hoặc đo trên instrumentation của image tích hợp
-   trước khi freeze PUF.
+5. Giữ audit route-lock full-SoC trong mọi build; bổ sung phép đo same-root hoặc
+   instrumentation trên chính image tích hợp trước khi freeze PUF.
 
 Sau campaign, board đã được nạp lại bitstream ML-KEM RC1. INFO protocol 1.2,
 enroll/reconstruct và stress 100/100 PASS; artifact root và bitstream build cùng

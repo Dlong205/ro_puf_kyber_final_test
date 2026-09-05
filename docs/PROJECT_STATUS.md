@@ -21,6 +21,8 @@
 | ASIC portability gate | PASS, ASIC-generic elaboration và primitive vendor đã cô lập |
 | Crypto RTL freeze candidate v2 | PASS functional/portability/manifest/Vivado/board; chờ review độc lập |
 | Netlist RO Xilinx | PASS, 128 LUT/128 feedback net/128 constraint loop |
+| Physical lock RO full-SoC | PASS, 136 endpoint/128 fixed route; 2 build khớp fingerprint V2 |
+| Board image route-lock `locked_b` | PASS INFO/enroll/reconstruct, stress 10.000/10.000; board đã trở lại RC1 |
 | Vivado synthesis/implementation | PASS, `xc7z020clg400-2`, không IP sinh tự động |
 | Route | PASS, 0 failed/unrouted/partially-routed net |
 | Timing 50 MHz candidate ML-KEM | PASS, WNS `+2,226 ns`, WHS `+0,034 ns`, TNS/THS `0` |

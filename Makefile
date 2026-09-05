@@ -1,8 +1,15 @@
 VIVADO ?= vivado
-XPR := build/vivado/kyber_ro_puf_zynq7020.xpr
 PUF_CHAR_XPR := build/puf_characterization/puf_characterization_zynq7020.xpr
+SOC_REPRO_RUN ?= locked_a
+SOC_REPRO_A ?= locked_a
+SOC_REPRO_B ?= locked_b
+SOC_REPRO_BIT := build/soc_repro/$(SOC_REPRO_RUN)/kyber_ro_puf_$(SOC_REPRO_RUN).runs/impl_1/Kyber_System_Top.bit
 
-.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem kyber kyber-invalid axi kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-elaboration asic-portability crypto-freeze-check crypto-freeze-gate vivado-project synth impl program release-check package-internal clean
+# This repository is intentionally serialized: two concurrent Vivado or
+# Verilator builds can exhaust RAM on the reference development host.
+.NOTPARALLEL:
+
+.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem kyber kyber-invalid axi kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-elaboration asic-portability crypto-freeze-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
 
 PUF_PORT ?= /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
 PUF_SAMPLES ?= 1000
@@ -108,16 +115,40 @@ vivado-project:
 	$(VIVADO) -mode batch -nolog -nojournal -source scripts/create_project.tcl
 
 # Both FPGA targets intentionally use one Vivado worker to protect low-memory hosts.
-synth:
-	@test -f $(XPR) || $(MAKE) vivado-project VIVADO=$(VIVADO)
+synth: vivado-project
 	$(VIVADO) -mode batch -nolog -nojournal -source scripts/build_fpga.tcl -tclargs synth
 
-impl:
-	@test -f $(XPR) || $(MAKE) vivado-project VIVADO=$(VIVADO)
+impl: vivado-project
 	$(VIVADO) -mode batch -nolog -nojournal -source scripts/build_fpga.tcl -tclargs impl
+
+# The exporter is hash-gated to the accepted RC1 DCP/bitstream and refuses an
+# unapproved baseline. Repro builds live under build/soc_repro and never
+# overwrite the standard project or the checked-in release bitstream.
+ro-lock-export:
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/export_ro_physical_lock.tcl
+
+ro-lock-source-check:
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/validate_ro_lock_checkpoint.tcl
+
+soc-repro-project:
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/create_soc_repro_project.tcl -tclargs $(SOC_REPRO_RUN)
+
+soc-repro-build: soc-repro-project
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/build_soc_repro.tcl -tclargs $(SOC_REPRO_RUN)
+
+ro-route-repro-check:
+	@./scripts/check_ro_route_repro.sh $(SOC_REPRO_A) $(SOC_REPRO_B)
 
 program:
 	$(VIVADO) -mode batch -nolog -nojournal -source scripts/program_board.tcl
+
+program-bit:
+	@test -n "$(BITSTREAM)" || { echo "ERROR: set BITSTREAM=/absolute/path/to/file.bit" >&2; exit 2; }
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/program_board.tcl -tclargs "$(BITSTREAM)"
+
+soc-repro-program:
+	@test -s "$(SOC_REPRO_BIT)" || { echo "ERROR: reproducibility bitstream not found: $(SOC_REPRO_BIT)" >&2; exit 2; }
+	$(MAKE) program-bit BITSTREAM="$(abspath $(SOC_REPRO_BIT))" VIVADO=$(VIVADO)
 
 release-check:
 	@./scripts/release_check.sh
