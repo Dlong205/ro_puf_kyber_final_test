@@ -1,10 +1,12 @@
 VIVADO ?= vivado
 XPR := build/vivado/kyber_ro_puf_zynq7020.xpr
+PUF_CHAR_XPR := build/puf_characterization/puf_characterization_zynq7020.xpr
 
-.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy fips202 kdf mlkem kyber kyber-invalid axi kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-elaboration asic-portability crypto-freeze-check crypto-freeze-gate vivado-project synth impl program release-check package-internal clean
+.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem kyber kyber-invalid axi kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-elaboration asic-portability crypto-freeze-check crypto-freeze-gate vivado-project synth impl program release-check package-internal clean
 
 PUF_PORT ?= /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
 PUF_SAMPLES ?= 1000
+PUF_CHAR_BIT := build/puf_characterization/puf_characterization_zynq7020.runs/impl_1/Puf_Characterization_Top.bit
 
 check:
 	@./scripts/check_standalone.sh
@@ -24,6 +26,30 @@ fuzzy-portable:
 # Release-mode proxy only: helper variation is not raw-response Hamming distance.
 puf-stability-proxy:
 	python3 -u host/puf_stability_proxy.py --port $(PUF_PORT) --count $(PUF_SAMPLES)
+
+# Characterization uses a separate, PUF-only bitstream. It never overwrites
+# the checked-in release bitstream or the full-system Vivado project.
+puf-characterization-project:
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/create_puf_characterization_project.tcl
+
+puf-characterization-bitstream:
+	@test -f $(PUF_CHAR_XPR) || $(MAKE) -j1 puf-characterization-project VIVADO=$(VIVADO)
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/build_puf_characterization.tcl
+
+puf-characterization-program:
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/program_puf_characterization.tcl
+
+puf-raw-characterize:
+	python3 -u host/puf_raw_characterize.py --port "$(PUF_PORT)" --count $(PUF_SAMPLES) --bitstream "$(PUF_CHAR_BIT)"
+
+puf-characterization-sim:
+	$(MAKE) -j1 -C sim/puf_characterization sim
+
+fuzzy-characterization:
+	$(MAKE) -j1 -C sim/fuzzy_extractor characterization
+
+puf-metrics-test:
+	python3 -m unittest discover -s host/tests -v
 
 fips202:
 	$(MAKE) -C sim/fips202 run
@@ -100,6 +126,7 @@ package-internal:
 	@./scripts/package_release.sh --internal
 
 clean:
+	$(MAKE) -C sim/puf_characterization clean
 	$(MAKE) -C sim/ro_puf clean
 	$(MAKE) -C sim/fuzzy_extractor clean
 	$(MAKE) -C sim/fips202 clean

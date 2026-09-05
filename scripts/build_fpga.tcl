@@ -18,7 +18,7 @@ if {![file exists $project_file]} {
 
 file mkdir $report_dir
 open_project $project_file
-set_param general.maxThreads 2
+set_param general.maxThreads 1
 if {[llength [get_ips -quiet]] != 0 || [llength [get_files -all -quiet *.xci]] != 0} {
     error "Standalone invariant failed: generated Xilinx IP is present"
 }

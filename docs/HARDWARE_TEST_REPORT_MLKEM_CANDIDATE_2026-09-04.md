@@ -1,5 +1,10 @@
 # Báo cáo implementation và board ML-KEM RC1 — 2026-09-04
 
+> Bổ sung ngày 2026-09-05: PASS trong báo cáo này là kết quả giao thức và
+> KEM loopback. Firmware chưa đối chiếu khóa PUF phục hồi với khóa enrollment,
+> nên số liệu 10.000/10.000 không đo silent wrong-root. Xem
+> [kế hoạch qualification PUF](PUF_QUALIFICATION_PLAN.md) và báo cáo đo riêng.
+
 ## Kết luận
 
 RTL `0.2.0-rc1` đã **PASS synthesis, place, route, timing, DRC, bitstream và

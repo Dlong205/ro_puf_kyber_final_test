@@ -13,6 +13,8 @@ dịch. Xem báo cáo
 [`docs/FIPS203_VERIFICATION_2026-09-04.md`](docs/FIPS203_VERIFICATION_2026-09-04.md)
 và
 [`docs/HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md`](docs/HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md).
+Qualification RO-PUF mới nhất nằm tại
+[`docs/PUF_CHARACTERIZATION_2026-09-05.md`](docs/PUF_CHARACTERIZATION_2026-09-05.md).
 
 Thiết kế pure RTL, chỉ dùng PL, thực hiện chuỗi:
 
@@ -47,6 +49,7 @@ trong repo độc lập này.
 | Test board ML-KEM RC1 | PASS INFO/enroll/reconstruct; stress 100/100, 1.000/1.000, 10.000/10.000 |
 | Stress phần cứng RC4 | PASS 100/100, 1.000/1.000 và 10.000/10.000 |
 | Hiệu năng board ML-KEM RC1 | `29,608 ms/giao dịch`, `33,775 giao dịch/s` ở run 10.000 |
+| RO-PUF ngắn hạn PUF-only | 10.000 mẫu: HD max/p99 = 1, 0 mẫu > t=8, 1 bit dao động; chưa đạt gate entropy/PVT |
 | Public release | **BỊ CHẶN**, xem `NOTICE.md` |
 
 Implementation ML-KEM candidate dùng 49.909/53.200 Slice LUT (`93,81%`),
@@ -139,7 +142,7 @@ Nếu Vivado không nằm trong `PATH`:
 make -j1 impl VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
 ```
 
-Script giới hạn một worker và tối đa hai thread. Bitstream mới nằm ở
+Script giới hạn một worker và một thread. Bitstream mới nằm ở
 `build/vivado/kyber_ro_puf_zynq7020.runs/impl_1/Kyber_System_Top.bit`.
 Artifact hiện có SHA-256
 `183e0af367376ebd7ca6bc2f3747314fd0602306a630af2a2e51858ef1f20e8e`.
@@ -161,6 +164,40 @@ python3 host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin str
 khai nhưng gắn với từng board/lần enroll; giữ nó ngoài repo. Xem
 `docs/HARDWARE_BRINGUP.md` và
 `docs/HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md`.
+
+Số thứ tự `ttyUSB` có thể thay đổi sau khi cắm lại cáp. Với adapter CH340 đang
+dùng, đường dẫn ổn định là `/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0`;
+kiểm tra `ls -l /dev/serial/by-id/` trước khi chọn cổng.
+
+## Kiểm tra độ ổn định RO-PUF
+
+Review ngày 2026-09-05 xác định cờ `success` của BCH chỉ kiểm tra codeword hợp
+lệ; KEM loopback dùng khóa vừa phục hồi cho cả giao dịch. Vì vậy PASS 10.000
+giao dịch chưa kiểm chứng khóa gốc có giữ nguyên so với enrollment. Bộ test
+mới đối chiếu khóa trực tiếp trong mô phỏng và image đo raw giúp đo bit lỗi.
+
+```sh
+make -j1 fuzzy-characterization
+make -j1 puf-characterization-sim
+make -j1 -C sim/puf_characterization CLKS_PER_BIT=434
+make -j1 puf-metrics-test
+```
+
+Image PUF-only đo response thô dùng project riêng và map 128 LUT từ RC1:
+
+```sh
+make -j1 puf-characterization-bitstream VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
+make -j1 puf-characterization-program VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
+make -j1 puf-raw-characterize PUF_SAMPLES=10000
+make -j1 program VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
+```
+
+Image này xuất raw response phục vụ phòng lab. Kết thúc đo phải nạp lại image
+release như lệnh cuối. Host chỉ lưu thống kê và không chủ động ghi raw response. Dataset
+gắn với SHA-256 bitstream PUF-only; LOC/BEL đã khóa nhưng routing/tải SoC chưa
+được bảo toàn, nên chưa suy kết quả đo sang RC1. Count-margin, same-root trên
+board, PVT và nhiều board vẫn cần thực hiện theo
+[`docs/PUF_QUALIFICATION_PLAN.md`](docs/PUF_QUALIFICATION_PLAN.md).
 
 ## Phạm vi FIPS và giới hạn
 

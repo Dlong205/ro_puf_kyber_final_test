@@ -5,6 +5,8 @@ root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 required=(
   rtl/top/Kyber_System_Top.sv
+  rtl/top/Puf_Characterization_Top.sv
+  rtl/top/puf_characterization_uart.sv
   rtl/puf/kp_puf_top.sv
   rtl/puf/kp_ro_cell.sv
   rtl/puf/kp_ro_cell_model.sv
@@ -21,6 +23,11 @@ required=(
   firmware/main.c
   firmware/firmware.hex
   constraints/kp_zynq_7020.xdc
+  constraints/ro_placement_rc1_zynq7020.xdc
+  host/puf_raw_characterize.py
+  scripts/create_puf_characterization_project.tcl
+  scripts/build_puf_characterization.tcl
+  scripts/program_puf_characterization.tcl
   sim/system/system_uart_main.cpp
   docs/board_pin_mapping.xls
 )
@@ -51,6 +58,7 @@ if grep -R -n -F '/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZ
     --exclude-dir=reports \
     --exclude-dir=obj_dir \
     --exclude-dir=obj_dir_axi \
+    --exclude-dir=__pycache__ \
     --exclude-dir=rtl_tcq0 \
     --exclude='*.jou' \
     --exclude='*.log' \
