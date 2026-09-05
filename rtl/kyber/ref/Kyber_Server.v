@@ -40,6 +40,7 @@ reg [3:0] din_rnd_end, dout_rnd_end, u_rnd_end;
 reg [2:0] rot_ctr;
 reg [5:0] pad_ctr;
 wire [7:0] fifo_GENA_ctr;
+wire matrix_stream_active;
 reg [3:0] nonce;
 reg [1:0] absorb_ctr, absorb_ctr_r1;
 reg [1:0] row, col;
@@ -146,6 +147,42 @@ reg OFIFO_empty_r1;
 wire OFIFO_seed, OFIFO_last;
 reg OFIFO_tx_done;
 
+// FIPS 203 implicit rejection hashes z || c, where c is the exact received
+// 768-byte ML-KEM-512 ciphertext.  The decode path consumes its input FIFO and
+// cannot reconstruct non-canonical/modified bytes, so retain one ciphertext
+// for replay through the existing SHAKE256 core after the compare.  A
+// synchronous generic_bram keeps this 6-Kibit buffer out of LUT fabric on FPGA
+// and remains portable to an ASIC SRAM/register-file mapping.
+reg [7:0] ciphertext_wr_ctr;
+reg [7:0] j_replay_ctr;
+reg final_kdf_active;
+wire [31:0] ciphertext_replay_dout;
+wire [7:0] ciphertext_replay_addr;
+
+// Port B is prefetched while z is being absorbed.  During replay it requests
+// word n+1 while word n is presented to the hash FIFO, compensating for the
+// one-cycle synchronous RAM read latency without inserting bubbles.
+assign ciphertext_replay_addr =
+	(state == 6'h8 && j_replay_ctr < 8'd191) ?
+		j_replay_ctr + 1'b1 : 8'd0;
+
+generic_bram #(
+	.DEPTH(256),
+	.WIDTH(32)
+) ciphertext_store (
+	.clk(clk),
+	.en_a(state == 6'h23 && wen && ciphertext_wr_ctr < 8'd192),
+	.we_a(state == 6'h23 && wen && ciphertext_wr_ctr < 8'd192),
+	.addr_a(ciphertext_wr_ctr),
+	.din_a(din),
+	.dout_a(),
+	.en_b(state == 6'h9 || state == 6'h8),
+	.we_b(1'b0),
+	.addr_b(ciphertext_replay_addr),
+	.din_b(32'b0),
+	.dout_b(ciphertext_replay_dout)
+);
+
 always @(posedge clk) begin
     if(rst) begin
         state <= 6'h 0;
@@ -154,8 +191,13 @@ always @(posedge clk) begin
     end else begin
         if (state == 6'h a && next_state == 6'h 11)
             state11_delay_ctr <= 0;
-        else if (state == 6'h 11)
-            state11_delay_ctr <= state11_delay_ctr + 1;
+		else if (state == 6'h 11)
+			// J(z || c) spans six SHAKE256 rate blocks.  State 11 waits
+			// while the queued blocks drain, so saturate instead of wrapping
+			// and accidentally enqueueing the final padding word again.
+			state11_delay_ctr <= (final_kdf_active &&
+				state11_delay_ctr == 3'd7) ? state11_delay_ctr :
+				state11_delay_ctr + 1'b1;
         else
             state11_delay_ctr <= 0;
         
@@ -172,19 +214,41 @@ always @* case(state)
 	6'h 4 : next_state = rot_ctr == 3'h 7 ? CCA_enc ? 6'h b : 6'h e : state;
 	6'h 5, 6'h 7 : next_state = rot_ctr == 3'h 7 ? state + 1'h 1 : state;
 	6'h 6 : next_state = rot_ctr == 3'h 7 ? 6'h a : state;
-	6'h 8 : next_state = rot_ctr == 3'h 7 ? 6'h f : state;
+	// Always replay all 192 ciphertext words after z.  Computing J(z || c) for
+	// accepted and rejected inputs equalizes the large protocol-level timing
+	// difference; the final key mux still selects K-bar when equal is true.
+	6'h 8 : next_state = j_replay_ctr == 8'd191 ? 6'h f : state;
 	6'h 9 : next_state = rot_ctr == 3'h 7 ? 6'h 8 : state;
 	6'h a : next_state = 6'h 11;
 	6'h b, 6'h c, 6'h d, 6'h e : next_state = 6'h 10;
 	6'h 10: next_state = pad_ctr == 5'h 0 ? state + 1'h 1 : state;
-	6'h 11: next_state = (state11_delay_ctr < 3'd4) ? 6'h 11 : 6'h 12;
+	6'h 11: next_state = final_kdf_active ?
+		((state11_delay_ctr != 3'd0 && ififo_empty) ? 6'h12 : 6'h11) :
+		((state11_delay_ctr < 3'd4) ? 6'h11 : 6'h12);
 	6'h 12: next_state = keccak_ready ? state + 1'h 1 : state;
-	6'h 13: if((patt_bit | eta3_bit) & ofifo1_full)
+	6'h 13: if(((patt_bit | eta3_bit) & ofifo1_full) |
+			(~patt_bit & ~eta3_bit & ofifo0_full))
 			next_state = state;
 		else case(keccak_ctr)
-			3'h 1 : next_state = ofifo_ena ? patt_r[72] ? 6'h 4 : 6'h 3 : state + 1'h 1;
+			// KeyGen schedule: a patt block starts a fresh PRF, an eta3-only
+			// block continues that SHAKE256 stream, and matrix XOF blocks are
+			// chained until rejection sampling has a complete polynomial.
+			3'h 1 : next_state = ofifo_ena ?
+				patt_r[72] ? 6'h 3 :
+				eta3_r[72] ? 6'h 3e :
+				(absorb_ctr[1] | absorb_ctr[0]) ? 6'h 16 : 6'h 4
+				: state + 1'h 1;
 			3'h 2 : next_state = 6'h 18;
-			3'h 3 : next_state = ofifo_ena ? patt_r[72] ? 6'h 4 : 6'h 3 : 6'h 2e;
+			// CCA re-encryption uses the same stream protocol as Encaps:
+			// patt starts PRF(r,nonce), eta3 emits its 56-byte continuation,
+			// and an untagged slot starts/continues matrix rejection sampling.
+			// The former reversed branch started a new nonce during eta3 and
+			// left the second secret polynomial with only 14 raw words.
+			3'h 3 : next_state = ofifo_ena ?
+				patt_r[72] ? 6'h 3 :
+				eta3_r[72] ? 6'h 3e :
+				(absorb_ctr[1] | absorb_ctr[0]) ? 6'h 16 : 6'h 4
+				: 6'h 2e;
 			3'h 4 : next_state = 6'h 2f;
 			// With the rebuilt hash schedule H(c) and G(m'||H(pk)) finish
 			// at counters 2 and 3, so the post-compare KDF finishes at 5,
@@ -198,14 +262,17 @@ always @* case(state)
 	6'h 15: next_state = 6'h 3;
 	6'h 16: next_state = rot_ctr == 3'h 7 ? state + 1'h 1 : state;
 	6'h 17: next_state = 6'h 10;
-	6'h 18: next_state = squeeze_ctr == 6'h 31 || fifo_GENA_ctr[7] ? state + 1'h 1 : state;
+	6'h 18: next_state = (fifo_GENA_ctr[7] && matrix_stream_active) ? state + 1'h 1 : state;
 	6'h 19: next_state = ready_t ? state + 1'h 1 : state;
 	6'h 1a: next_state = rot_ctr == 3'h 7 ? state + 1'h 1 : state;
 	6'h 1b: next_state = data_ctr == dout_ctr_end && data_rnd_ctr == dout_rnd_end && OFIFO_req_r1 ? state + 1'h 1 : state;
 	6'h 1c: next_state = ififo_empty ? state + 1'h 1 : state;
 	6'h 1e: next_state = pad_ctr == 5'h 0 ? state + 1'h 1 : state;
 	6'h 20: next_state = keccak_ready ? state + 1'h 1 : state;
-	6'h 21: next_state = rot_ctr == 3'h 7 ? state + 1'h 1 : state;
+	// Capture H(pk) by accepted digest words, not elapsed cycles.  The rebuilt
+	// sponge deliberately holds word 0 for one cycle at the state boundary;
+	// rot_ctr would therefore leave after only seven valid words.
+	6'h 21: next_state = squeeze_ctr == 3'h 7 ? state + 1'h 1 : state;
 	6'h 22: next_state = ready_c ? state + 1'h 1 : state;
 	6'h 23: next_state = data_ctr == din_ctr_end && data_rnd_ctr == din_rnd_end && decode_req_r1 ? state + 1'h 1 : state;
 	6'h 24: next_state = ififo_empty ? state + 1'h 1 : state;
@@ -219,13 +286,36 @@ always @* case(state)
 	// Drain the final CCA matrix XOF until rejection sampling has emitted all
 	// 128 packed words.  A fixed 32-cycle tail can leave the NTT permanently
 	// waiting for the last data-dependent coefficients.
-	6'h 2f: next_state = fifo_GENA_ctr[7] ? state + 1'h 1 : state;
-	6'h 30: next_state = NTT_finish ? equal ? 6'h 7 : 6'h 9 : state;
+	6'h 2f: next_state = (fifo_GENA_ctr[7] && matrix_stream_active) ?
+				state + 1'h 1 : state;
+	6'h 30: next_state = NTT_finish ? 6'h 9 : state;
 	6'h 31: next_state = squeeze_ctr == 3'h 7 ? 6'h 0 : state;
 	6'h 3e: next_state = rot_ctr == 3'h 7 ? state + 1'h 1 : state;
 	6'h 3f: next_state = 6'h 10;
 	default : next_state = state + 1'h 1;
 endcase
+
+always @(posedge clk) begin
+	if(rst || start) begin
+		ciphertext_wr_ctr <= 8'd0;
+	end else if(state == 6'h23 && wen && ciphertext_wr_ctr < 8'd192) begin
+		ciphertext_wr_ctr <= ciphertext_wr_ctr + 1'b1;
+	end
+end
+
+always @(posedge clk) begin
+	if(rst || state == 6'h30)
+		j_replay_ctr <= 8'd0;
+	else if(state == 6'h8 && j_replay_ctr < 8'd191)
+		j_replay_ctr <= j_replay_ctr + 1'b1;
+end
+
+always @(posedge clk) begin
+	if(rst || start || state == 6'h0)
+		final_kdf_active <= 1'b0;
+	else if(state == 6'h30 && next_state != state)
+		final_kdf_active <= 1'b1;
+end
 
 always @(posedge clk) begin
 	if(rst) d <= 0;
@@ -288,10 +378,12 @@ always @(posedge clk) begin
 		// re-encryption so state 7 feeds the correct value to the final KDF.
 		6'h 2e : K <= (keccak_squeeze && squeeze_ctr < 6'd8) ?
 					 {keccak_dout,K[255:32]} : K;
-		// The final decapsulation KDF is emitted in state 31.  Capture the
-		// same eight words into K for the AXI-facing shared-secret port.
-		6'h 31 : K <= (keccak_squeeze && squeeze_ctr < 6'd8) ?
-					 {keccak_dout,K[255:32]} : K;
+		// On a valid ciphertext FIPS 203 Decaps_internal returns K-bar.  Keep
+		// the value captured above; on rejection capture J(z || c) from the
+		// constant-schedule replay through the SHAKE256 core.
+		6'h 31 : K <= equal ? K :
+					 ((keccak_squeeze && squeeze_ctr < 6'd8) ?
+					  {keccak_dout,K[255:32]} : K);
 		default : K <= K;
 	endcase
 end
@@ -388,7 +480,10 @@ always @(posedge clk) case(state)
 	6'h 3, 6'h 3e : pad_ctr <= 5'h 17;
 	6'h 4, 6'h 16 : pad_ctr <= 5'h 1f;
 	6'h 5 : pad_ctr <= 5'h 0;
-	6'h 7, 6'h 9 : pad_ctr <= 5'h f;
+	6'h 7 : pad_ctr <= 5'h f;
+	// z || c contains 200 message words.  After the SHAKE domain word only
+	// two zero words are needed before the final 0x80000000 rate word.
+	6'h 9 : pad_ctr <= 5'h 1;
 	6'h 1b: case(k)
 		3'h 2 : pad_ctr <= 5'h 1;
 		3'h 3 : pad_ctr <= 5'h 7;
@@ -421,27 +516,29 @@ always @(posedge clk) begin
 		absorb_ctr_r1 <= absorb_ctr_r1;
 end
 always @(posedge clk) begin
-	if(state == 6'h 0 || state == 6'h 2d) begin		
+	if(state == 6'h 0 || state == 6'h 2d)
 		row <= 2'h 0;
-		col <= 2'h 0;
-	end
-	else if(state == 6'h 4 & next_state == 6'h e) begin
+	else if(keccak_ready && absorb_ctr == 2'h 3 && col == k-1)
 		row <= row == k-1 ? 2'h 0 : row + 1'h 1;
-		col <= row == k-1 ? col + 1'h 1 : col;
-	end
-	else if(state == 6'h 4 & next_state == 6'h b) begin
-		row <= row == k-1 ? 2'h 0 : row + 1'h 1;
-		col <= row == k-1 ? col + 1'h 1 : col;
-	end
-	else begin
+	else
 		row <= row;
+end
+always @(posedge clk) begin
+	if(state == 6'h 0 || state == 6'h 2d)
+		col <= 2'h 0;
+	else if(keccak_ready && absorb_ctr == 2'h 3)
+		col <= col == k-1 ? 2'h 0 : col + 1'h 1;
+	else
 		col <= col;
-	end
 end
 always @(posedge clk) begin
 	if(state == 6'h 0 || state == 6'h 2d)		
 		nonce <= 4'h 0;
-	else if(state == 6'h 3 & next_state == 6'h d)
+	// Advance once after a complete PRF stream.  For eta1=3 the first
+	// permutation is patt+eta3 and the continuation is eta3-only, so XOR is
+	// true exactly once; for eta=2 the single patt block also has XOR true.
+	else if(keccak_ready && (keccak_ctr == 3'h 1 || keccak_ctr == 3'h 3) &&
+			(patt_r[72] ^ eta3_r[72]))
 		nonce <= nonce + 1'h 1;
 	else		
 		nonce <= nonce;	
@@ -457,7 +554,10 @@ always @(posedge clk) begin
 		CCA_enc <= CCA_enc;
 end
 assign CCA_enc_start = state == 6'h a;
-assign ntt_noise_done = ((state == 6'h 19) & ~CCA_enc) | CCA_enc;
+// CCA re-encryption must wait for and consume the regenerated secret-noise
+// polynomial exactly like the Client Encaps path.  Treating CCA as
+// unconditionally "noise done" starts the NTT with an all-zero secret.
+assign ntt_noise_done = (state == 6'h 19) & ~CCA_enc;
 always @(posedge clk) begin
 	if(state == 6'h 0)
 		keccak_ctr <= 3'h 0;
@@ -499,11 +599,14 @@ always @(*) case(state)
 	4'h 5 : ififo_din = m[31:0];
 	4'h 6 : ififo_din = hash_pk[31:0];
 	4'h 7 : ififo_din = K[31:0]; 
-	4'h 8 : ififo_din = hash_c[31:0];
+	4'h 8 : ififo_din = ciphertext_replay_dout;
 	4'h 9 : ififo_din = z[31:0];
 	4'h a : ififo_din = 32'h 00000006;
 	4'h b : ififo_din = {16'h001f,6'h0,col,6'h0,row};
-	4'h c : ififo_din = 32'h 00000006;
+	// FIPS 203 K-PKE.KeyGen domain separation: G(d || k).  For the fixed
+	// ML-KEM-512 parameter set, byte 32 is k=2 and byte 33 is the SHA3-512
+	// suffix.  Packing is little-endian within the 32-bit absorb word.
+	4'h c : ififo_din = 32'h 00000602;
 	4'h d : ififo_din = {24'h 00001f,4'h0,nonce};
 	4'h e : ififo_din = {16'h001f,6'h0,row,6'h0,col};
 	4'h f : ififo_din = 32'h 0000001f;
@@ -511,7 +614,8 @@ always @(*) case(state)
 	6'h 1d, 6'h 27: ififo_din = 32'h 00000006;
 	6'h 23: ififo_din = IFIFO_dout;
 	6'h 30: ififo_din = m[31:0];
-	6'h 11: ififo_din = {~absorb_ctr[1]&~absorb_ctr[0],31'h0};
+	6'h 11: ififo_din = final_kdf_active ? 32'h80000000 :
+				 {~absorb_ctr[1]&~absorb_ctr[0],31'h0};
 	6'h 1f, 6'h 29 : ififo_din = 32'h 80000000;
 	default : ififo_din = 32'h 0;
 endcase
@@ -533,14 +637,28 @@ always @* case(state)
 	6'h 1b : ififo_last = data_ctr == 6'h 22 ? 1'h 1 : 1'h 0;
 	6'h 1f : ififo_last = 1'h 1;
 	6'h 23 : ififo_last = data_ctr == 6'h 22 ? 1'h 1 : 1'h 0;
+	// Rate boundaries for z[0..7] || c[0..191].  With a 34-word SHAKE256
+	// rate, the five complete blocks end at ciphertext words below; state 11
+	// marks the sixth and final padded block.
+	6'h 8 : ififo_last =
+		((j_replay_ctr == 8'd25)  || (j_replay_ctr == 8'd59) ||
+		 (j_replay_ctr == 8'd93)  || (j_replay_ctr == 8'd127) ||
+		 (j_replay_ctr == 8'd161));
 	6'h 29 : ififo_last = 1'h 1;
 	default : ififo_last = 1'h 0;
 endcase
-always @(*) case(state)
-	6'h 1b, 6'h 1d, 6'h 1e, 6'h 1f : ififo_absorb = 1'h 1;
-	6'h 23, 6'h 27, 6'h 28, 6'h 29 : ififo_absorb = 1'h 1;
-	default : ififo_absorb = absorb_ctr[1]|absorb_ctr[0];	
-endcase
+always @(*) begin
+	if(final_kdf_active)
+		// The sponge was hard-cleared on the state-30 boundary.  XOR is
+		// equivalent to overwrite for the first block and is required for all
+		// following z || c rate blocks.
+		ififo_absorb = 1'b1;
+	else case(state)
+		6'h 1b, 6'h 1d, 6'h 1e, 6'h 1f : ififo_absorb = 1'h 1;
+		6'h 23, 6'h 27, 6'h 28, 6'h 29 : ififo_absorb = 1'h 1;
+		default : ififo_absorb = absorb_ctr[1]|absorb_ctr[0];
+	endcase
+end
 reg [1:0] ififo_mode_n;
 always @(*) case(next_state)
 	6'h 0 : ififo_mode_n = 2'h 0;
@@ -643,8 +761,16 @@ endcase
 always @(*) begin
 	if(DFIFO0_load_b)
 		OFIFO_req = decode_req;
-	else 
-		OFIFO_req = ready_pk & req_pk;
+	else
+		// The Client keeps req_pk asserted while its decoder drains the last
+		// public-key words.  Restrict the destructive FIFO read to the actual
+		// transmit state; otherwise those trailing request cycles consume the
+		// circular copy of t that decapsulation needs for re-encryption.
+		// OFIFO has a registered synchronous read port.  When the final rho
+		// word (last=1) reaches dout, stop before issuing the otherwise one-cycle
+		// look-ahead read that would consume t[0] from the requeued copy.
+		OFIFO_req = (state == 6'h1b) & ready_pk & req_pk &
+			    ~OFIFO_tx_done & ~OFIFO_dout[33];
 end
 assign OFIFO_seed = state == 6'h 1a;
 assign OFIFO_last = OFIFO_seed && rot_ctr == 3'h 7;
@@ -731,7 +857,9 @@ NTT_core_Server ntt(
 .ready_t(ready_t),
 .fifo0_empty(ofifo0_empty),
 .fifo1_empty(ofifo1_empty),
-.fifo1_full(ofifo1_full),
+	// NTT starts when one complete 256-coefficient noise polynomial is
+	// buffered (64 packed words), independent of the FIFO's physical depth.
+	.fifo1_full(ofifo1_prog_full),
 		.noise_done(ntt_noise_done),
 .DFIFO0_full_eff(DFIFO0_full_eff),
 .fifo0_req(ofifo0_req),
@@ -781,10 +909,11 @@ hash_core_Server hash(
 .ofifo0_empty(ofifo0_empty),
 .ofifo1_empty(ofifo1_empty),
 .ofifo0_prog_full(ofifo0_prog_full),
-.ofifo1_prog_thresh(9'd18),
+.ofifo1_prog_thresh(9'd64),
 .ofifo1_prog_full(ofifo1_prog_full),
 .keccak_ready(keccak_ready),
-.fifo_GENA_ctr(fifo_GENA_ctr)
+.fifo_GENA_ctr(fifo_GENA_ctr),
+.matrix_stream_active(matrix_stream_active)
 		);
 	decode_Server decode(.clk(clk),.rst(rst),.din(decode_din),.fifo_empty(decode_fifo_empty),.CCA(CCA_enc),.sel(decode_sel),.k(k),.dout(decode_dout),.req(decode_req),.valid(decode_valid));
 	encode_Server encode(.clk(clk),.rst(rst),.din(encode_din),.wen(encode_wen),.valid(encode_valid),.dout(encode_dout));

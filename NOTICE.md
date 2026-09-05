@@ -1,6 +1,6 @@
 # Thông báo nguồn gốc và quyền phân phối
 
-Phiên bản ứng viên phát hành: `0.1.0-rc4`.
+Phiên bản ứng viên phát hành nội bộ: `0.2.0-rc1`.
 
 ## Thành phần đã xác định điều khoản
 
@@ -30,9 +30,10 @@ các tác giả RTL cung cấp quyền rõ ràng tại `LICENSES/KYBER-PERMISSIO
 Xem `docs/PROVENANCE.md` để biết ranh giới thành phần, nguồn và bằng chứng còn
 thiếu trước khi phát hành công khai.
 
-Đây là hardware loopback Kyber-512 cũ/thử nghiệm. Regression hiện có chỉ kiểm
-tra shared key server/client bằng nhau, không phải NIST ML-KEM-512 KAT chính
-thức. Không được gắn nhãn thiết kế là FIPS 203 ML-KEM-512.
+Đường thuật toán tích hợp hiện đã PASS cổng functional ML-KEM-512 bit-exact với
+tập NIST ACVP sample và oracle pq-crystals được ghi trong báo cáo. Kết quả này
+không phải chứng nhận CAVP/FIPS 140-3 và không thay đổi tình trạng quyền phân
+phối của RTL nền.
 
 ## Code thuộc dự án
 

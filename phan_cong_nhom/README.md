@@ -1,15 +1,17 @@
 # Phân công và tiến độ nhóm
 
-Thư mục này là bản đồ công việc trên baseline FPGA nội bộ `0.1.0-rc4`. Source
-RTL chính thức vẫn nằm trong `rtl/`; không copy RTL vào các thư mục cá nhân để
-tránh tồn tại nhiều phiên bản khác nhau của cùng một module.
+Thư mục này là bản đồ công việc trên baseline FPGA nội bộ `0.1.0-rc4` và nhánh
+ML-KEM candidate hiện tại. Source RTL chính thức vẫn nằm trong `rtl/`; không
+copy RTL vào các thư mục cá nhân để tránh tồn tại nhiều phiên bản khác nhau của
+cùng một module.
 
 ## Baseline chung
 
 - Mốc nền bất biến: tag `fpga-rc4-baseline` tại commit `6f734fc`.
 - FPGA XC7Z020 ở 50 MHz: implementation/timing/DRC PASS, 0 net chưa route.
 - Board: INFO, enroll, reconstruct và stress 10.000/10.000 PASS.
-- Kyber hiện tại là Kyber-512 cũ, chưa phải FIPS 203 ML-KEM-512.
+- ML-KEM-512 đã PASS functional bit-exact nội bộ theo FIPS 203 và Vivado
+  implementation; board regression PASS 10.000/10.000.
 - Bốn primitive FIPS 202 byte-oriented cho ML-KEM đã PASS 50/50 test.
 - Public release vẫn bị chặn bởi quyền phân phối Kyber RTL và top-level license.
 
@@ -17,10 +19,10 @@ tránh tồn tại nhiều phiên bản khác nhau của cùng một module.
 
 | Thành viên | Nội dung | Trạng thái hiện tại | Thư mục |
 |---|---|---|---|
-| Đạt và Tùng | Nghiên cứu Kyber KEM | Functional baseline PASS; lập gap FIPS 203 | [`01_kyber_kem_dat_tung/`](01_kyber_kem_dat_tung/README.md) |
+| Đạt và Tùng | Nghiên cứu Kyber KEM | ML-KEM functional/KAT PASS; chờ review độc lập | [`01_kyber_kem_dat_tung/`](01_kyber_kem_dat_tung/README.md) |
 | Minh | Nghiên cứu lưu khóa | Có zeroize và không xuất secret; kiến trúc lưu khóa chưa chốt | [`02_luu_khoa_minh/`](02_luu_khoa_minh/README.md) |
-| Việt Anh | Nghiên cứu KDF | FIPS 202 byte-oriented PASS 50/50 | [`03_kdf_viet_anh/`](03_kdf_viet_anh/README.md) |
-| Long | Chủ trì toàn bộ implementation | Tích hợp, test, RO-PUF và backend FPGA/ASIC | [`04_ro_puf_long/`](04_ro_puf_long/README.md) |
+| Việt Anh | Nghiên cứu KDF | FIPS 202 PASS 50/50; KDF fixed-profile PASS | [`03_kdf_viet_anh/`](03_kdf_viet_anh/README.md) |
+| Long | Chủ trì toàn bộ implementation | FPGA ML-KEM RC1 PASS; chờ review/PVT/ASIC | [`04_ro_puf_long/`](04_ro_puf_long/README.md) |
 
 Các thành viên Đạt, Tùng, Minh và Việt Anh cung cấp nghiên cứu/đối chiếu. Long
 là người thực hiện thay đổi RTL, tích hợp, chạy gate và chốt artifact để tránh

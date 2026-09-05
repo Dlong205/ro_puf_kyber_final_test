@@ -32,6 +32,7 @@ reg [3:0] din_rnd_end, dout_rnd_end;
 reg [2:0] rot_ctr;
 reg [5:0] pad_ctr;
 wire [7:0] fifo_GENA_ctr;
+wire matrix_stream_active;
 reg [3:0] nonce;
 reg [1:0] absorb_ctr, absorb_ctr_r1;
 reg [1:0] row, col;
@@ -145,7 +146,15 @@ always @* case(state)
 	6'h 13: if((patt_bit | eta3_bit) & ofifo1_full)
 			next_state = state;
 			else case(keccak_ctr)
-				3'h 3 : next_state = ofifo_ena ? patt_r[72] ? 6'h 4 : 6'h 3 : 6'h 21;
+				// Encapsulation schedule mirrors the proven KeyGen stream
+				// protocol: patt starts a fresh PRF, eta3 emits the second
+				// eta=3 rate without incrementing nonce, and an untagged
+				// stream either continues or starts matrix rejection sampling.
+				3'h 3 : next_state = ofifo_ena ?
+					patt_r[72] ? 6'h 3 :
+					eta3_r[72] ? 6'h 2e :
+					(absorb_ctr[1] | absorb_ctr[0]) ? 6'h 16 : 6'h 4
+					: 6'h 21;
 				3'h 4 : next_state = 6'h 18;
 				3'h 5 : next_state = 6'h 2c;
 				default : next_state = state + 1'h 1;
@@ -159,7 +168,7 @@ always @* case(state)
 	// required by the NTT (observed as 124/128 on a valid seed), after which
 	// both endpoints wait forever for ready_c.  The SHAKE adapter can extend
 	// across rate blocks, so finish only when the coefficient FIFO is complete.
-	6'h 18: next_state = fifo_GENA_ctr[7] ? 6'h 22 : state;
+	6'h 18: next_state = (fifo_GENA_ctr[7] && matrix_stream_active) ? 6'h 22 : state;
 	6'h 19: next_state = data_ctr == din_ctr_end && data_rnd_ctr == din_rnd_end && decode_req_r1 ? state + 1'h 1 : state;
 	6'h 1a: next_state = rot_ctr == 3'h 7 ? state + 1'h 1 : state;
 	6'h 1b: next_state = ififo_empty ? state + 1'h 1 : state;
@@ -199,10 +208,10 @@ always @(posedge clk) begin
 		6'h 21 : K <= (keccak_squeeze && squeeze_ctr < 6'd8) ?
 					 {keccak_dout,K[255:32]} : K;
 		6'h 7 : K <= {K[31:0],K[255:32]};
-		// The legacy design streamed the final shared secret only on dout.
-		// Retain those same eight KDF words in K for the AXI-facing port.
-		6'h 2c : K <= (keccak_squeeze && squeeze_ctr < 6'd8) ?
-					 {keccak_dout,K[255:32]} : K;
+		// FIPS 203 Encaps_internal returns K-bar directly.  The third-round
+		// construction additionally hashed K-bar || H(c); discard that legacy
+		// stream so the externally visible K remains the value captured above.
+		6'h 2c : K <= K;
 		default : K <= K;
 	endcase
 end
@@ -218,7 +227,9 @@ always @(posedge clk) begin
 	else case(state)
 		6'h 1 : m <= seed_m;
 		6'h 2, 6'h 5 : m <= {m[31:0],m[255:32]};
-		6'h 14: m <= (keccak_squeeze && squeeze_ctr < 6'd8) ? {keccak_dout,m[255:32]} : m;
+		// FIPS 203 Encaps_internal uses the supplied random m directly.  The
+		// third-round transform hashed m first; ignore that legacy digest.
+		6'h 14: m <= m;
 		default : m <= m;
 	endcase
 end
@@ -258,7 +269,11 @@ always @(posedge clk) begin
 		{patt_bit,eta3_bit} <= {patt_bit,eta3_bit};
 end
 assign req_pk = state == 5'h 19;
-assign ntt_noise_done = (state >= 6'h 12);
+// Every ML-KEM-512 noise polynomial is represented by 64 decoded FIFO words.
+// The old state-number comparison became true before the first PRF result was
+// available and made the NTT load an all-zero polynomial.  Let the explicit
+// programmable-full threshold be the sole start condition instead.
+assign ntt_noise_done = 1'b0;
 always @(*) case(k)
 	3'h 2 : begin
 		din_ctr_end = 6'h 16;
@@ -344,9 +359,13 @@ always @(posedge clk) begin
 		row <= 2'h 0;
 		col <= 2'h 0;
 	end
-	else if(state == 6'h 4 & next_state == 6'h e) begin
-		row <= row == k-1 ? 2'h 0 : row + 1'h 1;
-		col <= row == k-1 ? col + 1'h 1 : col;
+	// State 0e emits the domain word containing the current row/column.
+	// Advance only after that word has been sampled.  The NTT datapath
+	// consumes a complete output row at a time, so col must be the inner
+	// counter: A^T[0][0], A^T[0][1], A^T[1][0], A^T[1][1].
+	else if(state == 6'h e & next_state == 6'h 10) begin
+		col <= col == k-1 ? 2'h 0 : col + 1'h 1;
+		row <= col == k-1 ? row + 1'h 1 : row;
 	end
 	else begin
 		row <= row;
@@ -356,7 +375,9 @@ end
 always @(posedge clk) begin
 	if(state == 6'h 0)		
 		nonce <= 4'h 0;
-	else if(state == 6'h 3 & next_state == 6'h d)
+	// State 0d emits the PRF domain word containing nonce.  Increment after
+	// that cycle so the first polynomial is nonce 0, not nonce 1.
+	else if(state == 6'h d & next_state == 6'h 10)
 		nonce <= nonce + 1'h 1;
 	else		
 		nonce <= nonce;	
@@ -529,7 +550,7 @@ NTT_core_Client ntt(
 .ready_c(ready_c),
 .fifo0_empty(ofifo0_empty),
 .fifo1_empty(ofifo1_empty),
-.fifo1_full(ofifo1_full),
+.fifo1_full(ofifo1_prog_full),
 		.noise_done(ntt_noise_done),
 .fifo0_req(ofifo0_req),
 .fifo1_req_r9(ofifo1_req),
@@ -571,10 +592,11 @@ hash_core_Client hash(
 .ofifo0_empty(ofifo0_empty),
 .ofifo1_empty(ofifo1_empty),
 .ofifo0_prog_full(ofifo0_prog_full),
-.ofifo1_prog_thresh(9'd18),
+.ofifo1_prog_thresh(9'd64),
 .ofifo1_prog_full(ofifo1_prog_full),
 .keccak_ready(keccak_ready),
-.fifo_GENA_ctr(fifo_GENA_ctr)
+.fifo_GENA_ctr(fifo_GENA_ctr),
+.matrix_stream_active(matrix_stream_active)
 );
 	decode_Client decode(.clk(clk),.rst(rst),.din(IFIFO_dout),.fifo_empty(IFIFO_empty),.dout(decode_dout),.req(decode_req),.valid(decode_valid));
 	encode_Client encode(.clk(clk),.rst(rst),.din(NTT_dout),.wen(NTT_valid),.sel(ready_u),.k(k),.valid(encode_valid),.dout(encode_dout));

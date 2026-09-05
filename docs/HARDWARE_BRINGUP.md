@@ -3,14 +3,14 @@
 Quy trình chỉ nạp cấu hình PL volatile, không ghi QSPI và không dùng Xilinx IP
 sinh tự động.
 
-## Artifact RC4
+## Artifact ML-KEM-512 `0.2.0-rc1`
 
 - Part: `xc7z020clg400-2`
 - Clock: 50 MHz tại N18
 - Bitstream: `Kyber_System_Top.bit`, 4.045.676 byte
-- SHA-256: `bd8153f8ab58f0a704b2f696c54ed1f57d1a31b951d273f547b33926d239f348`
-- Timing: WNS `+3,663 ns`, WHS `+0,056 ns`, TNS/THS `0`
-- LUT: 51.682/53.200 (`97,15%`)
+- SHA-256: `183e0af367376ebd7ca6bc2f3747314fd0602306a630af2a2e51858ef1f20e8e`
+- Timing: WNS `+2,226 ns`, WHS `+0,034 ns`, TNS/THS `0`
+- LUT: 49.909/53.200 (`93,81%`)
 - Protocol: 1.2, release capability `0x06`, không retry
 
 ## Đấu dây
@@ -36,6 +36,16 @@ make program VIVADO=/media/donglong/tools/Xilinx/Vivado/2020.1/bin/vivado
 
 Thành công kết thúc bằng `PROGRAM_PASS`. Nếu JTAG thấy adapter nhưng không thấy
 device, kiểm tra nguồn, hướng cáp và jumper JTAG/boot-mode rồi power-cycle.
+
+Để nạp một candidate cách ly thay vì bitstream mặc định, luôn chỉ rõ file:
+
+```sh
+make program-bit \
+  BITSTREAM=/duong/dan/tuyet/doi/Kyber_System_Top.bit \
+  VIVADO=/media/donglong/tools/Xilinx/Vivado/2020.1/bin/vivado
+```
+
+Script xác nhận đúng một target và đúng một XC7Z020 trước khi ghi PL.
 
 ## Smoke test UART
 
@@ -69,9 +79,10 @@ python3 -u host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin 
 python3 -u host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin stress --count 10000
 ```
 
-RC4 tham chiếu PASS lần lượt 100/100, 1.000/1.000 và 10.000/10.000. Run dài có
-latency 29,119 ms/giao dịch, throughput 34,342 giao dịch/s. Khi host báo timeout,
-không tiếp tục gửi lệnh lên luồng mất đồng bộ; nạp lại bitstream rồi chạy INFO.
+ML-KEM RC1 PASS lần lượt 100/100, 1.000/1.000 và 10.000/10.000. Run dài có
+latency 29,608 ms/giao dịch, throughput 33,775 giao dịch/s. Khi host báo
+timeout, không tiếp tục gửi lệnh lên luồng mất đồng bộ; nạp lại bitstream rồi
+chạy INFO.
 
 ## Warning implementation đã biết
 
@@ -83,7 +94,7 @@ không tiếp tục gửi lệnh lên luồng mất đồng bộ; nạp lại bi
 - Methodology có 72 `TIMING-17` vì clock RO bất định không được khai báo timing
   clock; report CDC tự động không thay thế review CDC/RDC cho miền RO.
 
-Thiết kế dùng 97,15% LUT nên không tăng clock hay thêm logic mà không chạy lại
+Thiết kế dùng 93,81% LUT nên không tăng clock hay thêm logic mà không chạy lại
 implementation/timing/DRC.
 
 ## Qualification còn thiếu

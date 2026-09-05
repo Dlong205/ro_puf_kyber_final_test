@@ -49,6 +49,7 @@ module hash_core_Server(
     output wire ofifo1_empty,
     output reg [5:0] squeeze_ctr,
     output reg [7:0] fifo_GENA_ctr,
+    output wire matrix_stream_active,
     input wire [8:0] ofifo0_prog_thresh,
     input wire [8:0] ofifo1_prog_thresh,
     output wire ofifo0_prog_full,
@@ -89,6 +90,8 @@ module hash_core_Server(
     wire [31:0] sponge_dout;
     wire        sponge_valid;
     wire        sponge_done;
+    wire        sponge_done_extend;
+    wire [5:0]  sponge_output_rate;
     wire        sponge_rd_en;
 
     // Edge-detect keccak_init (Kyber FSM drives it combinationally per state)
@@ -123,8 +126,38 @@ module hash_core_Server(
         .rd_extend  (extend),
         .dout       (sponge_dout),
         .dout_valid (sponge_valid),
-        .done       (sponge_done)
+        .done       (sponge_done),
+        .done_extend(sponge_done_extend),
+        .dout_rate_words(sponge_output_rate)
     );
+
+    // sponge_done is visible to the parent for one full cycle.  Hold word 0
+    // for one additional cycle so the parent can advance patt/eta3, then
+    // snapshot the updated output classification before any word is consumed.
+    reg tag_capture_pending;
+    reg output_patt, output_eta3;
+    reg [3:0] matrix_stream_id;
+    wire output_is_matrix = (sponge_output_rate == 6'd42);
+    wire stream_patt = output_is_matrix ? 1'b0 : output_patt;
+    wire stream_eta3 = output_is_matrix ? 1'b0 : output_eta3;
+    always @(posedge clk) begin
+        if (rst || (sponge_init && keccak_init_hard)) begin
+            tag_capture_pending <= 1'b0;
+            output_patt  <= 1'b0;
+            output_eta3  <= 1'b0;
+            matrix_stream_id <= 4'h0;
+        end else if (sponge_done) begin
+            tag_capture_pending <= 1'b1;
+            if (!sponge_done_extend && output_is_matrix)
+                matrix_stream_id <= matrix_stream_id + 1'b1;
+        end else if (tag_capture_pending) begin
+            tag_capture_pending <= 1'b0;
+            output_patt <= patt_bit;
+            output_eta3 <= eta3_bit;
+        end else begin
+            tag_capture_pending <= tag_capture_pending;
+        end
+    end
 
     // Accept a popped word whenever the FIFO offers one while not mid-block.
     // (Absorb never overlaps permutation in the Kyber flow.)
@@ -157,14 +190,14 @@ module hash_core_Server(
     // (dout_valid = ready_flag && !permuting is HIGH during absorb).
     // Block consumption until first keccak_f completes (sponge_done),
     // then fresh squeeze words flow normally.
-    // FIX: sponge_hold must clear on the SAME cycle sponge_done fires,
-    // otherwise the first squeeze word is consumed but not counted by
-    // keccak_squeeze, causing an off-by-one that loses the first K word.
+    // Keep the first output word stationary during sponge_done.  The parent
+    // advances patt/eta3 and its capture state on that edge, so consuming the
+    // word in the same cycle would classify it as the preceding transaction.
     reg sponge_hold_set;
     always @(posedge clk) begin
         if (rst)
             sponge_hold_set <= 1'b0;
-        else if (sponge_init)
+        else if (sponge_init && keccak_init_hard)
             sponge_hold_set <= 1'b1;
         else if (sponge_done)
             sponge_hold_set <= 1'b0;
@@ -174,8 +207,25 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
     // Match the legacy Keccak register protocol: output advances while a new
     // input block is being shifted in, or while a fixed digest window asserts
     // extend.  Otherwise the first output word remains pending for the FSM.
-    wire squeeze_accept = sponge_valid & ~sponge_hold & ~squeeze_init &
-                          (core_word_accept | extend);
+    // eta1=3 needs 192 PRF bytes.  The first SHAKE256 rate contributes all
+    // 136 bytes (34 words), including the final two words that the legacy FSM
+    // does not overlap with absorption of the next request.  Drain those two
+    // words locally before allowing the sponge to permute for the 56-byte tail.
+    wire eta3_first_rate_drain = stream_patt & stream_eta3 &
+                                 (squeeze_ctr < 6'd34);
+    // The sponge owns the exact SHAKE128 rate boundary.  Do not use the
+    // legacy squeeze counter here: that counter may be reset while the final
+    // words of an overlapped transaction are still pending.
+    wire matrix_rate_drain = output_is_matrix;
+    // A queued absorb block cannot start while the previous squeeze rate is
+    // still marked ready.  Drain that tail whenever core_busy is caused by
+    // have_block, otherwise a multi-block H(pk)/H(c) transaction can stall
+    // forever with both have_block and ready_flag asserted.
+    wire squeeze_accept = sponge_valid & ~sponge_done & ~sponge_hold &
+                          ~tag_capture_pending & ~squeeze_init &
+                          (core_word_accept | core_busy | extend |
+                           eta3_first_rate_drain |
+                           matrix_rate_drain);
     assign sponge_rd_en   = squeeze_accept;
     assign keccak_squeeze = squeeze_accept;
     assign keccak_dout    = sponge_dout;
@@ -185,7 +235,16 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
     always @(posedge clk) begin
         if (rst)
             squeeze_ctr <= 6'h0;
-        else if (keccak_init || squeeze_init || (~extend & extend_r1))
+        // Each sponge_done publishes word 0 of a newly captured rate block.
+        // No read is accepted on that pulse, so resetting here preserves the
+        // word and prevents a preceding transaction's index from truncating
+        // the new SHAKE block (notably 34-word eta=3 PRF blocks).
+        // A new absorb request may overlap the two unused tail words of a
+        // preceding eta2 SHAKE256 rate.  Keep their old index until the next
+        // sponge_done publishes a genuinely new output block, otherwise the
+        // tail is re-labelled as word 0/1 of the following noise polynomial.
+        else if (squeeze_init || sponge_done ||
+                 (~extend & extend_r1))
             squeeze_ctr <= 6'h0;
         else if (squeeze_accept)
             squeeze_ctr <= squeeze_ctr + 6'h1;
@@ -200,15 +259,17 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
     // ------------------------------------------------------------------
     // ofifo0/ofifo1 routing (unchanged semantics, new strobe source)
     // ------------------------------------------------------------------
-    reg ofifo_ena_r1, ofifo_ena_r2;
     reg ofifo_wen;
-    wire [31:0] ofifo_din;
-    wire [31:0] ofifo_dout;
+    wire [39:0] ofifo_din;
+    wire [39:0] ofifo_dout;
     wire ofifo_full, ofifo_empty;
 
     wire decode_req;
     wire [23:0] decode_dout;
     wire decode_valid;
+    wire decode_patt;
+    wire decode_eta3;
+    wire [3:0] decode_stream;
 
     wire ofifo_din_valid0, ofifo_din_valid1;
     reg fifo_data_parity;
@@ -217,29 +278,27 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
     reg [23:0] ofifo0_din;
     wire [24:0] ofifo1_din;
     reg ofifo1_full_r1;
+    reg [3:0] matrix_stream_seen;
 
-    always @(posedge clk) begin
-        if (rst) begin
-            ofifo_ena_r1 <= 1'b0;
-            ofifo_ena_r2 <= 1'b0;
-        end else begin
-            ofifo_ena_r1 <= ofifo_ena;
-            ofifo_ena_r2 <= ofifo_ena_r1;
-        end
-    end
+    wire matrix_stream_change = decode_valid & ~decode_patt & ~decode_eta3 &
+                                (decode_stream != matrix_stream_seen);
+    wire matrix_parity = matrix_stream_change ? 1'b0 : fifo_data_parity;
 
-    assign ofifo_din = keccak_dout;
+    assign matrix_stream_active = (matrix_stream_seen == matrix_stream_id);
+
+    assign ofifo_din = {2'b0, matrix_stream_id, stream_patt,
+                        stream_eta3, keccak_dout};
 
     always @(*) case (keccak_ctr)
-        3'h1, 3'h2, 3'h3, 3'h4: ofifo_wen = ~ofifo_full & ofifo_ena & keccak_squeeze & ((patt_bit & ~eta3_bit) && ~squeeze_ctr[5] || eta3_bit && squeeze_ctr < 6'h22 || (~patt_bit&~eta3_bit) && squeeze_ctr < 6'h2A);
-        3'h7: ofifo_wen = ~ofifo_full & ofifo_ena & keccak_squeeze & ((patt_bit & ~eta3_bit) && ~squeeze_ctr[5] || eta3_bit && squeeze_ctr < 6'h22 || (~patt_bit&~eta3_bit) && squeeze_ctr < 6'h2A);
+        3'h1, 3'h2, 3'h3, 3'h4: ofifo_wen = ~ofifo_full & ofifo_ena & keccak_squeeze & ((stream_patt & ~stream_eta3) && ~squeeze_ctr[5] || stream_eta3 && squeeze_ctr < (stream_patt ? 6'd34 : 6'd14) || (~stream_patt&~stream_eta3));
+        3'h7: ofifo_wen = ~ofifo_full & ofifo_ena & keccak_squeeze & ((stream_patt & ~stream_eta3) && ~squeeze_ctr[5] || stream_eta3 && squeeze_ctr < (stream_patt ? 6'd34 : 6'd14) || (~stream_patt&~stream_eta3));
         default: ofifo_wen = 1'b0;
     endcase
 
     assign ofifo_din_valid0 = decode_dout[11:0] < 12'hd01;
     assign ofifo_din_valid1 = decode_dout[23:12] < 12'hd01;
 
-    always @(*) case ({ofifo_din_valid0, ofifo_din_valid1, fifo_data_parity})
+    always @(*) case ({ofifo_din_valid0, ofifo_din_valid1, matrix_parity})
         3'b101, 3'b111: begin
             ofifo0_din[11:0] = fifo_data_dropped;
             ofifo0_din[23:12] = decode_dout[11:0];
@@ -255,8 +314,8 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
     endcase
 
     always @(posedge clk) begin
-        if(decode_valid & ~patt_bit & ~eta3_bit)
-            case({ofifo_din_valid0,ofifo_din_valid1,fifo_data_parity})
+        if(decode_valid & ~decode_patt & ~decode_eta3)
+            case({ofifo_din_valid0,ofifo_din_valid1,matrix_parity})
             3'b 100 : fifo_data_dropped <= decode_dout[11:0];
             3'b 010, 3'b 111 : fifo_data_dropped <= decode_dout[23:12];
             default : fifo_data_dropped <= fifo_data_dropped;
@@ -265,9 +324,12 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
             fifo_data_dropped <= fifo_data_dropped;
     end
 
-    assign ofifo1_din = {eta3_bit, decode_dout};
-    assign ofifo0_wen = ~patt_bit&~eta3_bit & decode_valid & ~fifo_GENA_ctr[7] & (ofifo_din_valid0 & ofifo_din_valid1 | (ofifo_din_valid0 ^ ofifo_din_valid1) & fifo_data_parity);
-    assign ofifo1_wen = (patt_bit|eta3_bit) & decode_valid & ~ofifo1_full_r1;
+    assign ofifo1_din = {decode_eta3, decode_dout};
+    assign ofifo0_wen = ~decode_patt&~decode_eta3 & decode_valid &
+        (~fifo_GENA_ctr[7] | matrix_stream_change) &
+        (ofifo_din_valid0 & ofifo_din_valid1 |
+         (ofifo_din_valid0 ^ ofifo_din_valid1) & matrix_parity);
+    assign ofifo1_wen = (decode_patt|decode_eta3) & decode_valid & ~ofifo1_full_r1;
 
     // Synchronous reset keeps this FIFO status register compatible with the
     // inferred block-RAM control path.
@@ -276,7 +338,7 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
             ofifo1_full_r1 <= 1'b0;
         else if (keccak_ready)
             ofifo1_full_r1 <= 1'b0;
-        else if (ofifo1_full & eta3_bit)
+        else if (ofifo1_full & decode_eta3)
             ofifo1_full_r1 <= 1'b1;
         else
             ofifo1_full_r1 <= ofifo1_full_r1;
@@ -285,9 +347,17 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
     always @(posedge clk) begin
         if (rst || keccak_init_hard)
             fifo_data_parity <= 1'b0;
-        else if (fifo_GENA_ctr[7] && keccak_ready)
+        // A SHAKE128 matrix polynomial can require several rate blocks.
+        // keccak_ready therefore is not a polynomial boundary: resetting on
+        // it re-opens the 128-word gate and leaks rejection-sampling surplus
+        // from the previous polynomial into the next NTT input.  The KeyGen
+        // schedule places a decoded PRF/noise stream between matrix streams;
+        // use that actual data-class boundary to discard any unmatched sample.
+        else if (decode_valid && (decode_patt || decode_eta3))
             fifo_data_parity <= 1'b0;
-        else if (ofifo_din_valid0 ^ ofifo_din_valid1 && decode_valid && (~patt_bit&~eta3_bit))
+        else if (matrix_stream_change)
+            fifo_data_parity <= ofifo_din_valid0 ^ ofifo_din_valid1;
+        else if (ofifo_din_valid0 ^ ofifo_din_valid1 && decode_valid && (~decode_patt&~decode_eta3))
             fifo_data_parity <= ~fifo_data_parity;
         else
             fifo_data_parity <= fifo_data_parity;
@@ -296,9 +366,15 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
     always @(posedge clk) begin
         if (rst || keccak_init_hard)
             fifo_GENA_ctr <= 8'h0;
-        else if (fifo_GENA_ctr[7] && keccak_ready)
+        else if (decode_valid && (decode_patt || decode_eta3))
             fifo_GENA_ctr <= 8'h0;
-        else if (decode_valid && (~patt_bit&~eta3_bit) && ofifo_ena && ~fifo_GENA_ctr[7])
+        else if (matrix_stream_change)
+            fifo_GENA_ctr <= (ofifo_din_valid0 & ofifo_din_valid1) ?
+                             8'h1 : 8'h0;
+        // Count every packed matrix word that can actually be enqueued.
+        // Decoder output may trail the parent FSM's ofifo_ena window; gating
+        // only the counter (but not ofifo0_wen) allowed uncounted surplus.
+        else if (decode_valid && (~decode_patt&~decode_eta3) && ~fifo_GENA_ctr[7])
             case ({ofifo_din_valid0, ofifo_din_valid1, fifo_data_parity})
                 3'b110, 3'b111: fifo_GENA_ctr <= fifo_GENA_ctr + 1'h1;
                 3'b101, 3'b011: fifo_GENA_ctr <= fifo_GENA_ctr + 1'h1;
@@ -306,6 +382,13 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
             endcase
         else
             fifo_GENA_ctr <= fifo_GENA_ctr;
+    end
+
+    always @(posedge clk) begin
+        if (rst || keccak_init_hard)
+            matrix_stream_seen <= 4'h0;
+        else if (decode_valid && ~decode_patt && ~decode_eta3)
+            matrix_stream_seen <= decode_stream;
     end
 
     // ------------------------------------------------------------------
@@ -362,7 +445,7 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
         .prog_full(ofifo1_prog_full)
     );
 
-    fifo_wrapper_32_16 #(.DEPTH(1024)) ofifo_inst (
+    fifo_wrapper_40_32 #(.DEPTH(1024)) ofifo_inst (
         .clk(clk),
         .rst_n(~(rst | keccak_init_hard)),
         .wr_en(ofifo_wen),
@@ -376,13 +459,17 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
     decode_keccak decode(
         .clk(clk),
         .rst(rst | keccak_init_hard),
-        .din(ofifo_dout),
+        .din(ofifo_dout[31:0]),
         .fifo_empty(ofifo_empty),
-        .patt_bit(patt_bit),
-        .eta3_bit(eta3_bit),
+        .patt_bit(ofifo_dout[33]),
+        .eta3_bit(ofifo_dout[32]),
+        .stream_id(ofifo_dout[37:34]),
         .dout(decode_dout),
         .req(decode_req),
-        .valid(decode_valid)
+        .valid(decode_valid),
+        .patt_out(decode_patt),
+        .eta3_out(decode_eta3),
+        .stream_out(decode_stream)
     );
 
 endmodule

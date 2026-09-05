@@ -15,7 +15,10 @@ always @(*) case({sel,k})
 	default  : patt = 73'b 1000010000110000000000001000000000000000010000000000000000100000000000011_;	
 endcase
 always @(*) case({sel,k})
-	4'b 0010 : eta3 = 73'b 010000010000010000010000_0000000000000000000000000000000000000000000000000;
+	// ML-KEM-512 uses eta1=3 for both secret and error vectors in KeyGen.
+	// Keep both schedule slots asserted for each PRF block; clearing the first
+	// bit silently decoded the stream with eta=2 and changed every public key.
+	4'b 0010 : eta3 = 73'b 110000110000110000110000_0000000000000000000000000000000000000000000000000;
 	4'b 1010 : eta3 = 73'b 11000011000000000000000_00000000000000000000000000000000000000000000000000;
 	default  : eta3 = 73'b 0;
 endcase

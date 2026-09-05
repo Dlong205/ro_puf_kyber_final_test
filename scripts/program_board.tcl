@@ -3,11 +3,24 @@
 
 set script_dir [file dirname [file normalize [info script]]]
 set root_dir [file normalize [file join $script_dir ..]]
-set bit_candidates [glob -nocomplain \
-    [file join $root_dir build vivado kyber_ro_puf_zynq7020.runs impl_1 *.bit]]
-if {[llength $bit_candidates] == 0 &&
-    [file isfile [file join $root_dir Kyber_System_Top.bit]]} {
-    set bit_candidates [list [file join $root_dir Kyber_System_Top.bit]]
+set bit_candidates {}
+if {[llength $argv] > 1} {
+    error "Usage: program_board.tcl ?exact-bitstream-path?"
+}
+if {[llength $argv] == 1} {
+    set requested_bitstream [file normalize [lindex $argv 0]]
+    if {![file isfile $requested_bitstream] ||
+        [string tolower [file extension $requested_bitstream]] ne ".bit"} {
+        error "Requested bitstream is not a readable .bit file: $requested_bitstream"
+    }
+    set bit_candidates [list $requested_bitstream]
+} else {
+    set bit_candidates [glob -nocomplain \
+        [file join $root_dir build vivado kyber_ro_puf_zynq7020.runs impl_1 *.bit]]
+    if {[llength $bit_candidates] == 0 &&
+        [file isfile [file join $root_dir Kyber_System_Top.bit]]} {
+        set bit_candidates [list [file join $root_dir Kyber_System_Top.bit]]
+    }
 }
 if {[llength $bit_candidates] != 1} {
     error "Expected exactly one rebuilt or checked-in bitstream, found [llength $bit_candidates]"
@@ -21,9 +34,14 @@ if {[llength $hw_targets] != 1} {
     error "Expected exactly one JTAG target, found [llength $hw_targets]. Check board power and JTAG cable."
 }
 current_hw_target [lindex $hw_targets 0]
-open_hw_target [lindex $hw_targets 0]
+if {[catch {open_hw_target [lindex $hw_targets 0]} open_error]} {
+    close_hw_manager
+    error "JTAG target opened but no FPGA device was detected. Check board power, JTAG cable and boot-mode jumpers. Detail: $open_error"
+}
 set zynq_devices [get_hw_devices -quiet -filter {PART =~ "xc7z020*"}]
 if {[llength $zynq_devices] != 1} {
+    close_hw_target
+    close_hw_manager
     error "Expected exactly one XC7Z020 on JTAG, found [llength $zynq_devices]"
 }
 
