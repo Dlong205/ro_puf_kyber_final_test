@@ -1,6 +1,6 @@
 # Lịch sử thay đổi
 
-## Chưa phát hành — 2026-09-05
+## 0.2.0-rc2-dev — chưa phát hành — 2026-09-06
 
 - Xuất physical lock full-SoC từ routed DCP ML-KEM RC1 đã chấp nhận: cố định
   128 LUT RO, 8 LUT mux đầu cuối và 128 route vật lý.
@@ -14,6 +14,9 @@
   hash-gate exporter và cổng so sánh hai implementation.
 - Internal release gate và ASIC portability đều PASS; public release vẫn bị
   chặn bởi license, production vẫn chờ qualification PUF/same-root/PVT.
+- Đồng bộ README, hồ sơ trạng thái, bring-up và phân công nhóm; tách rõ artifact
+  RC1 đã tag với nhánh tích hợp sau RC1, sửa hướng dẫn nạp đúng bitstream root và
+  ghi chính xác phạm vi của từng cổng kiểm thử.
 
 ## 0.2.0-rc1 — 2026-09-04
 

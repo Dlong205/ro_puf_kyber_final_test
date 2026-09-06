@@ -141,3 +141,9 @@ retry. Helper tạm đã được giữ ngoài working tree và xóa sau khi ghi
    release.
 
 Các báo cáo nguồn nằm tại `reports/post_synth_*` và `reports/post_route_*`.
+
+Sau khi RC1 được chấp nhận, miền RO của chính implementation này đã được xuất
+thành physical lock/fingerprint và tái lập qua hai build sạch. Đây là bằng chứng
+bổ sung sau artifact, không thay đổi source commit hoặc số liệu RC1 trong báo
+cáo lịch sử này. Xem
+[`RO_PHYSICAL_REPRODUCIBILITY_2026-09-05.md`](RO_PHYSICAL_REPRODUCIBILITY_2026-09-05.md).

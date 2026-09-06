@@ -1,6 +1,7 @@
 # Trạng thái bảo mật
 
-`0.2.0-rc1` là ứng viên nghiên cứu/đánh giá FPGA. Đường thuật toán ML-KEM-512
+`0.2.0-rc1` là artifact nghiên cứu/đánh giá FPGA đã được chấp nhận; nhánh tích
+hợp hiện là `0.2.0-rc2-dev`. Đường thuật toán ML-KEM-512
 đã PASS cổng functional bit-exact nội bộ nhưng thiết kế không tuyên bố có chứng
 nhận FIPS 203, FIPS 140-3, Common Criteria, constant-time hay khả năng chống
 side-channel/fault-injection.
@@ -26,6 +27,14 @@ chứng minh mọi input và không phải formal verification hay chứng nhậ
 Helper data RO-PUF là dữ liệu công khai nhưng gắn với board/lần enroll. Không
 commit các file như `helper.bin`, `hardware_helper.bin` hoặc bản helper dùng khi
 bring-up.
+
+Miền RO của full-SoC hiện đã được khóa và kiểm tra bằng fingerprint vật lý
+(136 endpoint, 128 route) qua hai build sạch. Đây chỉ là kiểm soát tái lập
+implementation. Campaign PUF-only 10.000 mẫu trên một board có HD tối đa 1,
+nhưng chưa tương đương image full-SoC và chưa bao phủ same-root, PVT hay nhiều
+board. Với 32 RO vật lý, upper bound cấu trúc theo mô hình thứ tự tần số là
+`log2(32!) = 117,663 bit`; không được tuyên bố entropy 192/512 bit từ độ dài
+fuzzy-extractor/KDF khi chưa có đánh giá entropy và helper leakage.
 
 Các khoảng trống trước production:
 

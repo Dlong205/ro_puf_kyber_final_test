@@ -52,10 +52,11 @@ latency 12.287 cycle; loopback tích hợp có cùng latency 17.338 cycle.
 Đây mới là cổng functional cho thuật toán nội bộ ML-KEM-512, chưa phải chứng
 nhận FIPS/CAVP. KeyGen và Encaps đã bao phủ 25/25 vector AFT ML-KEM-512 trong
 sample NIST; Decaps/rejection có 25 cặp oracle độc lập nhưng chưa có corpus
-Wycheproof/negative đa dạng. Kiến trúc tích hợp tự sinh và giữ khóa bên trong nên chưa
-có API nạp khóa ngoài và chưa triển khai `encapsulationKeyCheck` /
-`decapsulationKeyCheck`. Quyết định phạm vi API này phải được chốt trước khi
-freeze RTL mật mã.
+Wycheproof/negative đa dạng. Phạm vi candidate đã chốt là kiến trúc tích hợp tự
+sinh và giữ khóa bên trong, nên không có API nạp khóa ngoài và chưa triển khai
+`encapsulationKeyCheck` / `decapsulationKeyCheck`. Nếu yêu cầu đổi sang API
+khóa ngoài, phải mở lại đặc tả, bổ sung malformed/length tests và tạo freeze
+manifest mới trước backend.
 
 `mlkem_ref_trace.c` và `mlkem_encap_ref_trace.c` là tiện ích chẩn đoán tùy
 chọn, dùng source phần mềm tham chiếu ngoài repo. Chúng không tham gia KAT mặc

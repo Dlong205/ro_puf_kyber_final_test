@@ -1,4 +1,7 @@
-# Đạt và Tùng — Kyber KEM
+# Đạt và Tùng — Kyber/ML-KEM-512
+
+Cập nhật **2026-09-06**. Đây là phạm vi nghiên cứu và review độc lập; Long là
+người thực hiện thay đổi RTL, tích hợp test và chốt artifact.
 
 ## Phạm vi nghiên cứu/đối chiếu
 
@@ -14,11 +17,29 @@
 - `rtl/common/generic_mult.sv`
 - `rtl/soc/soc_peripherals.sv`
 - `sim/kyber/`
+- `sim/mlkem/`
+- `docs/FIPS203_VERIFICATION_2026-09-04.md`
+- `docs/CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md`
+- `manifests/crypto_rtl_freeze_candidate.sha256`
 - `docs/PROVENANCE.md`
 
-## Trạng thái hiện tại
+## Chia trách nhiệm review
 
-- Functional loopback: PASS, server/client cùng shared key.
+### Đạt — thuật toán và đặc tả
+
+- Mapping RTL với `ML-KEM.KeyGen`, `ML-KEM.Encaps` và `ML-KEM.Decaps`.
+- Vector NIST ACVP, oracle pq-crystals, serialization và domain separation.
+- Compare/mux implicit rejection, claim FIPS được phép dùng và provenance.
+
+### Tùng — vi kiến trúc RTL
+
+- Client/Server, NTT, SHAKE stream, encode/decode và ciphertext codec.
+- FIFO/BRAM/AXI handshake, liveness, single-attempt và watchdog.
+- Assertion cho underflow/overflow/progress, latency và tài nguyên.
+
+## Đã hoàn thành
+
+- Legacy Kyber functional loopback: PASS, server/client cùng shared key.
 - AXI handshake/zeroize: PASS 32 giao dịch.
 - Raw gate: PASS 1.024/1.024, mismatch 0, retry 0, max attempt 1.
 - Codec round-trip: PASS.
@@ -30,7 +51,10 @@
   test hiện có.
 - Candidate PASS Vivado implementation 50 MHz và board stress 10.000/10.000.
 
-## Việc tiếp theo
+Kết luận đúng là **ML-KEM-512 internal algorithm functional PASS**. Đây không
+phải chứng nhận CAVP, FIPS 140-3 hoặc review mật mã độc lập.
+
+## Còn mở
 
 1. Review độc lập bảng mapping giữa RTL và `ML-KEM.KeyGen`, `ML-KEM.Encaps`,
    `ML-KEM.Decaps` của FIPS 203.
@@ -41,26 +65,31 @@
 4. Thêm assertion cho FIFO underflow/overflow, FSM progress, số coefficient và
    quy tắc đúng một attempt.
 5. Rà constant-time, zeroization và nguồn randomness cùng Minh và Việt Anh.
-6. Review báo cáo JTAG/UART và stress 10.000/10.000 của bitstream candidate.
+6. Ký xác nhận review báo cáo JTAG/UART và stress 10.000/10.000 đã có; nếu phát
+   hiện sai khác phải mở lại candidate và chạy lại gate.
 
 Đạt và Tùng chuẩn bị tài liệu, mapping và nhận xét review. Long thực hiện thay
 đổi RTL, tích hợp test và chốt kết quả trên nhánh chính của dự án.
 
-## Definition of Done
+## Definition of Done còn lại
 
-- Vector ML-KEM-512 chính thức khớp bit-exact hoặc tài liệu ghi rõ quyết định
-  không tuyên bố FIPS 203.
-- Không mismatch, timeout, FIFO starvation hay retry trong regression dài.
-- Interface/latency được tài liệu hóa và full-system simulation PASS.
+- Có biên bản review độc lập cho mapping FIPS 203, serialization và rejection.
+- Các invariant FIFO/FSM/single-attempt được review hoặc có assertion phù hợp.
+- Phạm vi API nội bộ và lý do chưa hỗ trợ khóa ngoài được ghi rõ.
+- Corpus/API chỉ cần mở rộng khi claim dự án mở rộng; không gọi bộ test hiện tại
+  là chứng nhận FIPS.
 - Nếu RTL thay đổi: Vivado timing/DRC và board stress được chạy lại.
 
 ## Lệnh kiểm tra hiện có
 
 ```sh
 make kyber
+make mlkem
 make axi
 make kyber-strict
+make kyber-invalid
 make kyber-codec
 make kyber-long
 make system
+make -j1 crypto-freeze-gate
 ```

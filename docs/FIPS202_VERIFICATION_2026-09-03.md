@@ -112,5 +112,6 @@ Kết quả:
 
 Phase FIPS 202 byte-oriented phục vụ ML-KEM được coi là hoàn thành về mặt
 functional regression. Cổng FIPS 203 tiếp theo cũng đã đạt mức internal
-algorithm functional; việc còn lại trước freeze cuối là board regression và
-review độc lập, không phải sửa thêm primitive FIPS 202 ở thời điểm này.
+algorithm functional và board regression 10.000/10.000 đã PASS. Việc còn lại
+trước freeze cuối là review độc lập, không phải sửa thêm primitive FIPS 202 ở
+thời điểm này.

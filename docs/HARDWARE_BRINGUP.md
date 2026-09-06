@@ -31,18 +31,21 @@ hoạt động UART TX; LED2/J16 báo giao dịch Kyber hoàn tất. Reset power
 
 ```sh
 sha256sum -c ARTIFACTS.sha256
-make program VIVADO=/media/donglong/tools/Xilinx/Vivado/2020.1/bin/vivado
+VIVADO_BIN=/absolute/path/to/Vivado/2020.1/bin/vivado
+make program-bit BITSTREAM="$PWD/Kyber_System_Top.bit" VIVADO="$VIVADO_BIN"
 ```
 
 Thành công kết thúc bằng `PROGRAM_PASS`. Nếu JTAG thấy adapter nhưng không thấy
 device, kiểm tra nguồn, hướng cáp và jumper JTAG/boot-mode rồi power-cycle.
+Luôn dùng `program-bit` với đường dẫn tuyệt đối khi xác nhận artifact: target
+`program` có thể ưu tiên một bitstream mới còn tồn tại trong `build/vivado/`.
 
 Để nạp một candidate cách ly thay vì bitstream mặc định, luôn chỉ rõ file:
 
 ```sh
 make program-bit \
-  BITSTREAM=/duong/dan/tuyet/doi/Kyber_System_Top.bit \
-  VIVADO=/media/donglong/tools/Xilinx/Vivado/2020.1/bin/vivado
+  BITSTREAM=/absolute/path/to/Kyber_System_Top.bit \
+  VIVADO=/absolute/path/to/Vivado/2020.1/bin/vivado
 ```
 
 Script xác nhận đúng một target và đúng một XC7Z020 trước khi ghi PL.
@@ -52,7 +55,8 @@ Script xác nhận đúng một target và đúng một XC7Z020 trước khi ghi
 UART 115200 8N1. Xác nhận firmware trước:
 
 ```sh
-python3 host/uart_host.py --port /dev/ttyUSB1 info
+PORT=/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
+python3 host/uart_host.py --port "$PORT" info
 ```
 
 Response release mong đợi: protocol 1.2, capability `0x06`, shared-secret export
@@ -61,8 +65,8 @@ tắt, session diversification và zeroize bật, retry flag tắt.
 Giữ helper bên ngoài repo:
 
 ```sh
-python3 host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin enroll
-python3 host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin reconstruct
+python3 host/uart_host.py --port "$PORT" --helper ../helper-private.bin enroll
+python3 host/uart_host.py --port "$PORT" --helper ../helper-private.bin reconstruct
 ```
 
 Reconstruct thành công phải đi qua marker `ABCDEFG` và trả success không kèm
@@ -74,9 +78,9 @@ lỗi giao dịch nhìn thấy được, sau đó core được zeroize.
 Chạy theo nấc, không mở hai host cùng một cổng UART:
 
 ```sh
-python3 -u host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin stress --count 100
-python3 -u host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin stress --count 1000
-python3 -u host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin stress --count 10000
+python3 -u host/uart_host.py --port "$PORT" --helper ../helper-private.bin stress --count 100
+python3 -u host/uart_host.py --port "$PORT" --helper ../helper-private.bin stress --count 1000
+python3 -u host/uart_host.py --port "$PORT" --helper ../helper-private.bin stress --count 10000
 ```
 
 ML-KEM RC1 PASS lần lượt 100/100, 1.000/1.000 và 10.000/10.000. Run dài có
@@ -102,3 +106,9 @@ implementation/timing/DRC.
 Một run dài không thay thế test cold/warm power-cycle, nhiều board, điện áp,
 nhiệt độ, aging, entropy/uniqueness hoặc side-channel/fault-injection. Ghi rõ
 điều kiện nguồn/nhiệt khi thực hiện các chiến dịch tiếp theo.
+
+Physical route-lock full-SoC đã tái lập qua hai build và image thử đã PASS board
+10.000/10.000. Kết quả đó kiểm soát thay đổi placement/routing giữa các build,
+nhưng vẫn không chứng minh same-root, count-margin hoặc PVT. Xem
+[`RO_PHYSICAL_REPRODUCIBILITY_2026-09-05.md`](RO_PHYSICAL_REPRODUCIBILITY_2026-09-05.md)
+và [`PUF_QUALIFICATION_PLAN.md`](PUF_QUALIFICATION_PLAN.md).

@@ -1,5 +1,18 @@
 # Kế hoạch qualification RO-PUF
 
+Bằng chứng cập nhật đến **2026-09-05**; kế hoạch đồng bộ **2026-09-06**.
+
+| Hạng mục | Trạng thái |
+|---|---|
+| Mô phỏng controller/UART/BCH và host metrics | PASS |
+| Campaign raw PUF-only 10.000 mẫu, một board/điều kiện phòng | PASS sơ bộ; HD max 1, một bit dao động |
+| Khóa/tái lập physical route miền RO full-SoC | PASS; 136 endpoint/128 route, hai build sạch |
+| Same-root trên full-SoC RC1 | CHƯA ĐO |
+| Count-margin và số lỗi BCH đã sửa trên board | CHƯA CÓ telemetry |
+| Warm/cold boot, PVT, aging và nhiều board | CHƯA CHẠY |
+| Entropy/uniqueness/helper leakage | CHƯA ĐỦ DỮ LIỆU |
+| Freeze PUF | NO-GO |
+
 ## Kết luận hiện tại
 
 Board regression 10.000/10.000 xác nhận các giao dịch báo thành công trong

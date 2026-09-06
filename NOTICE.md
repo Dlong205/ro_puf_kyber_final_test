@@ -1,6 +1,7 @@
 # Thông báo nguồn gốc và quyền phân phối
 
-Phiên bản ứng viên phát hành nội bộ: `0.2.0-rc1`.
+Artifact ứng viên phát hành nội bộ được chấp nhận: `0.2.0-rc1`. Nhánh tích hợp
+hiện mang version `0.2.0-rc2-dev` và chưa phải release mới.
 
 ## Thành phần đã xác định điều khoản
 

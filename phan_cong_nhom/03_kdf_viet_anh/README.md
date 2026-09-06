@@ -1,5 +1,9 @@
 # Việt Anh — KDF, Keccak và FIPS 202
 
+Cập nhật **2026-09-06**. Pha implementation FIPS 202 phục vụ ML-KEM đã hoàn
+thành ở mức functional; phần của Việt Anh hiện chuyển sang review độc lập.
+Long thực hiện mọi thay đổi RTL và chạy lại gate khi review phát hiện vấn đề.
+
 ## Phạm vi nghiên cứu/đối chiếu
 
 - Keccak-f[1600], SHA3/SHAKE padding, absorb/squeeze và byte/bit ordering.
@@ -12,9 +16,13 @@
 - `rtl/hash_core/`
 - `rtl/common/keccak_pkg.sv`
 - Các file Keccak/SHAKE trong `rtl/kyber/ref/`
+- `sim/fips202/`
 - `sim/kdf_kat/`
+- `sim/mlkem/`
+- `docs/FIPS202_VERIFICATION_2026-09-03.md`
+- `docs/FIPS203_VERIFICATION_2026-09-04.md`
 
-## Trạng thái hiện tại
+## Đã hoàn thành
 
 - SHA3-256, SHA3-512, SHAKE128 và SHAKE256 byte-oriented: PASS 50/50, gồm
   20 vector NIST CAVP, biên rate, multi-block, stall và reset.
@@ -25,27 +33,32 @@
 - Chưa hỗ trợ SHA3-224/SHA3-384 hoặc message bit-oriented; PASS không đồng nghĩa
   triển khai đã được chứng nhận CAVP.
 
-## Việc tiếp theo
+Kết luận đúng là **FIPS 202 functional scope cần cho ML-KEM đã DONE**. Không mở
+rộng primitive chỉ để tăng số lượng thuật toán nếu đặc tả hệ thống không cần.
 
-1. Review độc lập mapping FIPS 203 của `H`, `G`, `J`, PRF và XOF sang bốn mode
-   đã chốt.
+## Còn mở
+
+1. Review độc lập mapping `H=SHA3-256`, `G=SHA3-512`, `J/PRF=SHAKE256` và
+   `XOF=SHAKE128` theo FIPS 203.
 2. Review endianness/serialization tại ranh giới Keccak ↔ ML-KEM.
 3. Đề xuất thêm vector CAVP hoặc ACVP coverage còn thiếu nếu cần chứng nhận.
 4. Review báo cáo do Long chạy; mọi thay đổi RTL và tích hợp do Long thực hiện.
 
-## Definition of Done
+## Definition of Done còn lại
 
-- SHA3-256, SHAKE128 và SHAKE256 đều PASS vector FIPS 202, gồm multi-block.
-- Padding, byte-order và domain separation có test riêng, không chỉ test KDF
-  24-byte hiện tại.
-- Kết quả tái lập được bằng một lệnh và thất bại trả exit code khác 0.
-- Full-system và Kyber regression không bị phá sau khi tích hợp.
+- Có biên bản review cả SHA3-256, SHA3-512, SHAKE128 và SHAKE256.
+- Padding, byte-order, domain separation và mapping H/G/J/PRF/XOF được đối
+  chiếu độc lập với test hiện có.
+- Mọi claim ghi rõ đây là regression functional, không phải chứng nhận CAVP.
+- Nếu review yêu cầu sửa RTL: FIPS 202, ML-KEM và full-system phải PASS lại.
 
 ## Lệnh kiểm tra hiện có
 
 ```sh
 make fips202
 make kdf
+make mlkem
 make kyber
 make system
+make -j1 crypto-freeze-gate
 ```

@@ -1,4 +1,25 @@
-# Trạng thái xác minh dự án — ML-KEM-512 `0.2.0-rc1`
+# Trạng thái xác minh — integration `0.2.0-rc2-dev`, artifact `0.2.0-rc1`
+
+Bằng chứng cập nhật đến **2026-09-05**; tài liệu được đồng bộ ngày
+**2026-09-06**. Nhánh làm việc tích hợp là
+`codex/fips202-mlkem`; artifact FPGA được chấp nhận nằm tại tag
+`fpga-mlkem512-0.2.0-rc1`. Tag `fpga-rc4-baseline` chỉ được giữ làm mốc so
+sánh Kyber/FPGA cũ. Các kết quả characterization và physical route-lock sau
+RC1 là bằng chứng bổ sung, không phải một phiên bản production mới.
+
+## Tóm tắt theo cổng quyết định
+
+| Cổng | Quyết định | Bằng chứng/điều kiện còn lại |
+|---|---|---|
+| FIPS 202 byte-oriented cần cho ML-KEM | **DONE functional** | 50/50; chưa phải chứng nhận CAVP |
+| ML-KEM-512/FIPS 203 | **DONE functional nội bộ** | KAT/oracle, regression và board PASS; còn review độc lập |
+| Crypto RTL freeze cuối | **CONDITIONAL** | Candidate v2 đã khóa manifest; chưa đóng review serialization, rejection, reset và zeroize |
+| FPGA RC nội bộ | **GO** | Bitstream/firmware/report/checksum và board regression có trong repo |
+| Physical reproducibility của RO | **DONE cho full-SoC RC1** | Hai build sạch khớp 136 endpoint/128 route; không thay thế qualification vật lý |
+| Freeze RO-PUF | **NO-GO** | Thiếu same-root full-SoC, count-margin, cold/warm boot, PVT, aging và nhiều board |
+| ASIC frontend portability | **GO cho khảo sát** | ASIC-generic elaborate PASS; primitive vendor đã cô lập |
+| Full ASIC backend/sign-off | **CHƯA BẮT ĐẦU** | Cần PDK/library, macro RO, memory mapping, SDC/CDC/DFT và crypto RTL freeze |
+| Public/production release | **NO-GO** | License, security review và qualification PUF chưa đóng |
 
 | Hạng mục | Trạng thái |
 |---|---|
@@ -85,3 +106,25 @@ Phạm vi, manifest và điều kiện nâng candidate thành freeze cuối đư
 
 Phạm vi phụ trách và công việc tiếp theo của Đạt–Tùng, Minh, Việt Anh và Long
 được theo dõi tại [`phan_cong_nhom/`](../phan_cong_nhom/README.md).
+
+## Thứ tự công việc tiếp theo
+
+Kế hoạch chi tiết tại
+[`KE_HOACH_HOAN_THIEN_ASIC.md`](KE_HOACH_HOAN_THIEN_ASIC.md) chia công việc theo
+đầu ra và điều kiện chuyển bước:
+
+1. Chốt phạm vi full-system, threat model và PDK/library/tool sớm; lưu baseline
+   Git, tạo filelist ASIC và kiểm kê reset/memory/boot.
+2. Review độc lập FIPS 202/203, serialization/rejection, nguồn randomness,
+   quyền truy cập khóa và zeroization; sửa các điểm ảnh hưởng freeze.
+3. Chạy lint và synthesis thử digital core khi đủ đầu vào công nghệ. Có thể
+   thử P&R khối này trong lúc triển khai same-root/count-margin, entropy và
+   nghiên cứu macro RO ASIC.
+4. Hoàn thiện macro RO, memory/pad views, SDC/CDC/DFT, regression/equivalence;
+   chốt RTL và đầu vào trước floorplan cuối của toàn hệ thống.
+5. Hoàn tất full-system P&R/sign-off/GDS; sau chế tạo mới đo qualification
+   PUF ASIC trên nhiều chip, PVT, power-cycle và aging. Campaign FPGA hỗ trợ
+   đánh giá baseline FPGA, không thay thế phép đo silicon ASIC.
+
+Waveform trình bày và video demo vẫn được hoãn theo quyết định của nhóm; chúng
+không được dùng để che các gate kỹ thuật còn mở ở trên.

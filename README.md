@@ -1,15 +1,22 @@
 # RO-PUF + Fuzzy Extractor + Kyber/ML-KEM trên Zynq-7020
 
-> **Internal FPGA release candidate `0.2.0-rc1` cho ML-KEM-512.** Repo dành cho
+> **Nhánh tích hợp `0.2.0-rc2-dev`; artifact FPGA được chấp nhận vẫn là
+> `0.2.0-rc1` cho ML-KEM-512.** Repo dành cho
 > nghiên cứu, đánh giá và cộng tác trong nhóm riêng tư. Phát hành công khai vẫn
 > bị chặn bởi quyền phân phối Kyber RTL và top-level license. Kết quả hiện tại
 > không phải chứng nhận CAVP/FIPS 140-3 và không phải module mật mã production.
 
-Tag `fpga-rc4-baseline` giữ nguyên bitstream FPGA đã xác minh. Nhánh phát triển
-đã hoàn tất cổng FIPS 202 byte-oriented và cổng functional bit-exact đầu tiên
-cho KeyGen, Encaps, Decaps và implicit rejection của ML-KEM-512. RTL mới cũng
-đã synthesis/place/route, tạo bitstream và PASS board regression 10.000 giao
-dịch. Xem báo cáo
+Trạng thái dưới đây dùng bằng chứng đến **2026-09-05** và được đồng bộ tài liệu
+ngày **2026-09-06** trên nhánh tích hợp
+`codex/fips202-mlkem`. Tag `fpga-rc4-baseline` giữ mốc Kyber/FPGA cũ để đối
+chiếu; tag `fpga-mlkem512-0.2.0-rc1` là artifact ML-KEM-512 hiện được chấp nhận.
+Các commit sau tag RC1 bổ sung characterization và khóa vật lý miền RO, không
+âm thầm thay thế bitstream RC1 ở root.
+
+Nhánh tích hợp đã hoàn tất cổng FIPS 202 byte-oriented và cổng functional
+bit-exact cho KeyGen, Encaps, Decaps và implicit rejection của ML-KEM-512. RTL
+mới cũng đã synthesis/place/route, tạo bitstream và PASS board regression
+10.000 giao dịch. Xem báo cáo
 [`docs/FIPS203_VERIFICATION_2026-09-04.md`](docs/FIPS203_VERIFICATION_2026-09-04.md)
 và
 [`docs/HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md`](docs/HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md).
@@ -28,6 +35,27 @@ testbench, firmware, constraint, report Vivado, bitstream và host tool đều n
 trong repo độc lập này.
 
 ## Trạng thái ML-KEM-512 RC1
+
+| Giai đoạn | Trạng thái đúng hiện tại |
+|---|---|
+| FIPS 202 phục vụ ML-KEM | **HOÀN THÀNH functional**, chưa phải chứng nhận CAVP |
+| ML-KEM-512 theo FIPS 203 | **HOÀN THÀNH functional nội bộ** và đã test board; chưa phải chứng nhận |
+| Crypto RTL freeze | **CANDIDATE v2**; còn review độc lập serialization/rejection/reset/zeroize |
+| FPGA implementation | **PASS** ở 50 MHz trên XC7Z020; artifact RC1 đã được chấp nhận |
+| Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
+| Qualification RO-PUF | **CHƯA HOÀN THÀNH**: thiếu same-root trên full-SoC, PVT, power-cycle và nhiều board |
+| ASIC portability | **PASS frontend generic**; full ASIC backend/sign-off chưa bắt đầu |
+| Phát hành nội bộ | Có thể chia sẻ RC trong repo private kèm giới hạn đã ghi |
+| Public/production release | **NO-GO** do license, PUF qualification và security review |
+
+Nguồn trạng thái chuẩn là
+[`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md); điều kiện phát hành nằm trong
+[`docs/RELEASE_READINESS.md`](docs/RELEASE_READINESS.md). Không suy trạng thái
+chỉ từ tên branch, một lần stress, hoặc riêng kết quả timing.
+
+Lộ trình từ baseline hiện tại đến full-system layout/GDS và kiểm chứng silicon,
+gồm đầu ra và điều kiện chuyển từng pha, nằm tại
+[`docs/KE_HOACH_HOAN_THIEN_ASIC.md`](docs/KE_HOACH_HOAN_THIEN_ASIC.md).
 
 | Hạng mục | Kết quả |
 |---|---|
@@ -69,8 +97,10 @@ constraint lên 100 MHz mà không tái kiến trúc/pipeline và chạy lại s
 - `constraints/`: pin/clock/placement cho board XC7Z020
 - `scripts/`: tạo project, build, program, audit và đóng gói
 - `host/`: host UART enroll/reconstruct/stress
-- `reports/`: report synthesis và post-route của ML-KEM candidate hiện tại
-- `docs/`: giao thức, nguồn gốc, bring-up, xác minh và mức sẵn sàng
+- `reports/`: report synthesis/post-route của artifact ML-KEM RC1, cùng
+  fingerprint và thống kê characterization RO được chấp nhận
+- `docs/`: giao thức, nguồn gốc, bring-up, xác minh và mức sẵn sàng; bắt đầu tại
+  [`docs/README.md`](docs/README.md)
 - `phan_cong_nhom/`: tiến độ, phạm vi và tiêu chí hoàn thành của từng thành viên
 - `Kyber_System_Top.bit`: bitstream ML-KEM-512 `0.2.0-rc1` đã test board
 - `ARTIFACTS.sha256`: checksum bitstream, firmware, physical lock và fingerprint RO
@@ -82,10 +112,10 @@ loại bằng `.gitignore`.
 
 | Thành viên | Phụ trách |
 |---|---|
-| Đạt và Tùng | Nghiên cứu/đối chiếu Kyber KEM và FIPS 203 |
-| Minh | Nghiên cứu lưu khóa và vòng đời khóa |
-| Việt Anh | Nghiên cứu/đối chiếu KDF, Keccak và FIPS 202 |
-| Long | Chủ trì implementation, tích hợp, kiểm thử, RO-PUF và backend FPGA/ASIC |
+| Đạt và Tùng | Review độc lập Kyber/ML-KEM-512, FIPS 203 và các invariant FIFO/FSM |
+| Minh | Threat model, lưu khóa, vòng đời khóa, access policy và zeroization |
+| Việt Anh | Review độc lập KDF, Keccak, FIPS 202 và domain separation/serialization |
+| Long | Chủ trì toàn bộ implementation, tích hợp, kiểm thử, RO-PUF và backend FPGA/ASIC |
 
 Chi tiết, đường dẫn source, bài test và Definition of Done nằm tại
 [`phan_cong_nhom/`](phan_cong_nhom/README.md).
@@ -96,11 +126,8 @@ Yêu cầu khuyến nghị: GNU Make, Bash, Python 3, Verilator, C++ compiler v�
 RISC-V GCC toolchain. Chạy tuần tự để tránh dùng quá nhiều RAM:
 
 ```sh
-make check
-sha256sum -c ARTIFACTS.sha256
-make -j1 regression
-make -j1 kyber-long
 make -j1 crypto-freeze-gate
+sha256sum -c ARTIFACTS.sha256
 ```
 
 `kyber-long` là cổng bắt buộc của internal release: 1.024 message seed khác
@@ -112,6 +139,20 @@ nhau, mỗi giao dịch đúng một attempt, không retry. Có thể chạy t�
 `crypto-freeze-gate` chạy tuần tự toàn bộ regression, cổng 1.024 giao dịch,
 portability ASIC và đối chiếu SHA-256 của tập source mật mã. Manifest hiện là
 freeze candidate; xem `docs/CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md`.
+
+Không có một lệnh local nào tự chứng minh cả RTL, Vivado, board và PUF/PVT.
+Phạm vi các cổng được tách rõ:
+
+| Cổng | Bao phủ | Không bao phủ |
+|---|---|---|
+| `make -j1 crypto-freeze-gate` | Regression RTL, Kyber dài, ASIC portability, freeze manifest | Vivado mới, board, PVT |
+| `make -j1 impl` | Synthesis/P&R/timing/DRC và audit fingerprint RO | Board và qualification PUF |
+| `./scripts/release_check.sh --internal` | Regression, Kyber dài, checksum/report/artifact | Không chạy lại portability, freeze manifest hay Vivado |
+| `make ro-route-repro-check ...` | So sánh hai build cách ly đã tồn tại | Không tự build hoặc đo board |
+| Host UART stress | Pipeline trên board | Không chứng minh same-root/entropy PUF |
+
+Vì vậy một candidate mới chỉ được chốt sau khi chạy đúng các cổng bị ảnh hưởng,
+không dựa riêng vào `release_check.sh`.
 
 Kiểm tra khả năng elaborate RTL ở chế độ ASIC-generic (không đưa `LUT6_L`,
 `CARRY4` hay primitive DSP48 vào source list ASIC):
@@ -134,14 +175,13 @@ artifact release.
 Vivado 2020.1:
 
 ```sh
-make vivado-project
 make -j1 impl
 ```
 
 Nếu Vivado không nằm trong `PATH`:
 
 ```sh
-make -j1 impl VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
+make -j1 impl VIVADO=/absolute/path/to/Vivado/2020.1/bin/vivado
 ```
 
 Script giới hạn một worker và một thread. Bitstream mới nằm ở
@@ -159,15 +199,19 @@ File ở root đã được đối chiếu byte-for-byte với bitstream vừa t
 Kết nối đúng một XC7Z020 qua JTAG:
 
 ```sh
-make program VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
-python3 host/uart_host.py --port /dev/ttyUSB1 info
-python3 host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin enroll
-python3 host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin reconstruct
-python3 host/uart_host.py --port /dev/ttyUSB1 --helper ../helper-private.bin stress --count 10000
+make program-bit BITSTREAM="$PWD/Kyber_System_Top.bit" \
+  VIVADO=/absolute/path/to/Vivado/2020.1/bin/vivado
+PORT=/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
+python3 host/uart_host.py --port "$PORT" info
+python3 host/uart_host.py --port "$PORT" --helper ../helper-private.bin enroll
+python3 host/uart_host.py --port "$PORT" --helper ../helper-private.bin reconstruct
+python3 host/uart_host.py --port "$PORT" --helper ../helper-private.bin stress --count 10000
 ```
 
-`make program` chỉ nạp PL volatile, không ghi QSPI. Helper data là dữ liệu công
-khai nhưng gắn với từng board/lần enroll; giữ nó ngoài repo. Xem
+Lệnh trên truyền chính xác bitstream RC1 ở root để không vô tình nạp candidate
+còn sót trong `build/vivado/`. Việc program chỉ nạp PL volatile, không ghi QSPI.
+Helper data là dữ liệu công khai nhưng gắn với từng board/lần enroll; giữ nó
+ngoài repo. Xem
 `docs/HARDWARE_BRINGUP.md` và
 `docs/HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md`.
 
@@ -179,7 +223,7 @@ Khi thử một candidate cách ly, truyền bitstream chính xác để tránh 
 
 ```sh
 make soc-repro-program SOC_REPRO_RUN=locked_b \
-  VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
+  VIVADO=/absolute/path/to/Vivado/2020.1/bin/vivado
 ```
 
 ## Kiểm tra độ ổn định RO-PUF
@@ -199,10 +243,11 @@ make -j1 puf-metrics-test
 Image PUF-only đo response thô dùng project riêng và map 128 LUT từ RC1:
 
 ```sh
-make -j1 puf-characterization-bitstream VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
-make -j1 puf-characterization-program VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
+make -j1 puf-characterization-bitstream VIVADO=/absolute/path/to/Vivado/2020.1/bin/vivado
+make -j1 puf-characterization-program VIVADO=/absolute/path/to/Vivado/2020.1/bin/vivado
 make -j1 puf-raw-characterize PUF_SAMPLES=10000
-make -j1 program VIVADO=/opt/Xilinx/Vivado/2020.1/bin/vivado
+make program-bit BITSTREAM="$PWD/Kyber_System_Top.bit" \
+  VIVADO=/absolute/path/to/Vivado/2020.1/bin/vivado
 ```
 
 Image này xuất raw response phục vụ phòng lab. Kết thúc đo phải nạp lại image

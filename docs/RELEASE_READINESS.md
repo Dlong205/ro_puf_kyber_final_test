@@ -1,7 +1,30 @@
-# Mức độ sẵn sàng phát hành — ML-KEM-512 `0.2.0-rc1`
+# Mức độ sẵn sàng — integration `0.2.0-rc2-dev`, artifact `0.2.0-rc1`
 
-Đích hiện tại là XC7Z020-2CLG400I, pure RTL chỉ PL, clock ngoài 50 MHz. Tài liệu
-này phân biệt hoàn thành nội dung triển khai FPGA với public/production release.
+Đích hiện tại là XC7Z020-2CLG400I, pure RTL chỉ PL, clock ngoài 50 MHz. Version
+`0.2.0-rc2-dev` ngăn việc đóng gói nhánh sau route-lock dưới cùng tên với RC1
+đã tag; nó chưa phải artifact phần cứng mới. Tài liệu này phân biệt hoàn thành
+nội dung triển khai FPGA với public/production release.
+
+## Định danh trạng thái
+
+- RTL tạo artifact RC1: commit `8d2e8cd`.
+- Commit quảng bá/tag artifact: `7abbd79`, tag
+  `fpga-mlkem512-0.2.0-rc1`.
+- Physical lock/characterization sau RC1: đã tích hợp đến commit `36fc6da` trước
+  đợt đồng bộ tài liệu này.
+- `Kyber_System_Top.bit` và `reports/post_route_*` ở root vẫn là bằng chứng của
+  artifact RC1, không phải implementation mới của toàn nhánh `rc2-dev`.
+- Hai image/DCP `locked_a` và `locked_b` là bằng chứng tái lập trong `build/`,
+  được giữ ngoài Git; XDC/fingerprint và báo cáo tóm tắt được track.
+
+| Mức phát hành | Quyết định hiện tại |
+|---|---|
+| Chia sẻ nội bộ source + RC1 trong repo private | **GO**, kèm các giới hạn trong `NOTICE.md` và `SECURITY.md` |
+| Chốt crypto RTL freeze cuối | **CHƯA**, còn review độc lập |
+| Chốt PUF là golden/production | **NO-GO**, thiếu same-root/PVT/nhiều board/entropy |
+| Bắt đầu khảo sát ASIC frontend | **GO có điều kiện**, dùng portability gate |
+| Full ASIC backend/sign-off | **CHƯA**, thiếu PDK/macro/memory/SDC/DFT và các freeze đầu vào |
+| Public release | **BỊ CHẶN** bởi quyền phân phối/top-level license |
 
 ## Cổng kỹ thuật FPGA
 
@@ -22,7 +45,7 @@ này phân biệt hoàn thành nội dung triển khai FPGA với public/product
 | Kyber single-attempt 1.024 vector | PASS, mismatch 0, retry 0 |
 | Ciphertext codec round-trip | PASS |
 | Full-system firmware/UART simulation | PASS |
-| Backend FPGA/ASIC và ASIC-generic elaboration | PASS |
+| Abstraction backend FPGA/ASIC và ASIC-generic elaboration | PASS; chưa phải ASIC synthesis/P&R |
 | Crypto RTL freeze candidate v2 | PASS regression/manifest/Vivado/board; chờ review độc lập |
 | Audit netlist RO Xilinx | PASS, 128/128 feedback net được constraint |
 | Tái lập placement/pin/route RO full-SoC | PASS, 2 build sạch khớp fingerprint RC1 |
@@ -41,12 +64,16 @@ này phân biệt hoàn thành nội dung triển khai FPGA với public/product
 
 ## Kết luận cho nội dung triển khai FPGA
 
-ML-KEM RC1 đã hoàn thành phần kỹ thuật FPGA cần thiết trước khi chuyển sang
-ASIC backend: RTL chức năng, regression, cổng stress raw không retry,
+ML-KEM RC1 đã hoàn thành baseline kỹ thuật FPGA cần thiết để khảo sát frontend
+ASIC: RTL chức năng, regression, cổng stress raw không retry,
 firmware/host, implementation, timing, DRC, bitstream và test end-to-end trên
 board đều có bằng chứng. Run dài 10.000 đạt 100%, latency trung bình 29,608 ms
 và throughput 33,775 giao dịch/s. Primitive LUT6/CARRY4 đã được tách khỏi source
 list ASIC và multiplier NTT không còn phụ thuộc tên/primitive DSP48.
+
+Kết luận này chưa bật đèn xanh cho full ASIC backend/sign-off: crypto freeze
+độc lập, PUF qualification, PDK, macro RO, memory mapping, SDC/CDC và DFT vẫn
+phải được đóng hoặc có kế hoạch/waiver được review.
 
 Điều này không đồng nghĩa sản phẩm bảo mật production. Bốn primitive FIPS 202
 đã PASS regression byte-oriented. Nhánh phát triển ML-KEM-512 đã đối chiếu
