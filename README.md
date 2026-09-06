@@ -6,8 +6,7 @@
 > bị chặn bởi quyền phân phối Kyber RTL và top-level license. Kết quả hiện tại
 > không phải chứng nhận CAVP/FIPS 140-3 và không phải module mật mã production.
 
-Trạng thái dưới đây dùng bằng chứng đến **2026-09-05** và được đồng bộ tài liệu
-ngày **2026-09-06**. Nhánh ASIC hiện tại
+Trạng thái dưới đây dùng bằng chứng đến **2026-09-06**. Nhánh ASIC hiện tại
 `codex/asic-frontend-mlkem512` được tách từ integration
 `codex/fips202-mlkem`. Tag `fpga-rc4-baseline` giữ mốc Kyber/FPGA cũ để đối
 chiếu; tag `fpga-mlkem512-0.2.0-rc1` là artifact ML-KEM-512 hiện được chấp nhận.
@@ -15,12 +14,19 @@ Các commit sau tag RC1 bổ sung characterization và khóa vật lý miền RO
 âm thầm thay thế bitstream RC1 ở root.
 
 Nhánh tích hợp đã hoàn tất cổng FIPS 202 byte-oriented và cổng functional
-bit-exact cho KeyGen, Encaps, Decaps và implicit rejection của ML-KEM-512. RTL
-mới cũng đã synthesis/place/route, tạo bitstream và PASS board regression
-10.000 giao dịch. Xem báo cáo
+bit-exact cho KeyGen, Encaps, Decaps và implicit rejection của ML-KEM-512.
+Artifact RC1 đã PASS board regression 10.000 giao dịch. Candidate v3 sau sửa
+FIFO/policy secret đã PASS lại full gate, Vivado implementation cách ly và
+board regression 10.000/10.000, nhưng chưa được quảng bá. AI pre-review sau đó
+phát hiện zeroization sâu của NTT RAM/sponge/FE/KDF chưa đóng, nên v3 không
+được nâng thành freeze cuối. Xem báo cáo
 [`docs/FIPS203_VERIFICATION_2026-09-04.md`](docs/FIPS203_VERIFICATION_2026-09-04.md)
 và
 [`docs/HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md`](docs/HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md).
+Tác động Vivado của v3 được ghi riêng tại
+[`docs/VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md`](docs/VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md).
+Board regression đúng image v3 được ghi tại
+[`docs/HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md`](docs/HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md).
 Qualification RO-PUF mới nhất nằm tại
 [`docs/PUF_CHARACTERIZATION_2026-09-05.md`](docs/PUF_CHARACTERIZATION_2026-09-05.md).
 
@@ -41,7 +47,7 @@ trong repo độc lập này.
 |---|---|
 | FIPS 202 phục vụ ML-KEM | **HOÀN THÀNH functional**, chưa phải chứng nhận CAVP |
 | ML-KEM-512 theo FIPS 203 | **HOÀN THÀNH functional nội bộ** và đã test board; chưa phải chứng nhận |
-| Crypto RTL freeze | **CANDIDATE v3**; full gate tuần tự PASS sau sửa FIFO/khóa secret, còn Vivado impact review và review độc lập |
+| Crypto RTL freeze | **BLOCKED tại candidate v3**; full gate/Vivado/board PASS nhưng secure zeroize sâu chưa đóng và chưa có review độc lập |
 | FPGA implementation | **PASS** ở 50 MHz trên XC7Z020; artifact RC1 đã được chấp nhận |
 | Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
 | Qualification RO-PUF | **CHƯA HOÀN THÀNH**: thiếu same-root trên full-SoC, PVT, power-cycle và nhiều board |
@@ -73,8 +79,10 @@ gồm đầu ra và điều kiện chuyển từng pha, nằm tại
 | SHAKE256 KDF KAT | PASS bit-exact với Python `hashlib.shake_256`, cycle 148 |
 | Kyber raw single-attempt gate | PASS 1.024/1.024, mismatch 0, retry 0 |
 | Full-system simulation | PASS, 956.564 cycle trên nhánh ML-KEM |
-| Implementation ML-KEM | PASS ở 50 MHz, 49.909 LUT; WNS `+2,226 ns`, WHS `+0,034 ns` |
-| Route/DRC ML-KEM | 70.739/70.739 net route đủ; 0 Error/Critical Warning DRC |
+| Implementation ML-KEM RC1 | PASS ở 50 MHz, 49.909 LUT; WNS `+2,226 ns`, WHS `+0,034 ns` |
+| Vivado impact candidate v3 | PASS ở 50 MHz, 49.886 LUT; WNS `+4,732 ns`, WHS `+0,034 ns` |
+| Route/DRC candidate v3 | 70.741/70.741 net route đủ; 0 Error, 165 warning đã phân loại |
+| Test board candidate v3 | PASS INFO/enroll/reconstruct; stress 100/100, 1.000/1.000, 10.000/10.000; đã restore RC1 |
 | Tái lập vật lý RO full-SoC | PASS: 136 cell/128 net, 2 build sạch khớp fingerprint RC1 |
 | Test board image route-lock | PASS INFO/enroll/reconstruct; stress 10.000/10.000; sau đó đã nạp lại RC1 |
 | Test board ML-KEM RC1 | PASS INFO/enroll/reconstruct; stress 100/100, 1.000/1.000, 10.000/10.000 |
@@ -83,11 +91,12 @@ gồm đầu ra và điều kiện chuyển từng pha, nằm tại
 | RO-PUF ngắn hạn PUF-only | 10.000 mẫu: HD max/p99 = 1, 0 mẫu > t=8, 1 bit dao động; chưa đạt gate entropy/PVT |
 | Public release | **BỊ CHẶN**, xem `NOTICE.md` |
 
-Implementation ML-KEM candidate dùng 49.909/53.200 Slice LUT (`93,81%`),
-30.649 register, 25 BRAM tile và 4 DSP. KDF tích hợp dùng datapath SHAKE256 cố
+Artifact RC1 dùng 49.909/53.200 Slice LUT (`93,81%`); candidate v3 dùng
+49.886 LUT (`93,77%`), 30.649 register, 25 BRAM tile và 4 DSP. Candidate v3
+còn dùng 13.243/13.300 slice (`99,57%`). KDF tích hợp dùng datapath SHAKE256 cố
 định 24-byte → 64-byte để tránh bản sao state 1600-bit của controller tổng
 quát; KDF và full-system đều đã regression lại. Thiết kế vẫn gần đầy chip và
-đường tới hạn tại 50 MHz còn khoảng 2,226 ns margin, nên không thể chỉ đổi
+candidate v3 có setup margin 4,732 ns tại 50 MHz, nên không thể chỉ đổi
 constraint lên 100 MHz mà không tái kiến trúc/pipeline và chạy lại sign-off.
 
 ## Cấu trúc

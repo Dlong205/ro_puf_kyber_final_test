@@ -20,7 +20,7 @@ nội dung triển khai FPGA với public/production release.
 | Mức phát hành | Quyết định hiện tại |
 |---|---|
 | Chia sẻ nội bộ source + RC1 trong repo private | **GO**, kèm các giới hạn trong `NOTICE.md` và `SECURITY.md` |
-| Chốt crypto RTL freeze cuối | **CHƯA**, còn review độc lập |
+| Chốt crypto RTL freeze cuối | **CHƯA**, P0 secure-zeroize và review độc lập chưa đóng |
 | Chốt PUF là golden/production | **NO-GO**, thiếu same-root/PVT/nhiều board/entropy |
 | Bắt đầu khảo sát ASIC frontend | **GO có điều kiện**, dùng portability gate |
 | Full ASIC backend/sign-off | **CHƯA**, thiếu PDK/macro/memory/SDC/DFT và các freeze đầu vào |
@@ -41,12 +41,12 @@ nội dung triển khai FPGA với public/production release.
 | ML-KEM-512 Decaps và implicit rejection | PASS 25/25 + 175/175; K/J exact, timing bằng nhau |
 | SHAKE256 KDF KAT | PASS bit-exact, datapath cố định 24-byte → 64-byte |
 | Kyber functional loopback | PASS |
-| AXI start/status/key-match/zeroize | PASS |
+| AXI start/status/key-match/zeroize nhìn thấy | PASS; chưa chứng minh scrub RAM/sponge |
 | Kyber single-attempt 1.024 vector | PASS, mismatch 0, retry 0 |
 | Ciphertext codec round-trip | PASS |
 | Full-system firmware/UART simulation | PASS |
 | Abstraction backend FPGA/ASIC và ASIC-generic elaboration | PASS; chưa phải ASIC synthesis/P&R |
-| Crypto RTL freeze candidate v3 | Full `crypto-freeze-gate` PASS tuần tự; còn Vivado impact review và review độc lập |
+| Crypto RTL freeze candidate v3 | Full gate/Vivado/board PASS; không promote vì P0 secure-zeroize |
 | Audit netlist RO Xilinx | PASS, 128/128 feedback net được constraint |
 | Tái lập placement/pin/route RO full-SoC | PASS, 2 build sạch khớp fingerprint RC1 |
 | Board regression image route-lock | PASS INFO/enroll/reconstruct và 10.000/10.000; đã restore RC1 |
@@ -54,6 +54,8 @@ nội dung triển khai FPGA với public/production release.
 | Watchdog có giới hạn, không retry | PASS |
 | Synthesis/place/route/timing artifact RC1/v2 | PASS ở 50 MHz, WNS `+2,226 ns`, WHS `+0,034 ns` |
 | DRC/route artifact RC1/v2 | PASS, 0 lỗi, 0 net chưa route |
+| Candidate v3 Vivado impact | PASS 50 MHz: 49.886 LUT, WNS `+4,732 ns`, WHS `+0,034 ns`, route đủ, 0 Error DRC |
+| Candidate v3 board regression | PASS INFO/enroll/reconstruct và 100/1.000/10.000 vòng; board đã restore RC1 |
 | INFO/enroll/reconstruct artifact RC1/v2 trên board | PASS, protocol 1.2/capability `0x06` |
 | INFO/enroll/reconstruct RC4 trên board | PASS |
 | Stress board RC4 | PASS 100, 1.000 và 10.000 vòng |
@@ -80,8 +82,10 @@ phải được đóng hoặc có kế hoạch/waiver được review.
 bit-exact KeyGen/Encaps với toàn bộ 25 vector ML-KEM-512 AFT tương ứng trong
 sample NIST ACVP, 25 Decaps hợp lệ và 175 ca implicit rejection với oracle độc
 lập. Artifact RC1/candidate v2 tại source `8d2e8cd` đã hoàn tất Vivado
-implementation và board regression; kết quả đó chưa được gán cho candidate v3. Thiết kế
-vẫn chưa có API kiểm tra khóa ngoài.
+implementation và board regression. Candidate v3 tại `1dcdad8` đã PASS Vivado
+implementation cách ly, physical-lock audit và board regression 10.000/10.000,
+nhưng chưa quảng bá do zeroization sâu chưa đóng. Thiết kế vẫn chưa có API kiểm
+tra khóa ngoài.
 RO-PUF mới được đo trên một board ở điều kiện phòng. Route-lock đã đóng rủi ro
 implementation ngẫu nhiên làm đổi miền RO giữa các build full-SoC;
 qualification PVT, same-root và nhiều board vẫn chưa đóng.
@@ -126,7 +130,7 @@ qualification PVT, same-root và nhiều board vẫn chưa đóng.
 - Stress: 100/100, 1.000/1.000, 10.000/10.000; fail/timeout/retry bằng 0
 - Run 10.000: 29,608 ms/giao dịch, 33,775 giao dịch/s
 
-Trạng thái đúng là **ML-KEM-512 FPGA internal RC đã PASS toàn bộ gate kỹ thuật
-hiện có, gồm board regression; còn chờ review độc lập trước crypto freeze
-cuối**. Public release vẫn phải dừng ở license gate; production release còn
+Trạng thái đúng là **ML-KEM-512 FPGA internal RC đã PASS toàn bộ gate functional
+và board hiện có; crypto freeze vẫn bị chặn bởi secure-zeroize sâu và review
+độc lập**. Public release vẫn phải dừng ở license gate; production release còn
 phải dừng ở qualification PUF và xác minh mật mã/bảo mật.

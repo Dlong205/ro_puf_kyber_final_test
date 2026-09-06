@@ -14,7 +14,7 @@ thay đổi RTL, tích hợp, chạy gate và chốt artifact.
 | `fpga-mlkem512-0.2.0-rc1` tại `7abbd79` | Bitstream ML-KEM-512 đã test board | Artifact FPGA nội bộ hiện được chấp nhận |
 | `crypto-rtl-freeze-candidate-2-2026-09-04` tại `c323408` | Manifest crypto candidate v2 | Chưa phải freeze cuối; còn review độc lập |
 | Nhánh tích hợp sau RC1 | Characterization và physical route-lock RO | 10.000 mẫu ngắn hạn + hai build route-lock đã có bằng chứng |
-| Candidate v3 trên `codex/asic-frontend-mlkem512` | Sửa FIFO wrapper, khóa secret ở ASIC top và thêm front-end gate | Full RTL/ASIC gate PASS; chưa chạy lại Vivado/board, chưa freeze cuối |
+| Candidate v3 trên `codex/asic-frontend-mlkem512` | Sửa FIFO wrapper, khóa secret ở ASIC top và thêm front-end gate | Full gate/Vivado/board 10.000 PASS; P0 secure-zeroize chặn freeze cuối |
 
 ## Trạng thái chung
 
@@ -25,7 +25,7 @@ thay đổi RTL, tích hợp, chạy gate và chốt artifact.
 | FPGA XC7Z020 50 MHz | PASS implementation/timing/DRC và board stress 10.000/10.000 |
 | RO physical reproducibility | PASS full-SoC: 136 endpoint, 128 fixed route, hai build sạch khớp fingerprint |
 | RO-PUF ngắn hạn | PASS sơ bộ trên một board/image PUF-only: 10.000 mẫu, HD max 1 |
-| Crypto RTL freeze cuối | CONDITIONAL: còn review độc lập |
+| Crypto RTL freeze cuối | BLOCKED: phải sửa scrub NTT/FIFO/sponge/FE/KDF rồi review độc lập |
 | Freeze RO-PUF | NO-GO: thiếu same-root full-SoC, count-margin, PVT, power-cycle và nhiều board |
 | ASIC | Portability/elaboration PASS; backend/sign-off chưa bắt đầu |
 | Public release | BỊ CHẶN bởi license và các gate production còn mở |
@@ -36,9 +36,9 @@ thay đổi RTL, tích hợp, chạy gate và chốt artifact.
 |---|---|---|---|
 | Đạt | Mapping FIPS 203, ACVP/oracle, serialization, implicit rejection và provenance | KAT/oracle functional PASS | Biên bản review độc lập và danh sách sai khác/claim được phép dùng |
 | Tùng | Vi kiến trúc Kyber/ML-KEM: Client/Server, NTT, codec, FIFO/BRAM/AXI, liveness và single-attempt | Regression 1.024 raw + board 10.000 PASS | Review assertion/invariant, latency/resource và không starvation/underflow |
-| Minh | Threat model, lưu khóa, helper, access policy, provisioning và zeroization | Release UART không xuất secret; zeroize hiện có đã qua regression | Sơ đồ vòng đời khóa và policy cho reset/lỗi/timeout/tamper/persistent storage |
+| Minh | Threat model, lưu khóa, helper, access policy, provisioning và zeroization | Release UART không xuất secret; AXI clear phần nhìn thấy đã qua regression | Rà thiết kế scrub/handshake và vòng đời khóa cho reset/lỗi/timeout/tamper/storage |
 | Việt Anh | KDF, Keccak, FIPS 202, domain separation và byte ordering | 50/50 FIPS 202 + KDF fixed-profile PASS | Review độc lập mapping H/G/J/PRF/XOF và ranh giới serialization |
-| Long | Toàn bộ implementation/tích hợp/release, fuzzy extractor, firmware/UART/host, RO-PUF, FPGA và ASIC portability | ML-KEM RC1 + route-lock + campaign PUF ban đầu đã hoàn thành | Đóng review crypto, same-root/count-margin/PVT/nhiều board, rồi chuẩn bị PDK/macro ASIC |
+| Long | Toàn bộ implementation/tích hợp/release, fuzzy extractor, firmware/UART/host, RO-PUF, FPGA và ASIC portability | ML-KEM RC1 + v3 board 10.000 + route-lock + campaign PUF ban đầu | Tạo v4 secure-zeroize, rồi same-root/count-margin/PVT/nhiều board và PDK/macro ASIC |
 
 Chi tiết từng phần:
 
@@ -83,8 +83,8 @@ fingerprint với RC1 và board regression theo
 
 ## Thứ tự ưu tiên chung
 
-1. Review độc lập crypto và chốt freeze manifest cuối.
-2. Threat model/vòng đời khóa và kiểm thử zeroize ở mọi đường lỗi.
+1. Sửa P0 secure-zeroize, thêm handshake và test trực tiếp mọi vùng secret.
+2. Review độc lập crypto và chốt freeze manifest cuối.
 3. Same-root full-SoC, count-margin, warm/cold boot, PVT và nhiều board cho PUF.
 4. Chốt contract macro RO, memory mapping, SDC/CDC/DFT và PDK.
 5. Chỉ sau các cổng trên mới gọi full ASIC backend và sign-off.

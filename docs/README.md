@@ -1,7 +1,6 @@
 # Chỉ mục tài liệu
 
-Bằng chứng đến **2026-09-05**, tài liệu đồng bộ **2026-09-06** cho integration
-`0.2.0-rc2-dev`. Artifact FPGA được
+Bằng chứng đến **2026-09-06** cho integration `0.2.0-rc2-dev`. Artifact FPGA được
 chấp nhận vẫn là ML-KEM-512 `0.2.0-rc1`; các tài liệu sau RC1 bổ sung
 characterization và physical route-lock.
 
@@ -15,6 +14,8 @@ characterization và physical route-lock.
 | Xác minh FIPS 202 | [`FIPS202_VERIFICATION_2026-09-03.md`](FIPS202_VERIFICATION_2026-09-03.md) |
 | Xác minh ML-KEM/FIPS 203 | [`FIPS203_VERIFICATION_2026-09-04.md`](FIPS203_VERIFICATION_2026-09-04.md) |
 | Crypto freeze candidate | [`CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md`](CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md) |
+| Vivado impact candidate v3 | [`VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md`](VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md) |
+| Board regression candidate v3 | [`HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md`](HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md) |
 | Kết quả FPGA ML-KEM RC1 | [`HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md`](HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md) |
 | Characterization RO-PUF | [`PUF_CHARACTERIZATION_2026-09-05.md`](PUF_CHARACTERIZATION_2026-09-05.md) |
 | Kế hoạch qualification RO-PUF | [`PUF_QUALIFICATION_PLAN.md`](PUF_QUALIFICATION_PLAN.md) |

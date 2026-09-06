@@ -3,9 +3,10 @@
 Trạng thái: **CANDIDATE v3, chưa phải freeze cuối**. Candidate
 v2/tag cũ vẫn là mốc FPGA đã kiểm chứng. V3 sửa kết nối output của bảy FIFO
 wrapper để loại multiple-driver/undriven alias mà lint ASIC phát hiện, đồng thời
-thêm policy khóa readback seed/shared-secret cho top ASIC. Full candidate gate
-đã PASS tuần tự ngày 2026-09-06; còn phải đánh giá lại Vivado và có review độc
-lập trước khi nâng trạng thái.
+thêm policy khóa readback seed/shared-secret cho top ASIC. Full candidate gate,
+Vivado impact và đúng-image board regression đã PASS tuần tự ngày 2026-09-06.
+Tuy nhiên AI pre-review phát hiện P0 secure-zeroize nên v3 **bị chặn**, không
+được quảng bá hoặc nâng trạng thái; review độc lập của con người vẫn còn thiếu.
 
 Thay đổi v3 không đổi depth, width, latency hay full/empty semantics: output của
 `generic_fifo_sync` được nối vào wire nội bộ đã có rồi mới assign ra wrapper,
@@ -51,8 +52,21 @@ tạo manifest mới trước khi backend.
 | Kyber raw single-attempt | PASS 1.024/1.024, mismatch/retry bằng 0 |
 | ASIC portability | PASS, top elaborates với `KP_TARGET_ASIC` |
 | Freeze manifest | PASS tập file và SHA-256 |
+| Vivado synthesis/place/route/bitgen | PASS ở 50 MHz trên `xc7z020clg400-2` |
+| Timing/route | WNS `+4,732 ns`, WHS `+0,034 ns`, 70.741/70.741 net |
+| DRC/RO physical lock | 0 Error, 165 warning đã phân loại; 136 endpoint/128 route khớp RC1 |
+| Board đúng image v3 | PASS INFO/enroll/reconstruct; stress 100/100, 1.000/1.000 và 10.000/10.000 |
 
-## Bằng chứng FPGA kế thừa, chưa gán cho v3
+## Vivado impact của candidate v3
+
+Build cách ly tại source `1dcdad8ccb8c5acda5b11fcf754b2d686818d718`
+dùng 49.886/53.200 LUT (`93,77%`), 30.649 register, 25 BRAM tile và 4 DSP.
+Bitstream 4.045.676 byte có SHA-256
+`b9f40dce606bcd429b5a97a123df1169e33c7ceca64ec901392651c60b4fa61e`.
+Fingerprint RO SHA-256 `1fbad9f...` khớp byte-for-byte với RC1. Chi tiết tại
+[`VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md`](VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md).
+
+## Bằng chứng board
 
 Implementation/board đã PASS tương ứng artifact RC1/candidate v2 tại source
 commit
@@ -63,6 +77,27 @@ Artifact đã được quảng bá thành `Kyber_System_Top.bit` cho version
 `0.2.0-rc1` sau khi board PASS.
 Chi tiết tại
 [`HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md`](HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md).
+
+Đúng image candidate v3 SHA-256 `b9f40dce...` đã PASS JTAG, INFO,
+enroll/reconstruct và stress dài 10.000/10.000. Board sau đó được khôi phục về
+RC1 và reconstruct smoke với helper mới PASS. Chi tiết tại
+[`HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md`](HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md).
+
+## Kết quả AI pre-review — blocker mở
+
+Review tĩnh hỗ trợ bằng AI không thay thế reviewer độc lập. Review không thấy
+lỗi functional mới trong serialization/rejection fixed-size `k=2`, nhưng tìm
+thấy các vùng bí mật chưa được lệnh zeroize hiện tại xóa hoặc chứng minh xóa:
+
+- `s-hat` và dữ liệu trung gian trong NTT/FIFO/ciphertext RAM; reset hiện chỉ
+  xóa pointer/control, không ghi đè array;
+- bốn state 1.600-bit của `sha3_shake_core`;
+- `key_out`/register trung gian của fuzzy extractor và `seed_out` của KDF;
+- test AXI hiện chỉ quan sát seed/status/K ở interface, chưa kiểm các vùng trên.
+
+Các điểm P1 còn mở gồm reset giữa mọi phase, mutation ciphertext rộng hơn,
+assert đủ compare-event và review leakage sau synthesis. Do đó board PASS không
+thể được dùng để bỏ qua P0 zeroization.
 
 Chạy lại toàn bộ cổng candidate bằng một lệnh. Makefile ép các pha chạy tuần tự
 kể cả khi lệnh ngoài có tùy chọn `-j`:
@@ -81,14 +116,15 @@ make crypto-freeze-check
 
 1. ~~Chạy lại `make -j1 crypto-freeze-gate` sau sửa FIFO/policy secret.~~
    **PASS** ngày 2026-09-06.
-2. Chạy Vivado implementation trên đúng `xc7z020clg400-2`, kiểm utilization,
-   timing, route và DRC của candidate v3.
-3. Nếu implementation v3 được dùng làm artifact FPGA, nạp đúng bitstream mới
-   và chạy INFO/enroll/reconstruct cùng stress board; không tái sử dụng kết quả
-   RC1 để gắn nhãn v3.
-4. Có review độc lập cho serialization, compare/mux rejection, reset và
+2. ~~Chạy Vivado implementation trên đúng `xc7z020clg400-2`, kiểm utilization,
+   timing, route và DRC của candidate v3.~~ **PASS** ngày 2026-09-06.
+3. ~~Nạp đúng bitstream v3 và chạy INFO/enroll/reconstruct cùng stress board.~~
+   **PASS** 100/100, 1.000/1.000 và 10.000/10.000 ngày 2026-09-06; đã restore RC1.
+4. Sửa secure-zeroize sâu, bổ sung handshake/test RAM/sponge/FE/KDF và tạo
+   candidate/manifest mới; không sửa lịch sử v3.
+5. Có review độc lập cho serialization, compare/mux rejection, reset và
    zeroization.
-5. Chạy lại `make -j1 crypto-freeze-gate` trên working tree sạch, rồi mới tạo
+6. Chạy lại `make -j1 crypto-freeze-gate` trên working tree sạch, rồi mới tạo
    tag freeze cuối. Giữ tag `fpga-rc4-baseline` bất biến để so sánh.
 
 ## Change control

@@ -40,7 +40,8 @@ người thực hiện thay đổi RTL, tích hợp test và chốt artifact.
 ## Đã hoàn thành
 
 - Legacy Kyber functional loopback: PASS, server/client cùng shared key.
-- AXI handshake/zeroize: PASS 32 giao dịch.
+- AXI handshake/clear seed-status nhìn thấy: PASS 32 giao dịch; scrub RAM/sponge
+  chưa đóng ở candidate v3.
 - Raw gate: PASS 1.024/1.024, mismatch 0, retry 0, max attempt 1.
 - Codec round-trip: PASS.
 - Board full pipeline: PASS 10.000/10.000.
@@ -51,8 +52,8 @@ người thực hiện thay đổi RTL, tích hợp test và chốt artifact.
   test hiện có.
 - Artifact RC1/candidate v2 tại source `8d2e8cd` PASS Vivado implementation
   50 MHz và board stress 10.000/10.000.
-- Candidate v3 PASS full RTL/ASIC front-end gate sau sửa FIFO và policy khóa
-  secret; chưa chạy lại Vivado/board.
+- Candidate v3 PASS full RTL/ASIC front-end gate, Vivado và đúng-image board
+  stress 10.000/10.000; không promote vì P0 secure-zeroize.
 
 Kết luận đúng là **ML-KEM-512 internal algorithm functional PASS**. Đây không
 phải chứng nhận CAVP, FIPS 140-3 hoặc review mật mã độc lập.
@@ -67,7 +68,8 @@ phải chứng nhận CAVP, FIPS 140-3 hoặc review mật mã độc lập.
    test API khóa/ciphertext ngoài thay vì chỉ seed nội bộ.
 4. Thêm assertion cho FIFO underflow/overflow, FSM progress, số coefficient và
    quy tắc đúng một attempt.
-5. Rà constant-time, zeroization và nguồn randomness cùng Minh và Việt Anh.
+5. Đóng scrub NTT/FIFO/ciphertext RAM và sponge state; rà constant-time và
+   nguồn randomness cùng Minh và Việt Anh.
 6. Ký xác nhận review báo cáo JTAG/UART và stress 10.000/10.000 đã có; nếu phát
    hiện sai khác phải mở lại candidate và chạy lại gate.
 

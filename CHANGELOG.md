@@ -12,6 +12,14 @@
 - Khép kín filelist ASIC: thêm đủ chín translation unit Keccak và chín header,
   khóa checksum header, đồng thời so dependency record để chặn module/header
   bị Verilator auto-load ngoài manifest.
+- Candidate v3 tại `1dcdad8` PASS lại Vivado 2020.1 trên `xc7z020clg400-2` ở
+  50 MHz: 49.886 LUT, WNS `+4,732 ns`, WHS `+0,034 ns`, route đủ và 0 lỗi DRC.
+  Audit giữ đúng 136 endpoint/128 route RO. Đúng bitstream v3 sau đó PASS
+  INFO/enroll/reconstruct và stress 100/100, 1.000/1.000, 10.000/10.000 trên
+  board; RC1 root giữ nguyên SHA-256 `183e0af367376ebd...` và đã được nạp lại.
+- AI pre-review không nâng v3 thành freeze cuối: lệnh zeroize mới chỉ đóng
+  seed/status/readback nhìn thấy, chưa scrub NTT/FIFO RAM, sponge state, khóa FE
+  và seed KDF. Phần này được mở thành candidate kế tiếp thay vì waiver ngầm.
 - Xuất physical lock full-SoC từ routed DCP ML-KEM RC1 đã chấp nhận: cố định
   128 LUT RO, 8 LUT mux đầu cuối và 128 route vật lý.
 - Thêm fingerprint V2 gồm `INIT`, loại cell, LOC/BEL, pin-map, endpoint và

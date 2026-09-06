@@ -26,7 +26,8 @@ Long thực hiện mọi thay đổi RTL/firmware/test tích hợp.
 ## Đã hoàn thành trên ML-KEM RC1
 
 - Release firmware có capability `0x06` và không xuất shared secret qua UART.
-- Seed/status/key Kyber được zeroize sau giao dịch.
+- Seed/status/key nhìn thấy ở giao diện Kyber được clear sau giao dịch; candidate
+  v3 chưa scrub RAM/sponge/FE/KDF nên chưa được gọi là zeroize vật lý hoàn chỉnh.
 - Helper PUF được host lưu ngoài repo; helper không được xem là secret nhưng gắn
   với board/lần enroll.
 - AXI/firmware/full-system regression hiện có đều PASS; đây là bằng chứng chức

@@ -43,8 +43,8 @@ quyết định artifact nào được quảng bá.
   synthesis, place/route, timing/DRC và tạo bitstream ở 50 MHz.
 - Artifact này dùng 49.909/53.200 LUT (`93,81%`), WNS `+2,226 ns`; board
   regression PASS 10.000/10.000, fail 0.
-- Candidate v3 đã PASS full RTL/ASIC front-end gate; Vivado/board impact review
-  chưa chạy lại.
+- Candidate v3 đã PASS full RTL/ASIC front-end gate, Vivado và đúng-image board
+  stress 10.000/10.000; board đã restore RC1. P0 secure-zeroize chặn promote.
 - Counter đã dùng asynchronous-assert/synchronous-release và đồng bộ enable.
 - Image PUF-only đã lấy 10.000 mẫu ở điều kiện phòng trên một board: HD
   max/p99 bằng 1, không mẫu nào vượt BCH `t=8`, một bit dao động (bit 149).
@@ -70,7 +70,8 @@ quyết định artifact nào được quảng bá.
 
 ## Còn mở theo thứ tự ưu tiên
 
-1. Hoàn tất review độc lập và chốt crypto RTL freeze từ candidate đã PASS board.
+1. Tạo candidate v4 đóng P0 secure-zeroize, chạy lại full gate/Vivado/board rồi
+   mới chuyển sang review độc lập và freeze.
 2. Thêm count-margin telemetry, tie/zero detection và số lỗi BCH đã sửa; ưu
    tiên challenge tạo bit 149.
 3. Đo same-root trên chính full-SoC hoặc bằng instrumentation không làm thay đổi
