@@ -1,9 +1,11 @@
 # Makefile for Kyber-512 functional loopback verification (Verilator)
 # Usage: make kat
+#        make kat-invalid
 #        make clean
 
 VERILATOR = verilator
-VERILATOR_FLAGS = --cc --exe --trace --timing \
+DEBUG_FLAGS ?=
+VERILATOR_FLAGS = --cc --exe --trace --timing $(DEBUG_FLAGS) \
     -CFLAGS "-std=c++17 -O2" \
     -LDFLAGS "-lstdc++" \
     -I../../rtl/kyber/ref \
@@ -70,6 +72,10 @@ kat: obj_dir/$(SIM_EXE)
 	@echo "=== Running legacy Kyber-512 functional loopback verification ==="
 	@obj_dir/$(SIM_EXE)
 
+kat-invalid: obj_dir/$(SIM_EXE)
+	@echo "=== Running ML-KEM-512 implicit-rejection verification ==="
+	@obj_dir/$(SIM_EXE) +INVALID_CT
+
 obj_dir_axi/$(AXI_EXE): $(COMMON_SRCS) $(HASH_CORE_SRCS) $(KYBER_SRCS) ../../rtl/kyber/kyber_axi_wrapper.v tb_axi_main.cpp axi_wrapper_tb.sv
 	$(VERILATOR) $(VERILATOR_FLAGS) --Mdir obj_dir_axi --top-module $(AXI_TOP) $(COMMON_SRCS) $(HASH_CORE_SRCS) $(KYBER_SRCS) ../../rtl/kyber/kyber_axi_wrapper.v tb_axi_main.cpp axi_wrapper_tb.sv
 	$(MAKE) -C obj_dir_axi -f V$(AXI_TOP).mk V$(AXI_TOP)
@@ -98,4 +104,4 @@ clean:
 	rm -rf obj_dir obj_dir_axi obj_dir_codec
 	rm -f waveform.vcd
 
-.PHONY: kat axi strict-raw strict-raw-long codec clean
+.PHONY: kat kat-invalid axi strict-raw strict-raw-long codec clean

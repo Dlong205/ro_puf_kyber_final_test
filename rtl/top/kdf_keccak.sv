@@ -1,12 +1,14 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-// Key derivation used between the fuzzy extractor and Kyber subsystem.
+// Fixed-profile KDF between the fuzzy extractor and ML-KEM-512.
 //
-// Function: SHAKE256(key_in as 24 little-endian bytes, 64 output bytes).
-// The byte-oriented FIPS 202 controller handles padding and permutation block
-// boundaries internally.  seed_out keeps the historical project convention:
-// digest byte 0 is stored in seed_out[7:0].
+// Function: SHAKE256(key_in[191:0] as 24 little-endian bytes, 64 output
+// bytes). This controller intentionally uses the project's compact 32-bit
+// Keccak stream datapath. The general byte-stream fips202_sponge remains the
+// independently tested reference implementation for arbitrary lengths and
+// all four FIPS 202 primitives, but instantiating that general controller here
+// costs a second 1600-bit state buffer on FPGA.
 module kdf_keccak (
     input  wire         clk,
     input  wire         rst_n,
@@ -16,113 +18,185 @@ module kdf_keccak (
     output reg  [511:0] seed_out
 );
 
-    localparam [2:0] ST_IDLE  = 3'd0;
-    localparam [2:0] ST_START = 3'd1;
-    localparam [2:0] ST_FEED  = 3'd2;
-    localparam [2:0] ST_READ  = 3'd3;
-    localparam [2:0] ST_WAIT  = 3'd4;
+    localparam [3:0] ST_IDLE        = 4'd0;
+    localparam [3:0] ST_CLEAR       = 4'd1;
+    localparam [3:0] ST_INIT        = 4'd2;
+    localparam [3:0] ST_ABSORB_KEY  = 4'd3;
+    localparam [3:0] ST_DOMAIN      = 4'd4;
+    localparam [3:0] ST_PAD_ZERO    = 4'd5;
+    localparam [3:0] ST_PAD_FINAL   = 4'd6;
+    localparam [3:0] ST_CAPACITY    = 4'd7;
+    localparam [3:0] ST_PERM_START  = 4'd8;
+    localparam [3:0] ST_PERM_WAIT   = 4'd9;
+    localparam [3:0] ST_SQUEEZE     = 4'd10;
+    localparam [3:0] ST_DONE        = 4'd11;
 
-    reg [2:0]   state;
-    reg [5:0]   byte_count;
+    reg [3:0] state;
+    reg [3:0] next_state;
+    reg [5:0] word_count;
     reg [191:0] key_shift;
 
-    wire        sponge_start;
-    wire        sponge_in_ready;
-    wire        sponge_out_valid;
-    wire [7:0]  sponge_out_data;
-    wire        sponge_out_last;
-    wire        sponge_done;
-    wire        sponge_error;
-    wire        sponge_busy_unused;
+    reg         keccak_init;
+    reg         keccak_extend;
+    reg         keccak_absorb;
+    reg         keccak_go;
+    reg         keccak_shift;
+    reg  [31:0] keccak_din;
+    wire        keccak_done;
+    wire [31:0] keccak_dout;
 
-    assign sponge_start = (state == ST_START);
-
-    fips202_sponge sponge (
-        .clk           (clk),
-        .rst_n         (rst_n),
-        .start         (sponge_start),
-        .mode          (2'b01),       // SHAKE256
-        .msg_len_bytes (32'd24),
-        .out_len_bytes (32'd64),
-        .in_valid      (state == ST_FEED),
-        .in_ready      (sponge_in_ready),
-        .in_data       (key_shift[7:0]),
-        .out_valid     (sponge_out_valid),
-        .out_ready     (state == ST_READ),
-        .out_data      (sponge_out_data),
-        .out_last      (sponge_out_last),
-        .busy          (sponge_busy_unused),
-        .done          (sponge_done),
-        .error         (sponge_error)
+    keccak_f1600_server keccak_inst (
+        .clk     (clk),
+        .rst     (~rst_n),
+        .init    (keccak_init),
+        .squeeze (keccak_shift),
+        .extend  (keccak_extend),
+        .absorb  (keccak_absorb),
+        .go      (keccak_go),
+        .din     (keccak_din),
+        .done    (keccak_done),
+        .dout    (keccak_dout)
     );
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state      <= ST_IDLE;
-            byte_count <= 6'd0;
+            word_count <= 6'd0;
             key_shift  <= 192'd0;
             seed_out   <= 512'd0;
             done       <= 1'b0;
         end else begin
-            done <= 1'b0;
+            state <= next_state;
+            done  <= 1'b0;
 
             case (state)
                 ST_IDLE: begin
                     if (start) begin
                         key_shift  <= key_in;
                         seed_out   <= 512'd0;
-                        byte_count <= 6'd0;
-                        state      <= ST_START;
+                        word_count <= 6'd0;
                     end
                 end
 
-                ST_START: begin
-                    // sponge_start is asserted throughout this cycle.
-                    state <= ST_FEED;
+                ST_CLEAR: word_count <= word_count + 6'd1;
+                ST_INIT: word_count <= 6'd0;
+
+                ST_ABSORB_KEY: begin
+                    word_count <= word_count + 6'd1;
+                    key_shift  <= {32'd0, key_shift[191:32]};
                 end
 
-                ST_FEED: begin
-                    if (sponge_in_ready) begin
-                        key_shift <= {8'd0, key_shift[191:8]};
-                        if (byte_count == 6'd23) begin
-                            byte_count <= 6'd0;
-                            state      <= ST_READ;
-                        end else begin
-                            byte_count <= byte_count + 6'd1;
-                        end
-                    end
+                ST_DOMAIN:   word_count <= word_count + 6'd1;
+                ST_PAD_ZERO: word_count <= word_count + 6'd1;
+
+                ST_PAD_FINAL:  word_count <= 6'd0;
+                ST_CAPACITY:   word_count <= word_count + 6'd1;
+                ST_PERM_START: word_count <= 6'd0;
+
+                ST_SQUEEZE: begin
+                    word_count <= word_count + 6'd1;
+                    seed_out   <= {keccak_dout, seed_out[511:32]};
                 end
 
-                ST_READ: begin
-                    if (sponge_out_valid) begin
-                        seed_out[(byte_count * 8) +: 8] <= sponge_out_data;
-                        if (sponge_out_last) begin
-                            byte_count <= 6'd0;
-                            state      <= ST_WAIT;
-                        end else begin
-                            byte_count <= byte_count + 6'd1;
-                        end
-                    end
-                end
-
-                ST_WAIT: begin
-                    if (sponge_done) begin
-                        // Configuration is fixed and valid, so an error here
-                        // indicates an internal protocol fault.  Return a
-                        // deterministic all-zero result instead of stale data.
-                        if (sponge_error)
-                            seed_out <= 512'd0;
-                        done  <= 1'b1;
-                        state <= ST_IDLE;
-                    end
-                end
-
-                default: begin
-                    seed_out <= 512'd0;
-                    state    <= ST_IDLE;
-                end
+                ST_DONE: done <= 1'b1;
+                default: ;
             endcase
         end
+    end
+
+    always @* begin
+        next_state    = state;
+        keccak_init   = 1'b0;
+        keccak_extend = 1'b0;
+        keccak_absorb = 1'b0;
+        keccak_go     = 1'b0;
+        keccak_shift  = 1'b0;
+        keccak_din    = 32'd0;
+
+        case (state)
+            ST_IDLE: begin
+                if (start)
+                    next_state = ST_CLEAR;
+            end
+
+            // Fifty zero shifts clear all 1600 state bits without adding a
+            // second wide resettable register bank.
+            ST_CLEAR: begin
+                keccak_shift = 1'b1;
+                if (word_count == 6'd49)
+                    next_state = ST_INIT;
+            end
+
+            ST_INIT: begin
+                keccak_init = 1'b1;
+                next_state  = ST_ABSORB_KEY;
+            end
+
+            // Six little-endian 32-bit words contain the 24-byte key.
+            ST_ABSORB_KEY: begin
+                keccak_absorb = 1'b1;
+                keccak_shift  = 1'b1;
+                keccak_din    = key_shift[31:0];
+                if (word_count == 6'd5)
+                    next_state = ST_DOMAIN;
+            end
+
+            // SHAKE256 delimited suffix 0x1f at rate word index 6.
+            ST_DOMAIN: begin
+                keccak_absorb = 1'b1;
+                keccak_shift  = 1'b1;
+                keccak_din    = 32'h0000001f;
+                next_state    = ST_PAD_ZERO;
+            end
+
+            // Zero-fill rate word indices 7..32.
+            ST_PAD_ZERO: begin
+                keccak_absorb = 1'b1;
+                keccak_shift  = 1'b1;
+                if (word_count == 6'd32)
+                    next_state = ST_PAD_FINAL;
+            end
+
+            // Final pad10*1 bit at byte 135 (rate word index 33).
+            ST_PAD_FINAL: begin
+                keccak_absorb = 1'b1;
+                keccak_shift  = 1'b1;
+                keccak_din    = 32'h80000000;
+                next_state    = ST_CAPACITY;
+            end
+
+            // Rotate the sixteen capacity words through unchanged so the
+            // stream-oriented state is aligned for Keccak-f[1600].
+            ST_CAPACITY: begin
+                keccak_extend = 1'b1;
+                if (word_count == 6'd15)
+                    next_state = ST_PERM_START;
+            end
+
+            ST_PERM_START: begin
+                keccak_go  = 1'b1;
+                next_state = ST_PERM_WAIT;
+            end
+
+            ST_PERM_WAIT: begin
+                if (keccak_done)
+                    next_state = ST_SQUEEZE;
+            end
+
+            // The requested 64 bytes fit inside the first SHAKE256 rate block.
+            ST_SQUEEZE: begin
+                keccak_extend = 1'b1;
+                if (word_count == 6'd15)
+                    next_state = ST_DONE;
+            end
+
+            ST_DONE: begin
+                if (!start)
+                    next_state = ST_IDLE;
+            end
+
+            default: next_state = ST_IDLE;
+        endcase
     end
 
 endmodule

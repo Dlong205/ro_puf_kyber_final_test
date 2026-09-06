@@ -19,13 +19,25 @@ test -s LICENSES/PicoRV32-ISC.txt || { echo "ERROR: PicoRV32 notice missing" >&2
 test -s SECURITY.md || { echo "ERROR: SECURITY.md missing" >&2; exit 1; }
 test -s NOTICE.md || { echo "ERROR: NOTICE.md missing" >&2; exit 1; }
 
-bitstream="build/vivado/kyber_ro_puf_zynq7020.runs/impl_1/Kyber_System_Top.bit"
-if [[ ! -s "$bitstream" && -s Kyber_System_Top.bit ]]; then
-  bitstream="Kyber_System_Top.bit"
-fi
+bitstream="Kyber_System_Top.bit"
+rebuilt_bitstream="build/vivado/kyber_ro_puf_zynq7020.runs/impl_1/Kyber_System_Top.bit"
 test -s "$bitstream" || { echo "ERROR: release bitstream missing" >&2; exit 1; }
+sha256sum -c ARTIFACTS.sha256
+if [[ -s "$rebuilt_bitstream" ]] && ! cmp -s "$bitstream" "$rebuilt_bitstream"; then
+  echo "ERROR: checked-in bitstream differs from the current rebuilt bitstream" >&2
+  exit 1
+fi
 test -s reports/post_route_timing.rpt || { echo "ERROR: timing report missing" >&2; exit 1; }
 test -s reports/post_route_drc.rpt || { echo "ERROR: DRC report missing" >&2; exit 1; }
+test -s reports/ro_physical_fingerprint.tsv || {
+  echo "ERROR: release RO physical fingerprint missing" >&2
+  exit 1
+}
+cmp -s constraints/ro_physical_fingerprint_rc1_zynq7020.tsv \
+  reports/ro_physical_fingerprint.tsv || {
+  echo "ERROR: release RO placement/pins/routes differ from RC1 physical baseline" >&2
+  exit 1
+}
 
 grep -q "All user specified timing constraints are met" reports/post_route_timing.rpt || {
   echo "ERROR: post-route timing did not pass" >&2

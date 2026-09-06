@@ -38,7 +38,9 @@ module sha3_shake_core(
     input  wire        rd_extend,   // explicit request to continue past rate
     output wire [31:0] dout,
     output wire        dout_valid,
-    output wire        done         // 1-clk pulse: a fresh block is available
+    output wire        done,        // 1-clk pulse: a fresh block is available
+    output wire        done_extend, // block came from an XOF continuation
+    output wire [5:0]  dout_rate_words
 );
 
     // ----------------------------------------------------------
@@ -46,6 +48,7 @@ module sha3_shake_core(
     // ----------------------------------------------------------
     reg [1:0] mode_latched;
     reg [5:0] rate_words;
+    reg [5:0] output_rate_words;
     reg [31:0] dom_word;
     always @(*) begin
         case (mode_latched)
@@ -78,9 +81,14 @@ module sha3_shake_core(
     localparam S_IDLE = 2'd0, S_PERMUTE = 2'd1, S_DONE = 2'd2, S_CAPTURE = 2'd3;
 
     reg          auto_squeeze_perm;
+    reg          perm_is_extend;
+    reg          queued_is_extend;
 
     wire permuting  = (perm_state != S_IDLE);
-    wire start_perm = have_block && (perm_state == S_IDLE);
+    // Do not overwrite squeeze_reg while the tail of the preceding rate is
+    // still pending.  The Kyber scheduler deliberately overlaps absorption
+    // of request N+1 with squeezing response N.
+    wire start_perm = have_block && (perm_state == S_IDLE) && !ready_flag;
     wire last_round = (round_count == 5'd23);
     wire init_clears = hard_init || auto_squeeze_perm ||
                        (wr_idx == 6'd0 && !have_block);
@@ -93,7 +101,10 @@ module sha3_shake_core(
     // ready_flag is insufficient because a new absorb/permutation may start
     // while the previous squeeze block still has ready_flag asserted.
     reg done_reg;
+    reg done_extend_reg;
     assign done = done_reg;
+    assign done_extend = done_extend_reg;
+    assign dout_rate_words = output_rate_words;
 
     // ----------------------------------------------------------
     // Permutation datapath (identical structure to legacy core)
@@ -128,6 +139,7 @@ module sha3_shake_core(
     always @(posedge clk) begin
         if (rst) begin
             mode_latched   <= 2'd0;
+            output_rate_words <= 6'd18;
             wr_idx         <= 6'd0;
             rd_idx         <= 6'd0;
             have_block     <= 1'b0;
@@ -137,9 +149,13 @@ module sha3_shake_core(
             perm_state     <= S_IDLE;
             perm_active    <= 1'b0;
             done_reg       <= 1'b0;
+            done_extend_reg <= 1'b0;
             auto_squeeze_perm <= 1'b0;
+            perm_is_extend <= 1'b0;
+            queued_is_extend <= 1'b0;
         end else begin
             done_reg <= 1'b0;
+            done_extend_reg <= 1'b0;
 
             // ---------------- permutation engine ----------------
             case (perm_state)
@@ -150,6 +166,12 @@ module sha3_shake_core(
                         perm_state     <= S_PERMUTE;
                         perm_active    <= 1'b1;
                         round_count    <= 5'd0;
+                        // Legacy Kyber supplies manual continuation blocks
+                        // with wr_xor=1; automatic squeeze blocks use
+                        // auto_squeeze_perm.  Both belong to the same XOF
+                        // stream and must retain its polynomial identity.
+                        perm_is_extend <= auto_squeeze_perm |
+                                          queued_is_extend;
                     end
                 end
                 S_PERMUTE: begin
@@ -163,11 +185,15 @@ module sha3_shake_core(
                     // the edge entering this cycle); latch it, then drop en.
                     squeeze_reg <= algo_out;
                     base_state  <= algo_out;
+                    // Keep the squeeze rate stable even when absorption of
+                    // the following transaction changes mode_latched.
+                    output_rate_words <= rate_words;
                     rd_idx      <= 6'd0;
                     ready_flag  <= 1'b1;
                     perm_active <= 1'b0;
                     perm_state  <= S_IDLE;
                     done_reg    <= 1'b1;
+                    done_extend_reg <= perm_is_extend;
                     if (pre_padded) begin
                         // The Kyber legacy FSM supplies complete rate blocks,
                         // including domain and final 0x80.  Seed the next
@@ -194,11 +220,11 @@ module sha3_shake_core(
             // start-of-message when nothing has been absorbed yet; otherwise
             // it must NOT wipe partially absorbed data.
             if (init) begin
-                mode_latched <= mode;
                 // Hard message boundaries must discard partial legacy
                 // squeeze traffic.  Soft state-11 pulses retain the original
                 // guard because they can arrive while a block is in flight.
                 if (init_clears) begin
+                    mode_latched <= mode;
                     block_reg    <= 1600'h0;
                     squeeze_reg  <= 1600'h0;
                     block_perm_src <= 1600'h0;
@@ -210,6 +236,8 @@ module sha3_shake_core(
                     pad_extra    <= 1'b0;
                     tail_pending <= 1'b0;
                     auto_squeeze_perm <= 1'b0;
+                    perm_is_extend <= 1'b0;
+                    queued_is_extend <= 1'b0;
                     if (hard_init || auto_squeeze_perm) begin
                         // A hard boundary or auto-squeeze continuation may arrive
                         // while permuting. Abort it so its S_CAPTURE cannot restore
@@ -275,6 +303,7 @@ module sha3_shake_core(
                     end
                     have_block <= 1'b1;
                     auto_squeeze_perm <= 1'b0;
+                    queued_is_extend <= pre_padded && wr_xor;
                     wr_idx     <= 6'd0;
                 end else begin
                     if (pre_padded && !wr_xor)
@@ -288,7 +317,7 @@ module sha3_shake_core(
             // ---------------- squeeze side ----------------
             if (rd_en && ready_flag && !permuting) begin
                 squeeze_reg <= {squeeze_reg[31:0], squeeze_reg[1599:32]};
-                if (rd_idx == rate_words - 1) begin
+                if (rd_idx == output_rate_words - 1) begin
                     // The legacy Kyber datapath often absorbs the next
                     // message while it drains the tail of a fixed digest.
                     // Crossing the rate in that overlap must stop the old
@@ -302,6 +331,7 @@ module sha3_shake_core(
                         block_reg  <= base_state;
                         have_block <= 1'b1;
                         auto_squeeze_perm <= 1'b1;
+                        queued_is_extend <= 1'b1;
                     end else begin
                         auto_squeeze_perm <= 1'b0;
                     end

@@ -39,6 +39,37 @@ module fifo_wrapper_36_32 #(
     assign dout = rd_data;
 endmodule
 
+module fifo_wrapper_40_32 #(
+    parameter integer DEPTH = 256
+) (
+    input wire clk,
+    input wire rst_n,
+    input wire wr_en,
+    input wire [39:0] wr_data,
+    input wire rd_en,
+    output wire [39:0] dout,
+    output wire full,
+    output wire empty
+);
+    generic_fifo_sync #(
+        .DEPTH(DEPTH),
+        .WIDTH(40)
+    ) inst (
+        .clk(clk),
+        .rst_n(rst_n),
+        .wr_en(wr_en),
+        .wr_data(wr_data),
+        .wr_full(full),
+        .wr_almost_full(),
+        .wr_count(),
+        .rd_en(rd_en),
+        .rd_data(dout),
+        .rd_empty(empty),
+        .rd_almost_empty(),
+        .rd_count()
+    );
+endmodule
+
 
 module fifo_wrapper_25_16 #(
     parameter integer DEPTH = 64

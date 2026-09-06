@@ -1,7 +1,9 @@
 # Trạng thái bảo mật
 
-`0.1.0-rc4` là ứng viên nghiên cứu/đánh giá FPGA. Thiết kế không tuyên bố đạt
-FIPS 203, FIPS 140-3, Common Criteria, constant-time hay khả năng chống
+`0.2.0-rc1` là artifact nghiên cứu/đánh giá FPGA đã được chấp nhận; nhánh tích
+hợp hiện là `0.2.0-rc2-dev`. Đường thuật toán ML-KEM-512
+đã PASS cổng functional bit-exact nội bộ nhưng thiết kế không tuyên bố có chứng
+nhận FIPS 203, FIPS 140-3, Common Criteria, constant-time hay khả năng chống
 side-channel/fault-injection.
 
 Firmware mặc định dùng `RELEASE_BUILD=1`: chỉ trả match/fail, không xuất shared
@@ -14,22 +16,31 @@ và cycle counter RISC-V. Cơ chế này tránh lặp input đơn giản trong m
 nhưng không phải TRNG đã đặc trưng hay DRBG được phê duyệt. Sản phẩm thực tế cần
 nguồn entropy và thiết kế sinh số ngẫu nhiên được xác minh độc lập.
 
-RC3 đã bỏ hoàn toàn retry Kyber; RC4 giữ nguyên logic đó và tách các backend
-phụ thuộc FPGA để chuẩn bị cho ASIC. Các lỗi FIFO starvation/underfill của NTT/SHAKE
-được sửa ở RTL và được kiểm tra bằng 1.024 giao dịch raw single-attempt trong mô
-phỏng cùng 10.000 giao dịch end-to-end trên board, đều không lỗi. Kết quả này làm
-tăng độ tin cậy chức năng nhưng không chứng minh mọi input, không phải formal
-verification và không biến core Kyber cũ thành FIPS 203 ML-KEM-512.
+RC3 đã bỏ hoàn toàn retry Kyber; RC4 tách các backend phụ thuộc FPGA để chuẩn bị
+cho ASIC. RC1 ML-KEM bổ sung KeyGen/Encaps/Decaps và implicit rejection theo
+FIPS 203, đối chiếu bit-exact bằng vector/oracle độc lập. Các lỗi FIFO
+starvation/underfill của NTT/SHAKE được sửa ở RTL và được kiểm tra bằng 1.024
+giao dịch raw single-attempt trong mô phỏng cùng 10.000 giao dịch end-to-end
+trên board, đều không lỗi. Kết quả này làm tăng độ tin cậy chức năng nhưng không
+chứng minh mọi input và không phải formal verification hay chứng nhận FIPS.
 
 Helper data RO-PUF là dữ liệu công khai nhưng gắn với board/lần enroll. Không
 commit các file như `helper.bin`, `hardware_helper.bin` hoặc bản helper dùng khi
 bring-up.
 
+Miền RO của full-SoC hiện đã được khóa và kiểm tra bằng fingerprint vật lý
+(136 endpoint, 128 route) qua hai build sạch. Đây chỉ là kiểm soát tái lập
+implementation. Campaign PUF-only 10.000 mẫu trên một board có HD tối đa 1,
+nhưng chưa tương đương image full-SoC và chưa bao phủ same-root, PVT hay nhiều
+board. Với 32 RO vật lý, upper bound cấu trúc theo mô hình thứ tự tần số là
+`log2(32!) = 117,663 bit`; không được tuyên bố entropy 192/512 bit từ độ dài
+fuzzy-extractor/KDF khi chưa có đánh giá entropy và helper leakage.
+
 Các khoảng trống trước production:
 
 1. Đặc trưng PUF trên nhiều board và nhiều power-cycle ở các góc điện áp/nhiệt độ.
 2. Đo entropy, reliability, intra/inter-device Hamming distance và aging.
-3. Đối chiếu ML-KEM-512 KAT chính thức hoặc thay core bằng implementation được review.
+3. Mở rộng corpus ML-KEM ngoài sample ACVP và hoàn tất review mật mã độc lập.
 4. Phân tích constant-time, side-channel, fault-injection và vòng đời secret.
 5. Formal/property verification cho FIFO, FSM và các điều kiện liveness.
 6. Giải quyết quyền phân phối và top-level license trước public release.

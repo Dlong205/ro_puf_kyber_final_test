@@ -30,6 +30,19 @@ reg fifo1_req, fifo1_req_r10;
 reg req_noise, req_noise_r1, req_noise_r2;
 wire req_noise_r12;
 reg req_noise_done;
+wire fifo1_req_pipe;
+wire fifo1_req_noise_pipe;
+wire fifo1_req_is_noise = fifo1_req &&
+	((state_r2 == 5'h a) || (state_r2 == 5'h b) ||
+	 (state_r2 == 5'h14) || (state_r2 == 5'h15));
+reg [6:0] noise_pop_count;
+
+// fifo1_req is issued nine cycles ahead of the registered FIFO output.  The
+// original stop condition therefore leaves one request in flight after a
+// 64-word eta2 polynomial.  Gate that trailing request at the actual FIFO
+// port so it cannot consume word zero of the following polynomial.
+assign fifo1_req_r9 = fifo1_req_pipe &
+	(~fifo1_req_noise_pipe || (noise_pop_count < 7'd64));
 
 reg [23:0] in0_butt, in1_butt, tw_butt;
 wire [23:0] out0_butt, out1_butt;
@@ -95,7 +108,13 @@ always @(*) case(state)
 	4'h 6 : next_state = (ctr_k == 7'h 7f) & ~fifo0_empty ?
 				state + 1'h 1 : state;
 	4'h 7 : next_state = ctr_k == 7'h 7f ? state + 1'h 1 : state;
-	4'h 8 : next_state = ctr_col == k_1 ? state + 1'h 1 : 4'h 6;
+	// The noise loader's address pipeline assumes a continuous 64-word
+	// polynomial.  Matrix generation and PRF run concurrently, so wait until
+	// the programmable-full threshold confirms that e' is completely queued
+	// before starting the inverse NTT stages that drain it.
+	4'h 8 : next_state = ctr_col == k_1 ?
+				(fifo1_full ? 5'h 9 : 5'h 1b) : 4'h 6;
+	5'h 1b : next_state = fifo1_full ? 5'h 9 : state;
 	4'h 9 : next_state = flag_j ? state + 1'h 1 : state;
 	4'h b : next_state = flag_j & flag_k & ctr_i[6] ? state + 1'h 1 : 5'h a;
 	5'h d : next_state = ctr_k == 7'h 3f ? state + 1'h 1 : 5'h c;
@@ -230,6 +249,16 @@ always @(posedge clk) begin
 	samp3_q <= samp3[2] ? 12'h cfd + {1'b0,samp3[1:0]} : samp3;
 end
 always @(posedge clk) begin
+	if(rst)
+		noise_pop_count <= 7'd0;
+	else if((state == 5'h9) || (state == 5'h13))
+		noise_pop_count <= 7'd0;
+	else if(fifo1_req_r9 && fifo1_req_noise_pipe && !fifo1_empty)
+		noise_pop_count <= noise_pop_count + 1'b1;
+	else
+		noise_pop_count <= noise_pop_count;
+end
+always @(posedge clk) begin
 	state_r1 <=state;
 	state_r2 <= state_r1;
 	state_r3 <= state_r2;
@@ -242,7 +271,10 @@ always @(posedge clk) begin
 	raddr_RAM2_lsb_r2 <= raddr_RAM2_lsb_r1;
 	req_noise_r1 <= req_noise;
 	req_noise_r2 <= req_noise_r1;
-	fifo1_req_r10 <= fifo1_req_r9;
+	// Keep the ungated pipeline strobe internally: its trailing cycle flushes
+	// the data returned by the 64th real FIFO pop into RAM4.  Only the external
+	// FIFO read port is gated to preserve the following polynomial's word 0.
+	fifo1_req_r10 <= fifo1_req_pipe;
 	ctr_col_r1 <= ctr_col;	
 	rdata_RAM_mux0_r1 <= rdata_RAM_mux0;
 	rdata_RAM_mux1_r1 <= rdata_RAM_mux1;
@@ -506,7 +538,8 @@ c_shift_ram_3_5 S4(.CLK(clk),.D(state_r3),.Q(state_r13));
 	c_shift_ram_4_6 S6(.CLK(clk),.D(raddr_RAM1),.Q(waddr_RAM1));
 	c_shift_ram_5 S7(.CLK(clk),.D(raddr_RAM2),.Q(waddr_RAM2));
 c_shift_ram_6 S9(.CLK(clk),.D(rdata_acc),.Q(rdata_acc_r8));
-c_shift_ram_8 S10(.CLK(clk),.D(fifo1_req),.Q(fifo1_req_r9));
+c_shift_ram_8 S10(.CLK(clk),.D(fifo1_req),.Q(fifo1_req_pipe));
+c_shift_ram_8 S10N(.CLK(clk),.D(fifo1_req_is_noise),.Q(fifo1_req_noise_pipe));
 c_shift_ram_11 S11(.CLK(clk),.D(req_noise_r2),.Q(req_noise_r12));
 
 endmodule

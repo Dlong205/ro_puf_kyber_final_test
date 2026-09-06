@@ -10,6 +10,6 @@
 *.xdc text eol=lf
 *.hex text eol=lf
 *.rpt text eol=lf
+*.tsv text eol=lf
 *.bit binary
 *.xls binary
-

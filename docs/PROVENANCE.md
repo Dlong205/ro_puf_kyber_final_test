@@ -1,6 +1,9 @@
 # Hồ sơ nguồn gốc source
 
-Ngày kiểm tra: 2026-08-30. Đây là hồ sơ nguồn gốc kỹ thuật, không phải ý kiến pháp lý.
+Nguồn upstream được kiểm tra ngày **2026-08-30**; trạng thái hồ sơ được đồng bộ
+với dự án ngày **2026-09-06**. Đây là hồ sơ nguồn gốc kỹ thuật, không phải ý
+kiến pháp lý. Quyền public redistribution vẫn bị chặn cho tới khi có bằng chứng
+mới bằng văn bản.
 
 ## Chuỗi thành phần
 
@@ -61,4 +64,5 @@ zip nguồn được ghi trong file vector; `import_nist_cavp.py` là script d�
 5. Chọn top-level license tương thích với source RO-PUF chịu GPL và nghĩa vụ của
    mọi thành phần khác.
 
-Cho đến khi hoàn thành các mục này, chỉ chia sẻ RC4 trong repo riêng tư của nhóm.
+Cho đến khi hoàn thành các mục này, chỉ chia sẻ các internal RC trong repo riêng
+tư của nhóm; không public source hoặc bitstream ML-KEM.

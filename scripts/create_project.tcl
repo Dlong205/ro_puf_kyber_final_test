@@ -7,6 +7,17 @@ set script_dir [file dirname [file normalize [info script]]]
 set root_dir [file normalize [file join $script_dir ..]]
 set build_dir [file join $root_dir build vivado]
 set project_name kyber_ro_puf_zynq7020
+set extra_constraint_files [list [file join $root_dir constraints \
+    ro_physical_lock_rc1_zynq7020.xdc]]
+if {[info exists soc_build_dir_override]} {
+    set build_dir [file normalize $soc_build_dir_override]
+}
+if {[info exists soc_project_name_override]} {
+    set project_name $soc_project_name_override
+}
+if {[info exists soc_extra_constraints]} {
+    set extra_constraint_files $soc_extra_constraints
+}
 
 file mkdir $build_dir
 create_project $project_name $build_dir -part xc7z020clg400-2 -force
@@ -78,7 +89,21 @@ set constraint_file [file join $root_dir constraints kp_zynq_7020.xdc]
 if {![file exists $constraint_file]} {
     error "Board constraint is missing: $constraint_file"
 }
-add_files -fileset constrs_1 -norecurse $constraint_file
+set constraint_files [list $constraint_file]
+foreach extra_constraint $extra_constraint_files {
+    set extra_constraint [file normalize $extra_constraint]
+    if {![file exists $extra_constraint]} {
+        error "Extra constraint is missing: $extra_constraint"
+    }
+    lappend constraint_files $extra_constraint
+}
+add_files -fileset constrs_1 -norecurse $constraint_files
+foreach extra_constraint $extra_constraint_files {
+    set constraint_object [get_files -quiet [file normalize $extra_constraint]]
+    set_property PROCESSING_ORDER LATE $constraint_object
+    set_property USED_IN_SYNTHESIS false $constraint_object
+    set_property USED_IN_IMPLEMENTATION true $constraint_object
+}
 
 set_property top Kyber_System_Top [get_filesets sources_1]
 set_property top_auto_set false [get_filesets sources_1]
