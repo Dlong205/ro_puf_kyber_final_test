@@ -1,13 +1,20 @@
-# Crypto RTL freeze candidate — 2026-09-04
+# Crypto RTL freeze candidate v3 — cập nhật 2026-09-06
 
-Trạng thái: **CANDIDATE v2, chưa phải freeze cuối**. Functional
-ML-KEM-512/FIPS 203, portability ASIC, Vivado implementation và board regression
-đã PASS. Cổng kỹ thuật còn lại trước freeze cuối là review độc lập.
+Trạng thái: **CANDIDATE v3, chưa phải freeze cuối**. Candidate
+v2/tag cũ vẫn là mốc FPGA đã kiểm chứng. V3 sửa kết nối output của bảy FIFO
+wrapper để loại multiple-driver/undriven alias mà lint ASIC phát hiện, đồng thời
+thêm policy khóa readback seed/shared-secret cho top ASIC. Full candidate gate
+đã PASS tuần tự ngày 2026-09-06; còn phải đánh giá lại Vivado và có review độc
+lập trước khi nâng trạng thái.
+
+Thay đổi v3 không đổi depth, width, latency hay full/empty semantics: output của
+`generic_fifo_sync` được nối vào wire nội bộ đã có rồi mới assign ra wrapper,
+thay vì vừa nối trực tiếp vừa assign thêm từ wire chưa drive.
 
 ## Phạm vi được khóa
 
-Manifest `manifests/crypto_rtl_freeze_candidate.sha256` khóa đúng các file
-Verilog/SystemVerilog trong:
+Manifest `manifests/crypto_rtl_freeze_candidate.sha256` khóa đúng các source
+Verilog/SystemVerilog và header `.vh/.svh` trong:
 
 - `rtl/common/`;
 - `rtl/hash_core/`;
@@ -29,7 +36,7 @@ Nếu yêu cầu sản phẩm đổi sang API nhập khóa ngoài, phải mở l
 thêm kiểm tra Sections 7.2/7.3 của FIPS 203, bổ sung malformed/length tests và
 tạo manifest mới trước khi backend.
 
-## Bằng chứng candidate
+## Bằng chứng candidate v3 đã chạy lại
 
 | Cổng | Kết quả |
 |---|---|
@@ -44,10 +51,11 @@ tạo manifest mới trước khi backend.
 | Kyber raw single-attempt | PASS 1.024/1.024, mismatch/retry bằng 0 |
 | ASIC portability | PASS, top elaborates với `KP_TARGET_ASIC` |
 | Freeze manifest | PASS tập file và SHA-256 |
-| Vivado synthesis/place/route | PASS, 49.909 LUT; timing/route/DRC đạt |
-| Board RTL mới | PASS INFO/enroll/reconstruct; stress 10.000/10.000 |
 
-Implementation tương ứng source commit
+## Bằng chứng FPGA kế thừa, chưa gán cho v3
+
+Implementation/board đã PASS tương ứng artifact RC1/candidate v2 tại source
+commit
 `8d2e8cda6d31e04e1557d64ca53d187cd85afc92`, Vivado 2020.1, part
 `xc7z020clg400-2`, clock 50 MHz. Bitstream local 4.045.676 byte có SHA-256
 `183e0af367376ebd7ca6bc2f3747314fd0602306a630af2a2e51858ef1f20e8e`.
@@ -71,16 +79,16 @@ make crypto-freeze-check
 
 ## Điều kiện nâng thành freeze cuối
 
-1. ~~Chạy Vivado implementation trên đúng `xc7z020clg400-2`.~~ **PASS**.
-2. ~~Kiểm tra utilization riêng của RTL ML-KEM mới.~~ **PASS**, 49.909 LUT,
-   30.649 register, 25 BRAM và 4 DSP sau route.
-3. ~~Nạp bitstream mới, chạy INFO, enroll, reconstruct và stress 10.000 giao
-   dịch single-attempt trên board.~~ **PASS**, 10.000/10.000, fail 0.
-4. ~~Cập nhật report, SHA-256 và quảng bá artifact root.~~ **PASS**, version
-   `0.2.0-rc1`.
-5. Có review độc lập cho serialization, compare/mux rejection, reset và
+1. ~~Chạy lại `make -j1 crypto-freeze-gate` sau sửa FIFO/policy secret.~~
+   **PASS** ngày 2026-09-06.
+2. Chạy Vivado implementation trên đúng `xc7z020clg400-2`, kiểm utilization,
+   timing, route và DRC của candidate v3.
+3. Nếu implementation v3 được dùng làm artifact FPGA, nạp đúng bitstream mới
+   và chạy INFO/enroll/reconstruct cùng stress board; không tái sử dụng kết quả
+   RC1 để gắn nhãn v3.
+4. Có review độc lập cho serialization, compare/mux rejection, reset và
    zeroization.
-6. Chạy lại `make -j1 crypto-freeze-gate` trên working tree sạch, rồi mới tạo
+5. Chạy lại `make -j1 crypto-freeze-gate` trên working tree sạch, rồi mới tạo
    tag freeze cuối. Giữ tag `fpga-rc4-baseline` bất biến để so sánh.
 
 ## Change control

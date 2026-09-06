@@ -15,7 +15,7 @@ test -s "$manifest" || {
 
 {
   find rtl/common rtl/hash_core rtl/kyber -type f \
-    \( -name '*.v' -o -name '*.sv' \) -print
+    \( -name '*.v' -o -name '*.sv' -o -name '*.vh' -o -name '*.svh' \) -print
   printf '%s\n' rtl/top/kdf_keccak.sv
 } | LC_ALL=C sort >"$expected_files"
 
@@ -26,4 +26,4 @@ if ! diff -u "$manifest_files" "$expected_files"; then
 fi
 
 sha256sum --check --strict "$manifest"
-echo "PASS: crypto RTL source set and SHA-256 freeze manifest match"
+echo "PASS: crypto RTL source/header set and SHA-256 freeze manifest match"

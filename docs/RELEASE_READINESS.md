@@ -46,15 +46,15 @@ nội dung triển khai FPGA với public/production release.
 | Ciphertext codec round-trip | PASS |
 | Full-system firmware/UART simulation | PASS |
 | Abstraction backend FPGA/ASIC và ASIC-generic elaboration | PASS; chưa phải ASIC synthesis/P&R |
-| Crypto RTL freeze candidate v2 | PASS regression/manifest/Vivado/board; chờ review độc lập |
+| Crypto RTL freeze candidate v3 | Full `crypto-freeze-gate` PASS tuần tự; còn Vivado impact review và review độc lập |
 | Audit netlist RO Xilinx | PASS, 128/128 feedback net được constraint |
 | Tái lập placement/pin/route RO full-SoC | PASS, 2 build sạch khớp fingerprint RC1 |
 | Board regression image route-lock | PASS INFO/enroll/reconstruct và 10.000/10.000; đã restore RC1 |
 | Shared-secret export tắt | PASS |
 | Watchdog có giới hạn, không retry | PASS |
-| Synthesis/place/route/timing ML-KEM | PASS ở 50 MHz, WNS `+2,226 ns`, WHS `+0,034 ns` |
-| DRC/route ML-KEM | PASS, 0 lỗi, 0 net chưa route |
-| INFO/enroll/reconstruct ML-KEM trên board | PASS, protocol 1.2/capability `0x06` |
+| Synthesis/place/route/timing artifact RC1/v2 | PASS ở 50 MHz, WNS `+2,226 ns`, WHS `+0,034 ns` |
+| DRC/route artifact RC1/v2 | PASS, 0 lỗi, 0 net chưa route |
+| INFO/enroll/reconstruct artifact RC1/v2 trên board | PASS, protocol 1.2/capability `0x06` |
 | INFO/enroll/reconstruct RC4 trên board | PASS |
 | Stress board RC4 | PASS 100, 1.000 và 10.000 vòng |
 | Stress board ML-KEM RC1 | PASS 100, 1.000 và 10.000 vòng |
@@ -79,7 +79,8 @@ phải được đóng hoặc có kế hoạch/waiver được review.
 đã PASS regression byte-oriented. Nhánh phát triển ML-KEM-512 đã đối chiếu
 bit-exact KeyGen/Encaps với toàn bộ 25 vector ML-KEM-512 AFT tương ứng trong
 sample NIST ACVP, 25 Decaps hợp lệ và 175 ca implicit rejection với oracle độc
-lập. Candidate đã hoàn tất Vivado implementation và board regression. Thiết kế
+lập. Artifact RC1/candidate v2 tại source `8d2e8cd` đã hoàn tất Vivado
+implementation và board regression; kết quả đó chưa được gán cho candidate v3. Thiết kế
 vẫn chưa có API kiểm tra khóa ngoài.
 RO-PUF mới được đo trên một board ở điều kiện phòng. Route-lock đã đóng rủi ro
 implementation ngẫu nhiên làm đổi miền RO giữa các build full-SoC;

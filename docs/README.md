@@ -20,6 +20,8 @@ characterization và physical route-lock.
 | Kế hoạch qualification RO-PUF | [`PUF_QUALIFICATION_PLAN.md`](PUF_QUALIFICATION_PLAN.md) |
 | Tái lập placement/routing RO | [`RO_PHYSICAL_REPRODUCIBILITY_2026-09-05.md`](RO_PHYSICAL_REPRODUCIBILITY_2026-09-05.md) |
 | Ranh giới FPGA → ASIC | [`ASIC_PORTABILITY.md`](ASIC_PORTABILITY.md) |
+| ASIC front-end đang triển khai | [`../asic/README.md`](../asic/README.md) |
+| Đặc tả/threat model/memory/CDC ASIC | [`../asic/docs/`](../asic/docs/) |
 | Nạp và test board | [`HARDWARE_BRINGUP.md`](HARDWARE_BRINGUP.md) |
 | Giao thức UART revision 1.2 | [`UART_PROTOCOL_V1.md`](UART_PROTOCOL_V1.md) |
 | Nguồn gốc và license | [`PROVENANCE.md`](PROVENANCE.md), [`../NOTICE.md`](../NOTICE.md) |

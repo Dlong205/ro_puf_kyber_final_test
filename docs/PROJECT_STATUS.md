@@ -2,7 +2,7 @@
 
 Bằng chứng cập nhật đến **2026-09-05**; tài liệu được đồng bộ ngày
 **2026-09-06**. Nhánh làm việc tích hợp là
-`codex/fips202-mlkem`; artifact FPGA được chấp nhận nằm tại tag
+`codex/asic-frontend-mlkem512`, tách từ `codex/fips202-mlkem`; artifact FPGA được chấp nhận nằm tại tag
 `fpga-mlkem512-0.2.0-rc1`. Tag `fpga-rc4-baseline` chỉ được giữ làm mốc so
 sánh Kyber/FPGA cũ. Các kết quả characterization và physical route-lock sau
 RC1 là bằng chứng bổ sung, không phải một phiên bản production mới.
@@ -13,11 +13,11 @@ RC1 là bằng chứng bổ sung, không phải một phiên bản production m�
 |---|---|---|
 | FIPS 202 byte-oriented cần cho ML-KEM | **DONE functional** | 50/50; chưa phải chứng nhận CAVP |
 | ML-KEM-512/FIPS 203 | **DONE functional nội bộ** | KAT/oracle, regression và board PASS; còn review độc lập |
-| Crypto RTL freeze cuối | **CONDITIONAL** | Candidate v2 đã khóa manifest; chưa đóng review serialization, rejection, reset và zeroize |
+| Crypto RTL freeze cuối | **CONDITIONAL** | Candidate v3 đã PASS full gate; còn Vivado impact review và review độc lập serialization/rejection/reset/zeroize |
 | FPGA RC nội bộ | **GO** | Bitstream/firmware/report/checksum và board regression có trong repo |
 | Physical reproducibility của RO | **DONE cho full-SoC RC1** | Hai build sạch khớp 136 endpoint/128 route; không thay thế qualification vật lý |
 | Freeze RO-PUF | **NO-GO** | Thiếu same-root full-SoC, count-margin, cold/warm boot, PVT, aging và nhiều board |
-| ASIC frontend portability | **GO cho khảo sát** | ASIC-generic elaborate PASS; primitive vendor đã cô lập |
+| ASIC front-end P0/P2 | **ĐANG TRIỂN KHAI** | Top reset thật, filelist/manifest và structural lint PASS; còn warning/PDK/memory/security findings |
 | Full ASIC backend/sign-off | **CHƯA BẮT ĐẦU** | Cần PDK/library, macro RO, memory mapping, SDC/CDC/DFT và crypto RTL freeze |
 | Public/production release | **NO-GO** | License, security review và qualification PUF chưa đóng |
 
@@ -40,14 +40,14 @@ RC1 là bằng chứng bổ sung, không phải một phiên bản production m�
 | Full-system UART/PUF/FE/KDF/ML-KEM | PASS, 956.564 cycle |
 | Standalone/pure RTL audit | PASS, không symlink, `.xci` hay dependency source ngoài |
 | ASIC portability gate | PASS, ASIC-generic elaboration và primitive vendor đã cô lập |
-| Crypto RTL freeze candidate v2 | PASS functional/portability/manifest/Vivado/board; chờ review độc lập |
+| Crypto RTL freeze candidate v3 | Full `crypto-freeze-gate` PASS tuần tự, gồm raw 1.024, AXI mở/khóa secret và ASIC structural lint; còn Vivado impact review và review độc lập |
 | Netlist RO Xilinx | PASS, 128 LUT/128 feedback net/128 constraint loop |
 | Physical lock RO full-SoC | PASS, 136 endpoint/128 fixed route; 2 build khớp fingerprint V2 |
 | Board image route-lock `locked_b` | PASS INFO/enroll/reconstruct, stress 10.000/10.000; board đã trở lại RC1 |
-| Vivado synthesis/implementation | PASS, `xc7z020clg400-2`, không IP sinh tự động |
-| Route | PASS, 0 failed/unrouted/partially-routed net |
-| Timing 50 MHz candidate ML-KEM | PASS, WNS `+2,226 ns`, WHS `+0,034 ns`, TNS/THS `0` |
-| DRC | PASS, 0 lỗi; 165 warning đã phân loại |
+| Vivado synthesis/implementation artifact RC1/v2 | PASS, `xc7z020clg400-2`, không IP sinh tự động |
+| Route artifact RC1/v2 | PASS, 0 failed/unrouted/partially-routed net |
+| Timing 50 MHz artifact RC1/v2 | PASS, WNS `+2,226 ns`, WHS `+0,034 ns`, TNS/THS `0` |
+| DRC artifact RC1/v2 | PASS, 0 lỗi; 165 warning đã phân loại |
 | JTAG/INFO/enroll/reconstruct ML-KEM RC1 | PASS trên `xc7z020_1`, protocol 1.2/capability `0x06` |
 | JTAG/INFO/enroll/reconstruct RC4 | PASS trên `xc7z020_1` |
 | Stress board RC4 | PASS 100/100, 1.000/1.000 và 10.000/10.000 |

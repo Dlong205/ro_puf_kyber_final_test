@@ -1,6 +1,10 @@
 `timescale 1ns / 1ps
 
-module kyber_axi_wrapper (
+module kyber_axi_wrapper #(
+    // Secret readback is locked by default. Diagnostic FPGA/test integrations
+    // must opt in explicitly and must not use that setting as a production top.
+    parameter integer EXPOSE_SECRETS = 0
+) (
     // Clock and Reset
     input  wire        S_AXI_ACLK,
     input  wire        S_AXI_ARESETN,
@@ -193,7 +197,7 @@ module kyber_axi_wrapper (
                           (kyber_done_client || kyber_client_done_seen);
 
     assign kem_done = kyber_done_sticky;
-    assign kem_key = kyber_K_server;
+    assign kem_key = EXPOSE_SECRETS ? kyber_K_server : 256'b0;
 
     // Every KEM transaction starts from a clean core state. The Kyber cores
     // contain hash/FIFO state that is not guaranteed to self-clear merely by
@@ -288,13 +292,16 @@ module kyber_axi_wrapper (
     always @(*) begin
         reg_data_out = 32'h0;
         begin
-            if (araddr_offset >= 8'h00 && araddr_offset <= 8'h1C) begin
+            if (EXPOSE_SECRETS &&
+                araddr_offset >= 8'h00 && araddr_offset <= 8'h1C) begin
                 reg_data_out = reg_seed_d[araddr_offset[4:2]];
             end
-            else if (araddr_offset >= 8'h20 && araddr_offset <= 8'h3C) begin
+            else if (EXPOSE_SECRETS &&
+                     araddr_offset >= 8'h20 && araddr_offset <= 8'h3C) begin
                 reg_data_out = reg_seed_z[(araddr_offset - 8'h20)>>2];
             end
-            else if (araddr_offset >= 8'h80 && araddr_offset <= 8'h9C) begin
+            else if (EXPOSE_SECRETS &&
+                     araddr_offset >= 8'h80 && araddr_offset <= 8'h9C) begin
                 reg_data_out = reg_seed_m[(araddr_offset - 8'h80)>>2];
             end
             else if (araddr_offset == 8'h44) begin
@@ -306,7 +313,8 @@ module kyber_axi_wrapper (
             else if (araddr_offset == 8'h48) begin
                 reg_data_out = {29'h0, reg_k};
             end
-            else if (araddr_offset >= 8'h60 && araddr_offset <= 8'h7C) begin
+            else if (EXPOSE_SECRETS &&
+                     araddr_offset >= 8'h60 && araddr_offset <= 8'h7C) begin
                 case ((araddr_offset - 8'h60)>>2)
                     3'd0: reg_data_out = kyber_K_server[31:0];
                     3'd1: reg_data_out = kyber_K_server[63:32];
@@ -318,7 +326,8 @@ module kyber_axi_wrapper (
                     3'd7: reg_data_out = kyber_K_server[255:224];
                 endcase
             end
-            else if (araddr_offset >= 8'hA0 && araddr_offset <= 8'hBC) begin
+            else if (EXPOSE_SECRETS &&
+                     araddr_offset >= 8'hA0 && araddr_offset <= 8'hBC) begin
                 case ((araddr_offset - 8'hA0)>>2)
                     3'd0: reg_data_out = kyber_K_client[31:0];
                     3'd1: reg_data_out = kyber_K_client[63:32];

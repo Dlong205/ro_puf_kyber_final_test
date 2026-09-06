@@ -9,7 +9,7 @@ SOC_REPRO_BIT := build/soc_repro/$(SOC_REPRO_RUN)/kyber_ro_puf_$(SOC_REPRO_RUN).
 # Verilator builds can exhaust RAM on the reference development host.
 .NOTPARALLEL:
 
-.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem kyber kyber-invalid axi kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-elaboration asic-portability crypto-freeze-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
+.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem kyber kyber-invalid axi axi-secure kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-filelist-check asic-manifest-check asic-frontend-check asic-backend-readiness asic-elaboration asic-portability crypto-freeze-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
 
 PUF_PORT ?= /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
 PUF_SAMPLES ?= 1000
@@ -76,6 +76,9 @@ kyber-invalid:
 axi:
 	$(MAKE) -C sim/kyber axi
 
+axi-secure:
+	$(MAKE) -C sim/kyber axi-secure
+
 kyber-strict:
 	$(MAKE) -C sim/kyber strict-raw
 
@@ -94,10 +97,25 @@ ntt-multiplier:
 xilinx-ro-lint:
 	$(MAKE) -C sim/portability xilinx-ro-lint
 
+asic-reset-smoke:
+	$(MAKE) -C sim/asic_frontend reset-smoke
+
+asic-filelist-check:
+	@./scripts/check_asic_filelists.sh
+
+asic-manifest-check:
+	@./scripts/check_asic_manifest.sh
+
+asic-frontend-check: asic-manifest-check
+	@./scripts/check_asic_frontend.sh
+
+asic-backend-readiness:
+	@./scripts/check_asic_backend_readiness.sh
+
 asic-elaboration:
 	@./scripts/check_asic_portability.sh
 
-asic-portability: ro-puf fuzzy-portable ntt-multiplier xilinx-ro-lint asic-elaboration
+asic-portability: ro-puf fuzzy-portable ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-elaboration asic-frontend-check
 
 crypto-freeze-check:
 	@./scripts/check_crypto_freeze.sh
@@ -109,7 +127,7 @@ crypto-freeze-gate:
 	$(MAKE) -j1 asic-portability
 	$(MAKE) -j1 crypto-freeze-check
 
-regression: ro-puf fuzzy fips202 kdf mlkem kyber kyber-invalid axi kyber-strict kyber-codec system check
+regression: ro-puf fuzzy fips202 kdf mlkem kyber kyber-invalid axi axi-secure kyber-strict kyber-codec system check
 
 vivado-project:
 	$(VIVADO) -mode batch -nolog -nojournal -source scripts/create_project.tcl
@@ -157,6 +175,7 @@ package-internal:
 	@./scripts/package_release.sh --internal
 
 clean:
+	$(MAKE) -C sim/asic_frontend clean
 	$(MAKE) -C sim/puf_characterization clean
 	$(MAKE) -C sim/ro_puf clean
 	$(MAKE) -C sim/fuzzy_extractor clean

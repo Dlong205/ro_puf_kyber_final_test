@@ -1,5 +1,6 @@
 module riscv_soc #(
-    parameter CLKS_PER_BIT = 868
+    parameter CLKS_PER_BIT = 868,
+    parameter integer EXPOSE_KYBER_SECRETS = 0
 )(
     input clk,
     input rstn,
@@ -212,7 +213,9 @@ module riscv_soc #(
                          ((bridge_state == BRIDGE_READ_RESP) && axi_rvalid);
     assign kyber_rdata = axi_rdata;
 
-    kyber_axi_wrapper u_kyber_axi (
+    kyber_axi_wrapper #(
+        .EXPOSE_SECRETS(EXPOSE_KYBER_SECRETS)
+    ) u_kyber_axi (
         .S_AXI_ACLK    (clk),
         .S_AXI_ARESETN (rstn),
         .S_AXI_AWADDR  (axi_awaddr),

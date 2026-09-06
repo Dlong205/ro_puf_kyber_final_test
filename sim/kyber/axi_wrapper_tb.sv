@@ -1,4 +1,6 @@
-module axi_wrapper_tb(input logic clk);
+module axi_wrapper_tb #(
+    parameter integer EXPOSE_SECRETS = 1
+) (input logic clk);
     logic resetn = 0;
 
     logic [31:0] awaddr = 0;
@@ -23,7 +25,9 @@ module axi_wrapper_tb(input logic clk);
     wire kem_done;
     wire [255:0] kem_key;
 
-    kyber_axi_wrapper dut (
+    kyber_axi_wrapper #(
+        .EXPOSE_SECRETS(EXPOSE_SECRETS)
+    ) dut (
         .S_AXI_ACLK(clk),
         .S_AXI_ARESETN(resetn),
         .S_AXI_AWADDR(awaddr),
@@ -291,9 +295,15 @@ module axi_wrapper_tb(input logic clk);
                     local_client_key[word_id*32 +: 32] = key_word;
                 end
 
-                keys_match = status_word[5] &&
-                             (local_server_key == local_client_key) &&
-                             (local_server_key != 0);
+                if (EXPOSE_SECRETS)
+                    keys_match = status_word[5] &&
+                                 (local_server_key == local_client_key) &&
+                                 (local_server_key != 0);
+                else
+                    keys_match = status_word[5] &&
+                                 (local_server_key == 0) &&
+                                 (local_client_key == 0) &&
+                                 (kem_key == 0);
                 if (!keys_match) begin
                     stress_raw_failures = stress_raw_failures + 1;
                     $display("[AXI RAW] TX%0d attempt%0d mismatch seed_m=%h server_m=%h client_m=%h e1=%08h/%08h starvation=%0d/%0d",
@@ -332,6 +342,7 @@ module axi_wrapper_tb(input logic clk);
         end
         if (strict_raw)
             $display("[AXI TB] strict single-attempt gate enabled (retry disabled)");
+        $display("[AXI TB] secret readback policy=%0d", EXPOSE_SECRETS);
         $display("[AXI TB] changing-seed transaction range=%0d..%0d",
                  stress_start, stress_start + stress_count - 1);
 
@@ -366,10 +377,31 @@ module axi_wrapper_tb(input logic clk);
         end
         $display("[AXI TB] seeds loaded");
 
-        // Readback proves the registered AXI R channel holds the correct data.
-        axi_read(8'h00, value);
-        if (value != 32'h03020100)
-            $fatal(1, "Seed readback failed: %h", value);
+        // Cover every word in all three seed banks. Diagnostic mode must
+        // preserve the registered AXI read channel; locked mode must return
+        // zero for d, z and m without affecting status/control reads.
+        for (i = 0; i < 8; i = i + 1) begin
+            axi_read(8'h00 + i*4, value);
+            if (EXPOSE_SECRETS &&
+                value != (32'h03020100 + i*32'h04040404))
+                $fatal(1, "Seed d[%0d] readback failed: %h", i, value);
+            if (!EXPOSE_SECRETS && value != 0)
+                $fatal(1, "Seed d[%0d] escaped locked mode: %h", i, value);
+
+            axi_read(8'h20 + i*4, value);
+            if (EXPOSE_SECRETS &&
+                value != (32'h1c1d1e1f - i*32'h04040404))
+                $fatal(1, "Seed z[%0d] readback failed: %h", i, value);
+            if (!EXPOSE_SECRETS && value != 0)
+                $fatal(1, "Seed z[%0d] escaped locked mode: %h", i, value);
+
+            axi_read(8'h80 + i*4, value);
+            if (EXPOSE_SECRETS &&
+                value != (32'h33221100 + i*32'h44444444))
+                $fatal(1, "Seed m[%0d] readback failed: %h", i, value);
+            if (!EXPOSE_SECRETS && value != 0)
+                $fatal(1, "Seed m[%0d] escaped locked mode: %h", i, value);
+        end
 
         axi_write(8'h40, 32'd1);
         $display("[AXI TB] start write completed");
@@ -405,10 +437,16 @@ module axi_wrapper_tb(input logic clk);
             axi_read(8'ha0 + i*4, value);
             client_key[i*32 +: 32] = value;
         end
-        if (server_key == 0 || server_key != client_key)
-            $fatal(1, "AXI shared-key mismatch: server=%h client=%h", server_key, client_key);
-        if (kem_key != server_key)
-            $fatal(1, "Direct key mirror differs from AXI key");
+        if (EXPOSE_SECRETS) begin
+            if (server_key == 0 || server_key != client_key)
+                $fatal(1, "AXI shared-key mismatch: server=%h client=%h", server_key, client_key);
+            if (kem_key != server_key)
+                $fatal(1, "Direct key mirror differs from AXI key");
+        end else begin
+            if (server_key != 0 || client_key != 0 || kem_key != 0)
+                $fatal(1, "Shared secret escaped locked policy: server=%h client=%h mirror=%h",
+                       server_key, client_key, kem_key);
+        end
 
         // CTRL[1] must erase all software-visible seeds, completion state and
         // key material retained in the two Kyber cores.
@@ -416,9 +454,27 @@ module axi_wrapper_tb(input logic clk);
         axi_read(8'h44, value);
         if (value != 0 || kem_done)
             $fatal(1, "Zeroize did not clear status: %h", value);
-        axi_read(8'h00, value);
-        if (value != 0)
-            $fatal(1, "Zeroize did not clear seed registers: %h", value);
+        for (i = 0; i < 8; i = i + 1) begin
+            axi_read(8'h00 + i*4, value);
+            if (value != 0)
+                $fatal(1, "Zeroize did not clear seed d[%0d]: %h", i, value);
+            axi_read(8'h20 + i*4, value);
+            if (value != 0)
+                $fatal(1, "Zeroize did not clear seed z[%0d]: %h", i, value);
+            axi_read(8'h80 + i*4, value);
+            if (value != 0)
+                $fatal(1, "Zeroize did not clear seed m[%0d]: %h", i, value);
+            axi_read(8'h60 + i*4, value);
+            if (value != 0)
+                $fatal(1, "Zeroize did not clear server key[%0d]: %h", i, value);
+            axi_read(8'ha0 + i*4, value);
+            if (value != 0)
+                $fatal(1, "Zeroize did not clear client key[%0d]: %h", i, value);
+        end
+        if (dut.flat_seed_d != 0 || dut.flat_seed_z != 0 ||
+            dut.flat_seed_m != 0 || dut.kyber_K_server != 0 ||
+            dut.kyber_K_client != 0)
+            $fatal(1, "Zeroize left internal seed/key state");
         if (kem_key != 0)
             $fatal(1, "Zeroize did not clear Kyber key state: %h", kem_key);
 

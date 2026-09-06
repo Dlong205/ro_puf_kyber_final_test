@@ -49,7 +49,10 @@ người thực hiện thay đổi RTL, tích hợp test và chốt artifact.
   nhóm; `ek`, `dk`, ciphertext và shared secret khớp bit-exact.
 - Implicit rejection PASS 175/175; timing valid/invalid bằng nhau trong các
   test hiện có.
-- Candidate PASS Vivado implementation 50 MHz và board stress 10.000/10.000.
+- Artifact RC1/candidate v2 tại source `8d2e8cd` PASS Vivado implementation
+  50 MHz và board stress 10.000/10.000.
+- Candidate v3 PASS full RTL/ASIC front-end gate sau sửa FIFO và policy khóa
+  secret; chưa chạy lại Vivado/board.
 
 Kết luận đúng là **ML-KEM-512 internal algorithm functional PASS**. Đây không
 phải chứng nhận CAVP, FIPS 140-3 hoặc review mật mã độc lập.

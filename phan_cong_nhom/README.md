@@ -1,7 +1,7 @@
 # Phân công và tiến độ nhóm
 
-Bằng chứng cập nhật đến **2026-09-05**; phân công đồng bộ **2026-09-06** cho
-nhánh tích hợp `codex/fips202-mlkem`. Source RTL
+Bằng chứng cập nhật đến **2026-09-06**; phân công đồng bộ cho nhánh tích hợp
+`codex/asic-frontend-mlkem512`, tách từ `codex/fips202-mlkem`. Source RTL
 chính thức chỉ nằm trong `rtl/`; không copy RTL vào thư mục cá nhân. Đạt, Tùng,
 Minh và Việt Anh thực hiện nghiên cứu/đối chiếu/review; Long là người thực hiện
 thay đổi RTL, tích hợp, chạy gate và chốt artifact.
@@ -14,6 +14,7 @@ thay đổi RTL, tích hợp, chạy gate và chốt artifact.
 | `fpga-mlkem512-0.2.0-rc1` tại `7abbd79` | Bitstream ML-KEM-512 đã test board | Artifact FPGA nội bộ hiện được chấp nhận |
 | `crypto-rtl-freeze-candidate-2-2026-09-04` tại `c323408` | Manifest crypto candidate v2 | Chưa phải freeze cuối; còn review độc lập |
 | Nhánh tích hợp sau RC1 | Characterization và physical route-lock RO | 10.000 mẫu ngắn hạn + hai build route-lock đã có bằng chứng |
+| Candidate v3 trên `codex/asic-frontend-mlkem512` | Sửa FIFO wrapper, khóa secret ở ASIC top và thêm front-end gate | Full RTL/ASIC gate PASS; chưa chạy lại Vivado/board, chưa freeze cuối |
 
 ## Trạng thái chung
 

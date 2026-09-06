@@ -39,10 +39,12 @@ quyết định artifact nào được quảng bá.
 - Backend behavioral, Xilinx LUT và ASIC macro boundary đã tách.
 - Netlist FPGA có 128 LUT, 128 feedback net và 128/128 loop constraint.
 - Board full pipeline stress 10.000/10.000 PASS trong một phiên test.
-- ML-KEM candidate PASS functional gate, ASIC portability, synthesis,
-  place/route, timing/DRC và tạo bitstream ở 50 MHz.
-- Candidate dùng 49.909/53.200 LUT (`93,81%`), WNS `+2,226 ns`; board
+- Artifact ML-KEM RC1/candidate v2 PASS functional gate, ASIC portability,
+  synthesis, place/route, timing/DRC và tạo bitstream ở 50 MHz.
+- Artifact này dùng 49.909/53.200 LUT (`93,81%`), WNS `+2,226 ns`; board
   regression PASS 10.000/10.000, fail 0.
+- Candidate v3 đã PASS full RTL/ASIC front-end gate; Vivado/board impact review
+  chưa chạy lại.
 - Counter đã dùng asynchronous-assert/synchronous-release và đồng bộ enable.
 - Image PUF-only đã lấy 10.000 mẫu ở điều kiện phòng trên một board: HD
   max/p99 bằng 1, không mẫu nào vượt BCH `t=8`, một bit dao động (bit 149).

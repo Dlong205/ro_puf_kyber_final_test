@@ -29,7 +29,7 @@ Long thực hiện mọi thay đổi RTL và chạy lại gate khi review phát 
 - KDF SHAKE256 fixed-profile 24-byte → 64-byte: PASS bit-exact ở cycle 148.
 - Full-system PUF → KDF → ML-KEM: PASS ở 956.564 cycle.
 - KDF fixed-profile được giữ riêng với controller FIPS 202 tổng quát để giảm
-  LUT; candidate đã fit XC7Z020 ở 49.909 LUT sau route.
+  LUT; artifact RC1/candidate v2 đã fit XC7Z020 ở 49.909 LUT sau route.
 - Chưa hỗ trợ SHA3-224/SHA3-384 hoặc message bit-oriented; PASS không đồng nghĩa
   triển khai đã được chứng nhận CAVP.
 

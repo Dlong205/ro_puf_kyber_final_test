@@ -69,7 +69,13 @@ module Kyber_System_Top(
     wire [263:0] helper_soc_to_fe; // From UART to FE
     wire [263:0] helper_fe_to_soc; // From FE to UART
     
-    riscv_soc #(.CLKS_PER_BIT(434)) u_soc (
+    // The accepted FPGA research image keeps internal key observability for
+    // legacy diagnostics. UART release firmware still withholds the secret.
+    // ASIC/production integrations use the locked default instead.
+    riscv_soc #(
+        .CLKS_PER_BIT(434),
+        .EXPOSE_KYBER_SECRETS(1)
+    ) u_soc (
         .clk(clk),
         .rstn(rst_n),
         .rx(rx),

@@ -27,7 +27,9 @@ functional nội bộ không tự trở thành chứng nhận FIPS hoặc FIPS 1
 - FIPS 202: 50/50 test byte-oriented cho bốn primitive cần cho ML-KEM.
 - ML-KEM-512: KeyGen/Encaps 25 vector NIST mỗi nhóm; Decaps 25 vector oracle
   độc lập và 175 rejection; FPGA full-pipeline stress 10.000 giao dịch đã PASS.
-- Crypto RTL: manifest 48 file đang khớp, trạng thái **candidate v2**.
+- Crypto RTL: candidate v2 là mốc FPGA đã kiểm chứng; candidate v3 đã PASS full
+  gate RTL/ASIC front-end sau khi sửa multiple-driver trong FIFO wrapper, nhưng
+  chưa chạy lại Vivado/board và chưa có review độc lập.
 - RO full-SoC: 136 cell đầu cuối/128 route tái lập qua hai build sạch.
 - PUF-only: 10.000 mẫu một board/điều kiện phòng, HD max 1; chưa tương đương
   image full-SoC và chưa có qualification ASIC.

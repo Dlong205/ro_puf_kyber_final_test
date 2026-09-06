@@ -7,7 +7,8 @@
 > không phải chứng nhận CAVP/FIPS 140-3 và không phải module mật mã production.
 
 Trạng thái dưới đây dùng bằng chứng đến **2026-09-05** và được đồng bộ tài liệu
-ngày **2026-09-06** trên nhánh tích hợp
+ngày **2026-09-06**. Nhánh ASIC hiện tại
+`codex/asic-frontend-mlkem512` được tách từ integration
 `codex/fips202-mlkem`. Tag `fpga-rc4-baseline` giữ mốc Kyber/FPGA cũ để đối
 chiếu; tag `fpga-mlkem512-0.2.0-rc1` là artifact ML-KEM-512 hiện được chấp nhận.
 Các commit sau tag RC1 bổ sung characterization và khóa vật lý miền RO, không
@@ -40,11 +41,11 @@ trong repo độc lập này.
 |---|---|
 | FIPS 202 phục vụ ML-KEM | **HOÀN THÀNH functional**, chưa phải chứng nhận CAVP |
 | ML-KEM-512 theo FIPS 203 | **HOÀN THÀNH functional nội bộ** và đã test board; chưa phải chứng nhận |
-| Crypto RTL freeze | **CANDIDATE v2**; còn review độc lập serialization/rejection/reset/zeroize |
+| Crypto RTL freeze | **CANDIDATE v3**; full gate tuần tự PASS sau sửa FIFO/khóa secret, còn Vivado impact review và review độc lập |
 | FPGA implementation | **PASS** ở 50 MHz trên XC7Z020; artifact RC1 đã được chấp nhận |
 | Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
 | Qualification RO-PUF | **CHƯA HOÀN THÀNH**: thiếu same-root trên full-SoC, PVT, power-cycle và nhiều board |
-| ASIC portability | **PASS frontend generic**; full ASIC backend/sign-off chưa bắt đầu |
+| ASIC front-end | **ĐANG TRIỂN KHAI**: top/reset/filelist/manifest và structural lint đã có; chưa có PDK/backend |
 | Phát hành nội bộ | Có thể chia sẻ RC trong repo private kèm giới hạn đã ghi |
 | Public/production release | **NO-GO** do license, PUF qualification và security review |
 
@@ -92,6 +93,7 @@ constraint lên 100 MHz mà không tái kiến trúc/pipeline và chạy lại s
 ## Cấu trúc
 
 - `rtl/`: RTL tổng hợp được cho SoC, PUF, BCH, KDF, Kyber và Keccak
+- `asic/`: top/filelist/manifest, constraint template, đặc tả và findings ASIC
 - `sim/`: testbench RO-PUF, BCH, KDF, Kyber/AXI/codec và full-system UART
 - `firmware/`: firmware PicoRV32 release và ảnh `firmware.hex`
 - `constraints/`: pin/clock/placement cho board XC7Z020
@@ -127,6 +129,7 @@ RISC-V GCC toolchain. Chạy tuần tự để tránh dùng quá nhiều RAM:
 
 ```sh
 make -j1 crypto-freeze-gate
+make -j1 asic-frontend-check
 sha256sum -c ARTIFACTS.sha256
 ```
 
@@ -164,7 +167,8 @@ make -j1 asic-portability
 RO-PUF đã có backend riêng cho mô phỏng, Xilinx và macro ASIC; BCH có đường so
 sánh portable; multiplier NTT dùng phép nhân RTL trung lập. Đây mới là cổng
 portability, chưa phải ASIC sign-off. Xem `docs/ASIC_PORTABILITY.md` để biết
-contract macro RO và các bước PDK/memory/SDC/DFT/backend còn lại.
+contract macro RO và các bước PDK/memory/SDC/DFT/backend còn lại. Workspace mới
+và findings tái hiện được nằm tại [`asic/`](asic/README.md).
 
 Firmware mặc định dùng `RELEASE_BUILD=1`: không truyền shared secret qua UART.
 Bản `RELEASE_BUILD=0` chỉ dùng chẩn đoán và không được commit/phân phối như

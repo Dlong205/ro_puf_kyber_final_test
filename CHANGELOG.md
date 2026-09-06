@@ -2,6 +2,16 @@
 
 ## 0.2.0-rc2-dev — chưa phát hành — 2026-09-06
 
+- Thêm top ASIC với external reset và synchronized release, filelist/manifest,
+  constraint template cùng tài liệu clock/reset/CDC và memory inventory.
+- Sửa bảy FIFO wrapper có multiple-driver/undriven alias; targeted Kyber KAT,
+  AXI 32 giao dịch và ASIC structural lint PASS.
+- Top ASIC khóa AXI seed/shared-secret readback và direct key mirror; test cùng
+  wrapper ở chế độ diagnostic và locked-secret đều PASS 32 giao dịch, kiểm đủ
+  mọi word d/z/m và hai shared-key bank; wrapper/SoC nay khóa mặc định.
+- Khép kín filelist ASIC: thêm đủ chín translation unit Keccak và chín header,
+  khóa checksum header, đồng thời so dependency record để chặn module/header
+  bị Verilator auto-load ngoài manifest.
 - Xuất physical lock full-SoC từ routed DCP ML-KEM RC1 đã chấp nhận: cố định
   128 LUT RO, 8 LUT mux đầu cuối và 128 route vật lý.
 - Thêm fingerprint V2 gồm `INIT`, loại cell, LOC/BEL, pin-map, endpoint và
