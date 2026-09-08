@@ -1,6 +1,6 @@
 # Lịch sử thay đổi
 
-## 0.2.0-rc2-dev — chưa phát hành — cập nhật 2026-09-07
+## 0.2.0-rc2-dev — chưa phát hành — cập nhật 2026-09-08
 
 - Tạo candidate v4 cho crypto-accelerator zeroize: yêu cầu chung có handshake
   xóa PUF response, toàn bộ BCH FE pipeline/key, KDF/Keccak state, ML-KEM
@@ -20,8 +20,17 @@
   và trước command dispatcher; timeout trả `FF 09` rồi không nhận lệnh.
 - Boundary không bao gồm PicoRV32 register/pipeline, SoC RAM/stack, bus staging
   hay scan/DFT; firmware release và CPU/bus nội bộ vẫn thuộc trusted base.
-- Candidate v4 mới chỉ PASS offline. Vivado implementation và board regression
-  cho đúng source/image v4 còn PENDING; bitstream/report root vẫn thuộc RC1.
+- Phát hiện implementation v4 đầu tiên làm RAM scrub bị Vivado chuyển thành
+  register (242.665 LUT, `UTLZ-1`). Gom scrub/normal thành một đường ghi cú pháp
+  cho mỗi cổng RAM/FIFO và thêm capacity audit; BRAM inference được khôi phục.
+- Đúng source `5943ceb` PASS Vivado 2020.1 ở 50 MHz: 50.902 LUT, 30.958 FF,
+  30,5 BRAM, 4 DSP, WNS `+3,268 ns`, WHS `+0,037 ns`, route đủ và DRC 0
+  Error/Critical Warning. Fingerprint RO khớp RC1, 136 endpoint/128 route.
+- Đúng bitstream v4 PASS INFO/enroll/reconstruct và stress 100/100,
+  1.000/1.000, 10.000/10.000; fail 0, run dài đạt 29,694 ms/giao dịch. Board
+  đang giữ image v4 volatile; bitstream/report root vẫn thuộc RC1.
+- Candidate v4 đã PASS mọi gate do tác giả tự chạy nhưng chưa freeze/promote:
+  còn review mật mã/zeroize độc lập, license và qualification PUF.
 
 - Thêm top ASIC với external reset và synchronized release, filelist/manifest,
   constraint template cùng tài liệu clock/reset/CDC và memory inventory.

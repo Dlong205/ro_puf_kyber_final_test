@@ -99,7 +99,7 @@ và CDC/RDC chuyên dụng khi đã chọn PDK.
 Kết quả trên chứng minh việc tách backend không làm hỏng FPGA baseline. Nó chưa
 thay thế macro RO, memory compiler, SDC, synthesis/STA hay physical sign-off ASIC.
 
-## Candidate v4 ngày 2026-09-07
+## Candidate v4 — cập nhật 2026-09-08
 
 V4 bổ sung synchronous reset thật xuyên hierarchy BCH và scrub tường minh cho
 PUF/FE/KDF/ML-KEM. Xilinx FE và đường ASIC-portable đều PASS 29/29; full
@@ -109,5 +109,7 @@ write-zero/latency của wrapper hiện tại; kết quả RTL không chứng mi
 remanence vật lý.
 
 Phạm vi hiện là crypto-accelerator zeroize. CPU PicoRV32, SoC RAM/bus staging
-và scan/DFT còn ngoài boundary. V4 chưa chạy Vivado hay board, nên mọi số liệu
-post-route và campaign board ở phần trên vẫn chỉ thuộc RC1/v3 lịch sử.
+và scan/DFT còn ngoài boundary. Sau khi khôi phục BRAM inference, đúng source v4
+đã PASS Vivado 50 MHz, physical-lock audit và đúng-image board 10.000/10.000.
+Điều này xác nhận portability patch không phá FPGA flow, nhưng không thay thế
+memory mapping, synthesis/P&R, DFT hoặc sign-off trên PDK ASIC thật.

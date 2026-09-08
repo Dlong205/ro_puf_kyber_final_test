@@ -13,14 +13,15 @@ FPGA/tag/bitstream ở root không bị thay thế bởi kết quả trong đây
 - Full top đã elaborate bằng Verilator; lỗi multiple-driver trong FIFO wrapper
   được phát hiện và sửa.
 - Candidate v4 thêm reset thật cho BCH và crypto-accelerator zeroize xuyên
-  PUF/FE/KDF/ML-KEM; full offline freeze gate và ba manifest v4 PASS.
+  PUF/FE/KDF/ML-KEM; full offline freeze gate, Vivado 50 MHz và đúng-image
+  board stress 10.000/10.000 PASS.
 - Chưa có PDK, standard-cell/memory/pad library, RO macro vật lý, SDC sign-off,
   OpenROAD/STA/KLayout hay commercial backend tool trên máy hiện tại.
 
 Vì vậy đây là **ASIC front-end đang triển khai**, chưa phải handoff GDS/sign-off.
 Zeroize hiện không bao gồm PicoRV32, SoC RAM/bus hay scan/DFT; macro memory thật
-vẫn phải giữ scrub contract và được kiểm chứng lại. Vivado/board v4 cũng còn
-PENDING; các report RC1/v3 ở root chỉ là baseline lịch sử.
+vẫn phải giữ scrub contract và được kiểm chứng lại. Candidate v4 chưa được
+freeze vì review độc lập còn mở; artifact/report ở root vẫn thuộc RC1.
 
 ## Lệnh nhẹ, chạy tuần tự
 

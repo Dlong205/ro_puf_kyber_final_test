@@ -13,10 +13,13 @@ sinh tự động.
 - LUT: 49.909/53.200 (`93,81%`)
 - Protocol: 1.2, release capability `0x06`, không retry
 
-Đây là hướng dẫn cho artifact RC1 ở root. Candidate v4 dùng protocol 1.3 và
-accelerator-zeroize sâu nhưng **chưa có bitstream/Vivado/board evidence** ngày
-2026-09-07. Không dùng các kết quả RC1/v3 để ghi PASS cho v4; khi build v4 phải
-nạp đúng file cách ly và mong đợi INFO `4B 50 01 03 06`.
+Đây là hướng dẫn mặc định cho artifact RC1 ở root. Candidate v4 dùng protocol
+1.3 và accelerator-zeroize sâu; đúng build cách ly `candidate_v4_final` đã PASS
+Vivado/board ngày 2026-09-08. Không dùng file root để tái kiểm v4: phải nạp
+`build/soc_repro/candidate_v4_final/kyber_ro_puf_candidate_v4_final.runs/impl_1/Kyber_System_Top.bit`,
+kiểm SHA-256
+`bc3a8ab8cac94c00ad3f02f5c3165ff9f8bbacf13db7ba0952003bb90946260a`
+và mong đợi INFO `4B 50 01 03 06`.
 
 ## Đấu dây
 
@@ -94,6 +97,10 @@ latency 29,608 ms/giao dịch, throughput 33,775 giao dịch/s. Khi host báo
 timeout, không tiếp tục gửi lệnh lên luồng mất đồng bộ; nạp lại bitstream rồi
 chạy INFO.
 
+Candidate v4 đúng image cũng PASS 100/100, 1.000/1.000 và 10.000/10.000; fail
+0. Run 10.000 đạt 29,694 ms/giao dịch và 33,677 giao dịch/s. Báo cáo đầy đủ ở
+[`HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md`](HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md).
+
 ## Warning implementation đã biết
 
 - 32 `LUTLP-2`: 32 vòng ring oscillator có chủ ý, đã constraint.
@@ -104,8 +111,10 @@ chạy INFO.
 - Methodology có 72 `TIMING-17` vì clock RO bất định không được khai báo timing
   clock; report CDC tự động không thay thế review CDC/RDC cho miền RO.
 
-Thiết kế dùng 93,81% LUT nên không tăng clock hay thêm logic mà không chạy lại
-implementation/timing/DRC.
+Artifact RC1 dùng 93,81% LUT. Candidate v4 dùng 95,68% LUT và 99,87% slice
+(chỉ còn 17/13.300 slice), nên không tăng clock hay thêm logic mà không chạy
+lại implementation/timing/DRC/capacity audit. Xem
+[`VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md`](VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md).
 
 ## Qualification còn thiếu
 

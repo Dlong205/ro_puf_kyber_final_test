@@ -117,3 +117,12 @@ khóa vừa phục hồi. Board hiện đang chạy lại RC1, không phải ima
   giải quyết nhiễu vật lý.
 - Vẫn cần warm/cold boot, PVT, aging, tối thiểu 5 board và entropy/helper
   leakage trước khi freeze PUF hay gọi thiết kế production-ready.
+
+## Addendum candidate v4 — 2026-09-08
+
+Build cách ly `candidate_v4_final` tại source `5943ceb` tiếp tục PASS audit với
+đúng 136 endpoint và 128 fixed route. Fingerprint SHA-256 vẫn là
+`1fbad9f1d1ec3a04560d506979778991311a00e84d3b31c7e8e56596db464c23`,
+khớp RC1/candidate v3. Đúng image v4 sau đó PASS board stress 10.000/10.000;
+board hiện giữ image v4 volatile. Việc này bổ sung một lần tái lập qua thay đổi
+RTL/BRAM, nhưng không thay đổi các khoảng trống qualification ở trên.

@@ -1,6 +1,6 @@
 # Minh — Lưu khóa và vòng đời khóa
 
-Cập nhật **2026-09-07**. Minh phụ trách nghiên cứu, threat model và review;
+Cập nhật **2026-09-08**. Minh phụ trách nghiên cứu, threat model và review;
 Long thực hiện mọi thay đổi RTL/firmware/test tích hợp.
 
 ## Phạm vi nghiên cứu/đối chiếu
@@ -33,6 +33,8 @@ Long thực hiện mọi thay đổi RTL/firmware/test tích hợp.
   với board/lần enroll.
 - AXI/firmware/full-system regression v4 đều PASS; đây là bằng chứng RTL, chưa
   phải chứng minh zeroization vật lý/netlist hoặc chống side-channel.
+- Đúng source/image v4 PASS Vivado 50 MHz và board stress 10.000/10.000; kết
+  quả này không mở rộng boundary zeroize sang CPU/SoC RAM/scan.
 
 ## Rủi ro phải ghi rõ
 

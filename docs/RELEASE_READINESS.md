@@ -4,7 +4,7 @@
 `0.2.0-rc2-dev` ngăn việc đóng gói nhánh sau route-lock dưới cùng tên với RC1
 đã tag; nó chưa phải artifact phần cứng mới. Tài liệu này phân biệt hoàn thành
 nội dung triển khai FPGA với public/production release. Trạng thái cập nhật đến
-**2026-09-07**.
+**2026-09-08**.
 
 ## Định danh trạng thái
 
@@ -21,7 +21,7 @@ nội dung triển khai FPGA với public/production release. Trạng thái cậ
 | Mức phát hành | Quyết định hiện tại |
 |---|---|
 | Chia sẻ nội bộ source + RC1 trong repo private | **GO**, kèm các giới hạn trong `NOTICE.md` và `SECURITY.md` |
-| Chốt crypto RTL freeze cuối | **CHƯA**; v4 accelerator scrub và full manifest gate PASS offline, còn review độc lập/Vivado/board v4 |
+| Chốt crypto RTL freeze cuối | **CHƯA**; v4 accelerator scrub, full manifest gate, Vivado và đúng-image board PASS; còn review độc lập |
 | Chốt PUF là golden/production | **NO-GO**, thiếu same-root/PVT/nhiều board/entropy |
 | Bắt đầu khảo sát ASIC frontend | **GO có điều kiện**, dùng portability gate |
 | Full ASIC backend/sign-off | **CHƯA**, thiếu PDK/macro/memory/SDC/DFT và các freeze đầu vào |
@@ -48,7 +48,7 @@ nội dung triển khai FPGA với public/production release. Trạng thái cậ
 | Full-system firmware/UART simulation v4 | PASS, 958.516 cycle |
 | Abstraction backend FPGA/ASIC và ASIC-generic elaboration | PASS; chưa phải ASIC synthesis/P&R |
 | Crypto RTL freeze candidate v4 | Full offline freeze gate + ba manifest PASS; chưa freeze/promote |
-| Candidate v4 Vivado/board | **PENDING/PENDING** |
+| Candidate v4 Vivado/board | **PASS/PASS**: 50.902 LUT, WNS `+3,268 ns`, WHS `+0,037 ns`; INFO/enroll/reconstruct và stress 10.000/10.000, fail 0 |
 | Audit netlist RO Xilinx | PASS, 128/128 feedback net được constraint |
 | Tái lập placement/pin/route RO full-SoC | PASS, 2 build sạch khớp fingerprint RC1 |
 | Board regression image route-lock | PASS INFO/enroll/reconstruct và 10.000/10.000; đã restore RC1 |
@@ -62,7 +62,7 @@ nội dung triển khai FPGA với public/production release. Trạng thái cậ
 | INFO/enroll/reconstruct RC4 trên board | PASS |
 | Stress board RC4 | PASS 100, 1.000 và 10.000 vòng |
 | Stress board ML-KEM RC1 | PASS 100, 1.000 và 10.000 vòng |
-| Report/checksum/provenance | PASS |
+| Report/checksum/provenance RC1 | PASS tại snapshot `36fc6da`; working tree v4 cố ý không khớp firmware/XDC của manifest RC1 |
 | Waveform trình bày/video demo | HOÃN theo kế hoạch |
 | Quyền phân phối công khai | **BỊ CHẶN** |
 
@@ -89,8 +89,10 @@ lập. Artifact RC1/candidate v2 tại source `8d2e8cd` đã hoàn tất Vivado
 implementation và board regression. Candidate v3 tại `1dcdad8` đã PASS Vivado
 implementation cách ly, physical-lock audit và board regression 10.000/10.000,
 nhưng không được quảng bá do zeroization sâu chưa đóng. Candidate v4 đã PASS
-offline regression và raw 1.024/1.024 sau khi thêm accelerator scrub; Vivado và
-board đúng v4 vẫn PENDING. Thiết kế vẫn chưa có API kiểm tra khóa ngoài.
+offline regression và raw 1.024/1.024 sau khi thêm accelerator scrub. Sau khi
+sửa BRAM inference tại `5943ceb`, đúng source v4 đã PASS Vivado 50 MHz,
+physical-lock audit và board 10.000/10.000. Thiết kế vẫn chưa có API kiểm tra
+khóa ngoài; candidate chưa freeze vì review độc lập chưa hoàn tất.
 RO-PUF mới được đo trên một board ở điều kiện phòng. Route-lock đã đóng rủi ro
 implementation ngẫu nhiên làm đổi miền RO giữa các build full-SoC;
 qualification PVT, same-root và nhiều board vẫn chưa đóng.
@@ -141,9 +143,9 @@ không được tuyên bố mọi over-noise đều bị phát hiện.
 - Stress: 100/100, 1.000/1.000, 10.000/10.000; fail/timeout/retry bằng 0
 - Run 10.000: 29,608 ms/giao dịch, 33,775 giao dịch/s
 
-Trạng thái đúng là **ML-KEM-512 FPGA RC1 đã PASS các gate và board lịch sử;
-candidate v4 secure-zeroize đã PASS offline nhưng chưa có Vivado/board v4 và
-chưa được crypto freeze**. Public release vẫn phải dừng ở license gate;
+Trạng thái đúng là **ML-KEM-512 FPGA RC1 vẫn là artifact root đã chấp nhận;
+candidate v4 secure-zeroize đã PASS offline, Vivado và đúng-image board nhưng
+chưa được crypto freeze do còn review độc lập**. Public release vẫn phải dừng ở license gate;
 production release còn phải dừng ở qualification PUF và xác minh mật mã/bảo
 mật. Các PASS FIPS/ACVP nêu ở đây là functional bit-exact, không phải NIST
 validation/certification.

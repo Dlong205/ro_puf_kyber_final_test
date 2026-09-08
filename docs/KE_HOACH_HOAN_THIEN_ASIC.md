@@ -1,6 +1,6 @@
 # Kế hoạch hoàn thiện RO-PUF + ML-KEM-512 đến ASIC
 
-Ngày lập: **2026-09-06**, cập nhật tiến độ **2026-09-07**. Đây là kế hoạch đề xuất, không phải báo cáo các pha
+Ngày lập: **2026-09-06**, cập nhật tiến độ **2026-09-08**. Đây là kế hoạch đề xuất, không phải báo cáo các pha
 đã thực hiện. Long thực hiện implementation và tích hợp; các thành viên khác
 nghiên cứu, đối chiếu và hỗ trợ review theo khả năng thực tế.
 
@@ -29,8 +29,9 @@ functional nội bộ không tự trở thành chứng nhận FIPS hoặc FIPS 1
   độc lập và 175 rejection; FPGA full-pipeline stress 10.000 giao dịch đã PASS.
 - Crypto RTL: candidate v2 là mốc FPGA đã kiểm chứng; candidate v3 đã PASS full
   gate, Vivado và board nhưng không được promote vì P0 secure-zeroize. Candidate
-  v4 đã thêm accelerator scrub và PASS full offline freeze gate + ba manifest;
-  Vivado/board v4 và review độc lập còn PENDING.
+  v4 đã thêm accelerator scrub và PASS full offline freeze gate + ba manifest,
+  Vivado 50 MHz, physical-lock audit và đúng-image board 10.000/10.000; review
+  độc lập còn PENDING trước freeze/promote.
 - RO full-SoC: 136 cell đầu cuối/128 route tái lập qua hai build sạch.
 - PUF-only: 10.000 mẫu một board/điều kiện phòng, HD max 1; chưa tương đương
   image full-SoC và chưa có qualification ASIC.
@@ -279,8 +280,8 @@ Việc thực hiện:
 
 ## 5. Việc ưu tiên trong đợt triển khai đầu
 
-1. Khóa manifest và review độc lập candidate v4; chạy Vivado rồi board v4 trước
-   khi freeze, không tái sử dụng report candidate v3.
+1. Review độc lập manifest, FIPS 202/203 và accelerator-zeroize candidate v4;
+   đối chiếu report Vivado/board ngày 2026-09-08, xử lý finding rồi mới freeze.
 2. Chốt boundary CPU/bus/SoC RAM/scan ngoài accelerator-zeroize và scope/API.
 3. Xác nhận PDK/tool/library được cấp; map memory và giữ đúng scrub contract.
 4. Review entropy/RBG/key lifecycle; triển khai same-root/count-margin/PVT trên

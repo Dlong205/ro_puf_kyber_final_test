@@ -1,6 +1,6 @@
 # Việt Anh — KDF, Keccak và FIPS 202
 
-Cập nhật **2026-09-07**. Pha implementation FIPS 202 phục vụ ML-KEM đã hoàn
+Cập nhật **2026-09-08**. Pha implementation FIPS 202 phục vụ ML-KEM đã hoàn
 thành ở mức functional; phần của Việt Anh hiện chuyển sang review độc lập.
 Long thực hiện mọi thay đổi RTL và chạy lại gate khi review phát hiện vấn đề.
 
@@ -30,6 +30,8 @@ Long thực hiện mọi thay đổi RTL và chạy lại gate khi review phát 
 - Candidate v4 KDF/Keccak zeroize PASS: input shift, seed output, controller và
   sponge state được xóa; KDF KAT + zeroize test PASS.
 - Full-system PUF → KDF → ML-KEM v4: PASS ở 958.516 cycle, protocol 1.3.
+- Đúng source/image v4 PASS Vivado 50 MHz và board stress 10.000/10.000; đây
+  là regression tích hợp, không thay thế review FIPS 202 độc lập.
 - KDF fixed-profile được giữ riêng với controller FIPS 202 tổng quát để giảm
   LUT; artifact RC1/candidate v2 đã fit XC7Z020 ở 49.909 LUT sau route.
 - Chưa hỗ trợ SHA3-224/SHA3-384 hoặc message bit-oriented; PASS không đồng nghĩa

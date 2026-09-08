@@ -1,6 +1,6 @@
 # Trạng thái xác minh — integration `0.2.0-rc2-dev`, artifact `0.2.0-rc1`
 
-Bằng chứng cập nhật đến **2026-09-07**. Nhánh làm việc tích hợp là
+Bằng chứng cập nhật đến **2026-09-08**. Nhánh làm việc tích hợp là
 `codex/asic-frontend-mlkem512`, tách từ `codex/fips202-mlkem`; artifact FPGA được chấp nhận nằm tại tag
 `fpga-mlkem512-0.2.0-rc1`. Tag `fpga-rc4-baseline` chỉ được giữ làm mốc so
 sánh Kyber/FPGA cũ. Các kết quả characterization và physical route-lock sau
@@ -12,8 +12,8 @@ RC1 là bằng chứng bổ sung, không phải một phiên bản production m�
 |---|---|---|
 | FIPS 202 byte-oriented cần cho ML-KEM | **DONE functional** | 50/50; chưa phải chứng nhận CAVP |
 | ML-KEM-512/FIPS 203 | **DONE functional nội bộ** | KAT/oracle, regression và board PASS; còn review độc lập |
-| Crypto RTL freeze cuối | **CANDIDATE v4** | Full offline freeze gate và ba manifest v4 PASS; còn review độc lập, Vivado và board v4 trước freeze/promote |
-| FPGA RC nội bộ | **GO cho RC1 đã tag** | Bitstream/report/checksum/board evidence thuộc RC1; working tree v4 chưa là artifact FPGA đồng nhất |
+| Crypto RTL freeze cuối | **CANDIDATE v4** | Offline, Vivado và đúng-image board PASS; còn review độc lập trước freeze/promote |
+| FPGA RC nội bộ | **GO cho RC1 đã tag** | Candidate v4 đã có build/board evidence cách ly nhưng chưa thay artifact RC1 ở root |
 | Physical reproducibility của RO | **DONE cho full-SoC RC1** | Hai build sạch khớp 136 endpoint/128 route; không thay thế qualification vật lý |
 | Freeze RO-PUF | **NO-GO** | Thiếu same-root full-SoC, count-margin, cold/warm boot, PVT, aging và nhiều board |
 | ASIC front-end P0/P2 | **ĐANG TRIỂN KHAI** | Top/reset/filelist/elaboration PASS; accelerator zeroize đã thêm, còn PDK/memory/CPU-bus/DFT/security findings |
@@ -40,8 +40,10 @@ RC1 là bằng chứng bổ sung, không phải một phiên bản production m�
 | Full-system UART/PUF/FE/KDF/ML-KEM candidate v4 | PASS, 958.516 cycle; startup zeroize fail-closed |
 | Standalone/pure RTL audit | PASS, không symlink, `.xci` hay dependency source ngoài |
 | ASIC portability gate | PASS, ASIC-generic elaboration và primitive vendor đã cô lập |
-| Crypto RTL freeze candidate v4 | Full `crypto-freeze-gate` PASS, gồm verification manifest, regression, raw 1.024, portability và crypto manifest; chưa freeze/promote |
-| Vivado/board candidate v4 | **PENDING/PENDING**; evidence RC1/v3 không xác nhận v4 |
+| Crypto RTL freeze candidate v4 | Full `crypto-freeze-gate` PASS, gồm verification manifest, regression, raw 1.024, portability và crypto manifest; chưa freeze/promote vì còn review độc lập |
+| Vivado candidate v4 | PASS 50 MHz tại `5943ceb`: 50.902 LUT, 30.958 FF, 30,5 BRAM, 4 DSP; WNS `+3,268 ns`, WHS `+0,037 ns`, route đủ, DRC 0 Error/Critical Warning |
+| Board regression candidate v4 | PASS INFO 1.3/`0x06`, enroll/reconstruct; stress 100/100, 1.000/1.000 và 10.000/10.000, fail 0; image đang nạp volatile |
+| Physical lock candidate v4 | PASS, fingerprint khớp RC1: 136 endpoint/128 fixed route |
 | Netlist RO Xilinx | PASS, 128 LUT/128 feedback net/128 constraint loop |
 | Physical lock RO full-SoC | PASS, 136 endpoint/128 fixed route; 2 build khớp fingerprint V2 |
 | Board image route-lock `locked_b` | PASS INFO/enroll/reconstruct, stress 10.000/10.000; board đã trở lại RC1 |
@@ -110,14 +112,19 @@ lịch sử.
 
 Candidate v4 đã thêm handshake crypto-accelerator zeroize, scrub sâu
 NTT/FIFO/ciphertext RAM, sponge và toàn bộ state PUF/FE/KDF liên quan. Full
-regression offline và raw gate 1.024/1.024 PASS ngày 2026-09-07. Claim không
+regression offline và raw gate 1.024/1.024 PASS; sau khi sửa BRAM inference,
+Vivado 50 MHz và đúng-image board 10.000/10.000 cũng PASS ngày 2026-09-08. Claim không
 bao gồm register/pipeline PicoRV32, SoC BRAM/stack, bus staging hoặc scan/DFT.
-Vivado implementation và board regression của đúng candidate v4 chưa chạy.
+Candidate vẫn chờ review độc lập trước crypto freeze/promote.
 
 Vivado impact candidate v3 được định danh tại
 [`VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md`](VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md).
 Board campaign tương ứng nằm tại
 [`HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md`](HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md).
+Kết quả tương ứng của candidate v4 nằm tại
+[`VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md`](VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md)
+và
+[`HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md`](HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md).
 
 Phạm vi, boundary và điều kiện nâng candidate thành freeze cuối được ghi tại
 [`CRYPTO_RTL_FREEZE_CANDIDATE_V4_2026-09-07.md`](CRYPTO_RTL_FREEZE_CANDIDATE_V4_2026-09-07.md).
@@ -131,8 +138,9 @@ Kế hoạch chi tiết tại
 [`KE_HOACH_HOAN_THIEN_ASIC.md`](KE_HOACH_HOAN_THIEN_ASIC.md) chia công việc theo
 đầu ra và điều kiện chuyển bước:
 
-1. Khóa/check manifest candidate v4, review độc lập FIPS 202/203,
-   serialization/rejection và accelerator-zeroize; chạy Vivado rồi board v4.
+1. Review độc lập manifest candidate v4, FIPS 202/203,
+   serialization/rejection và accelerator-zeroize; xử lý finding rồi mới
+   freeze/promote. Vivado và đúng-image board v4 đã PASS.
 2. Chốt threat model cho CPU/bus/SoC RAM/scan ngoài boundary accelerator,
    nguồn randomness, PDK/library/tool và memory/boot contract.
 3. Chạy lint và synthesis thử digital core khi đủ đầu vào công nghệ. Có thể

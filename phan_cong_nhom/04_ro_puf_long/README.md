@@ -1,6 +1,6 @@
 # Long — Chủ trì implementation và RO-PUF
 
-Cập nhật **2026-09-07**. Long là implementation owner duy nhất: tiếp nhận các
+Cập nhật **2026-09-08**. Long là implementation owner duy nhất: tiếp nhận các
 biên bản nghiên cứu/review, sửa RTL, tích hợp, chạy regression/Vivado/board và
 quyết định artifact nào được quảng bá.
 
@@ -56,7 +56,8 @@ quyết định artifact nào được quảng bá.
   primitive vendor trong source list ASIC.
 - Candidate v4 đã thêm accelerator-zeroize cho PUF/FE/KDF/ML-KEM, reset thật
   xuyên BCH và deep scrub Kyber; full offline freeze gate cùng ba manifest v4
-  PASS. Vivado/board v4 còn PENDING.
+  PASS. Sau khi khôi phục BRAM inference, Vivado 50 MHz và đúng-image board
+  stress 10.000/10.000 PASS; fingerprint RO vẫn khớp RC1.
 - FE characterization PASS 7.728 check trong bán kính `t=8`; ca delta codeword
   weight 41 có thể `success=1` nhưng sai root, đúng giới hạn expected ngoài
   bán kính và không được diễn giải là mọi over-noise đều bị phát hiện.
@@ -76,8 +77,8 @@ quyết định artifact nào được quảng bá.
 
 ## Còn mở theo thứ tự ưu tiên
 
-1. Review độc lập accelerator-zeroize trên manifest v4 đã khóa, chạy Vivado và
-   đúng-image board smoke/stress rồi mới freeze/promote.
+1. Review độc lập accelerator-zeroize trên manifest v4 và bằng chứng
+   Vivado/đúng-image board ngày 2026-09-08; xử lý finding rồi mới freeze/promote.
 2. Thêm count-margin telemetry, tie/zero detection và số lỗi BCH đã sửa; ưu
    tiên challenge tạo bit 149.
 3. Đo same-root trên chính full-SoC hoặc bằng instrumentation không làm thay đổi

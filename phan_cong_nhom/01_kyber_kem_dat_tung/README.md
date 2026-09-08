@@ -1,6 +1,6 @@
 # Đạt và Tùng — Kyber/ML-KEM-512
 
-Cập nhật **2026-09-07**. Đây là phạm vi nghiên cứu và review độc lập; Long là
+Cập nhật **2026-09-08**. Đây là phạm vi nghiên cứu và review độc lập; Long là
 người thực hiện thay đổi RTL, tích hợp test và chốt artifact.
 
 ## Phạm vi nghiên cứu/đối chiếu
@@ -58,7 +58,8 @@ người thực hiện thay đổi RTL, tích hợp test và chốt artifact.
   stress 10.000/10.000; không promote vì P0 secure-zeroize.
 - Candidate v4 PASS trọn `crypto-freeze-gate`: verification manifest, full
   regression, raw 1.024/1.024, ASIC portability và crypto manifest; firmware
-  protocol 1.3. Vivado và board đúng image v4 còn PENDING.
+  protocol 1.3. Vivado 50 MHz, physical-lock audit và board đúng image v4
+  10.000/10.000 cũng PASS; candidate vẫn chờ review độc lập.
 
 Kết luận đúng là **ML-KEM-512 internal algorithm functional PASS**. Đây không
 phải chứng nhận CAVP, FIPS 140-3 hoặc review mật mã độc lập.
@@ -76,8 +77,8 @@ phải chứng nhận CAVP, FIPS 140-3 hoặc review mật mã độc lập.
 5. Review scrub NTT/FIFO/ciphertext RAM, sponge, AXI backpressure và abort; chốt
    contract scrub-before-first-START và response khi write bị từ chối lúc busy;
    rà constant-time và nguồn randomness cùng Minh và Việt Anh.
-6. Sau Vivado/board v4, ký xác nhận đúng report/image; nếu phát
-   hiện sai khác phải mở lại candidate và chạy lại gate.
+6. Đối chiếu và ký xác nhận report/image v4 ngày 2026-09-08; nếu phát hiện sai
+   khác phải mở lại candidate và chạy lại gate.
 
 Đạt và Tùng chuẩn bị tài liệu, mapping và nhận xét review. Long thực hiện thay
 đổi RTL, tích hợp test và chốt kết quả trên nhánh chính của dự án.
@@ -89,7 +90,8 @@ phải chứng nhận CAVP, FIPS 140-3 hoặc review mật mã độc lập.
 - Phạm vi API nội bộ và lý do chưa hỗ trợ khóa ngoài được ghi rõ.
 - Corpus/API chỉ cần mở rộng khi claim dự án mở rộng; không gọi bộ test hiện tại
   là chứng nhận FIPS.
-- Vivado timing/DRC và board stress đúng candidate v4 được chạy lại trước freeze.
+- Vivado timing/DRC và board stress đúng candidate v4 đã được Long chạy lại;
+  Đạt/Tùng cần review độc lập bằng chứng trước freeze.
 
 ## Lệnh kiểm tra hiện có
 

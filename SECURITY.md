@@ -62,6 +62,9 @@ Các khoảng trống trước production:
 
 Candidate v4 đã PASS full offline `crypto-freeze-gate`, gồm source/verification
 manifest, regression, ASIC portability và Kyber raw 1.024/1.024 ngày
-2026-09-07, nhưng chưa chạy Vivado hay board. Kết quả FIPS 202/ML-KEM bit-exact
-là functional verification nội bộ, không phải NIST validation hoặc
-certification. Xem `docs/CRYPTO_RTL_FREEZE_CANDIDATE_V4_2026-09-07.md`.
+2026-09-07/08. Đúng source/image v4 cũng PASS Vivado 50 MHz, physical-lock audit
+và board stress 10.000/10.000 ngày 2026-09-08. Đây vẫn là bằng chứng do tác giả
+tự chạy; review độc lập, PUF qualification, license và ASIC sign-off còn mở.
+Kết quả FIPS 202/ML-KEM bit-exact là functional verification nội bộ, không phải
+NIST validation hoặc certification. Xem
+`docs/CRYPTO_RTL_FREEZE_CANDIDATE_V4_2026-09-07.md`.

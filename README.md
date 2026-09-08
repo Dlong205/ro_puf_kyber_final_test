@@ -6,7 +6,7 @@
 > bị chặn bởi quyền phân phối Kyber RTL và top-level license. Kết quả hiện tại
 > không phải chứng nhận CAVP/FIPS 140-3 và không phải module mật mã production.
 
-Trạng thái dưới đây dùng bằng chứng đến **2026-09-07**. Nhánh ASIC hiện tại
+Trạng thái dưới đây dùng bằng chứng đến **2026-09-08**. Nhánh ASIC hiện tại
 `codex/asic-frontend-mlkem512` được tách từ integration
 `codex/fips202-mlkem`. Tag `fpga-rc4-baseline` giữ mốc Kyber/FPGA cũ để đối
 chiếu; tag `fpga-mlkem512-0.2.0-rc1` là artifact ML-KEM-512 hiện được chấp nhận.
@@ -18,10 +18,9 @@ bit-exact cho KeyGen, Encaps, Decaps và implicit rejection của ML-KEM-512.
 Artifact RC1 đã PASS board regression 10.000 giao dịch. Candidate v3 sau sửa
 FIFO/policy secret đã PASS lại full gate, Vivado implementation cách ly và
 board regression 10.000/10.000, nhưng không được quảng bá vì AI pre-review tìm
-thấy P0 zeroization sâu. Candidate v4 ngày 2026-09-07 đã thêm scrub cho
-PUF/FE/KDF/ML-KEM và PASS full regression offline cùng raw gate
-1.024/1.024. V4 chưa chạy Vivado hoặc board, chưa có review độc lập và chưa
-phải freeze. Xem hồ sơ
+thấy P0 zeroization sâu. Candidate v4 đã thêm scrub cho PUF/FE/KDF/ML-KEM,
+PASS full offline gate, Vivado 50 MHz, audit route-lock và đúng-image board
+stress 10.000/10.000. V4 chưa có review độc lập và chưa phải freeze. Xem hồ sơ
 [`docs/CRYPTO_RTL_FREEZE_CANDIDATE_V4_2026-09-07.md`](docs/CRYPTO_RTL_FREEZE_CANDIDATE_V4_2026-09-07.md), báo cáo
 [`docs/FIPS203_VERIFICATION_2026-09-04.md`](docs/FIPS203_VERIFICATION_2026-09-04.md)
 và
@@ -30,6 +29,10 @@ Tác động Vivado của v3 được ghi riêng tại
 [`docs/VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md`](docs/VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md).
 Board regression đúng image v3 được ghi tại
 [`docs/HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md`](docs/HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V3_2026-09-06.md).
+Vivado và board candidate v4 được ghi tại
+[`docs/VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md`](docs/VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md)
+và
+[`docs/HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md`](docs/HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md).
 Qualification RO-PUF mới nhất nằm tại
 [`docs/PUF_CHARACTERIZATION_2026-09-05.md`](docs/PUF_CHARACTERIZATION_2026-09-05.md).
 
@@ -49,9 +52,9 @@ trong repo độc lập này.
 | Giai đoạn | Trạng thái đúng hiện tại |
 |---|---|
 | FIPS 202 phục vụ ML-KEM | **HOÀN THÀNH functional**, chưa phải chứng nhận CAVP |
-| ML-KEM-512 theo FIPS 203 | **HOÀN THÀNH functional nội bộ**; RC1/v3 đã test board, v4 chưa; không phải chứng nhận |
-| Crypto RTL freeze | **CANDIDATE v4**; full offline freeze gate và manifest PASS, còn review độc lập/Vivado/board trước khi freeze |
-| FPGA implementation | **PASS** ở 50 MHz trên XC7Z020; artifact RC1 đã được chấp nhận |
+| ML-KEM-512 theo FIPS 203 | **HOÀN THÀNH functional nội bộ**; v4 đã test board; không phải chứng nhận |
+| Crypto RTL freeze | **CANDIDATE v4**; offline/Vivado/board PASS, còn review độc lập trước khi freeze |
+| FPGA implementation | **PASS** candidate v4 ở 50 MHz; artifact root được chấp nhận vẫn là RC1 |
 | Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
 | Qualification RO-PUF | **CHƯA HOÀN THÀNH**: thiếu same-root trên full-SoC, PVT, power-cycle và nhiều board |
 | ASIC front-end | **ĐANG TRIỂN KHAI**: top/reset/filelist/manifest và structural lint đã có; chưa có PDK/backend |
@@ -83,7 +86,8 @@ gồm đầu ra và điều kiện chuyển từng pha, nằm tại
 | SHAKE256 KDF KAT | PASS bit-exact với Python `hashlib.shake_256`, cycle 148 |
 | Kyber raw single-attempt gate | PASS 1.024/1.024, mismatch 0, retry 0 |
 | Full-system simulation v4 | PASS, 958.516 cycle; protocol 1.3/capability `0x06` |
-| Vivado/board candidate v4 | **PENDING/PENDING**; không dùng kết quả v3 để xác nhận v4 |
+| Vivado candidate v4 | PASS: 50.902 LUT sau route, WNS `+3,268 ns`, WHS `+0,037 ns`, 0 routing error |
+| Board candidate v4 | PASS INFO/enroll/reconstruct; stress 100/100, 1.000/1.000, 10.000/10.000, fail 0 |
 | Implementation ML-KEM RC1 | PASS ở 50 MHz, 49.909 LUT; WNS `+2,226 ns`, WHS `+0,034 ns` |
 | Vivado impact candidate v3 | PASS ở 50 MHz, 49.886 LUT; WNS `+4,732 ns`, WHS `+0,034 ns` |
 | Route/DRC candidate v3 | 70.741/70.741 net route đủ; 0 Error, 165 warning đã phân loại |
@@ -92,16 +96,16 @@ gồm đầu ra và điều kiện chuyển từng pha, nằm tại
 | Test board image route-lock | PASS INFO/enroll/reconstruct; stress 10.000/10.000; sau đó đã nạp lại RC1 |
 | Test board ML-KEM RC1 | PASS INFO/enroll/reconstruct; stress 100/100, 1.000/1.000, 10.000/10.000 |
 | Stress phần cứng RC4 | PASS 100/100, 1.000/1.000 và 10.000/10.000 |
-| Hiệu năng board ML-KEM RC1 | `29,608 ms/giao dịch`, `33,775 giao dịch/s` ở run 10.000 |
+| Hiệu năng board candidate v4 | `29,694 ms/giao dịch`, `33,677 giao dịch/s` ở run 10.000 |
 | RO-PUF ngắn hạn PUF-only | 10.000 mẫu: HD max/p99 = 1, 0 mẫu > t=8, 1 bit dao động; chưa đạt gate entropy/PVT |
 | Public release | **BỊ CHẶN**, xem `NOTICE.md` |
 
-Artifact RC1 dùng 49.909/53.200 Slice LUT (`93,81%`); candidate v3 dùng
-49.886 LUT (`93,77%`), 30.649 register, 25 BRAM tile và 4 DSP. Candidate v3
-còn dùng 13.243/13.300 slice (`99,57%`). KDF tích hợp dùng datapath SHAKE256 cố
+Artifact RC1 dùng 49.909/53.200 Slice LUT (`93,81%`); candidate v4 dùng
+50.902 LUT (`95,68%`), 30.958 register, 30,5 BRAM tile và 4 DSP. Candidate v4
+dùng 13.283/13.300 slice (`99,87%`). KDF tích hợp dùng datapath SHAKE256 cố
 định 24-byte → 64-byte để tránh bản sao state 1600-bit của controller tổng
 quát; KDF và full-system đều đã regression lại. Thiết kế vẫn gần đầy chip và
-candidate v3 có setup margin 4,732 ns tại 50 MHz, nên không thể chỉ đổi
+candidate v4 có setup margin 3,268 ns tại 50 MHz, nên không thể chỉ đổi
 constraint lên 100 MHz mà không tái kiến trúc/pipeline và chạy lại sign-off.
 
 ## Cấu trúc
@@ -247,7 +251,7 @@ kiểm tra `ls -l /dev/serial/by-id/` trước khi chọn cổng.
 Khi thử một candidate cách ly, truyền bitstream chính xác để tránh nạp nhầm:
 
 ```sh
-make soc-repro-program SOC_REPRO_RUN=locked_b \
+make soc-repro-program SOC_REPRO_RUN=candidate_v4_final \
   VIVADO=/absolute/path/to/Vivado/2020.1/bin/vivado
 ```
 
