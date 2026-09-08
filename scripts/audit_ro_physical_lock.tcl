@@ -3,11 +3,26 @@
 source [file join [file dirname [file normalize [info script]]] \
     ro_physical_common.tcl]
 
+proc audit_ro_generated_lfsr_mux_endpoints {} {
+    set matched_cells {}
+    foreach lane {2 3 4 5} {
+        set selector [format \
+            {NAME =~ "u_puf/lfsr_inst/n_0_*_BUFG_inst_i_%d"} $lane]
+        set cells [get_cells -quiet -hierarchical -filter $selector]
+        if {[llength $cells] != 1} {
+            error "Generated LFSR mux lane $lane must match exactly once; found $cells"
+        }
+        lappend matched_cells [lindex $cells 0]
+    }
+    puts "RO_GENERATED_LFSR_MUX_SELECTOR_AUDIT=PASS cells=[llength $matched_cells]"
+}
+
 proc audit_ro_physical_lock {golden_fingerprint actual_fingerprint} {
     if {![file exists $golden_fingerprint]} {
         error "Golden RO fingerprint not found: $golden_fingerprint"
     }
 
+    audit_ro_generated_lfsr_mux_endpoints
     set inventory [ro_collect_physical_inventory]
     set endpoint_cells [dict get $inventory endpoint_cells]
     set ro_nets [dict get $inventory ro_nets]

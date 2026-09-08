@@ -57,6 +57,7 @@ if {[llength $ro_luts] != 128} {
     error "Expected 128 physical RO LUTs after synthesis, found [llength $ro_luts]"
 }
 audit_ro_placement $placement_map
+audit_ro_generated_lfsr_mux_endpoints
 report_utilization -file [file join $report_dir post_synth_utilization.rpt]
 close_design
 

@@ -55,6 +55,7 @@ if {![string match "*Complete*" $synth_status]} {
 
 open_run synth_1
 audit_ro_placement $placement_map
+audit_ro_generated_lfsr_mux_endpoints
 report_utilization -file [file join $report_dir post_synth_utilization.rpt]
 report_timing_summary -file [file join $report_dir post_synth_timing.rpt]
 report_cdc -details -file [file join $report_dir post_synth_cdc.rpt]

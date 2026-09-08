@@ -58,24 +58,8 @@ puts $channel "## Source bitstream SHA-256: $bitstream_sha256"
 puts $channel "## Vivado 2020.1 build 2902540; part xc7z020clg400-2."
 puts $channel "## BEL is applied before LOC. Every connected leaf cell is fixed before routes."
 puts $channel {## Four measurement-mux leaf LUTs have a Vivado-generated n_0_<number> stem.
-## That number depends on unrelated full-SoC logic, so resolve those endpoints
-## by their stable hierarchy and lane suffix and require exactly one match.
-proc ro_require_generated_lfsr_mux_endpoint {lane} {
-    if {$lane < 2 || $lane > 5} {
-        error "Invalid generated LFSR mux endpoint lane: $lane"
-    }
-    set selector [format \
-        {NAME =~ "u_puf/lfsr_inst/n_0_*_BUFG_inst_i_%d"} $lane]
-    set cells [get_cells -quiet -hierarchical -filter $selector]
-    if {[llength $cells] != 1} {
-        error "Expected one generated LFSR mux endpoint for lane $lane, found $cells"
-    }
-    return [lindex $cells 0]
-}
-set ro_generated_lfsr_mux_i2 [ro_require_generated_lfsr_mux_endpoint 2]
-set ro_generated_lfsr_mux_i3 [ro_require_generated_lfsr_mux_endpoint 3]
-set ro_generated_lfsr_mux_i4 [ro_require_generated_lfsr_mux_endpoint 4]
-set ro_generated_lfsr_mux_i5 [ro_require_generated_lfsr_mux_endpoint 5]}
+## That number depends on unrelated full-SoC logic, so select those endpoints
+## by stable hierarchy/lane. The build Tcl separately requires one exact match.}
 
 foreach cell $endpoint_cells {
     set bel [get_property BEL $cell]
@@ -90,7 +74,9 @@ foreach cell $endpoint_cells {
     if {[regexp \
             {^u_puf/lfsr_inst/n_0_[0-9]+_BUFG_inst_i_([2-5])$} \
             $cell unused generated_lane]} {
-        set cell_target [format {$ro_generated_lfsr_mux_i%d} $generated_lane]
+        set cell_target [format \
+            {[get_cells -hierarchical -filter {NAME =~ "u_puf/lfsr_inst/n_0_*_BUFG_inst_i_%d"}]} \
+            $generated_lane]
     }
     puts $channel [format {set_property BEL %s %s} $bel $cell_target]
     puts $channel [format {set_property LOC %s %s} $loc $cell_target]
@@ -106,10 +92,6 @@ foreach cell $endpoint_cells {
     puts $channel [format \
         {set_property DONT_TOUCH true %s} $cell_target]
 }
-puts $channel {unset ro_generated_lfsr_mux_i2
-unset ro_generated_lfsr_mux_i3
-unset ro_generated_lfsr_mux_i4
-unset ro_generated_lfsr_mux_i5}
 
 foreach net $ro_nets {
     set route [get_property ROUTE $net]
