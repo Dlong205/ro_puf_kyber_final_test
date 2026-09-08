@@ -22,6 +22,7 @@ module bch_error_tmec #(
 	parameter ACCUM = PIPELINE_STAGES > 1 ? `CONFIG_LUT_SZ : 1
 ) (
 	input clk,
+	input reset,
 	input start,			/* Latch inputs, start calculating */
 	input [`BCH_SIGMA_SZ(P)-1:0] sigma,
 	output first,			/* First valid output data */
@@ -67,14 +68,17 @@ module bch_error_tmec #(
 
 	bch_chien #(P, BITS, REG_RATIO) u_chien(
 		.clk(clk),
+		.reset(reset),
 		.start(start),
 		.sigma(sigma),
 		.chien(chien),
 		.first(first_raw)
 	);
 
-	pipeline #(PIPELINE_STAGES) u_out_pipeline (
+	pipeline_ce_reset #(PIPELINE_STAGES) u_out_pipeline (
 		.clk(clk),
+		.ce(1'b1),
+		.reset(reset),
 		.i(first_raw),
 		.o(first)
 	);
@@ -94,16 +98,30 @@ module bch_error_tmec #(
 		end
 	end
 
-	pipeline #(PIPELINE_STAGES > 1) u_accum_pipeline [ACCUM*BITS*M-1:0] (clk, accum, accum_pipelined);
+	pipeline_ce_reset #(PIPELINE_STAGES > 1) u_accum_pipeline [ACCUM*BITS*M-1:0] (
+		.clk(clk),
+		.ce(1'b1),
+		.reset(reset),
+		.i(accum),
+		.o(accum_pipelined)
+	);
 
 	finite_parallel_adder #(M, ACCUM) u_adder [BITS-1:0] (accum_pipelined, sum);
 
-	pipeline #(PIPELINE_STAGES > 2) u_sum_pipeline [BITS*M-1:0] (clk, sum, sum_pipelined);
+	pipeline_ce_reset #(PIPELINE_STAGES > 2) u_sum_pipeline [BITS*M-1:0] (
+		.clk(clk),
+		.ce(1'b1),
+		.reset(reset),
+		.i(sum),
+		.o(sum_pipelined)
+	);
 
 	zero_cla #(M, PIPELINE_STAGES > 2 ? 1 : ACCUM) u_zero [BITS-1:0] (sum_pipelined, err_raw);
 
-	pipeline #(PIPELINE_STAGES > 0) u_err_pipeline1 [BITS-1:0] (
+	pipeline_ce_reset #(PIPELINE_STAGES > 0) u_err_pipeline1 [BITS-1:0] (
 		.clk(clk),
+		.ce(1'b1),
+		.reset(reset),
 		.i(err_raw[BITS-1:0]),
 		.o(err[BITS-1:0])
 	);

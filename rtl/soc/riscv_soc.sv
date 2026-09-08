@@ -1,5 +1,7 @@
 module riscv_soc #(
-    parameter CLKS_PER_BIT = 868
+    parameter CLKS_PER_BIT = 868,
+    parameter integer EXPOSE_KYBER_SECRETS = 0,
+    parameter integer SECURE_KYBER_SCRUB = 1
 )(
     input clk,
     input rstn,
@@ -16,6 +18,7 @@ module riscv_soc #(
     output fe_start,
     output fe_mode,
     output kdf_start,
+    output secure_zeroize,
     input  puf_done,
     input  fe_done,
     input  fe_success,
@@ -47,6 +50,7 @@ module riscv_soc #(
     wire [31:0] periph_rdata;
     wire        kyber_ready;
     wire [31:0] kyber_rdata;
+    wire kyber_zeroize_done;
 
     assign mem_ready = sel_bram ? bram_ready : (sel_periph_native ? periph_ready : (sel_kyber ? kyber_ready : 1'b0));
     assign mem_rdata = sel_bram ? bram_rdata : (sel_periph_native ? periph_rdata : (sel_kyber ? kyber_rdata : 32'h0));
@@ -119,10 +123,12 @@ module riscv_soc #(
         .fe_start    (fe_start),
         .fe_mode     (fe_mode),
         .kdf_start   (kdf_start),
+        .secure_zeroize (secure_zeroize),
         .puf_done    (puf_done),
         .fe_done     (fe_done),
         .fe_success  (fe_success),
         .kdf_done    (kdf_done),
+        .secure_zeroize_done (kyber_zeroize_done),
         .kdf_seed    (kdf_seed),
         .helper_out_data (helper_out),
         .helper_in_data  (helper_in)
@@ -212,7 +218,10 @@ module riscv_soc #(
                          ((bridge_state == BRIDGE_READ_RESP) && axi_rvalid);
     assign kyber_rdata = axi_rdata;
 
-    kyber_axi_wrapper u_kyber_axi (
+    kyber_axi_wrapper #(
+        .EXPOSE_SECRETS(EXPOSE_KYBER_SECRETS),
+        .SECURE_SCRUB(SECURE_KYBER_SCRUB)
+    ) u_kyber_axi (
         .S_AXI_ACLK    (clk),
         .S_AXI_ARESETN (rstn),
         .S_AXI_AWADDR  (axi_awaddr),
@@ -235,7 +244,10 @@ module riscv_soc #(
         .S_AXI_RVALID  (axi_rvalid),
         .S_AXI_RREADY  (axi_rready),
         .kem_done      (kyber_done),
-        .kem_key       (kyber_shared_secret)
+        .kem_key       (kyber_shared_secret),
+        .secure_zeroize(secure_zeroize),
+        .zeroize_busy  (),
+        .zeroize_done  (kyber_zeroize_done)
     );
 
 endmodule

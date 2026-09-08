@@ -30,6 +30,7 @@ module dsynN_method1 #(
 	parameter PIPELINE_STAGES = 0
 ) (
 	input clk,
+	input reset,
 	input start,				/* Accept first bit of syndrome */
 	input start_pipelined,			/* Start delayed by one if there are
 						 * two pipeline stages */
@@ -116,15 +117,19 @@ module dsynN_method1 #(
 		.out(terms_summed)
 	);
 
-	pipeline_ce #(PIPELINE_STAGES > 0) u_summed_pipeline [M-1:0] (
+	pipeline_ce_reset #(PIPELINE_STAGES > 0) u_summed_pipeline [M-1:0] (
 		.clk(clk),
 		.ce(ce),
+		.reset(reset),
 		.i(terms_summed),
 		.o(terms_summed_pipelined)
 	);
 
 	always @(posedge clk) begin
-		if (ce) begin
+		if (reset) begin
+			pow <= #TCQ POW_INITIAL;
+			synN <= #TCQ 0;
+		end else if (ce) begin
 			/* Utilize set/reset signal if possible */
 			pow <= #TCQ (PIPELINE_STAGES > 1 && start) ? POW_INITIAL : pow_next;
 			if (start_pipelined)

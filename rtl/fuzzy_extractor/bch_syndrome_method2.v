@@ -28,6 +28,7 @@ module dsynN_method2 #(
 	parameter PIPELINE_STAGES = 0
 ) (
 	input clk,
+	input reset,
 	input ce,				/* Accept additional bit */
 	input start,				/* Accept first bit of syndrome */
 	input start_pipelined,			/* Start delayed by one if there are
@@ -101,17 +102,19 @@ module dsynN_method2 #(
 	end else
 		assign in_enc_early = 0;
 
-	pipeline_ce #(PIPELINE_STAGES > 0) u_in_pipeline [DEGREE-1:0] (
+	pipeline_ce_reset #(PIPELINE_STAGES > 0) u_in_pipeline [DEGREE-1:0] (
 		.clk(clk),
 		.ce(ce),
+		.reset(reset),
 		.i(in_enc_early),
 		.o(in_enc_early_pipelined)
 	);
 
 	assign in_enc = in_enc_early_pipelined ^ data_pipelined;
-	pipeline_ce #(PIPELINE_STAGES > 1) u_enc_pipeline [DEGREE-1:0] (
+	pipeline_ce_reset #(PIPELINE_STAGES > 1) u_enc_pipeline [DEGREE-1:0] (
 		.clk(clk),
 		.ce(ce),
+		.reset(reset),
 		.i(in_enc),
 		.o(in_enc_pipelined)
 	);
@@ -126,7 +129,9 @@ module dsynN_method2 #(
 
 	/* Calculate remainder */
 	always @(posedge clk)
-		if (ce) begin
+		if (reset)
+			lfsr <= #TCQ 0;
+		else if (ce) begin
 			if (start_pipelined)
 				/* Use start as set/reset if possible */
 				lfsr <= #TCQ PIPELINE_STAGES ? 0 : in_enc_pipelined;

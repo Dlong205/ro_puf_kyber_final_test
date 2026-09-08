@@ -11,7 +11,9 @@ module fifo_wrapper_36_32 #(
     input wire rd_en,
     output wire [35:0] dout,
     output wire full,
-    output wire empty
+    output wire empty,
+    input wire scrub_en,
+    input wire [10:0] scrub_addr
 );
     wire wr_full, rd_empty;
     wire [35:0] rd_data;
@@ -24,6 +26,45 @@ module fifo_wrapper_36_32 #(
         .rst_n(rst_n),
         .wr_en(wr_en),
         .wr_data(wr_data),
+        .wr_full(wr_full),
+        .wr_almost_full(),
+        .wr_count(),
+        .rd_en(rd_en),
+        .rd_data(rd_data),
+        .rd_empty(rd_empty),
+        .rd_almost_empty(),
+        .rd_count(),
+        .scrub_en(scrub_en),
+        .scrub_addr(scrub_addr)
+    );
+    
+    assign full = wr_full;
+    assign empty = rd_empty;
+    assign dout = rd_data;
+endmodule
+
+module fifo_wrapper_40_32 #(
+    parameter integer DEPTH = 256
+) (
+    input wire clk,
+    input wire rst_n,
+    input wire wr_en,
+    input wire [39:0] wr_data,
+    input wire rd_en,
+    output wire [39:0] dout,
+    output wire full,
+    output wire empty,
+    input wire scrub_en,
+    input wire [10:0] scrub_addr
+);
+    generic_fifo_sync #(
+        .DEPTH(DEPTH),
+        .WIDTH(40)
+    ) inst (
+        .clk(clk),
+        .rst_n(rst_n),
+        .wr_en(wr_en),
+        .wr_data(wr_data),
         .wr_full(full),
         .wr_almost_full(),
         .wr_count(),
@@ -31,12 +72,10 @@ module fifo_wrapper_36_32 #(
         .rd_data(dout),
         .rd_empty(empty),
         .rd_almost_empty(),
-        .rd_count()
+        .rd_count(),
+        .scrub_en(scrub_en),
+        .scrub_addr(scrub_addr)
     );
-    
-    assign full = wr_full;
-    assign empty = rd_empty;
-    assign dout = rd_data;
 endmodule
 
 
@@ -52,7 +91,9 @@ module fifo_wrapper_25_16 #(
     output wire [24:0] dout,
     output wire full,
     output wire empty,
-    output wire prog_full
+    output wire prog_full,
+    input wire scrub_en,
+    input wire [10:0] scrub_addr
 );
     wire wr_full, rd_empty;
     wire [24:0] rd_data;
@@ -66,14 +107,16 @@ module fifo_wrapper_25_16 #(
         .rst_n(rst_n),
         .wr_en(wr_en),
         .wr_data(wr_data),
-        .wr_full(full),
+        .wr_full(wr_full),
         .wr_almost_full(),
         .wr_count(wcount),
         .rd_en(rd_en),
-        .rd_data(dout),
-        .rd_empty(empty),
+        .rd_data(rd_data),
+        .rd_empty(rd_empty),
         .rd_almost_empty(),
-        .rd_count()
+        .rd_count(),
+        .scrub_en(scrub_en),
+        .scrub_addr(scrub_addr)
     );
     
     assign prog_full = (wcount >= prog_full_thresh);
@@ -96,7 +139,9 @@ module fifo_wrapper_24_16 #(
     output wire [23:0] dout,
     output wire full,
     output wire empty,
-    output wire prog_full
+    output wire prog_full,
+    input wire scrub_en,
+    input wire [10:0] scrub_addr
 );
     wire wr_full, rd_empty;
     wire [23:0] rd_data;
@@ -110,14 +155,16 @@ module fifo_wrapper_24_16 #(
         .rst_n(rst_n),
         .wr_en(wr_en),
         .wr_data(wr_data),
-        .wr_full(full),
+        .wr_full(wr_full),
         .wr_almost_full(),
         .wr_count(wcount),
         .rd_en(rd_en),
-        .rd_data(dout),
-        .rd_empty(empty),
+        .rd_data(rd_data),
+        .rd_empty(rd_empty),
         .rd_almost_empty(),
-        .rd_count()
+        .rd_count(),
+        .scrub_en(scrub_en),
+        .scrub_addr(scrub_addr)
     );
     
     assign full = wr_full;
@@ -137,7 +184,9 @@ module fifo_wrapper_32_16 #(
     input wire rd_en,
     output wire [31:0] dout,
     output wire full,
-    output wire empty
+    output wire empty,
+    input wire scrub_en,
+    input wire [10:0] scrub_addr
 );
     wire wr_full, rd_empty;
     wire [31:0] rd_data;
@@ -150,14 +199,16 @@ module fifo_wrapper_32_16 #(
         .rst_n(rst_n),
         .wr_en(wr_en),
         .wr_data(wr_data),
-        .wr_full(full),
+        .wr_full(wr_full),
         .wr_almost_full(),
         .wr_count(),
         .rd_en(rd_en),
-        .rd_data(dout),
-        .rd_empty(empty),
+        .rd_data(rd_data),
+        .rd_empty(rd_empty),
         .rd_almost_empty(),
-        .rd_count()
+        .rd_count(),
+        .scrub_en(scrub_en),
+        .scrub_addr(scrub_addr)
     );
     
     assign full = wr_full;
@@ -174,7 +225,9 @@ module fifo_wrapper_33_16 (
     input wire rd_en,
     output wire [32:0] dout,
     output wire full,
-    output wire empty
+    output wire empty,
+    input wire scrub_en,
+    input wire [10:0] scrub_addr
 );
     wire wr_full, rd_empty;
     wire [32:0] rd_data;
@@ -187,14 +240,16 @@ module fifo_wrapper_33_16 (
         .rst_n(rst_n),
         .wr_en(wr_en),
         .wr_data(wr_data),
-        .wr_full(full),
+        .wr_full(wr_full),
         .wr_almost_full(),
         .wr_count(),
         .rd_en(rd_en),
-        .rd_data(dout),
-        .rd_empty(empty),
+        .rd_data(rd_data),
+        .rd_empty(rd_empty),
         .rd_almost_empty(),
-        .rd_count()
+        .rd_count(),
+        .scrub_en(scrub_en),
+        .scrub_addr(scrub_addr)
     );
     
     assign full = wr_full;
@@ -213,7 +268,9 @@ module fifo_wrapper_34_16 #(
     input wire rd_en,
     output wire [33:0] dout,
     output wire full,
-    output wire empty
+    output wire empty,
+    input wire scrub_en,
+    input wire [10:0] scrub_addr
 );
     wire wr_full, rd_empty;
     wire [33:0] rd_data;
@@ -226,14 +283,16 @@ module fifo_wrapper_34_16 #(
         .rst_n(rst_n),
         .wr_en(wr_en),
         .wr_data(wr_data),
-        .wr_full(full),
+        .wr_full(wr_full),
         .wr_almost_full(),
         .wr_count(),
         .rd_en(rd_en),
-        .rd_data(dout),
-        .rd_empty(empty),
+        .rd_data(rd_data),
+        .rd_empty(rd_empty),
         .rd_almost_empty(),
-        .rd_count()
+        .rd_count(),
+        .scrub_en(scrub_en),
+        .scrub_addr(scrub_addr)
     );
     
     assign full = wr_full;
@@ -252,7 +311,9 @@ module fifo_wrapper_10_16 #(
     input wire rd_en,
     output wire [9:0] dout,
     output wire full,
-    output wire empty
+    output wire empty,
+    input wire scrub_en,
+    input wire [10:0] scrub_addr
 );
     wire wr_full, rd_empty;
     wire [9:0] rd_data;
@@ -265,14 +326,16 @@ module fifo_wrapper_10_16 #(
         .rst_n(rst_n),
         .wr_en(wr_en),
         .wr_data(wr_data),
-        .wr_full(full),
+        .wr_full(wr_full),
         .wr_almost_full(),
         .wr_count(),
         .rd_en(rd_en),
-        .rd_data(dout),
-        .rd_empty(empty),
+        .rd_data(rd_data),
+        .rd_empty(rd_empty),
         .rd_almost_empty(),
-        .rd_count()
+        .rd_count(),
+        .scrub_en(scrub_en),
+        .scrub_addr(scrub_addr)
     );
     
     assign full = wr_full;

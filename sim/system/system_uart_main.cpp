@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
         std::printf("[SYSTEM] Firmware banner received\n");
 
         uart_send(dut, 0x00);
-        const std::array<uint8_t, 5> info{{'K', 'P', 1, 2, 0x06}};
+        const std::array<uint8_t, 5> info{{'K', 'P', 1, 3, 0x06}};
         for (uint8_t byte : info) expect_byte(dut, byte, "firmware info");
         std::printf("[SYSTEM] Release protocol/capabilities passed\n");
 
@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
         reconstruct(dut, helper);
         reconstruct(dut, helper);
 
-        std::printf("[SYSTEM] Release mode withheld shared secrets and zeroized Kyber\n");
+        std::printf("[SYSTEM] Release mode withheld shared secrets and zeroized crypto accelerators\n");
         std::printf("*** FULL UART/PUF/FE/KDF/KYBER-512 PASS (%llu cycles) ***\n",
                     static_cast<unsigned long long>(sim_cycles));
         dut.final();

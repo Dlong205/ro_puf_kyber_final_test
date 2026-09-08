@@ -46,6 +46,8 @@ RTL_SRCS = $(SIM_RTL_DIR)/bch_blank_ecc.v \
 
 PORTABLE_MDIR = obj_dir_portable
 PORTABLE_RTL_SRCS = $(filter-out $(SIM_RTL_DIR)/compare_cla_xilinx.v xilinx_carry4_stub.v,$(RTL_SRCS))
+CHARACTERIZATION_TOP = tb_fuzzy_characterization
+CHARACTERIZATION_MDIR = obj_dir_characterization
 
 all: sim
 
@@ -97,7 +99,15 @@ portable: $(PORTABLE_MDIR)/$(SIM_EXE)
 	@echo "Running portable (no CARRY4) simulation..."
 	@./$(PORTABLE_MDIR)/$(SIM_EXE)
 
-clean:
-	rm -rf obj_dir $(PORTABLE_MDIR) $(SIM_RTL_DIR) *.vcd $(TB_CPP)
+$(CHARACTERIZATION_MDIR)/V$(CHARACTERIZATION_TOP): $(CHARACTERIZATION_TOP).sv $(RTL_SRCS) $(SIM_RTL_STAMP)
+	$(VERILATOR) $(filter-out --cc --exe,$(VERILATOR_FLAGS)) --binary -j 1 \
+		--Mdir $(CHARACTERIZATION_MDIR) --top-module $(CHARACTERIZATION_TOP) \
+		$(RTL_SRCS) $(CHARACTERIZATION_TOP).sv
 
-.PHONY: all sim portable clean
+characterization: $(CHARACTERIZATION_MDIR)/V$(CHARACTERIZATION_TOP)
+	@./$(CHARACTERIZATION_MDIR)/V$(CHARACTERIZATION_TOP)
+
+clean:
+	rm -rf obj_dir $(PORTABLE_MDIR) $(CHARACTERIZATION_MDIR) $(SIM_RTL_DIR) *.vcd $(TB_CPP)
+
+.PHONY: all sim portable characterization clean

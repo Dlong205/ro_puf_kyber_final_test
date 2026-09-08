@@ -1,0 +1,9 @@
+rtl/common/generic_blk_mem.v
+rtl/common/generic_c_shift_ram.v
+rtl/common/generic_dist_mem.v
+rtl/kyber/Kyber_top.v
+rtl/kyber/kyber_top_wrapper.sv
+rtl/kyber/loopback_test.v
+rtl/puf/kp_ro_cell_xilinx.sv
+rtl/fuzzy_extractor/compare_cla_xilinx.v
+rtl/top/Kyber_System_Top.sv

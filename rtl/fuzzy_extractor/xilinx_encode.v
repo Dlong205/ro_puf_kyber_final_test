@@ -6,6 +6,7 @@ module xilinx_encode #(
 ) (
 	input [BITS-1:0] data_in,
 	input clk_in,
+	input reset,
 	input start,
 	input ce,
 	output ready,
@@ -33,14 +34,18 @@ module xilinx_encode #(
 	wire clk;
 	assign clk = clk_in;
 
-	pipeline #(2) u_input [BITS+2-1:0] (
+	pipeline_ce_reset #(2) u_input [BITS+2-1:0] (
 		.clk(clk),
+		.ce(1'b1),
+		.reset(reset),
 		.i({data_in, start, ce}),
 		.o({data_in0, start0, ce0})
 	);
 
-	pipeline #(2) u_output [BITS+5-1:0] (
+	pipeline_ce_reset #(2) u_output [BITS+5-1:0] (
 		.clk(clk),
+		.ce(1'b1),
+		.reset(reset),
 		.i({ready0, data_out0, first0, last0, data_bits0, ecc_bits0}),
 		.o({ready, data_out, first, last, data_bits, ecc_bits})
 	);
@@ -48,6 +53,7 @@ module xilinx_encode #(
 
 	bch_encode #(BCH_PARAMS, BITS, PIPELINE_STAGES) u_encode(
 		.clk(clk),
+		.reset(reset),
 		.start(start0),
 		.ready(ready0),
 		.ce(ce0),
@@ -60,4 +66,3 @@ module xilinx_encode #(
 	);
 
 endmodule
-

@@ -59,7 +59,9 @@ always @(posedge clk) begin
 	end
 end
 always @(posedge clk) begin
-	if(req_r1 & ~fifo_empty_r1)
+	if(rst)
+		sftreg <= 52'h0;
+	else if(req_r1 & ~fifo_empty_r1)
 		sftreg <= {din,sftreg[51:32]};
 	else
 		sftreg <= sftreg;
@@ -73,7 +75,10 @@ always @(*) case(state)
 	6'h30, 6'h33, 6'h36, 6'h39, 6'h3c : req = ~fifo_empty;
 	default : req = 1'h 0;
 endcase
-always @(posedge clk) case(state_r2)
+always @(posedge clk) begin
+	if(rst)
+		dout <= 24'h0;
+	else case(state_r2)
 	6'h01, 6'h0c, 6'h10, 6'h30, 6'h20 : dout <= sftreg[43:20];
 	6'h02, 6'h1e : dout <= sftreg[29:8];
 	6'h03, 6'h0d, 6'h1c, 6'h34, 6'h23 : dout <= sftreg[51:28];
@@ -98,15 +103,20 @@ always @(posedge clk) case(state_r2)
 	6'h3b : dout <= sftreg[51:34];
 	6'h32 : dout <= sftreg[51:40];
 	default : dout <= sftreg[51:30];
-endcase
+	endcase
+end
 
-always @(posedge clk) case(state_r2)
+always @(posedge clk) begin
+	if(rst)
+		valid <= 1'b0;
+	else case(state_r2)
 	6'h1, 6'h2, 6'h3, 6'h4, 6'h5, 6'h6, 6'h7, 6'h8 : valid <= 1'h 1;
 	6'hc, 6'hd, 6'he, 6'hf : valid <= 1'h 1;
 	6'h10, 6'h11, 6'h12, 6'h13, 6'h14, 6'h15, 6'h16, 6'h17, 6'h18, 6'h19, 6'h1a, 6'h1b, 6'h1c, 6'h1d, 6'h1e, 6'h1f : valid <= 1'h 1;
 	6'h20, 6'h21, 6'h22, 6'h23 : valid <= 1'h 1;
 	6'h30, 6'h31, 6'h32, 6'h33, 6'h34, 6'h35, 6'h36, 6'h37, 6'h38, 6'h39, 6'h3a, 6'h3b, 6'h3c, 6'h3d, 6'h3e, 6'h3f : valid <= 1'h 1;
 	default : valid <= 1'h 0;
-endcase
+	endcase
+end
 
 endmodule

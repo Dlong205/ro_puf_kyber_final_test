@@ -1,9 +1,11 @@
 # Makefile for Kyber-512 functional loopback verification (Verilator)
 # Usage: make kat
+#        make kat-invalid
 #        make clean
 
 VERILATOR = verilator
-VERILATOR_FLAGS = --cc --exe --trace --timing \
+DEBUG_FLAGS ?=
+VERILATOR_FLAGS = --cc --exe --trace --timing $(DEBUG_FLAGS) \
     -CFLAGS "-std=c++17 -O2" \
     -LDFLAGS "-lstdc++" \
     -I../../rtl/kyber/ref \
@@ -18,6 +20,7 @@ TOP_MODULE = kat_wrapper
 SIM_EXE = V$(TOP_MODULE)
 AXI_TOP = axi_wrapper_tb
 AXI_EXE = V$(AXI_TOP)
+AXI_SECURE_MDIR = obj_dir_axi_secure
 CODEC_TOP = codec_roundtrip_tb
 CODEC_EXE = V$(CODEC_TOP)
 
@@ -70,6 +73,10 @@ kat: obj_dir/$(SIM_EXE)
 	@echo "=== Running legacy Kyber-512 functional loopback verification ==="
 	@obj_dir/$(SIM_EXE)
 
+kat-invalid: obj_dir/$(SIM_EXE)
+	@echo "=== Running ML-KEM-512 implicit-rejection verification ==="
+	@obj_dir/$(SIM_EXE) +INVALID_CT
+
 obj_dir_axi/$(AXI_EXE): $(COMMON_SRCS) $(HASH_CORE_SRCS) $(KYBER_SRCS) ../../rtl/kyber/kyber_axi_wrapper.v tb_axi_main.cpp axi_wrapper_tb.sv
 	$(VERILATOR) $(VERILATOR_FLAGS) --Mdir obj_dir_axi --top-module $(AXI_TOP) $(COMMON_SRCS) $(HASH_CORE_SRCS) $(KYBER_SRCS) ../../rtl/kyber/kyber_axi_wrapper.v tb_axi_main.cpp axi_wrapper_tb.sv
 	$(MAKE) -C obj_dir_axi -f V$(AXI_TOP).mk V$(AXI_TOP)
@@ -77,6 +84,14 @@ obj_dir_axi/$(AXI_EXE): $(COMMON_SRCS) $(HASH_CORE_SRCS) $(KYBER_SRCS) ../../rtl
 axi: obj_dir_axi/$(AXI_EXE)
 	@echo "=== Running Kyber-512 AXI register/handshake verification ==="
 	@obj_dir_axi/$(AXI_EXE)
+
+$(AXI_SECURE_MDIR)/$(AXI_EXE): $(COMMON_SRCS) $(HASH_CORE_SRCS) $(KYBER_SRCS) ../../rtl/kyber/kyber_axi_wrapper.v tb_axi_main.cpp axi_wrapper_tb.sv
+	$(VERILATOR) $(VERILATOR_FLAGS) --Mdir $(AXI_SECURE_MDIR) -GEXPOSE_SECRETS=0 --top-module $(AXI_TOP) $(COMMON_SRCS) $(HASH_CORE_SRCS) $(KYBER_SRCS) ../../rtl/kyber/kyber_axi_wrapper.v tb_axi_main.cpp axi_wrapper_tb.sv
+	$(MAKE) -C $(AXI_SECURE_MDIR) -f V$(AXI_TOP).mk V$(AXI_TOP)
+
+axi-secure: $(AXI_SECURE_MDIR)/$(AXI_EXE)
+	@echo "=== Running Kyber-512 AXI locked-secret policy verification ==="
+	@$(AXI_SECURE_MDIR)/$(AXI_EXE)
 
 strict-raw: obj_dir_axi/$(AXI_EXE)
 	@echo "=== Running strict single-attempt Kyber raw gate (no retry) ==="
@@ -95,7 +110,7 @@ codec: obj_dir_codec/$(CODEC_EXE)
 	@obj_dir_codec/$(CODEC_EXE)
 
 clean:
-	rm -rf obj_dir obj_dir_axi obj_dir_codec
+	rm -rf obj_dir obj_dir_axi $(AXI_SECURE_MDIR) obj_dir_codec
 	rm -f waveform.vcd
 
-.PHONY: kat axi strict-raw strict-raw-long codec clean
+.PHONY: kat kat-invalid axi axi-secure strict-raw strict-raw-long codec clean

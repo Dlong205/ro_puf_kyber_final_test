@@ -28,7 +28,7 @@ module codec_roundtrip_tb(input logic clk);
     fifo_wrapper_32_16 #(.DEPTH(512)) transport (
         .clk(clk), .rst_n(~rst), .wr_en(enc_valid), .wr_data(enc_dout),
         .rd_en(dec_req), .dout(fifo_dout), .full(fifo_full),
-        .empty(fifo_empty)
+        .empty(fifo_empty), .scrub_en(1'b0), .scrub_addr(11'd0)
     );
 
     decode_Server decoder (

@@ -8,6 +8,7 @@ module tb_kp_puf_simple (
     localparam int TIMEOUT_CYCLES = 2000;
 
     logic rst_n;
+    logic zeroize = 1'b0;
     logic start;
     logic [7:0] seed;
     logic busy;
@@ -25,6 +26,7 @@ module tb_kp_puf_simple (
     ) dut (
         .clk      (clk),
         .rst_n    (rst_n),
+        .zeroize  (zeroize),
         .start    (start),
         .seed     (seed),
         .busy     (busy),
@@ -98,6 +100,17 @@ module tb_kp_puf_simple (
         repeat (2) @(posedge clk);
         run_puf(8'hA5, response_b);
         check("PUF restarts cleanly after reset", response_b == response_a);
+
+        @(negedge clk);
+        zeroize = 1'b1;
+        @(negedge clk);
+        check("zeroize clears PUF busy", !busy);
+        check("zeroize clears PUF done", !done);
+        check("zeroize clears raw PUF response", response == '0);
+        zeroize = 1'b0;
+        repeat (2) @(posedge clk);
+        run_puf(8'hA5, response_b);
+        check("PUF restarts cleanly after zeroize", response_b == response_a);
 
         if (failures != 0)
             $fatal(1, "%0d PUF TESTS FAILED", failures);

@@ -8,6 +8,7 @@ module fuzzy_extractor #(
 )(
     input  logic                  clk,
     input  logic                  rst_n,
+    input  logic                  zeroize,
 
     input  logic                  start,
     input  logic                  mode,            // 0: enroll (encode), 1: reconstruct (decode)
@@ -68,6 +69,12 @@ module fuzzy_extractor #(
     logic            dec_start_in;
     logic [BITS-1:0] dec_err_out;
     logic            dec_first_out;
+    logic            bch_clear;
+
+    // The BCH library historically relied on FPGA register initial values.
+    // Drive a real synchronous clear through the complete encoder/decoder
+    // hierarchy so reset and secure zeroization also work in an ASIC flow.
+    assign bch_clear = zeroize || !rst_n;
 
     xilinx_encode #(
         .T(T),
@@ -77,6 +84,7 @@ module fuzzy_extractor #(
     ) u_encode (
         .data_in   (enc_data_in),
         .clk_in    (clk),
+        .reset     (bch_clear),
         .start     (enc_start),
         .ce        (enc_ce),
         .ready     (enc_ready),
@@ -99,6 +107,7 @@ module fuzzy_extractor #(
     ) u_decode (
         .data_in   (dec_data_in),
         .clk_in    (clk),
+        .reset     (bch_clear),
         .start_in  (dec_start_in),
         .err_out   (dec_err_out),
         .first_out (dec_first_out)
@@ -123,6 +132,23 @@ module fuzzy_extractor #(
             success_reg <= 1'b0;
             helper_out  <= '0;
             key_out     <= '0;
+        end else if (zeroize) begin
+            state       <= S_IDLE;
+            word_cnt    <= '0;
+            cap         <= 1'b0;
+            resp_reg    <= '0;
+            helper_reg  <= '0;
+            r_reg       <= '0;
+            key_reg     <= '0;
+            cw_reg      <= '0;
+            err_reg     <= '0;
+            corrected   <= '0;
+            done_reg    <= 1'b0;
+            success_reg <= 1'b0;
+            key_out     <= '0;
+            // helper_out is public fuzzy-extractor helper data. Preserve it
+            // so enrollment can erase the PUF-derived key before UART sends
+            // the helper record.
         end else begin
             state    <= next_state;
             done_reg <= 1'b0;
@@ -216,7 +242,9 @@ module fuzzy_extractor #(
         dec_data_in = '0;
         dec_start_in = 1'b0;
 
-        case (state)
+        if (zeroize) begin
+            next_state = S_IDLE;
+        end else case (state)
             S_IDLE: begin
                 if (start)
                     next_state = mode ? S_DEC_FEED : S_ENC;

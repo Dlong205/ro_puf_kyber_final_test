@@ -64,12 +64,20 @@ module Kyber_System_Top(
     // 1. RISC-V SoC Core (PicoRV32 + Firmware + Peripherals)
     // ==========================================
     wire puf_start_r, fe_start_r, fe_mode_r, kdf_start_r;
+    wire secure_zeroize;
     wire puf_done, fe_done, fe_success, kdf_done;
     // SoC-FE helper data connections
     wire [263:0] helper_soc_to_fe; // From UART to FE
     wire [263:0] helper_fe_to_soc; // From FE to UART
     
-    riscv_soc #(.CLKS_PER_BIT(434)) u_soc (
+    // The accepted FPGA research image keeps internal key observability for
+    // legacy diagnostics. UART release firmware still withholds the secret.
+    // ASIC/production integrations use the locked default instead.
+    riscv_soc #(
+        .CLKS_PER_BIT(434),
+        .EXPOSE_KYBER_SECRETS(1),
+        .SECURE_KYBER_SCRUB(1)
+    ) u_soc (
         .clk(clk),
         .rstn(rst_n),
         .rx(rx),
@@ -81,6 +89,7 @@ module Kyber_System_Top(
         .fe_start(fe_start_r),
         .fe_mode(fe_mode_r),
         .kdf_start(kdf_start_r),
+        .secure_zeroize(secure_zeroize),
         .puf_done(puf_done),
         .fe_done(fe_done),
         .fe_success(fe_success),
@@ -96,6 +105,7 @@ module Kyber_System_Top(
     kp_puf_top u_puf (
         .clk(clk),
         .rst_n(rst_n),
+        .zeroize(secure_zeroize),
         .start(puf_start_r),
         .seed(8'h42),
         .busy(),
@@ -109,6 +119,7 @@ module Kyber_System_Top(
     fuzzy_extractor u_fe (
         .clk(clk),
         .rst_n(rst_n),
+        .zeroize(secure_zeroize),
         .start(fe_start_r),
         .mode(fe_mode_r),
         .response_in(puf_resp),
@@ -126,6 +137,7 @@ module Kyber_System_Top(
     kdf_keccak u_kdf (
         .clk(clk),
         .rst_n(rst_n),
+        .zeroize(secure_zeroize),
         .start(kdf_start_r),
         .key_in(fe_key),
         .done(kdf_done),

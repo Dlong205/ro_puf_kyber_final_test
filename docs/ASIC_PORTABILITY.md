@@ -29,7 +29,8 @@ tránh runt pulse trên clock đã chọn.
 
 Primitive `CARRY4` chỉ còn trong `compare_cla_xilinx.v`. Chế độ
 `KP_TARGET_ASIC` dùng phép so sánh chuẩn tổng hợp được bằng standard cell. Cả
-hai backend đã chạy cùng 12 ca enroll/reconstruct, gồm 0, 1, 8 và 12 lỗi bit.
+hai backend đã PASS cùng 29 kiểm tra, gồm 0/1/8/12 lỗi bit, reset/zeroize sâu,
+abort giữa operation, không có completion muộn và restart sạch.
 
 ### NTT multiplier
 
@@ -50,7 +51,7 @@ make -j1 asic-portability
 Cổng này thực hiện:
 
 1. regression RO-PUF với mô hình số;
-2. 12/12 test fuzzy extractor không dùng `CARRY4`;
+2. 29/29 test fuzzy extractor không dùng `CARRY4`;
 3. unit test multiplier;
 4. lint wrapper/backend RO Xilinx bằng khai báo primitive mô phỏng;
 5. audit vị trí primitive vendor;
@@ -71,16 +72,23 @@ Cổng này thực hiện:
 
 ## Xác nhận lại backend FPGA
 
-Nhánh portability đã được xác nhận lại thành artifact RC4 thay vì chỉ dừng ở
-elaboration:
+Tag `fpga-rc4-baseline` giữ kết quả portability ban đầu làm mốc lịch sử. Artifact
+được chấp nhận hiện tại là ML-KEM-512 `0.2.0-rc1`; backend abstraction không bị
+phá khi chuyển từ RC4 sang nhánh ML-KEM:
 
-- full regression và `make -j1 asic-portability`: PASS;
+- full regression, `make -j1 asic-portability` và freeze manifest: PASS;
 - Vivado 2020.1 synthesize/place/route/bitstream: PASS, không có `.xci`;
-- post-route 50 MHz: WNS `+3,663 ns`, WHS `+0,056 ns`, TNS/THS `0`;
-- DRC: 0 lỗi; route: 0 failed/unrouted/partial net;
-- netlist RO: 128 LUT, 128 feedback net và 128/128 net có constraint loop;
-- Vivado infer 4 DSP48E1 từ phép nhân RTL trung lập;
-- board XC7Z020: INFO/enroll/reconstruct và stress 100, 1.000, 10.000 đều PASS.
+- ML-KEM RC1 post-route 50 MHz: WNS `+2,226 ns`, WHS `+0,034 ns`, TNS/THS `0`;
+- 49.909/53.200 LUT, 30.649 register, 25 BRAM tile; Vivado infer 4 DSP48E1 từ
+  phép nhân RTL trung lập;
+- DRC: 0 Error/Critical Warning; route: 70.739/70.739 net routable hoàn tất;
+- board XC7Z020: INFO/enroll/reconstruct và stress 100, 1.000, 10.000 đều PASS;
+- miền RO full-SoC đã khóa 136 endpoint/128 route và hai build sạch khớp
+  fingerprint RC1; image tái lập cũng PASS board 10.000/10.000.
+
+Các report post-route được track ở root thuộc artifact RC1 tạo từ source commit
+`8d2e8cd`; các commit sau RC1 thêm constraint/audit/repro flow. Bitstream/DCP
+`locked_a` và `locked_b` nằm trong `build/` và không phải artifact root mới.
 
 Report methodology vẫn có 72 `TIMING-17` vì hai counter nhận clock từ RO vật
 lý có tần số bất định. `report_cdc` chỉ phân tích đường có clock được khai báo ở
@@ -90,3 +98,18 @@ và CDC/RDC chuyên dụng khi đã chọn PDK.
 
 Kết quả trên chứng minh việc tách backend không làm hỏng FPGA baseline. Nó chưa
 thay thế macro RO, memory compiler, SDC, synthesis/STA hay physical sign-off ASIC.
+
+## Candidate v4 — cập nhật 2026-09-08
+
+V4 bổ sung synchronous reset thật xuyên hierarchy BCH và scrub tường minh cho
+PUF/FE/KDF/ML-KEM. Xilinx FE và đường ASIC-portable đều PASS 29/29; full
+offline `crypto-freeze-gate` và ba manifest v4 PASS, gồm full-top ASIC/filelist
+closure cùng Kyber raw 1.024/1.024. Memory compiler phải giữ hành vi quét
+write-zero/latency của wrapper hiện tại; kết quả RTL không chứng minh SRAM
+remanence vật lý.
+
+Phạm vi hiện là crypto-accelerator zeroize. CPU PicoRV32, SoC RAM/bus staging
+và scan/DFT còn ngoài boundary. Sau khi khôi phục BRAM inference, đúng source v4
+đã PASS Vivado 50 MHz, physical-lock audit và đúng-image board 10.000/10.000.
+Điều này xác nhận portability patch không phá FPGA flow, nhưng không thay thế
+memory mapping, synthesis/P&R, DFT hoặc sign-off trên PDK ASIC thật.

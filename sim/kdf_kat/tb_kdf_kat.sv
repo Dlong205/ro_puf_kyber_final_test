@@ -18,6 +18,7 @@ module tb_kdf_kat(input wire clk);
 
     // DUT
     logic        start = 0;
+    logic        zeroize = 0;
     logic [191:0] key_in;
     wire         done;
     wire [511:0] seed_out;
@@ -25,6 +26,7 @@ module tb_kdf_kat(input wire clk);
     kdf_keccak u_kdf (
         .clk      (clk),
         .rst_n    (rst_n),
+        .zeroize  (zeroize),
         .start    (start),
         .key_in   (key_in),
         .done     (done),
@@ -54,6 +56,7 @@ module tb_kdf_kat(input wire clk);
 
     // Control
     logic started = 0;
+    logic [1:0] zeroize_phase = 0;
     always @(posedge clk) begin
         if (rst_n && !started && cyc == 2) begin
             start <= 1;
@@ -63,7 +66,7 @@ module tb_kdf_kat(input wire clk);
             start <= 0;
         end
 
-        if (done) begin
+        if (done && zeroize_phase == 0) begin
             $display("[KDF_KAT] KDF done at cycle %0d", cyc);
             $display("[KDF_KAT] seed_out = %0h", seed_out);
             $display("[KDF_KAT] expected = %0h", expected);
@@ -84,6 +87,16 @@ module tb_kdf_kat(input wire clk);
                 end
                 $fatal(1, "KDF SHAKE256 known-answer mismatch");
             end
+            zeroize <= 1'b1;
+            zeroize_phase <= 1;
+        end else if (zeroize_phase == 1) begin
+            zeroize <= 1'b0;
+            zeroize_phase <= 2;
+        end else if (zeroize_phase == 2) begin
+            if (seed_out != 0 || u_kdf.key_shift != 0 ||
+                u_kdf.keccak_inst.state_reg != 0 || done)
+                $fatal(1, "KDF zeroize left secret state");
+            $display("[KDF_KAT] *** PASS: zeroize cleared key, seed and 1600-bit Keccak state ***");
             $finish;
         end
 

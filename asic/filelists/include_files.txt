@@ -1,0 +1,9 @@
+rtl/hash_core/keccak_pkg.vh
+rtl/fuzzy_extractor/bch.vh
+rtl/fuzzy_extractor/bch_defs.vh
+rtl/fuzzy_extractor/bch_encode.vh
+rtl/fuzzy_extractor/bch_params.vh
+rtl/fuzzy_extractor/bch_syndrome.vh
+rtl/fuzzy_extractor/config.vh
+rtl/fuzzy_extractor/log2.vh
+rtl/fuzzy_extractor/matrix.vh

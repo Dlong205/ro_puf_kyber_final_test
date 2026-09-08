@@ -22,11 +22,13 @@ module soc_peripherals #(
     output reg fe_start,
     output reg fe_mode,
     output reg kdf_start,
+    output reg secure_zeroize,
 
     input puf_done,
     input fe_done,
     input fe_success,
     input kdf_done,
+    input secure_zeroize_done,
     input [511:0] kdf_seed,
 
     output [263:0] helper_out_data, // Helper data from UART to FE
@@ -131,6 +133,7 @@ module soc_peripherals #(
     reg fe_done_sticky;
     reg fe_success_sticky;
     reg kdf_done_sticky;
+    reg secure_zeroize_done_sticky;
 
     always @(posedge clk) begin
         if (!rstn) begin
@@ -138,12 +141,15 @@ module soc_peripherals #(
             fe_done_sticky    <= 0;
             fe_success_sticky <= 0;
             kdf_done_sticky   <= 0;
+            secure_zeroize_done_sticky <= 0;
         end else begin
             // Latch on hardware pulse
             if (puf_done)   puf_done_sticky   <= 1;
             if (fe_done)    fe_done_sticky    <= 1;
             if (fe_done && fe_success) fe_success_sticky <= 1;
             if (kdf_done)   kdf_done_sticky   <= 1;
+            if (secure_zeroize_done)
+                secure_zeroize_done_sticky <= 1;
 
             // Clear ALL latches when CPU writes to SYS_CTRL (starting a new operation)
             if (mem_valid && !mem_ready && (|mem_wstrb) && sel_sys_ctrl) begin
@@ -151,6 +157,7 @@ module soc_peripherals #(
                 fe_done_sticky    <= 0;
                 fe_success_sticky <= 0;
                 kdf_done_sticky   <= 0;
+                secure_zeroize_done_sticky <= 0;
             end
         end
     end
@@ -164,6 +171,7 @@ module soc_peripherals #(
             puf_start <= 0;
             fe_start <= 0;
             kdf_start <= 0;
+            secure_zeroize <= 0;
             fe_mode <= 0;
             for (int i=0; i<9; i++) helper_reg[i] <= 0;
         end else begin
@@ -172,6 +180,7 @@ module soc_peripherals #(
             puf_start <= 0;
             fe_start <= 0;
             kdf_start <= 0;
+            secure_zeroize <= 0;
 
             if (mem_valid && !mem_ready) begin
                 mem_ready <= 1;
@@ -186,6 +195,7 @@ module soc_peripherals #(
                         fe_start  <= mem_wdata[1];
                         fe_mode   <= mem_wdata[2];
                         kdf_start <= mem_wdata[3];
+                        secure_zeroize <= mem_wdata[4];
                     end else if (sel_helper) begin
                         helper_reg[helper_idx] <= mem_wdata;
                     end
@@ -198,7 +208,9 @@ module soc_peripherals #(
                         mem_rdata <= {29'd0, rx_overflow, tx_done, tx_active};
                     end else if (sel_sys_ctrl) begin
                         // Return STICKY latched status bits
-                        mem_rdata <= {28'd0, kdf_done_sticky, fe_success_sticky, fe_done_sticky, puf_done_sticky};
+                        mem_rdata <= {27'd0, secure_zeroize_done_sticky,
+                                     kdf_done_sticky, fe_success_sticky,
+                                     fe_done_sticky, puf_done_sticky};
                     end else if (sel_helper) begin
                         mem_rdata <= helper_in_words[helper_idx];
                     end else if (sel_kdf) begin

@@ -11,6 +11,8 @@ module Kyber_top(
 Kyber_Server S(
 .clk(clk),
 .rst(rst),
+.scrub_en(1'b0),
+.scrub_addr(11'd0),
 .start(start),
 .wen(valid_client),
 .k(k),
@@ -25,6 +27,8 @@ Kyber_Server S(
 Kyber_Client C(
 .clk(clk),
 .rst(rst),
+.scrub_en(1'b0),
+.scrub_addr(11'd0),
 .start(start),
 .wen(valid_server),
 .k(k),

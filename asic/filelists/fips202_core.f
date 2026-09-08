@@ -1,0 +1,10 @@
+rtl/hash_core/ADDER.v
+rtl/hash_core/ALGORITHM.v
+rtl/hash_core/CHI1.v
+rtl/hash_core/CHI2.v
+rtl/hash_core/Chi_3_Iota.v
+rtl/hash_core/IOTA.v
+rtl/hash_core/RC.v
+rtl/hash_core/THETA1.v
+rtl/hash_core/THETA2_RHO_PI.v
+rtl/hash_core/fips202_sponge.sv

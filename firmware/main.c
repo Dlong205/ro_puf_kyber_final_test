@@ -21,7 +21,7 @@
 #endif
 
 #define PROTOCOL_MAJOR 1
-#define PROTOCOL_MINOR 2
+#define PROTOCOL_MINOR 3
 
 #define CMD_INFO   0x00
 #define CMD_ENROLL 0x01
@@ -33,7 +33,7 @@
 #define RESULT_KEY_FOLLOWS (1u << 0)
 #define CAP_KEY_EXPORT     (1u << 0)
 #define CAP_SESSION_DIVERSIFICATION (1u << 1)
-#define CAP_KYBER_ZEROIZE  (1u << 2)
+#define CAP_ACCELERATOR_ZEROIZE (1u << 2)
 
 #define ERR_UART_TIMEOUT  0x01
 #define ERR_PUF_TIMEOUT   0x02
@@ -43,6 +43,13 @@
 #define ERR_KYBER_CONFIG  0x06
 #define ERR_KYBER_TIMEOUT 0x07
 #define ERR_KEY_MISMATCH  0x08
+#define ERR_ZEROIZE_TIMEOUT 0x09
+
+#define SYS_ST_PUF_DONE       (1u << 0)
+#define SYS_ST_FE_DONE        (1u << 1)
+#define SYS_ST_FE_SUCCESS     (1u << 2)
+#define SYS_ST_KDF_DONE       (1u << 3)
+#define SYS_ST_ZEROIZE_DONE   (1u << 4)
 
 #define KYBER_ST_DONE         (1u << 2)
 #define KYBER_ST_BUSY         (1u << 3)
@@ -121,21 +128,25 @@ static void secure_zero_words(volatile uint32_t *words, uint32_t count) {
 }
 #endif
 
-static void kyber_zeroize(void) {
-    // CTRL[1] resets both Kyber cores and clears all seed/status registers.
-    KYBER_CTRL = 0x02;
+static int secure_zeroize(void) {
+    // SYS_CTRL[4] erases secret state in the PUF, FE, KDF and Kyber
+    // accelerators. Completion is reported only after the 2048-address Kyber
+    // memory scrub has finished. CPU/firmware state is outside this hardware
+    // accelerator-zeroize boundary.
+    SYS_CTRL = SYS_ST_ZEROIZE_DONE;
+    return wait_sys_status(SYS_ST_ZEROIZE_DONE);
 }
 
-static void send_failure(uint8_t code, int clear_kyber) {
-    if (clear_kyber)
-        kyber_zeroize();
+static void send_failure(uint8_t code, int clear_sensitive) {
+    if (clear_sensitive && !secure_zeroize())
+        code = ERR_ZEROIZE_TIMEOUT;
     uart_putchar(STATUS_FAIL);
     uart_putchar(code);
 }
 
 static void process_info(void) {
     uint8_t capabilities = CAP_SESSION_DIVERSIFICATION |
-                           CAP_KYBER_ZEROIZE;
+                           CAP_ACCELERATOR_ZEROIZE;
 #if !RELEASE_BUILD
     capabilities |= CAP_KEY_EXPORT;
 #endif
@@ -147,15 +158,22 @@ static void process_info(void) {
 }
 
 static void process_enroll(void) {
-    SYS_CTRL = 0x01;
-    if (!wait_sys_status(0x01)) {
-        send_failure(ERR_PUF_TIMEOUT, 0);
+    SYS_CTRL = SYS_ST_PUF_DONE;
+    if (!wait_sys_status(SYS_ST_PUF_DONE)) {
+        send_failure(ERR_PUF_TIMEOUT, 1);
         return;
     }
 
-    SYS_CTRL = 0x02;
-    if (!wait_sys_status(0x02)) {
-        send_failure(ERR_FE_TIMEOUT, 0);
+    SYS_CTRL = SYS_ST_FE_DONE;
+    if (!wait_sys_status(SYS_ST_FE_DONE)) {
+        send_failure(ERR_FE_TIMEOUT, 1);
+        return;
+    }
+
+    // helper_out is public and intentionally survives this request. Erase
+    // the raw PUF response and reconstructed key before returning it.
+    if (!secure_zeroize()) {
+        send_failure(ERR_ZEROIZE_TIMEOUT, 0);
         return;
     }
 
@@ -199,28 +217,28 @@ static void process_recon(void) {
         return;
 
     uart_putchar('A');
-    SYS_CTRL = 0x01;
-    if (!wait_sys_status(0x01)) {
-        send_failure(ERR_PUF_TIMEOUT, 0);
+    SYS_CTRL = SYS_ST_PUF_DONE;
+    if (!wait_sys_status(SYS_ST_PUF_DONE)) {
+        send_failure(ERR_PUF_TIMEOUT, 1);
         return;
     }
     uart_putchar('B');
 
-    SYS_CTRL = 0x06;
-    if (!wait_sys_status(0x02)) {
-        send_failure(ERR_FE_TIMEOUT, 0);
+    SYS_CTRL = SYS_ST_FE_DONE | SYS_ST_FE_SUCCESS;
+    if (!wait_sys_status(SYS_ST_FE_DONE)) {
+        send_failure(ERR_FE_TIMEOUT, 1);
         return;
     }
     uart_putchar('C');
-    if (!(SYS_CTRL & 0x04)) {
-        send_failure(ERR_FE_DECODE, 0);
+    if (!(SYS_CTRL & SYS_ST_FE_SUCCESS)) {
+        send_failure(ERR_FE_DECODE, 1);
         return;
     }
 
     uart_putchar('D');
-    SYS_CTRL = 0x08;
-    if (!wait_sys_status(0x08)) {
-        send_failure(ERR_KDF_TIMEOUT, 0);
+    SYS_CTRL = SYS_ST_KDF_DONE;
+    if (!wait_sys_status(SYS_ST_KDF_DONE)) {
+        send_failure(ERR_KDF_TIMEOUT, 1);
         return;
     }
     uart_putchar('E');
@@ -234,8 +252,10 @@ static void process_recon(void) {
     int key_match = 0;
     int final_attempt_timed_out = 0;
     for (uint32_t attempt = 0; attempt < KYBER_MAX_ATTEMPTS; attempt++) {
-        if (attempt != 0)
-            kyber_zeroize();
+        if (attempt != 0 && !secure_zeroize()) {
+            send_failure(ERR_ZEROIZE_TIMEOUT, 0);
+            return;
+        }
 
         session_mix = mix32(session_mix ^ read_cycle() ^
                             (0x9E3779B9u + attempt));
@@ -278,13 +298,21 @@ static void process_recon(void) {
     }
     uart_putchar('G');
 
-    uart_putchar(STATUS_SUCCESS);
 #if !RELEASE_BUILD
     uint32_t server_key[8];
-    uart_putchar(RESULT_KEY_FOLLOWS);
     for (int i = 0; i < 8; i++) {
         uint32_t key_word = KYBER_K_SERVER(i);
         server_key[i] = key_word;
+    }
+    if (!secure_zeroize()) {
+        secure_zero_words(server_key, 8);
+        send_failure(ERR_ZEROIZE_TIMEOUT, 0);
+        return;
+    }
+    uart_putchar(STATUS_SUCCESS);
+    uart_putchar(RESULT_KEY_FOLLOWS);
+    for (int i = 0; i < 8; i++) {
+        uint32_t key_word = server_key[i];
         uart_putchar((key_word >>  0) & 0xFF);
         uart_putchar((key_word >>  8) & 0xFF);
         uart_putchar((key_word >> 16) & 0xFF);
@@ -292,9 +320,13 @@ static void process_recon(void) {
     }
     secure_zero_words(server_key, 8);
 #else
+    if (!secure_zeroize()) {
+        send_failure(ERR_ZEROIZE_TIMEOUT, 0);
+        return;
+    }
+    uart_putchar(STATUS_SUCCESS);
     uart_putchar(0x00);
 #endif
-    kyber_zeroize();
 }
 
 int main(void) {
@@ -304,6 +336,17 @@ int main(void) {
     uart_putchar('A');
     uart_putchar('R');
     uart_putchar('T');
+
+    // SRAM contents are not guaranteed after an ASIC cold boot and can retain
+    // secret data across a warm reset.  Scrub every crypto accelerator before
+    // accepting the first host command.  A failed scrub is fail-closed: expose
+    // the protocol error once, then never enter the command dispatcher.
+    if (!secure_zeroize()) {
+        uart_putchar(STATUS_FAIL);
+        uart_putchar(ERR_ZEROIZE_TIMEOUT);
+        while (1) { }
+    }
+
     while (1) {
         uint8_t command = uart_getchar_blocking();
         if (command == CMD_INFO)
