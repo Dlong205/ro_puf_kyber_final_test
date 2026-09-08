@@ -3,6 +3,24 @@
 ## Source bitstream SHA-256: 183e0af367376ebd7ca6bc2f3747314fd0602306a630af2a2e51858ef1f20e8e
 ## Vivado 2020.1 build 2902540; part xc7z020clg400-2.
 ## BEL is applied before LOC. Every connected leaf cell is fixed before routes.
+## Four measurement-mux leaf LUTs have a Vivado-generated n_0_<number> stem.
+## That number depends on unrelated full-SoC logic, so resolve those endpoints
+## by their stable hierarchy and lane suffix and require exactly one match.
+proc ro_require_generated_lfsr_mux_endpoint {lane} {
+    if {$lane < 2 || $lane > 5} {
+        error "Invalid generated LFSR mux endpoint lane: $lane"
+    }
+    set selector [format  {NAME =~ "u_puf/lfsr_inst/n_0_*_BUFG_inst_i_%d"} $lane]
+    set cells [get_cells -quiet -hierarchical -filter $selector]
+    if {[llength $cells] != 1} {
+        error "Expected one generated LFSR mux endpoint for lane $lane, found $cells"
+    }
+    return [lindex $cells 0]
+}
+set ro_generated_lfsr_mux_i2 [ro_require_generated_lfsr_mux_endpoint 2]
+set ro_generated_lfsr_mux_i3 [ro_require_generated_lfsr_mux_endpoint 3]
+set ro_generated_lfsr_mux_i4 [ro_require_generated_lfsr_mux_endpoint 4]
+set ro_generated_lfsr_mux_i5 [ro_require_generated_lfsr_mux_endpoint 5]
 set_property BEL SLICEL.A6LUT [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/clk_BUFG_inst_i_2"}]
 set_property LOC SLICE_X113Y32 [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/clk_BUFG_inst_i_2"}]
 set_property LOCK_PINS {I0:A2 I1:A6 I2:A1 I3:A3 I4:A5 I5:A4} [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/clk_BUFG_inst_i_2"}]
@@ -19,22 +37,22 @@ set_property BEL SLICEL.A6LUT [get_cells -hierarchical -filter {NAME == "u_puf/l
 set_property LOC SLICE_X111Y29 [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/clk_BUFG_inst_i_5"}]
 set_property LOCK_PINS {I0:A5 I1:A2 I2:A4 I3:A3 I4:A1 I5:A6} [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/clk_BUFG_inst_i_5"}]
 set_property DONT_TOUCH true [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/clk_BUFG_inst_i_5"}]
-set_property BEL SLICEL.A6LUT [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_2"}]
-set_property LOC SLICE_X111Y25 [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_2"}]
-set_property LOCK_PINS {I0:A6 I1:A2 I2:A3 I3:A4 I4:A1 I5:A5} [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_2"}]
-set_property DONT_TOUCH true [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_2"}]
-set_property BEL SLICEL.A6LUT [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_3"}]
-set_property LOC SLICE_X113Y24 [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_3"}]
-set_property LOCK_PINS {I0:A6 I1:A3 I2:A5 I3:A2 I4:A4 I5:A1} [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_3"}]
-set_property DONT_TOUCH true [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_3"}]
-set_property BEL SLICEM.A6LUT [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_4"}]
-set_property LOC SLICE_X112Y26 [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_4"}]
-set_property LOCK_PINS {I0:A6 I1:A3 I2:A4 I3:A2 I4:A5 I5:A1} [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_4"}]
-set_property DONT_TOUCH true [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_4"}]
-set_property BEL SLICEL.B6LUT [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_5"}]
-set_property LOC SLICE_X109Y27 [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_5"}]
-set_property LOCK_PINS {I0:A6 I1:A1 I2:A3 I3:A4 I4:A2 I5:A5} [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_5"}]
-set_property DONT_TOUCH true [get_cells -hierarchical -filter {NAME == "u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_5"}]
+set_property BEL SLICEL.A6LUT $ro_generated_lfsr_mux_i2
+set_property LOC SLICE_X111Y25 $ro_generated_lfsr_mux_i2
+set_property LOCK_PINS {I0:A6 I1:A2 I2:A3 I3:A4 I4:A1 I5:A5} $ro_generated_lfsr_mux_i2
+set_property DONT_TOUCH true $ro_generated_lfsr_mux_i2
+set_property BEL SLICEL.A6LUT $ro_generated_lfsr_mux_i3
+set_property LOC SLICE_X113Y24 $ro_generated_lfsr_mux_i3
+set_property LOCK_PINS {I0:A6 I1:A3 I2:A5 I3:A2 I4:A4 I5:A1} $ro_generated_lfsr_mux_i3
+set_property DONT_TOUCH true $ro_generated_lfsr_mux_i3
+set_property BEL SLICEM.A6LUT $ro_generated_lfsr_mux_i4
+set_property LOC SLICE_X112Y26 $ro_generated_lfsr_mux_i4
+set_property LOCK_PINS {I0:A6 I1:A3 I2:A4 I3:A2 I4:A5 I5:A1} $ro_generated_lfsr_mux_i4
+set_property DONT_TOUCH true $ro_generated_lfsr_mux_i4
+set_property BEL SLICEL.B6LUT $ro_generated_lfsr_mux_i5
+set_property LOC SLICE_X109Y27 $ro_generated_lfsr_mux_i5
+set_property LOCK_PINS {I0:A6 I1:A1 I2:A3 I3:A4 I4:A2 I5:A5} $ro_generated_lfsr_mux_i5
+set_property DONT_TOUCH true $ro_generated_lfsr_mux_i5
 set_property BEL SLICEL.A6LUT [get_cells -hierarchical -filter {NAME == "u_puf/ring0[0].ro0/u_backend/LUT6_INV0"}]
 set_property LOC SLICE_X110Y27 [get_cells -hierarchical -filter {NAME == "u_puf/ring0[0].ro0/u_backend/LUT6_INV0"}]
 set_property DONT_TOUCH true [get_cells -hierarchical -filter {NAME == "u_puf/ring0[0].ro0/u_backend/LUT6_INV0"}]
@@ -419,6 +437,10 @@ set_property DONT_TOUCH true [get_cells -hierarchical -filter {NAME == "u_puf/ri
 set_property BEL SLICEL.D6LUT [get_cells -hierarchical -filter {NAME == "u_puf/ring1[15].ro1/u_backend/LUT6_NAND0"}]
 set_property LOC SLICE_X113Y23 [get_cells -hierarchical -filter {NAME == "u_puf/ring1[15].ro1/u_backend/LUT6_NAND0"}]
 set_property DONT_TOUCH true [get_cells -hierarchical -filter {NAME == "u_puf/ring1[15].ro1/u_backend/LUT6_NAND0"}]
+unset ro_generated_lfsr_mux_i2
+unset ro_generated_lfsr_mux_i3
+unset ro_generated_lfsr_mux_i4
+unset ro_generated_lfsr_mux_i5
 set_property FIXED_ROUTE { { CLBLL_LL_B CLBLL_LOGIC_OUTS13 SE2BEG1 NR1BEG1 WR1BEG2 IMUX_L4 CLBLL_LL_A6 }  } [get_nets -hierarchical -filter {NAME == "u_puf/ring0[0].ro0/u_backend/t0"}]
 set_property IS_ROUTE_FIXED true [get_nets -hierarchical -filter {NAME == "u_puf/ring0[0].ro0/u_backend/t0"}]
 set_property FIXED_ROUTE { { CLBLL_LL_A CLBLL_LL_AMUX CLBLL_LOGIC_OUTS20 NR1BEG2 IMUX_L4 CLBLL_LL_A6 }  } [get_nets -hierarchical -filter {NAME == "u_puf/ring0[0].ro0/u_backend/t1"}]

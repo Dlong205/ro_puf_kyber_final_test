@@ -7,6 +7,19 @@ proc ro_normalize_space {value} {
     return $normalized
 }
 
+proc ro_canonical_object_name {value} {
+    # Vivado's numeric n_0_<number> stem is allocated from the complete
+    # synthesized netlist and changes when unrelated SoC logic changes.  The
+    # hierarchy, lane suffix and physical properties are the stable identity
+    # of these four measurement-mux endpoints.  Preserve the accepted RC1
+    # spelling in the serialized fingerprint so byte-for-byte comparisons
+    # still measure physical equivalence instead of an auto-name artifact.
+    regsub -all \
+        {u_puf/lfsr_inst/n_0_[0-9]+_BUFG_inst_i_([2-5])} \
+        $value {u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_\1} canonical
+    return $canonical
+}
+
 proc ro_sha256_file {path} {
     if {![file isfile $path]} {
         error "Cannot hash missing file: $path"
@@ -125,7 +138,8 @@ proc ro_write_physical_fingerprint {path inventory} {
             close $channel
             error "Endpoint cell has no physical input-pin mapping: $cell"
         }
-        puts $channel "CELL\t$cell\t$ref_name\t$init\t$loc\t$bel\t$pin_map"
+        set canonical_cell [ro_canonical_object_name $cell]
+        puts $channel "CELL\t$canonical_cell\t$ref_name\t$init\t$loc\t$bel\t$pin_map"
     }
 
     foreach net $ro_nets {
@@ -136,7 +150,12 @@ proc ro_write_physical_fingerprint {path inventory} {
             close $channel
             error "RO net is not routed: $net"
         }
-        puts $channel "NET\t$net\t[join $pins ,]\t$route"
+        set canonical_net [ro_canonical_object_name $net]
+        set canonical_pins {}
+        foreach pin $pins {
+            lappend canonical_pins [ro_canonical_object_name $pin]
+        }
+        puts $channel "NET\t$canonical_net\t[join $canonical_pins ,]\t$route"
     }
     close $channel
 }

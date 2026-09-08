@@ -57,6 +57,25 @@ puts $channel "## Source DCP SHA-256: $checkpoint_sha256"
 puts $channel "## Source bitstream SHA-256: $bitstream_sha256"
 puts $channel "## Vivado 2020.1 build 2902540; part xc7z020clg400-2."
 puts $channel "## BEL is applied before LOC. Every connected leaf cell is fixed before routes."
+puts $channel {## Four measurement-mux leaf LUTs have a Vivado-generated n_0_<number> stem.
+## That number depends on unrelated full-SoC logic, so resolve those endpoints
+## by their stable hierarchy and lane suffix and require exactly one match.
+proc ro_require_generated_lfsr_mux_endpoint {lane} {
+    if {$lane < 2 || $lane > 5} {
+        error "Invalid generated LFSR mux endpoint lane: $lane"
+    }
+    set selector [format \
+        {NAME =~ "u_puf/lfsr_inst/n_0_*_BUFG_inst_i_%d"} $lane]
+    set cells [get_cells -quiet -hierarchical -filter $selector]
+    if {[llength $cells] != 1} {
+        error "Expected one generated LFSR mux endpoint for lane $lane, found $cells"
+    }
+    return [lindex $cells 0]
+}
+set ro_generated_lfsr_mux_i2 [ro_require_generated_lfsr_mux_endpoint 2]
+set ro_generated_lfsr_mux_i3 [ro_require_generated_lfsr_mux_endpoint 3]
+set ro_generated_lfsr_mux_i4 [ro_require_generated_lfsr_mux_endpoint 4]
+set ro_generated_lfsr_mux_i5 [ro_require_generated_lfsr_mux_endpoint 5]}
 
 foreach cell $endpoint_cells {
     set bel [get_property BEL $cell]
@@ -66,12 +85,15 @@ foreach cell $endpoint_cells {
         close $channel
         error "Incomplete endpoint constraint for $cell"
     }
-    puts $channel [format \
-        {set_property BEL %s [get_cells -hierarchical -filter {NAME == "%s"}]} \
-        $bel $cell]
-    puts $channel [format \
-        {set_property LOC %s [get_cells -hierarchical -filter {NAME == "%s"}]} \
-        $loc $cell]
+    set cell_target [format \
+        {[get_cells -hierarchical -filter {NAME == "%s"}]} $cell]
+    if {[regexp \
+            {^u_puf/lfsr_inst/n_0_[0-9]+_BUFG_inst_i_([2-5])$} \
+            $cell unused generated_lane]} {
+        set cell_target [format {$ro_generated_lfsr_mux_i%d} $generated_lane]
+    }
+    puts $channel [format {set_property BEL %s %s} $bel $cell_target]
+    puts $channel [format {set_property LOC %s %s} $loc $cell_target]
     # The board XDC already locks every RO LUT's six logical inputs to
     # A6..A1.  Repeating the same property in this late implementation-only
     # XDC is harmless, but Vivado 2020.1 reports one critical warning for
@@ -79,13 +101,15 @@ foreach cell $endpoint_cells {
     # endpoints that are outside the RO-cell wildcard in the board XDC.
     if {![string match "*u_puf*ring*LUT6*" $cell]} {
         puts $channel [format \
-            {set_property LOCK_PINS %s [get_cells -hierarchical -filter {NAME == "%s"}]} \
-            [list $pin_map] $cell]
+            {set_property LOCK_PINS %s %s} [list $pin_map] $cell_target]
     }
     puts $channel [format \
-        {set_property DONT_TOUCH true [get_cells -hierarchical -filter {NAME == "%s"}]} \
-        $cell]
+        {set_property DONT_TOUCH true %s} $cell_target]
 }
+puts $channel {unset ro_generated_lfsr_mux_i2
+unset ro_generated_lfsr_mux_i3
+unset ro_generated_lfsr_mux_i4
+unset ro_generated_lfsr_mux_i5}
 
 foreach net $ro_nets {
     set route [get_property ROUTE $net]
