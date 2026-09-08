@@ -23,6 +23,7 @@ set physical_lock [file join $root_dir constraints \
     ro_physical_lock_rc1_zynq7020.xdc]
 source [file join $script_dir audit_ro_placement.tcl]
 source [file join $script_dir audit_ro_physical_lock.tcl]
+source [file join $script_dir audit_fpga_capacity.tcl]
 
 if {![file exists $project_file]} {
     error "Reproducibility project not found: $project_file"
@@ -58,7 +59,8 @@ if {[llength $ro_luts] != 128} {
 }
 audit_ro_placement $placement_map
 audit_ro_generated_lfsr_mux_endpoints
-report_utilization -file [file join $report_dir post_synth_utilization.rpt]
+report_and_audit_fpga_capacity \
+    [file join $report_dir post_synth_utilization.rpt]
 close_design
 
 reset_run impl_1

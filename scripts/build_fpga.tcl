@@ -14,6 +14,7 @@ set placement_map [file join $root_dir constraints \
     ro_placement_rc1_zynq7020.xdc]
 source [file join $script_dir audit_ro_placement.tcl]
 source [file join $script_dir audit_ro_physical_lock.tcl]
+source [file join $script_dir audit_fpga_capacity.tcl]
 set stage synth
 if {[llength $argv] > 0} {
     set stage [lindex $argv 0]
@@ -56,7 +57,8 @@ if {![string match "*Complete*" $synth_status]} {
 open_run synth_1
 audit_ro_placement $placement_map
 audit_ro_generated_lfsr_mux_endpoints
-report_utilization -file [file join $report_dir post_synth_utilization.rpt]
+report_and_audit_fpga_capacity \
+    [file join $report_dir post_synth_utilization.rpt]
 report_timing_summary -file [file join $report_dir post_synth_timing.rpt]
 report_cdc -details -file [file join $report_dir post_synth_cdc.rpt]
 close_design

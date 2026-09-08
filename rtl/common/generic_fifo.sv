@@ -30,6 +30,7 @@ module generic_fifo #(
     
     logic [ADDR_WIDTH:0] wr_ptr;
     logic [ADDR_WIDTH:0] rd_ptr;
+
     logic [ADDR_WIDTH:0] wr_ptr_gray;
     logic [ADDR_WIDTH:0] rd_ptr_gray;
     logic [ADDR_WIDTH:0] wr_ptr_gray_sync1;
@@ -178,10 +179,22 @@ module generic_fifo_sync #(
 
     localparam int ADDR_WIDTH = $clog2(DEPTH);
     
-    logic [WIDTH-1:0] mem [0:DEPTH-1];
+    (* ram_style = "block" *) logic [WIDTH-1:0] mem [0:DEPTH-1];
     
     logic [ADDR_WIDTH:0] wr_ptr;
     logic [ADDR_WIDTH:0] rd_ptr;
+
+    // A RAM inference process must contain one syntactic write port.  Select
+    // normal FIFO traffic or the sequential scrub before the memory process;
+    // two separate mem[address] assignments make Vivado map large FIFOs to
+    // LUTRAM instead of BRAM.
+    wire                  scrub_addr_valid = (scrub_addr < DEPTH);
+    wire                  mem_write_en = scrub_en ? scrub_addr_valid :
+                                         (wr_en && !wr_full);
+    wire [ADDR_WIDTH-1:0] mem_write_addr = scrub_en ?
+        scrub_addr[ADDR_WIDTH-1:0] : wr_ptr[ADDR_WIDTH-1:0];
+    wire [WIDTH-1:0]      mem_write_data = scrub_en ?
+        {WIDTH{1'b0}} : wr_data;
     
     // Write pointer with synchronous reset
     always_ff @(posedge clk) begin
@@ -194,12 +207,8 @@ module generic_fifo_sync #(
     
     // Write data
     always_ff @(posedge clk) begin
-        if (scrub_en) begin
-            if (scrub_addr < DEPTH)
-                mem[scrub_addr[ADDR_WIDTH-1:0]] <= '0;
-        end else if (wr_en && !wr_full) begin
-            mem[wr_ptr[ADDR_WIDTH-1:0]] <= wr_data;
-        end
+        if (mem_write_en)
+            mem[mem_write_addr] <= mem_write_data;
     end
     
     // Read pointer
