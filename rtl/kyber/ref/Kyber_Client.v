@@ -1,6 +1,8 @@
 `timescale 1ns / 1ps
 module Kyber_Client(
 	input clk, rst, start,
+	input scrub_en,
+	input [10:0] scrub_addr,
 	input wen,
 	input [2:0] k,
 	input ready_pk,
@@ -191,7 +193,9 @@ always @* case(state)
 endcase
 
 always @(posedge clk) begin
-	if(state == 6'h 1a && decode_req_r1)
+	if(scrub_en)
+		rho <= 0;
+	else if(state == 6'h 1a && decode_req_r1)
 		rho <= {IFIFO_dout,rho[255:32]};
 	else if(state == 6'h 4)
 		rho <= {rho[31:0],rho[255:32]};
@@ -215,11 +219,15 @@ always @(posedge clk) begin
 		default : K <= K;
 	endcase
 end
-always @(posedge clk) case(state)
-	6'h 21 : r <= (keccak_squeeze && squeeze_ctr >= 6'd8 && squeeze_ctr < 6'd16) ? {keccak_dout,r[255:32]} : r;
-	6'h 3 : r <= {r[31:0],r[255:32]};
-	default : r <= r;
-endcase
+always @(posedge clk) begin
+	if(scrub_en)
+		r <= 0;
+	else case(state)
+		6'h 21 : r <= (keccak_squeeze && squeeze_ctr >= 6'd8 && squeeze_ctr < 6'd16) ? {keccak_dout,r[255:32]} : r;
+		6'h 3 : r <= {r[31:0],r[255:32]};
+		default : r <= r;
+	endcase
+end
 always @(posedge clk) begin
 	if(rst) m <= 0;
 	else if(ena_sft)
@@ -233,16 +241,24 @@ always @(posedge clk) begin
 		default : m <= m;
 	endcase
 end
-always @(posedge clk) case(state)
-	6'h 6 : hash_pk <= {hash_pk[31:0],hash_pk[255:32]};
-	6'h 20 : hash_pk <= (keccak_squeeze && squeeze_ctr < 6'd8) ? {keccak_dout,hash_pk[255:32]} : hash_pk;
-	default : hash_pk <= hash_pk;
-endcase
-always @(posedge clk) case(state)	
-	6'h 8 : hash_c <= {hash_c[31:0],hash_c[255:32]};
-	6'h 2b : hash_c <= (keccak_squeeze && squeeze_ctr < 6'd8) ? {keccak_dout,hash_c[255:32]} : hash_c;
-	default : hash_c <= hash_c;
-endcase
+always @(posedge clk) begin
+	if(scrub_en)
+		hash_pk <= 0;
+	else case(state)
+		6'h 6 : hash_pk <= {hash_pk[31:0],hash_pk[255:32]};
+		6'h 20 : hash_pk <= (keccak_squeeze && squeeze_ctr < 6'd8) ? {keccak_dout,hash_pk[255:32]} : hash_pk;
+		default : hash_pk <= hash_pk;
+	endcase
+end
+always @(posedge clk) begin
+	if(scrub_en)
+		hash_c <= 0;
+	else case(state)
+		6'h 8 : hash_c <= {hash_c[31:0],hash_c[255:32]};
+		6'h 2b : hash_c <= (keccak_squeeze && squeeze_ctr < 6'd8) ? {keccak_dout,hash_c[255:32]} : hash_c;
+		default : hash_c <= hash_c;
+	endcase
+end
 always @(posedge clk) begin
 	if(start) begin
 		patt_r <= patt;
@@ -506,7 +522,11 @@ assign OFIFO_din = encode_dout;
 assign OFIFO_wen = encode_valid;
 
 always @(posedge clk) begin
-	if(req_c_r1 & ready_c & ~OFIFO_empty_r1) begin
+	if(rst || scrub_en) begin
+		dout <= 32'h0;
+		valid <= 1'h0;
+	end
+	else if(req_c_r1 & ready_c & ~OFIFO_empty_r1) begin
 		dout <= OFIFO_dout;
 		valid <= 1'h 1;
 	end
@@ -544,6 +564,8 @@ end
 NTT_core_Client ntt(
 .clk(clk),
 .rst(rst),
+.scrub_en(scrub_en),
+.scrub_addr(scrub_addr),
 .start(start),
 .k(k),
 .ready_u(ready_u),
@@ -564,6 +586,8 @@ NTT_core_Client ntt(
 hash_core_Client hash(
 .clk(clk),
 .rst(rst),
+.scrub_en(scrub_en),
+.scrub_addr(scrub_addr),
 .keccak_init(keccak_init),
 .keccak_init_hard((state == 6'h1) || (state == 6'h19) || (state == 6'h22)),
 .squeeze_init(squeeze_init_early),
@@ -611,7 +635,9 @@ hash_core_Client hash(
 		.rd_en(decode_req),
 		.dout(IFIFO_dout),
 		.full(IFIFO_full),
-		.empty(IFIFO_empty)
+			.empty(IFIFO_empty),
+			.scrub_en(scrub_en),
+			.scrub_addr(scrub_addr)
 	);
 	
 	fifo_wrapper_32_16 #(.DEPTH(512)) OFIFO (
@@ -622,7 +648,9 @@ hash_core_Client hash(
 		.rd_en(req_c),
 		.dout(OFIFO_dout),
 		.full(OFIFO_full),
-		.empty(OFIFO_empty)
+			.empty(OFIFO_empty),
+			.scrub_en(scrub_en),
+			.scrub_addr(scrub_addr)
 	);
 	
 	fifo_wrapper_24_16 DFIFO (
@@ -635,7 +663,9 @@ hash_core_Client hash(
 		.dout(DFIFO_dout),
 		.full(DFIFO_full),
 		.empty(DFIFO_empty),
-		.prog_full()
+			.prog_full(),
+			.scrub_en(scrub_en),
+			.scrub_addr(scrub_addr)
 	);
 	
 endmodule

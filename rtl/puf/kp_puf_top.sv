@@ -8,6 +8,7 @@ module kp_puf_top #(
 )(
     input  logic        clk,
     input  logic        rst_n,
+    input  logic        zeroize,
     input  logic        start,
     input  logic [7:0]  seed,
     output logic        busy,
@@ -24,6 +25,7 @@ module kp_puf_top #(
     (* ASYNC_REG = "TRUE" *) logic winner_meta;
     (* ASYNC_REG = "TRUE" *) logic winner_sync;
     logic        lfsr_done;
+    wire         puf_rst_n = rst_n & ~zeroize;
 
     kp_puf_control #(
         .BIT_COUNT(BIT_COUNT),
@@ -32,7 +34,7 @@ module kp_puf_top #(
         .SETTLE_CYCLES(SETTLE_CYCLES)
     ) ctrl_inst (
         .clk      (clk),
-        .rst_n    (rst_n),
+        .rst_n    (puf_rst_n),
         .start    (start),
         .lfsr_dv  (lfsr_dv),
         .count_en (count_en),
@@ -49,7 +51,7 @@ module kp_puf_top #(
         .NUM_BITS(8)
     ) lfsr_inst (
         .clk       (clk),
-        .rst_n     (rst_n),
+        .rst_n     (puf_rst_n),
         .en        (lfsr_en),
         .seed_dv   (lfsr_dv),
         .seed      (seed),
@@ -64,7 +66,7 @@ module kp_puf_top #(
                 .FREQ_OFFSET(i * 3 + 1)
             ) ro0 (
                 .clk (clk),
-                .rst_n (rst_n),
+                .rst_n (puf_rst_n),
                 .en  (ro_en),
                 .cfg (challenge[3:0]),
                 .o   (ro_out0[i])
@@ -76,7 +78,7 @@ module kp_puf_top #(
                 .FREQ_OFFSET(i * 3 + 17)
             ) ro1 (
                 .clk (clk),
-                .rst_n (rst_n),
+                .rst_n (puf_rst_n),
                 .en  (ro_en),
                 .cfg (challenge[7:4]),
                 .o   (ro_out1[i])
@@ -101,7 +103,7 @@ module kp_puf_top #(
     ) counter0 (
         .clk    (mux0_out),
         .en     (count_en),
-        .rst_n  (rst_n),
+        .rst_n  (puf_rst_n),
         .cnt_rst(cnt_rst),
         .q      (cnt0)
     );
@@ -111,7 +113,7 @@ module kp_puf_top #(
     ) counter1 (
         .clk    (mux1_out),
         .en     (count_en),
-        .rst_n  (rst_n),
+        .rst_n  (puf_rst_n),
         .cnt_rst(cnt_rst),
         .q      (cnt1)
     );
@@ -125,8 +127,8 @@ module kp_puf_top #(
     // The RO counters are asynchronous to clk.  The FSM first disables both
     // ROs and waits SETTLE_CYCLES; this two-flop path then transfers the now
     // stable comparator result into the system-clock domain before capture.
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+    always_ff @(posedge clk or negedge puf_rst_n) begin
+        if (!puf_rst_n) begin
             winner_meta <= 1'b0;
             winner_sync <= 1'b0;
         end else begin
@@ -139,7 +141,7 @@ module kp_puf_top #(
         .WIDTH(BIT_COUNT)
     ) shiftreg_inst (
         .clk   (clk),
-        .rst_n (rst_n),
+        .rst_n (puf_rst_n),
         .en    (sr_en),
         .s_in  (winner_sync),
         .p_out (response)
@@ -150,8 +152,8 @@ module kp_puf_top #(
     // runt pulse on the muxed clock.  The controller must settle challenge
     // only while ro_en is low.
     logic [7:0] challenge_prev;
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+    always_ff @(posedge clk or negedge puf_rst_n) begin
+        if (!puf_rst_n) begin
             challenge_prev <= '0;
         end else begin
             if (ro_en && challenge != challenge_prev)

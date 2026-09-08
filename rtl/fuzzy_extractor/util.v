@@ -35,14 +35,14 @@ module pipeline_ce_reset #(
 	output o
 );
 	localparam TCQ = 1;
-	if (!STAGES)
+	if (!STAGES) begin : BYPASS
 		assign o = i;
-	else begin
+	end else begin : REGISTERS
 		reg [STAGES-1:0] pipeline = 0;
 		assign o = pipeline[STAGES-1];
 		always @(posedge clk)
 			if (reset)
-				pipeline <= #TCQ pipeline << 1;
+				pipeline <= #TCQ {STAGES{1'b0}};
 			else if (ce)
 				pipeline <= #TCQ (pipeline << 1) | i;
 	end

@@ -1,6 +1,8 @@
 `timescale 1ns / 1ps
 module Kyber_Server(
 	input clk, rst, start,
+	input scrub_en,
+	input [10:0] scrub_addr,
 	input wen,
 	input [2:0] k,
 	input ready_c,
@@ -180,7 +182,9 @@ generic_bram #(
 	.we_b(1'b0),
 	.addr_b(ciphertext_replay_addr),
 	.din_b(32'b0),
-	.dout_b(ciphertext_replay_dout)
+		.dout_b(ciphertext_replay_dout),
+		.scrub_en(scrub_en),
+		.scrub_addr(scrub_addr)
 );
 
 always @(posedge clk) begin
@@ -326,7 +330,9 @@ always @(posedge clk) begin
 	endcase
 end
 always @(posedge clk) begin
-	if(squeeze_ctr[3] && (state == 6'h 14 || state == 6'h 2e))
+	if(scrub_en)
+		sigma <= 0;
+	else if(squeeze_ctr[3] && (state == 6'h 14 || state == 6'h 2e))
 		sigma <= {keccak_dout,sigma[255:32]};
 	else if(state == 4'h 3)
 		sigma <= {sigma[31:0],sigma[255:32]};
@@ -337,7 +343,9 @@ always @(posedge clk) begin
 	// During key generation the first half of G(d) is the public matrix
 	// seed rho.  During CCA decapsulation the same output lane is K-bar;
 	// keep the original rho intact for re-encryption.
-	if(~CCA_enc && ~squeeze_ctr[3] && state == 6'h 14)
+	if(scrub_en)
+		rho <= 0;
+	else if(~CCA_enc && ~squeeze_ctr[3] && state == 6'h 14)
 		rho <= {keccak_dout,rho[255:32]};
 	else if(state == 6'h 1a || state == 6'h 4)
 		rho <= {rho[31:0],rho[255:32]};
@@ -345,7 +353,9 @@ always @(posedge clk) begin
 		rho <= rho;
 end
 always @(posedge clk) begin
-	if(ena_sft)
+	if(scrub_en)
+		m <= 0;
+	else if(ena_sft)
 		m <= {m[1:0],m[255:2]};
 	else if(m_ena)
 		m <= {m_dec,m[255:2]};
@@ -359,16 +369,24 @@ always @(posedge clk) begin
 		default : m <= m;
 	endcase
 end
-always @(posedge clk) case(state)
-	6'h 6 : hash_pk <= {hash_pk[31:0],hash_pk[255:32]};
-	6'h 21 : hash_pk <= (keccak_squeeze && squeeze_ctr < 6'd8) ? {keccak_dout,hash_pk[255:32]} : hash_pk;
-	default : hash_pk <= hash_pk;
-endcase
-always @(posedge clk) case(state)
-	6'h 8 : hash_c <= {hash_c[31:0],hash_c[255:32]};
-	6'h 2b : hash_c <= (keccak_squeeze && squeeze_ctr < 6'd8) ? {keccak_dout,hash_c[255:32]} : hash_c;
-	default : hash_c <= hash_c;
-endcase
+always @(posedge clk) begin
+	if(scrub_en)
+		hash_pk <= 0;
+	else case(state)
+		6'h 6 : hash_pk <= {hash_pk[31:0],hash_pk[255:32]};
+		6'h 21 : hash_pk <= (keccak_squeeze && squeeze_ctr < 6'd8) ? {keccak_dout,hash_pk[255:32]} : hash_pk;
+		default : hash_pk <= hash_pk;
+	endcase
+end
+always @(posedge clk) begin
+	if(scrub_en)
+		hash_c <= 0;
+	else case(state)
+		6'h 8 : hash_c <= {hash_c[31:0],hash_c[255:32]};
+		6'h 2b : hash_c <= (keccak_squeeze && squeeze_ctr < 6'd8) ? {keccak_dout,hash_c[255:32]} : hash_c;
+		default : hash_c <= hash_c;
+	endcase
+end
 always @(posedge clk) begin
 	if(rst)
 		K <= 256'h0;
@@ -798,7 +816,9 @@ always @(*) case({req_D0_r1&~ready_t,req_D1_r1&CCA_enc})
 	end
 endcase
 always @(posedge clk) begin
-	if(start)
+	if(rst || scrub_en)
+		equal <= 1'h 0;
+	else if(start)
 		equal <= 1'h 1;
 	else if(req_D0_r1&~ready_t | req_D1_r1&CCA_enc)
 		equal <= cmp0 == cmp1 ? equal : 1'h 0;
@@ -807,7 +827,11 @@ always @(posedge clk) begin
 end
 
 always @(posedge clk) begin
-	if(req_pk_r1 & ready_pk & ~OFIFO_empty_r1 & ~OFIFO_tx_done) begin
+	if(rst || scrub_en) begin
+		dout <= 32'h0;
+		valid <= 1'h0;
+	end
+	else if(req_pk_r1 & ready_pk & ~OFIFO_empty_r1 & ~OFIFO_tx_done) begin
 		dout <= OFIFO_dout;
 		valid <= 1'h 1;
 	end
@@ -849,6 +873,8 @@ end
 NTT_core_Server ntt(
 .clk(clk),
 .rst(rst),
+.scrub_en(scrub_en),
+.scrub_addr(scrub_addr),
 .start(start),
 .k(k),
 .CCA_enc(CCA_enc),
@@ -879,6 +905,8 @@ NTT_core_Server ntt(
 hash_core_Server hash(
 .clk(clk),
 .rst(rst),
+.scrub_en(scrub_en),
+.scrub_addr(scrub_addr),
 .keccak_init(keccak_init),
 .keccak_init_hard((state == 6'h1) || (state == 6'h1a) ||
 				  (state == 6'h22) ||
@@ -928,7 +956,9 @@ hash_core_Server hash(
 		.rd_en(decode_req),
 		.dout(IFIFO_dout),
 		.full(IFIFO_full),
-		.empty(IFIFO_empty)
+			.empty(IFIFO_empty),
+			.scrub_en(scrub_en),
+			.scrub_addr(scrub_addr)
 	);
 	
 	fifo_wrapper_34_16 OFIFO (
@@ -939,7 +969,9 @@ hash_core_Server hash(
 		.rd_en(OFIFO_req),
 		.dout(OFIFO_dout),
 		.full(OFIFO_full),
-		.empty(OFIFO_empty)
+			.empty(OFIFO_empty),
+			.scrub_en(scrub_en),
+			.scrub_addr(scrub_addr)
 	);
 	
 	fifo_wrapper_24_16 DFIFO0 (
@@ -952,7 +984,9 @@ hash_core_Server hash(
 		.dout(DFIFO0_dout),
 		.full(DFIFO0_full),
 		.empty(DFIFO0_empty),
-		.prog_full(DFIFO0_prog_full)
+			.prog_full(DFIFO0_prog_full),
+			.scrub_en(scrub_en),
+			.scrub_addr(scrub_addr)
 	);
 	
 	fifo_wrapper_10_16 DFIFO1 (
@@ -963,7 +997,9 @@ hash_core_Server hash(
 		.rd_en(req_D1),
 		.dout(DFIFO1_dout),
 		.full(DFIFO1_full),
-		.empty(DFIFO1_empty)
+			.empty(DFIFO1_empty),
+			.scrub_en(scrub_en),
+			.scrub_addr(scrub_addr)
 	);
 	
 endmodule

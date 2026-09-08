@@ -13,6 +13,7 @@ module tb_fuzzy_characterization;
     logic clk = 0;
     always #5 clk = ~clk;
     logic rst_n = 0;
+    logic zeroize = 0;
     logic start = 0;
     logic mode = 0;
     logic [N-1:0] response_in = '0;

@@ -202,7 +202,8 @@ module mlkem_encap_probe (
 `endif
 
     Kyber_Client client_inst (
-        .clk(clk), .rst(~rst_n), .start(start_reg),
+        .clk(clk), .rst(~rst_n), .scrub_en(1'b0), .scrub_addr(11'd0),
+        .start(start_reg),
         .wen(pk_valid), .k(3'd2), .ready_pk(1'b1),
         .req_c(ct_req), .din(pk_word), .ready_c(ready_c),
         .req_pk(pk_req), .valid(unused_valid),

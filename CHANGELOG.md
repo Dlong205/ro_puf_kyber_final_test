@@ -1,6 +1,27 @@
 # Lịch sử thay đổi
 
-## 0.2.0-rc2-dev — chưa phát hành — 2026-09-06
+## 0.2.0-rc2-dev — chưa phát hành — cập nhật 2026-09-07
+
+- Tạo candidate v4 cho crypto-accelerator zeroize: yêu cầu chung có handshake
+  xóa PUF response, toàn bộ BCH FE pipeline/key, KDF/Keccak state, ML-KEM
+  Client/Server/NTT/hash/codec/sponge và quét 2.048 địa chỉ RAM/FIFO/ciphertext.
+- Zeroize có thể hủy giao dịch đang chạy; core ML-KEM được giữ reset khi scrub.
+  AXI giữ `RDATA` ổn định nếu response đang stalled, chỉ báo done sau khi response
+  được nhận và staging được xóa; seed/config write cạnh tranh bị chặn.
+- Bổ sung reset thật cho hierarchy BCH từng phụ thuộc FPGA initial value. Hai
+  backend Xilinx/ASIC-portable PASS 29/29, gồm abort giữa operation, không có
+  done muộn và có thể restart.
+- Full regression v4 PASS; FIPS 202 50/50, ML-KEM KeyGen/Encaps/Decaps và 175
+  ca rejection tiếp tục bit-exact. Gate raw dài PASS 1.024/1.024, mismatch 0,
+  recovered 0, max attempts 1. Full-system PASS ở 958.516 cycle.
+- Firmware/UART lên protocol 1.3 và giữ capability `0x06`; bit 2 nay được gọi
+  chính xác là crypto-accelerator zeroize. Thêm lỗi `0x09` cho zeroize timeout.
+- Startup fail-closed: firmware bắt buộc hoàn tất accelerator zeroize sau banner
+  và trước command dispatcher; timeout trả `FF 09` rồi không nhận lệnh.
+- Boundary không bao gồm PicoRV32 register/pipeline, SoC RAM/stack, bus staging
+  hay scan/DFT; firmware release và CPU/bus nội bộ vẫn thuộc trusted base.
+- Candidate v4 mới chỉ PASS offline. Vivado implementation và board regression
+  cho đúng source/image v4 còn PENDING; bitstream/report root vẫn thuộc RC1.
 
 - Thêm top ASIC với external reset và synchronized release, filelist/manifest,
   constraint template cùng tài liệu clock/reset/CDC và memory inventory.

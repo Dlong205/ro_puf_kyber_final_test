@@ -31,6 +31,7 @@ module Puf_Characterization_Top(
     kp_puf_top u_puf (
         .clk(clk),
         .rst_n(por_done),
+        .zeroize(1'b0),
         .start(puf_start),
         .seed(8'h42),
         .busy(puf_busy),

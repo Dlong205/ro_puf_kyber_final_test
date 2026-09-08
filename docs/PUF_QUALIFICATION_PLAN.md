@@ -64,7 +64,9 @@ firmware production. Image phải xuất:
 - raw response 264 bit;
 - `count0`, `count1` hoặc ít nhất `abs(count0-count1)` cho từng challenge;
 - seed/challenge index, measurement-window và boot/session index;
-- số lỗi BCH đã sửa và cờ over-noise.
+- số lỗi BCH đã sửa, cờ decode và phép đối chiếu same-root độc lập. Không dùng
+  riêng `success` làm cờ over-noise vì decoder có thể trả codeword hợp lệ nhưng
+  sai root khi input nằm ngoài bán kính sửa lỗi.
 
 Full-SoC release hiện khóa theo RC1 cả 128 LUT RO, 8 LUT mux đầu cuối và 128
 route vật lý; hai implementation sạch đã khớp fingerprint. Image

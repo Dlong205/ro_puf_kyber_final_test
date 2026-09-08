@@ -23,6 +23,7 @@
 module sha3_shake_core(
     input  wire        clk,
     input  wire        rst,
+    input  wire        scrub,      // secure erase; has priority over control reset
     input  wire        init,        // 1-clk pulse: clear sponge, latch mode
     input  wire        hard_init,   // force-clear a partial legacy rate block
     input  wire [1:0]  mode,
@@ -137,7 +138,32 @@ module sha3_shake_core(
     // of LUT input muxes on XC7Z020.  Configuration initializes FPGA registers,
     // and every accepted hard message boundary clears these values before use.
     always @(posedge clk) begin
-        if (rst) begin
+        if (scrub) begin
+            // Unlike the normal control reset, secure scrub must overwrite all
+            // retained sponge copies.  These registers already have a hard-init
+            // zero path, so this does not introduce an array-style reset.
+            block_reg      <= 1600'h0;
+            squeeze_reg    <= 1600'h0;
+            block_perm_src <= 1600'h0;
+            base_state     <= 1600'h0;
+            mode_latched   <= 2'd0;
+            output_rate_words <= 6'd18;
+            wr_idx         <= 6'd0;
+            rd_idx         <= 6'd0;
+            have_block     <= 1'b0;
+            ready_flag     <= 1'b0;
+            pad_extra      <= 1'b0;
+            round_count    <= 5'd0;
+            perm_state     <= S_IDLE;
+            perm_active    <= 1'b0;
+            done_reg       <= 1'b0;
+            done_extend_reg <= 1'b0;
+            auto_squeeze_perm <= 1'b0;
+            perm_is_extend <= 1'b0;
+            queued_is_extend <= 1'b0;
+            tail_xor       <= 32'd0;
+            tail_pending   <= 1'b0;
+        end else if (rst) begin
             mode_latched   <= 2'd0;
             output_rate_words <= 6'd18;
             wr_idx         <= 6'd0;

@@ -1,6 +1,6 @@
 # Kế hoạch hoàn thiện RO-PUF + ML-KEM-512 đến ASIC
 
-Ngày lập: **2026-09-06**. Đây là kế hoạch đề xuất, không phải báo cáo các pha
+Ngày lập: **2026-09-06**, cập nhật tiến độ **2026-09-07**. Đây là kế hoạch đề xuất, không phải báo cáo các pha
 đã thực hiện. Long thực hiện implementation và tích hợp; các thành viên khác
 nghiên cứu, đối chiếu và hỗ trợ review theo khả năng thực tế.
 
@@ -28,9 +28,9 @@ functional nội bộ không tự trở thành chứng nhận FIPS hoặc FIPS 1
 - ML-KEM-512: KeyGen/Encaps 25 vector NIST mỗi nhóm; Decaps 25 vector oracle
   độc lập và 175 rejection; FPGA full-pipeline stress 10.000 giao dịch đã PASS.
 - Crypto RTL: candidate v2 là mốc FPGA đã kiểm chứng; candidate v3 đã PASS full
-  gate, Vivado và board 10.000/10.000 sau sửa FIFO/policy secret, nhưng không
-  được promote vì AI pre-review tìm thấy P0 secure-zeroize và chưa có review
-  độc lập của con người.
+  gate, Vivado và board nhưng không được promote vì P0 secure-zeroize. Candidate
+  v4 đã thêm accelerator scrub và PASS full offline freeze gate + ba manifest;
+  Vivado/board v4 và review độc lập còn PENDING.
 - RO full-SoC: 136 cell đầu cuối/128 route tái lập qua hai build sạch.
 - PUF-only: 10.000 mẫu một board/điều kiện phòng, HD max 1; chưa tương đương
   image full-SoC và chưa có qualification ASIC.
@@ -38,7 +38,7 @@ functional nội bộ không tự trở thành chứng nhận FIPS hoặc FIPS 1
   công nghệ hoặc báo cáo synthesis/P&R ASIC được chấp nhận.
 
 Chi tiết bằng chứng tại [PROJECT_STATUS.md](PROJECT_STATUS.md),
-[crypto freeze candidate](CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md) và
+[crypto freeze candidate v4](CRYPTO_RTL_FREEZE_CANDIDATE_V4_2026-09-07.md) và
 [báo cáo PUF](PUF_CHARACTERIZATION_2026-09-05.md).
 
 ## 3. Phụ thuộc và phần có thể làm song song
@@ -279,12 +279,14 @@ Việc thực hiện:
 
 ## 5. Việc ưu tiên trong đợt triển khai đầu
 
-1. Lưu baseline tài liệu và chốt M2 là đích trước mắt, M3 là bước sau chế tạo.
-2. Xác nhận PDK/tool/library được cấp và phần cứng máy chạy; chốt scope/API.
-3. Tạo filelist ASIC, audit các file thật sự compile, reset và memory inventory.
-4. Review entropy/RBG/key lifecycle, chọn phương án trước khi sửa crypto RTL.
-5. Tạo top/reset và lint gate đúng nghĩa; synthesis thử khối crypto khi đầu vào
-   công nghệ sẵn sàng, đồng thời thiết kế phép đo same-root/RO macro.
+1. Khóa manifest và review độc lập candidate v4; chạy Vivado rồi board v4 trước
+   khi freeze, không tái sử dụng report candidate v3.
+2. Chốt boundary CPU/bus/SoC RAM/scan ngoài accelerator-zeroize và scope/API.
+3. Xác nhận PDK/tool/library được cấp; map memory và giữ đúng scrub contract.
+4. Review entropy/RBG/key lifecycle; triển khai same-root/count-margin/PVT trên
+   FPGA và contract macro RO cho ASIC.
+5. Giảm/waive lint theo object, hoàn thiện SDC/CDC/DFT rồi synthesis/equivalence
+   khi đầu vào công nghệ sẵn sàng.
 
 Đầu ra đợt đầu là danh sách finding có thể tái hiện, dự toán area/timing ban đầu
 và các quyết định kiến trúc cần chốt. Sau đó mới ước lượng lịch P&R toàn chip.

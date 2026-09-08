@@ -4,6 +4,7 @@ module tb_fuzzy_extractor;
 
     logic                    clk;
     logic                    rst_n;
+    logic                    zeroize;
     logic                    start;
     logic                    mode;
     logic [263:0]            response_in;
@@ -22,6 +23,7 @@ module tb_fuzzy_extractor;
     ) dut (
         .clk         (clk),
         .rst_n       (rst_n),
+        .zeroize     (zeroize),
         .start       (start),
         .mode        (mode),
         .response_in (response_in),
@@ -38,6 +40,53 @@ module tb_fuzzy_extractor;
     logic [191:0] KEY0;
     int failures;
     int tests;
+    logic late_done;
+
+    // Collect every secret-bearing register bank in the elaborated
+    // BCH(264,192,t=8) hierarchy.  These are intentionally hierarchical:
+    // the test must fail if zeroize only clears the architectural wrapper.
+    wire [19:0]  enc_input_pipeline_state;
+    wire [25:0]  enc_output_pipeline_state;
+    wire [17:0]  dec_io_pipeline_state;
+    wire [71:0]  syndrome_state;
+    wire [80:0]  bma_adder_state;
+    wire [647:0] chien_state;
+
+    generate
+        for (genvar p = 0; p < 10; p = p + 1) begin : TB_ENC_INPUT_PIPE
+            assign enc_input_pipeline_state[2*p +: 2] =
+                dut.u_encode.u_input[p].REGISTERS.pipeline;
+        end
+        for (genvar p = 0; p < 13; p = p + 1) begin : TB_ENC_OUTPUT_PIPE
+            assign enc_output_pipeline_state[2*p +: 2] =
+                dut.u_encode.u_output[p].REGISTERS.pipeline;
+        end
+        for (genvar p = 0; p < 18; p = p + 1) begin : TB_DEC_IO_PIPE
+            assign dec_io_pipeline_state[p] =
+                dut.u_decode.u_pipeline[p].REGISTERS.pipeline;
+        end
+        for (genvar a = 0; a < 9; a = a + 1) begin : TB_BMA_ADDERS
+            assign bma_adder_state[9*a +: 9] =
+                dut.u_decode.u_bma.u_cN[a].parallel_out;
+        end
+        for (genvar b = 0; b < 8; b = b + 1) begin : TB_CHIEN_BITS
+            for (genvar r = 0; r < 9; r = r + 1) begin : TB_CHIEN_REGS
+                assign chien_state[(b*9+r)*9 +: 9] =
+                    dut.u_decode.u_error_tmec.u_chien.BIT[b].REG[r].ORIG.u_chien_reg.out;
+            end
+        end
+    endgenerate
+
+    assign syndrome_state = {
+        dut.u_decode.u_bch_syndrome.SYNDROMES[7].METHOD1.u_syn1a.synN,
+        dut.u_decode.u_bch_syndrome.SYNDROMES[6].METHOD1.u_syn1a.synN,
+        dut.u_decode.u_bch_syndrome.SYNDROMES[5].METHOD1.u_syn1a.synN,
+        dut.u_decode.u_bch_syndrome.SYNDROMES[4].METHOD1.u_syn1a.synN,
+        dut.u_decode.u_bch_syndrome.SYNDROMES[3].METHOD2.u_syn2a.lfsr,
+        dut.u_decode.u_bch_syndrome.SYNDROMES[2].METHOD2.u_syn2a.lfsr,
+        dut.u_decode.u_bch_syndrome.SYNDROMES[1].METHOD2.u_syn2a.lfsr,
+        dut.u_decode.u_bch_syndrome.SYNDROMES[0].METHOD2.u_syn2a.lfsr
+    };
 
     initial begin
         clk = 0;
@@ -79,6 +128,15 @@ module tb_fuzzy_extractor;
         end
     endtask
 
+    task pulse_zeroize;
+        begin
+            @(negedge clk);
+            zeroize = 1'b1;
+            @(negedge clk);
+            zeroize = 1'b0;
+        end
+    endtask
+
     task check(input string name, input logic cond);
         begin
             tests = tests + 1;
@@ -103,6 +161,7 @@ module tb_fuzzy_extractor;
         failures = 0;
         tests    = 0;
         rst_n    = 0;
+        zeroize  = 0;
         start    = 0;
         mode     = 0;
         response_in = '0;
@@ -149,6 +208,89 @@ module tb_fuzzy_extractor;
         $display("--- enroll determinism ---");
         run_op(0, R0, '0);
         check("enroll: helper deterministic", helper_out == H);
+
+        $display("--- secure zeroize ---");
+        pulse_zeroize();
+        check("zeroize: clears busy/done/success",
+              !busy && !done && !success);
+        check("zeroize: clears external key", key_out == '0);
+        check("zeroize: clears retained secret registers",
+              dut.resp_reg == '0 && dut.helper_reg == '0 &&
+              dut.r_reg == '0 && dut.key_reg == '0 &&
+              dut.cw_reg == '0 && dut.err_reg == '0 &&
+              dut.corrected == '0);
+        check("zeroize: clears encoder pipeline and LFSR",
+              enc_input_pipeline_state == '0 &&
+              enc_output_pipeline_state == '0 &&
+              dut.u_encode.u_encode.lfsr == '0 &&
+              !dut.u_encode.u_encode.last &&
+              !dut.u_encode.u_encode.load_lfsr &&
+              !dut.u_encode.u_encode.busy &&
+              !dut.u_encode.u_encode.start_last);
+        check("zeroize: clears decoder I/O and syndrome state",
+              dec_io_pipeline_state == '0 && syndrome_state == '0 &&
+              !dut.u_decode.u_bch_syndrome.busy &&
+              !dut.u_decode.u_bch_syndrome.done);
+        check("zeroize: clears BMA arithmetic state",
+              dut.u_decode.u_bma.beta == '0 &&
+              dut.u_decode.u_bma.sigma_last == '0 &&
+              dut.u_decode.u_bma.u_bch_syndrome_shuffle.syn_shuffled == '0 &&
+              bma_adder_state == '0 &&
+              dut.u_decode.u_bma.u_dinv.standard_a == '0 &&
+              dut.u_decode.u_bma.u_dinv.dual_c == '0 &&
+              !dut.u_decode.u_bma.u_dinv.busy &&
+              dut.u_decode.u_bma.u_serial_mixed_multiplier.lfsr == '0 &&
+              dut.u_decode.u_bma.u_serial_mixed_multiplier.dual_stored == '0 &&
+              !dut.u_decode.u_bma.u_serial_mixed_multiplier.change &&
+              dut.u_decode.u_bma.msm_serial_standard_multiplier.out == '0);
+        check("zeroize: clears BMA control state",
+              !dut.u_decode.u_bma.done && !dut.u_decode.u_bma.busy &&
+              !dut.u_decode.u_bma.first_cycle &&
+              !dut.u_decode.u_bma.second_cycle &&
+              !dut.u_decode.u_bma.penult2_cycle &&
+              !dut.u_decode.u_bma.penult1_cycle &&
+              !dut.u_decode.u_bma.last_cycle &&
+              !dut.u_decode.u_bma.first_calc &&
+              !dut.u_decode.u_bma.final_calc &&
+              !dut.u_decode.u_bma.counting &&
+              dut.u_decode.u_bma.err_count == '0 &&
+              !dut.u_decode.u_bma.d_r_nonzero &&
+              !dut.u_decode.u_bma.bsel_last);
+        check("zeroize: clears all 72 Chien field registers",
+              chien_state == '0 &&
+              dut.u_decode.u_error_tmec.u_chien.u_first_pipeline.REGISTERS.pipeline == '0);
+        check("zeroize: preserves public enrollment helper", helper_out == H);
+
+        run_op(1, R0, H);
+        check("reconstruct after zeroize: key matches", key_out == KEY0);
+        check("reconstruct after zeroize: success", success == 1'b1);
+
+        $display("--- secure zeroize during reconstruct ---");
+        @(posedge clk);
+        mode        = 1'b1;
+        response_in = flipn(R0, 40, 4);
+        helper_in   = H;
+        start       = 1'b1;
+        @(posedge clk);
+        start       = 1'b0;
+        repeat (20) @(posedge clk);
+        check("mid-operation zeroize: operation was active", busy);
+        pulse_zeroize();
+        check("mid-operation zeroize: returns wrapper idle", !busy && !done && !success);
+        check("mid-operation zeroize: clears deep BCH state",
+              syndrome_state == '0 && bma_adder_state == '0 &&
+              chien_state == '0 && dut.u_encode.u_encode.lfsr == '0);
+
+        late_done = 1'b0;
+        repeat (50) begin
+            @(posedge clk);
+            late_done = late_done || done;
+        end
+        check("mid-operation zeroize: no late completion pulse", !late_done && !busy);
+
+        run_op(1, flipn(R0, 40, 4), H);
+        check("restart after mid-operation zeroize: key matches", key_out == KEY0);
+        check("restart after mid-operation zeroize: success", success == 1'b1);
 
         if (failures == 0) begin
             $display("ALL %0d TESTS PASSED", tests);

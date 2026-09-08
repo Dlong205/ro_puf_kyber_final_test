@@ -28,7 +28,9 @@ always @(*) begin
 end
 
 always @(posedge clk) begin
-	if(wen) 
+	if(rst)
+		sftreg <= 48'h0;
+	else if(wen)
 		sftreg <= {din,sftreg[47:24]};		
 	else
 		sftreg <= sftreg;

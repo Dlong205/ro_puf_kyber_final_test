@@ -17,6 +17,7 @@ module bch_chien_reg #(
 	parameter STRIDE = 1
 ) (
 	input clk,
+	input reset,
 	input start,
 	input [`BCH_M(P)-1:0] in,
 	output reg [`BCH_M(P)-1:0] out = 0
@@ -59,7 +60,10 @@ module bch_chien_reg #(
 			.standard_out(mul_out)
 		);
 	always @(posedge clk)
-		out <= #TCQ start ? mul_out_start : mul_out;
+		if (reset)
+			out <= #TCQ 0;
+		else
+			out <= #TCQ start ? mul_out_start : mul_out;
 endmodule
 
 module bch_chien_expand #(
@@ -96,6 +100,7 @@ module bch_chien #(
 	parameter REG_RATIO = BITS > 8 ? 8 : BITS
 ) (
 	input clk,
+	input reset,
 	input start,
 	input [`BCH_SIGMA_SZ(P)-1:0] sigma,
 	output first,			/* First valid output data */
@@ -118,6 +123,7 @@ module bch_chien #(
 			if (!(b % REG_RATIO)) begin : ORIG
 				bch_chien_reg #(M, i + 1, SKIP + b - BITS + 1 + `BCH_N(P), BITS) u_chien_reg(
 					.clk(clk),
+					.reset(reset),
 					.start(start),
 					.in(sigma[i*M+:M]),
 					.out(chien[((BITS-b-1)*(T+1)+i)*M+:M])
@@ -132,8 +138,10 @@ module bch_chien #(
 	end
 	endgenerate
 
-	pipeline #(2) u_first_pipeline (
+	pipeline_ce_reset #(2) u_first_pipeline (
 		.clk(clk),
+		.ce(1'b1),
+		.reset(reset),
 		.i(start),
 		.o(first)
 	);

@@ -16,6 +16,7 @@ module bch_syndrome #(
 	parameter PIPELINE_STAGES = 0
 ) (
 	input clk,
+	input reset,
 	input start,		/* Accept first syndrome bit (assumes ce) */
 	input ce,
 	input [BITS-1:0] data_in,
@@ -48,7 +49,7 @@ module bch_syndrome #(
 	if (CYCLES > 2) begin : COUNTER
 		lfsr_counter #(M) u_counter(
 			.clk(clk),
-			.reset(start && ce),
+			.reset(reset || (start && ce)),
 			.ce(busy && ce),
 			.count(count)
 		);
@@ -58,7 +59,10 @@ module bch_syndrome #(
 	assign ready = !busy;
 
 	always @(posedge clk) begin
-		if (ce) begin
+		if (reset) begin
+			done <= #TCQ 0;
+			busy <= #TCQ 0;
+		end else if (ce) begin
 			if (start) begin
 				done <= #TCQ CYCLES == 1;
 				busy <= #TCQ CYCLES > 1;
@@ -81,7 +85,9 @@ module bch_syndrome #(
 			reg [RUNT-1:0] runt = 0;
 			assign shifted_in = {start ? {RUNT{1'b0}} : runt, data_in[BITS-1:RUNT]};
 			always @(posedge clk)
-				if (ce)
+				if (reset)
+					runt <= #TCQ 0;
+				else if (ce)
 					runt <= #TCQ data_in;
 		end else
 			assign shifted_in = data_in;
@@ -89,24 +95,27 @@ module bch_syndrome #(
 
 
 	/* Pipelined data for method1 */
-	pipeline_ce #(PIPELINE_STAGES > 1) u_data_pipeline [BITS-1:0] (
+	pipeline_ce_reset #(PIPELINE_STAGES > 1) u_data_pipeline [BITS-1:0] (
 		.clk(clk),
 		.ce(ce),
+		.reset(reset),
 		.i(data_in),
 		.o(data_pipelined)
 	);
 
 	/* Pipelined data for method2 */
-	pipeline_ce #(PIPELINE_STAGES > 0) u_shifted_pipeline [BITS-1:0] (
+	pipeline_ce_reset #(PIPELINE_STAGES > 0) u_shifted_pipeline [BITS-1:0] (
 		.clk(clk),
 		.ce(ce),
+		.reset(reset),
 		.i(shifted_in),
 		.o(shifted_pipelined)
 	);
 
-	pipeline_ce #(PIPELINE_STAGES > 1) u_start_pipeline (
+	pipeline_ce_reset #(PIPELINE_STAGES > 1) u_start_pipeline (
 		.clk(clk),
 		.ce(ce),
+		.reset(reset),
 		.i(start),
 		.o(start_pipelined)
 	);
@@ -118,6 +127,7 @@ module bch_syndrome #(
 		if (syndrome_method(`BCH_T(P), SYN) == 0) begin : METHOD1
 			dsynN_method1 #(P, SYN, BITS, REG_RATIO, PIPELINE_STAGES) u_syn1a(
 				.clk(clk),
+				.reset(reset),
 				.start(start),
 				.start_pipelined(start_pipelined),
 				.ce((busy || start) && ce),
@@ -127,6 +137,7 @@ module bch_syndrome #(
 		end else begin : METHOD2
 			dsynN_method2 #(P, SYN, syndrome_degree(M, SYN), BITS, PIPELINE_STAGES) u_syn2a(
 				.clk(clk),
+				.reset(reset),
 				.start(start),
 				.start_pipelined(start_pipelined),
 				.ce((busy || start) && ce),
@@ -144,6 +155,7 @@ module bch_syndrome_shuffle #(
 	parameter [`BCH_PARAM_SZ-1:0] P = `BCH_SANE
 ) (
 	input clk,
+	input reset,
 	input start,		/* Accept first syndrome bit */
 	input ce,		/* Shuffle cycle */
 	input [`BCH_SYNDROMES_SZ(P)-1:0] syndromes,
@@ -198,7 +210,9 @@ module bch_syndrome_shuffle #(
 	end
 
 	always @(posedge clk)
-		if (start || ce)
+		if (reset)
+			syn_shuffled <= #TCQ 0;
+		else if (start || ce)
 			syn_shuffled <= #TCQ (start ? syn_expanded : (syn_expanded ^ bypass_in_shifted));
 endmodule
 

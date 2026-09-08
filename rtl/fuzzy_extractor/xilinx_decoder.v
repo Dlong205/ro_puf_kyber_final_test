@@ -10,6 +10,7 @@ module xilinx_decoder #(
 ) (
 	input [BITS-1:0] data_in,
 	input clk_in,
+	input reset,
 	input start_in,
 	output [BITS-1:0] err_out,
 	output first_out
@@ -34,14 +35,17 @@ module xilinx_decoder #(
 	// so every pipeline instance sees the same clock domain.
 	wire clk = clk_in;
 
-	pipeline #(1) u_pipeline [BITS*2+2-1:0] (
+	pipeline_ce_reset #(1) u_pipeline [BITS*2+2-1:0] (
 		.clk(clk),
+		.ce(1'b1),
+		.reset(reset),
 		.i({data_in, start_in, err_first, err}),
 		.o({data, start, first_out, err_out})
 	);
 
 	bch_syndrome #(BCH_PARAMS, BITS, SYN_REG_RATIO, SYN_PIPELINE_STAGES) u_bch_syndrome(
 		.clk(clk),
+		.reset(reset),
 		.start(start),
 		.ce(1'b1),
 		.data_in(data),
@@ -52,6 +56,7 @@ module xilinx_decoder #(
 
 	bch_sigma_bma_serial #(BCH_PARAMS) u_bma (
 		.clk(clk),
+		.reset(reset),
 		.start(syn_done && key_ready),
 		.ready(key_ready),
 		.syndromes(syndromes),
@@ -63,6 +68,7 @@ module xilinx_decoder #(
 
 	bch_error_tmec #(BCH_PARAMS, BITS, ERR_REG_RATIO, ERR_PIPELINE_STAGES, ACCUM) u_error_tmec(
 		.clk(clk),
+		.reset(reset),
 		.start(key_done),
 		.sigma(sigma),
 		.first(err_first),

@@ -1,6 +1,6 @@
 # Đặc tả ASIC front-end — bản nháp có kiểm soát
 
-Trạng thái: **DRAFT/P0**, ngày 2026-09-06. Những mục ghi `OPEN` là điều kiện
+Trạng thái: **DRAFT/P0**, cập nhật 2026-09-07. Những mục ghi `OPEN` là điều kiện
 phải chốt trước freeze RTL cuối, không phải chức năng đã cam kết.
 
 ## 1. Phạm vi baseline
@@ -39,6 +39,11 @@ mirror bị buộc zero; status/control vẫn hoạt động. Pad, ESD, PLL/cloc
 source, power-on-reset analog, power domain và package nằm ngoài top hiện tại và
 phải được thêm trong P4 nếu mục tiêu là chip độc lập.
 
+Candidate v4 có crypto-accelerator zeroize gồm PUF/FE/KDF/ML-KEM và handshake
+hoàn tất sau scrub. CPU PicoRV32, SoC BRAM/stack, bus staging và scan/DFT nằm
+ngoài boundary này và hiện thuộc trusted base. `OPEN-SCOPE-02`: quyết định có
+yêu cầu whole-SoC secure erase hay không trước khi chốt DFT/backend.
+
 ## 3. Clock và reset
 
 - Baseline: 50 MHz (`20 ns`); 100 MHz chỉ là exploration riêng.
@@ -60,7 +65,8 @@ shift arrays); xem `MEMORY_INVENTORY.md`.
 ## 5. Yêu cầu functional trước freeze
 
 - FIPS 202 KAT và ML-KEM-512 KeyGen/Encaps/Decaps/rejection phải PASS.
-- Reset giữa mọi phase, timeout, invalid command/config và zeroize phải PASS.
+- Reset giữa mọi phase, timeout, invalid command/config và accelerator-zeroize
+  phải PASS; startup fail-closed nếu zeroize timeout.
 - FIFO/memory adapter phải giữ đúng latency/read-during-write của RTL baseline.
 - Nếu thêm API ngoài: interoperability với implementation độc lập phải PASS.
 - ASIC filelist/manifest phải khớp; không có primitive FPGA hoặc file legacy.

@@ -1,6 +1,6 @@
 # Việt Anh — KDF, Keccak và FIPS 202
 
-Cập nhật **2026-09-06**. Pha implementation FIPS 202 phục vụ ML-KEM đã hoàn
+Cập nhật **2026-09-07**. Pha implementation FIPS 202 phục vụ ML-KEM đã hoàn
 thành ở mức functional; phần của Việt Anh hiện chuyển sang review độc lập.
 Long thực hiện mọi thay đổi RTL và chạy lại gate khi review phát hiện vấn đề.
 
@@ -27,7 +27,9 @@ Long thực hiện mọi thay đổi RTL và chạy lại gate khi review phát 
 - SHA3-256, SHA3-512, SHAKE128 và SHAKE256 byte-oriented: PASS 50/50, gồm
   20 vector NIST CAVP, biên rate, multi-block, stall và reset.
 - KDF SHAKE256 fixed-profile 24-byte → 64-byte: PASS bit-exact ở cycle 148.
-- Full-system PUF → KDF → ML-KEM: PASS ở 956.564 cycle.
+- Candidate v4 KDF/Keccak zeroize PASS: input shift, seed output, controller và
+  sponge state được xóa; KDF KAT + zeroize test PASS.
+- Full-system PUF → KDF → ML-KEM v4: PASS ở 958.516 cycle, protocol 1.3.
 - KDF fixed-profile được giữ riêng với controller FIPS 202 tổng quát để giảm
   LUT; artifact RC1/candidate v2 đã fit XC7Z020 ở 49.909 LUT sau route.
 - Chưa hỗ trợ SHA3-224/SHA3-384 hoặc message bit-oriented; PASS không đồng nghĩa
@@ -43,6 +45,7 @@ rộng primitive chỉ để tăng số lượng thuật toán nếu đặc tả
 2. Review endianness/serialization tại ranh giới Keccak ↔ ML-KEM.
 3. Đề xuất thêm vector CAVP hoặc ACVP coverage còn thiếu nếu cần chứng nhận.
 4. Review báo cáo do Long chạy; mọi thay đổi RTL và tích hợp do Long thực hiện.
+5. Review ranh giới accelerator-zeroize; không suy claim sang CPU/bus/scan.
 
 ## Definition of Done còn lại
 

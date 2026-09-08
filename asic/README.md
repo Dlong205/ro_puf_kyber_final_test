@@ -12,10 +12,15 @@ FPGA/tag/bitstream ở root không bị thay thế bởi kết quả trong đây
 - Source ASIC loại `LUT6_L`, `CARRY4`, DSP48 primitive và các file legacy.
 - Full top đã elaborate bằng Verilator; lỗi multiple-driver trong FIFO wrapper
   được phát hiện và sửa.
+- Candidate v4 thêm reset thật cho BCH và crypto-accelerator zeroize xuyên
+  PUF/FE/KDF/ML-KEM; full offline freeze gate và ba manifest v4 PASS.
 - Chưa có PDK, standard-cell/memory/pad library, RO macro vật lý, SDC sign-off,
   OpenROAD/STA/KLayout hay commercial backend tool trên máy hiện tại.
 
 Vì vậy đây là **ASIC front-end đang triển khai**, chưa phải handoff GDS/sign-off.
+Zeroize hiện không bao gồm PicoRV32, SoC RAM/bus hay scan/DFT; macro memory thật
+vẫn phải giữ scrub contract và được kiểm chứng lại. Vivado/board v4 cũng còn
+PENDING; các report RC1/v3 ở root chỉ là baseline lịch sử.
 
 ## Lệnh nhẹ, chạy tuần tự
 

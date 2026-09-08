@@ -212,6 +212,8 @@ module kat_wrapper(
     Kyber_Server server_inst (
         .clk        (clk),
         .rst        (~rst_n),
+        .scrub_en   (1'b0),
+        .scrub_addr (11'd0),
         .start      (start_reg),
         .wen        (client_valid_out),     // Fed by Client's valid_out
         .k          (3'd2),                 // Kyber-512
@@ -235,6 +237,8 @@ module kat_wrapper(
     Kyber_Client client_inst (
         .clk        (clk),
         .rst        (~rst_n),
+        .scrub_en   (1'b0),
+        .scrub_addr (11'd0),
         .start      (start_reg),
         .wen        (server_valid_out),     // Fed by Server's valid_out
         .k          (3'd2),                 // Kyber-512

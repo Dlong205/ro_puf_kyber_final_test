@@ -49,7 +49,8 @@ module mlkem_decap_probe (
     end
 
     Kyber_Server server_inst (
-        .clk(clk), .rst(~rst_n), .start(start_reg),
+        .clk(clk), .rst(~rst_n), .scrub_en(1'b0), .scrub_addr(11'd0),
+        .start(start_reg),
         .wen(ct_valid), .k(3'd2), .ready_c(1'b1),
         // Keep requesting throughout the transmit state.  The Server's last
         // marker and state gate terminate the synchronous FIFO read exactly.

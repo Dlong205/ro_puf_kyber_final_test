@@ -29,7 +29,8 @@ tránh runt pulse trên clock đã chọn.
 
 Primitive `CARRY4` chỉ còn trong `compare_cla_xilinx.v`. Chế độ
 `KP_TARGET_ASIC` dùng phép so sánh chuẩn tổng hợp được bằng standard cell. Cả
-hai backend đã chạy cùng 12 ca enroll/reconstruct, gồm 0, 1, 8 và 12 lỗi bit.
+hai backend đã PASS cùng 29 kiểm tra, gồm 0/1/8/12 lỗi bit, reset/zeroize sâu,
+abort giữa operation, không có completion muộn và restart sạch.
 
 ### NTT multiplier
 
@@ -50,7 +51,7 @@ make -j1 asic-portability
 Cổng này thực hiện:
 
 1. regression RO-PUF với mô hình số;
-2. 12/12 test fuzzy extractor không dùng `CARRY4`;
+2. 29/29 test fuzzy extractor không dùng `CARRY4`;
 3. unit test multiplier;
 4. lint wrapper/backend RO Xilinx bằng khai báo primitive mô phỏng;
 5. audit vị trí primitive vendor;
@@ -97,3 +98,16 @@ và CDC/RDC chuyên dụng khi đã chọn PDK.
 
 Kết quả trên chứng minh việc tách backend không làm hỏng FPGA baseline. Nó chưa
 thay thế macro RO, memory compiler, SDC, synthesis/STA hay physical sign-off ASIC.
+
+## Candidate v4 ngày 2026-09-07
+
+V4 bổ sung synchronous reset thật xuyên hierarchy BCH và scrub tường minh cho
+PUF/FE/KDF/ML-KEM. Xilinx FE và đường ASIC-portable đều PASS 29/29; full
+offline `crypto-freeze-gate` và ba manifest v4 PASS, gồm full-top ASIC/filelist
+closure cùng Kyber raw 1.024/1.024. Memory compiler phải giữ hành vi quét
+write-zero/latency của wrapper hiện tại; kết quả RTL không chứng minh SRAM
+remanence vật lý.
+
+Phạm vi hiện là crypto-accelerator zeroize. CPU PicoRV32, SoC RAM/bus staging
+và scan/DFT còn ngoài boundary. V4 chưa chạy Vivado hay board, nên mọi số liệu
+post-route và campaign board ở phần trên vẫn chỉ thuộc RC1/v3 lịch sử.

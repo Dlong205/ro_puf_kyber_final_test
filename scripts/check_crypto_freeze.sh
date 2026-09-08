@@ -13,6 +13,12 @@ test -s "$manifest" || {
   exit 1
 }
 
+if ! awk 'NF != 2 || length($1) != 64 || $1 !~ /^[0-9a-f]+$/ {bad=1}
+          END {exit bad}' "$manifest"; then
+  echo "ERROR: malformed SHA-256 manifest line" >&2
+  exit 1
+fi
+
 {
   find rtl/common rtl/hash_core rtl/kyber -type f \
     \( -name '*.v' -o -name '*.sv' -o -name '*.vh' -o -name '*.svh' \) -print

@@ -8,7 +8,9 @@ module blk_mem_gen_0 (
     input  wire [23:0] dina,
     input  wire        clkb,
     input  wire [7:0]  addrb,
-    output wire [23:0] doutb
+    output wire [23:0] doutb,
+    input  wire        scrub_en,
+    input  wire [10:0] scrub_addr
 );
     generic_bram #(
         .DEPTH(256),
@@ -25,7 +27,9 @@ module blk_mem_gen_0 (
         .we_b(1'b0),
         .addr_b(addrb),
         .din_b(24'h0),
-        .dout_b(doutb)
+        .dout_b(doutb),
+        .scrub_en(scrub_en),
+        .scrub_addr(scrub_addr)
     );
 endmodule
 
@@ -37,7 +41,9 @@ module blk_mem_gen_1 (
     input  wire [47:0] dina,
     input  wire        clkb,
     input  wire [6:0]  addrb,
-    output wire [47:0] doutb
+    output wire [47:0] doutb,
+    input  wire        scrub_en,
+    input  wire [10:0] scrub_addr
 );
 
     generic_bram #(
@@ -55,7 +61,9 @@ module blk_mem_gen_1 (
         .we_b(1'b0),
         .addr_b(addrb),
         .din_b(48'h0),
-        .dout_b(doutb)
+        .dout_b(doutb),
+        .scrub_en(scrub_en),
+        .scrub_addr(scrub_addr)
     );
 endmodule
 
@@ -67,7 +75,9 @@ module blk_mem_gen_2 (
     input  wire [23:0] dina,
     input  wire        clkb,
     input  wire [5:0]  addrb,
-    output wire [23:0] doutb
+    output wire [23:0] doutb,
+    input  wire        scrub_en,
+    input  wire [10:0] scrub_addr
 );
 
     generic_bram #(
@@ -85,6 +95,8 @@ module blk_mem_gen_2 (
         .we_b(1'b0),
         .addr_b(addrb),
         .din_b(24'h0),
-        .dout_b(doutb)
+        .dout_b(doutb),
+        .scrub_en(scrub_en),
+        .scrub_addr(scrub_addr)
     );
 endmodule

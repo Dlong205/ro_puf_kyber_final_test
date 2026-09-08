@@ -12,6 +12,7 @@
 module kdf_keccak (
     input  wire         clk,
     input  wire         rst_n,
+    input  wire         zeroize,
     input  wire         start,
     input  wire [191:0] key_in,
     output reg          done,
@@ -45,9 +46,11 @@ module kdf_keccak (
     wire        keccak_done;
     wire [31:0] keccak_dout;
 
+    wire keccak_reset = ~rst_n | zeroize;
+
     keccak_f1600_server keccak_inst (
         .clk     (clk),
-        .rst     (~rst_n),
+        .rst     (keccak_reset),
         .init    (keccak_init),
         .squeeze (keccak_shift),
         .extend  (keccak_extend),
@@ -60,6 +63,12 @@ module kdf_keccak (
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
+            state      <= ST_IDLE;
+            word_count <= 6'd0;
+            key_shift  <= 192'd0;
+            seed_out   <= 512'd0;
+            done       <= 1'b0;
+        end else if (zeroize) begin
             state      <= ST_IDLE;
             word_count <= 6'd0;
             key_shift  <= 192'd0;
@@ -113,7 +122,9 @@ module kdf_keccak (
         keccak_shift  = 1'b0;
         keccak_din    = 32'd0;
 
-        case (state)
+        if (zeroize) begin
+            next_state = ST_IDLE;
+        end else case (state)
             ST_IDLE: begin
                 if (start)
                     next_state = ST_CLEAR;

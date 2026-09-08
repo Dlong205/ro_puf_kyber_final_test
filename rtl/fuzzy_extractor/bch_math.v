@@ -92,6 +92,7 @@ module serial_mixed_multiplier_dss #(
 	parameter N_INPUT = 1
 ) (
 	input clk,
+	input reset,
 	input start,
 	input [M-1:0] dual_in,
 	input [M*N_INPUT-1:0] standard_in,
@@ -128,7 +129,7 @@ module serial_mixed_multiplier_dss #(
 
 	lfsr_counter #(CB) u_counter(
 		.clk(clk),
-		.reset(start),
+		.reset(reset || start),
 		.ce(1'b1),
 		.count(count)
 	);
@@ -200,37 +201,48 @@ module serial_mixed_multiplier_dss #(
 		assign lfsr_add = {M{vector_bit}} & mod;
 
 		always @(posedge clk) begin
-			if (start)
+			if (reset) begin
+				mod <= #TCQ 0;
+				vector_bit <= #TCQ 0;
+			end else begin
+				if (start)
 				/* Load the DSL/DSU shift in/out value */
-				mod <= #TCQ dual_dsl;
+					mod <= #TCQ dual_dsl;
 
-			/* Do a shift out/in of mod next cycle */
-			vector_bit <= |vector_bits;
+				/* Do a shift out/in of mod next cycle */
+				vector_bit <= |vector_bits;
+			end
 		end
 	end else
 		assign lfsr_add = 0;
 	endgenerate
 
 	always @(posedge clk) begin
-		if (start)
-			/* Used to load the mod register with a DSU value*/
-			dual_stored <= #TCQ dual_dsu;
+		if (reset) begin
+			dual_stored <= #TCQ 0;
+			change <= #TCQ 0;
+			lfsr <= #TCQ 0;
+		end else begin
+			if (start)
+				/* Used to load the mod register with a DSU value*/
+				dual_stored <= #TCQ dual_dsu;
 
-		if (M - D == 2)
-			change <= #TCQ start;
-		else
-			change <= #TCQ count == lfsr_count(CB, M - D - 3) &&
-					!start;
+			if (M - D == 2)
+				change <= #TCQ start;
+			else
+				change <= #TCQ count == lfsr_count(CB, M - D - 3) &&
+						!start;
 
-		if (start)
-			/* Start with DSL */
-			lfsr <= #TCQ dual_dsl;
-		else if (change)
-			/* Switch to DSU */
-			lfsr <= #TCQ dual_stored;
-		else
-			lfsr <= #TCQ {^(lfsr & `BCH_POLYNOMIAL(M)), lfsr[M-1:1]} ^
-				lfsr_add;
+			if (start)
+				/* Start with DSL */
+				lfsr <= #TCQ dual_dsl;
+			else if (change)
+				/* Switch to DSU */
+				lfsr <= #TCQ dual_stored;
+			else
+				lfsr <= #TCQ {^(lfsr & `BCH_POLYNOMIAL(M)), lfsr[M-1:1]} ^
+					lfsr_add;
+		end
 	end
 
 	matrix_vector_multiply #(M, N_INPUT) u_mult(standard_in, lfsr, standard_out);
@@ -455,6 +467,7 @@ module finite_divider #(
 	parameter M = 6
 ) (
 	input clk,
+	input reset,
 	input start,
 	input [M-1:0] standard_numer,
 	input [M-1:0] standard_denom,
@@ -493,24 +506,30 @@ module finite_divider #(
 
 	lfsr_counter #(log2(M)) u_counter(
 		.clk(clk),
-		.reset(start),
+		.reset(reset || start),
 		.ce(busy),
 		.count(count)
 	);
 
 	always @(posedge clk) begin
-		if (start)
-			busy <= #TCQ 1;
-		else if (count == DONE)
+		if (reset) begin
 			busy <= #TCQ 0;
+			dual_c <= #TCQ 0;
+			standard_a <= #TCQ 0;
+		end else begin
+			if (start)
+				busy <= #TCQ 1;
+			else if (count == DONE)
+				busy <= #TCQ 0;
 
-		if (start)
-			dual_c <= #TCQ INITIAL;
-		else if (busy)
-			dual_c <= #TCQ dual_d;
+			if (start)
+				dual_c <= #TCQ INITIAL;
+			else if (busy)
+				dual_c <= #TCQ dual_d;
 
-		if (start || busy)
-			standard_a <= #TCQ standard_b;
+			if (start || busy)
+				standard_a <= #TCQ standard_b;
+		end
 	end
 endmodule
 
@@ -697,6 +716,7 @@ module finite_serial_adder #(
 	parameter M = 4
 ) (
 	input clk,
+	input reset,
 	input start,
 	input ce,
 	input [M-1:0] parallel_in,
@@ -707,7 +727,9 @@ module finite_serial_adder #(
 	localparam TCQ = 1;
 
 	always @(posedge clk)
-		if (start)
+		if (reset)
+			parallel_out <= #TCQ 0;
+		else if (start)
 			parallel_out <= #TCQ {parallel_in[0+:M-1], parallel_in[M-1]};
 		else if (ce)
 			parallel_out <= #TCQ {parallel_out[0+:M-1], parallel_out[M-1] ^ serial_in};
@@ -755,4 +777,3 @@ module lfsr_term #(
 		.out(out)
 	);
 endmodule
-

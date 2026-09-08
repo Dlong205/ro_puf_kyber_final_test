@@ -17,7 +17,12 @@ module generic_bram #(
   input  logic        we_b,
   input  logic [$clog2(DEPTH)-1:0] addr_b,
   input  logic [WIDTH-1:0] din_b,
-  output logic [WIDTH-1:0] dout_b
+  output logic [WIDTH-1:0] dout_b,
+  // Optional common scrub port.  A top-level controller walks scrub_addr
+  // through every address while normal clients are held in reset.  Keeping
+  // the erase as an ordinary sequential write preserves BRAM/SRAM inference.
+  input  logic        scrub_en,
+  input  logic [10:0] scrub_addr
 );
 
   (* ram_style = "block" *) logic [WIDTH-1:0] mem [0:DEPTH-1];
@@ -35,7 +40,11 @@ module generic_bram #(
 
   // Port A
   always_ff @(posedge clk) begin
-    if (en_a) begin
+    if (scrub_en) begin
+      if (scrub_addr < DEPTH)
+        mem[scrub_addr[$clog2(DEPTH)-1:0]] <= '0;
+      dout_a <= '0;
+    end else if (en_a) begin
       if (we_a) mem[addr_a] <= din_a;
       dout_a <= mem[addr_a];
     end
@@ -43,7 +52,9 @@ module generic_bram #(
 
   // Port B
   always_ff @(posedge clk) begin
-    if (en_b) begin
+    if (scrub_en) begin
+      dout_b <= '0;
+    end else if (en_b) begin
       if (we_b) mem[addr_b] <= din_b;
       dout_b <= mem[addr_b];
     end

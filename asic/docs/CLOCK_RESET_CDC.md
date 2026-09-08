@@ -42,4 +42,6 @@ phụ thuộc library. Không blanket false-path reset trước khi review.
 - Không còn crossing data nhiều bit không có handshake/stability contract.
 - Test reset giữa IDLE/PUF/FE/KDF/KEM, reset khi RO đang bật và clock RO không
   khởi động; hệ thống phải trở về trạng thái xác định.
+- Clock/power intent phải giữ `clk_sys` chạy liên tục từ yêu cầu accelerator
+  zeroize đến `zeroize_done`; quét SRAM/FIFO cần đủ 2.048 cạnh clock.
 - SDC functional/test phải có clock groups/exceptions được review từng đường.

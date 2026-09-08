@@ -46,7 +46,9 @@ always @(posedge clk) begin
 	end
 end
 always @(posedge clk) begin
-	if(req_r1 & ~fifo_empty_r1)
+	if(rst)
+		sftreg <= 48'h0;
+	else if(req_r1 & ~fifo_empty_r1)
 		sftreg <= {din,sftreg[47:32]};
 	else
 		sftreg <= sftreg;
@@ -56,17 +58,25 @@ always @(*) case(state)
 	4'h1, 4'h2, 4'h3 : req = ~fifo_empty;	
 	default : req = 1'h 0;
 endcase
-always @(posedge clk) case(state_r2)	
+always @(posedge clk) begin
+	if(rst)
+		dout <= 24'h0;
+	else case(state_r2)
 	4'h 1 : dout <= sftreg[39:16];
 	4'h 2 : dout <= sftreg[31:8];
 	4'h 3 : dout <= sftreg[23:0];
 	4'h 4 : dout <= sftreg[47:24];	
 	default : dout <= sftreg[47:24];
-endcase
+	endcase
+end
 
-always @(posedge clk) case(state_r2)
+always @(posedge clk) begin
+	if(rst)
+		valid <= 1'b0;
+	else case(state_r2)
 	4'h1, 4'h2, 4'h3, 4'h4 : valid <= 1'h 1;
 	default : valid <= 1'h 0;
-endcase
+	endcase
+end
 
 endmodule

@@ -24,9 +24,13 @@ module axi_wrapper_tb #(
 
     wire kem_done;
     wire [255:0] kem_key;
+    wire zeroize_busy;
+    wire zeroize_done;
+    logic secure_zeroize = 1'b0;
 
     kyber_axi_wrapper #(
-        .EXPOSE_SECRETS(EXPOSE_SECRETS)
+        .EXPOSE_SECRETS(EXPOSE_SECRETS),
+        .SECURE_SCRUB(1)
     ) dut (
         .S_AXI_ACLK(clk),
         .S_AXI_ARESETN(resetn),
@@ -50,7 +54,10 @@ module axi_wrapper_tb #(
         .S_AXI_RVALID(rvalid),
         .S_AXI_RREADY(rready),
         .kem_done(kem_done),
-        .kem_key(kem_key)
+        .kem_key(kem_key),
+        .secure_zeroize(secure_zeroize),
+        .zeroize_busy(zeroize_busy),
+        .zeroize_done(zeroize_done)
     );
 
     task automatic axi_write(input logic [7:0] addr, input logic [31:0] data);
@@ -77,6 +84,151 @@ module axi_wrapper_tb #(
         end
     endtask
 
+    task automatic request_direct_zeroize;
+        begin
+            @(negedge clk);
+            secure_zeroize = 1'b1;
+            @(negedge clk);
+            secure_zeroize = 1'b0;
+        end
+    endtask
+
+    task automatic wait_for_zeroize;
+        integer wait_cycles;
+        logic saw_busy;
+        begin
+            saw_busy = zeroize_busy;
+            for (wait_cycles = 0;
+                 wait_cycles < 3000 && !zeroize_done;
+                 wait_cycles = wait_cycles + 1) begin
+                @(negedge clk);
+                if (zeroize_busy)
+                    saw_busy = 1'b1;
+            end
+            if (!zeroize_done)
+                $fatal(1, "Secure scrub timed out after %0d cycles", wait_cycles);
+            if (!saw_busy)
+                $fatal(1, "Secure scrub never asserted zeroize_busy");
+            if (wait_cycles < 2048)
+                $fatal(1, "Secure scrub completed too early: %0d cycles", wait_cycles);
+        end
+    endtask
+
+    task automatic assert_kyber_storage_zero;
+        integer j;
+        begin
+            for (j = 0; j < 2048; j = j + 1) begin
+                if (j < 256) begin
+                    if (dut.S.ntt.RAM0.inst.mem[j] !== '0 ||
+                        dut.S.ntt.RAM1.inst.mem[j] !== '0 ||
+                        dut.C.ntt.RAM0.inst.mem[j] !== '0 ||
+                        dut.C.ntt.RAM1.inst.mem[j] !== '0)
+                        $fatal(1, "Scrub left NTT RAM0/RAM1 data at address %0d", j);
+                    if (dut.S.ciphertext_store.mem[j] !== '0)
+                        $fatal(1, "Scrub left ciphertext data at address %0d", j);
+                    if (dut.S.hash.ififo_inst.inst.mem[j] !== '0 ||
+                        dut.C.hash.ififo_inst.inst.mem[j] !== '0 ||
+                        dut.S.hash.ofifo1_inst.inst.mem[j] !== '0 ||
+                        dut.C.hash.ofifo1_inst.inst.mem[j] !== '0)
+                        $fatal(1, "Scrub left 256-entry hash FIFO data at address %0d", j);
+                end
+                if (j < 64) begin
+                    if (dut.S.ntt.RAM2.inst.mem[j] !== '0 ||
+                        dut.S.ntt.RAM3.inst.mem[j] !== '0 ||
+                        dut.C.ntt.RAM2.inst.mem[j] !== '0 ||
+                        dut.C.ntt.RAM3.inst.mem[j] !== '0)
+                        $fatal(1, "Scrub left NTT RAM2/RAM3 data at address %0d", j);
+                end
+                if (j < 128) begin
+                    if (dut.S.ntt.RAM4.inst.mem[j] !== '0 ||
+                        dut.C.ntt.RAM4.inst.mem[j] !== '0 ||
+                        dut.S.IFIFO.inst.mem[j] !== '0 ||
+                        dut.S.DFIFO1.inst.mem[j] !== '0 ||
+                        dut.C.IFIFO.inst.mem[j] !== '0)
+                        $fatal(1, "Scrub left 128-entry Kyber storage at address %0d", j);
+                end
+                if (j < 512) begin
+                    if (dut.S.OFIFO.inst.mem[j] !== '0 ||
+                        dut.S.DFIFO0.inst.mem[j] !== '0 ||
+                        dut.C.OFIFO.inst.mem[j] !== '0 ||
+                        dut.C.DFIFO.inst.mem[j] !== '0)
+                        $fatal(1, "Scrub left 512-entry Kyber FIFO data at address %0d", j);
+                end
+                if (j < 1024) begin
+                    if (dut.S.hash.ofifo_inst.inst.mem[j] !== '0 ||
+                        dut.C.hash.ofifo_inst.inst.mem[j] !== '0)
+                        $fatal(1, "Scrub left 1024-entry hash FIFO data at address %0d", j);
+                end
+                if (dut.S.hash.ofifo0_inst.inst.mem[j] !== '0 ||
+                    dut.C.hash.ofifo0_inst.inst.mem[j] !== '0)
+                    $fatal(1, "Scrub left 2048-entry hash FIFO data at address %0d", j);
+            end
+
+            if (dut.S.hash.sponge.block_reg !== '0 ||
+                dut.S.hash.sponge.squeeze_reg !== '0 ||
+                dut.S.hash.sponge.block_perm_src !== '0 ||
+                dut.S.hash.sponge.base_state !== '0 ||
+                dut.C.hash.sponge.block_reg !== '0 ||
+                dut.C.hash.sponge.squeeze_reg !== '0 ||
+                dut.C.hash.sponge.block_perm_src !== '0 ||
+                dut.C.hash.sponge.base_state !== '0)
+                $fatal(1, "Scrub left SHA-3 sponge state");
+
+            if (dut.S.hash.fifo_data_dropped !== '0 ||
+                dut.C.hash.fifo_data_dropped !== '0)
+                $fatal(1, "Scrub left SHAKE rejection-sampling staging data");
+
+            if (dut.S.encode.sftreg !== '0 || dut.S.decode.sftreg !== '0 ||
+                dut.C.encode.sftreg !== '0 || dut.C.decode.sftreg !== '0 ||
+                dut.S.hash.decode.word0 !== '0 ||
+                dut.S.hash.decode.word1 !== '0 ||
+                dut.S.hash.decode.word2 !== '0 ||
+                dut.C.hash.decode.word0 !== '0 ||
+                dut.C.hash.decode.word1 !== '0 ||
+                dut.C.hash.decode.word2 !== '0)
+                $fatal(1, "Scrub left codec/hash staging registers");
+
+            if (dut.S.ntt.in0_butt !== '0 || dut.S.ntt.in1_butt !== '0 ||
+                dut.S.ntt.out0_butt_r1 !== '0 ||
+                dut.S.ntt.out1_butt_r1 !== '0 ||
+                dut.S.ntt.out1_butt_r2 !== '0 ||
+                dut.S.ntt.rdata_RAM_mux0_r1 !== '0 ||
+                dut.S.ntt.rdata_RAM_mux1_r1 !== '0 ||
+                dut.S.ntt.rdata_RAM_mux1_r2 !== '0 ||
+                dut.S.ntt.rdata_acc_r8 !== '0 ||
+                dut.S.ntt.data_mux0 !== '0 || dut.S.ntt.data_mux1 !== '0 ||
+                dut.C.ntt.in0_butt !== '0 || dut.C.ntt.in1_butt !== '0 ||
+                dut.C.ntt.out0_butt_r1 !== '0 ||
+                dut.C.ntt.out1_butt_r1 !== '0 ||
+                dut.C.ntt.out1_butt_r2 !== '0 ||
+                dut.C.ntt.rdata_RAM_mux0_r1 !== '0 ||
+                dut.C.ntt.rdata_RAM_mux1_r1 !== '0 ||
+                dut.C.ntt.rdata_RAM_mux1_r2 !== '0 ||
+                dut.C.ntt.rdata_acc_r8 !== '0 ||
+                dut.C.ntt.data_mux0 !== '0 || dut.C.ntt.data_mux1 !== '0)
+                $fatal(1, "Scrub did not flush NTT data pipeline");
+
+            if (dut.S.ntt.BU.M0.u_mult.product_reg !== '0 ||
+                dut.S.ntt.BU.M1.u_mult.product_reg !== '0 ||
+                dut.C.ntt.BU.M0.u_mult.product_reg !== '0 ||
+                dut.C.ntt.BU.M1.u_mult.product_reg !== '0 ||
+                dut.S.ntt.BU.R0.c_reg !== '0 ||
+                dut.S.ntt.BU.R1.c_reg !== '0 ||
+                dut.C.ntt.BU.R0.c_reg !== '0 ||
+                dut.C.ntt.BU.R1.c_reg !== '0)
+                $fatal(1, "Scrub did not flush NTT multiplier/reduction pipeline");
+
+            if (dut.S.d !== '0 || dut.S.rho !== '0 || dut.S.sigma !== '0 ||
+                dut.S.hash_pk !== '0 || dut.S.hash_c !== '0 ||
+                dut.S.m !== '0 || dut.S.z !== '0 || dut.S.K !== '0 ||
+                dut.S.dout !== '0 || dut.S.equal !== '0 ||
+                dut.C.rho !== '0 || dut.C.r !== '0 ||
+                dut.C.hash_pk !== '0 || dut.C.hash_c !== '0 ||
+                dut.C.m !== '0 || dut.C.K !== '0 || dut.C.dout !== '0)
+                $fatal(1, "Scrub left retained Kyber secret registers");
+        end
+    endtask
+
     task automatic axi_read(input logic [7:0] addr, output logic [31:0] data);
         begin
             @(negedge clk);
@@ -100,6 +252,7 @@ module axi_wrapper_tb #(
     logic [255:0] client_key;
     integer i;
     integer polls;
+    integer drain_polls;
     integer tx;
     integer stress_failures;
     integer stress_raw_failures;
@@ -319,6 +472,7 @@ module axi_wrapper_tb #(
                 end
 
                 axi_write(8'h40, 32'd2);
+                wait_for_zeroize();
                 axi_read(8'h44, status_word);
                 if (status_word != 0 || kem_done || kem_key != 0)
                     $fatal(1, "TX%0d attempt%0d zeroize failed: status=%h key=%h",
@@ -448,9 +602,49 @@ module axi_wrapper_tb #(
                        server_key, client_key, kem_key);
         end
 
+        // Completed AXI reads must not leave their payload in the response
+        // register after RVALID/RREADY. This is especially important for the
+        // diagnostic build, where key readback is intentionally enabled.
+        if (dut.rdata !== 32'b0)
+            $fatal(1, "AXI response register retained completed read data: %h", dut.rdata);
+
+        // Hold one key response stalled while requesting zeroize. AXI requires
+        // RDATA to remain stable until the master accepts it, so zeroize must
+        // scrub the core but withhold DONE until this response drains.
+        @(negedge clk);
+        araddr = 32'h00000060;
+        arvalid = 1'b1;
+        while (!arready) @(negedge clk);
+        @(negedge clk);
+        arvalid = 1'b0;
+        while (!rvalid) @(negedge clk);
+        if (rdata !== (EXPOSE_SECRETS ? server_key[31:0] : 32'b0))
+            $fatal(1, "Unexpected stalled key response: %h", rdata);
+        request_direct_zeroize();
+        axi_write(8'h00, 32'hdeadbeef);
+        repeat (2100) begin
+            @(negedge clk);
+            if (zeroize_done)
+                $fatal(1, "Zeroize acknowledged before stalled AXI response drained");
+            if (!zeroize_busy)
+                $fatal(1, "Zeroize busy dropped while AXI response was stalled");
+            if (rdata !== (EXPOSE_SECRETS ? server_key[31:0] : 32'b0))
+                $fatal(1, "Stalled AXI response changed before RREADY: %h", rdata);
+        end
+        rready = 1'b1;
+        @(negedge clk);
+        rready = 1'b0;
+        for (drain_polls = 0;
+             drain_polls < 10 && !zeroize_done;
+             drain_polls = drain_polls + 1)
+            @(negedge clk);
+        if (!zeroize_done)
+            $fatal(1, "Zeroize did not complete after stalled AXI response drained");
+        if (dut.rdata !== 32'b0)
+            $fatal(1, "Zeroize left drained AXI response data: %h", dut.rdata);
+
         // CTRL[1] must erase all software-visible seeds, completion state and
         // key material retained in the two Kyber cores.
-        axi_write(8'h40, 32'd2);
         axi_read(8'h44, value);
         if (value != 0 || kem_done)
             $fatal(1, "Zeroize did not clear status: %h", value);
@@ -477,6 +671,28 @@ module axi_wrapper_tb #(
             $fatal(1, "Zeroize left internal seed/key state");
         if (kem_key != 0)
             $fatal(1, "Zeroize did not clear Kyber key state: %h", kem_key);
+        assert_kyber_storage_zero();
+
+        // A security request must also abort a live KEM and must not be lost
+        // in an arbitrary core phase.
+        for (i = 0; i < 8; i = i + 1) begin
+            axi_write(8'h00 + i*4, 32'ha5a50000 ^ i);
+            axi_write(8'h20 + i*4, 32'h5a5a0000 ^ i);
+            axi_write(8'h80 + i*4, 32'hc3c30000 ^ i);
+        end
+        axi_write(8'h40, 32'd1);
+        repeat (200) @(negedge clk);
+        axi_read(8'h44, value);
+        if (!value[3] || value[2])
+            $fatal(1, "KEM was not busy before mid-operation zeroize: %h", value);
+        request_direct_zeroize();
+        wait_for_zeroize();
+        axi_read(8'h44, value);
+        if (value != 0 || kem_done || kem_key != 0 ||
+            dut.S.state != 0 || dut.C.state != 0)
+            $fatal(1, "Mid-operation zeroize failed: status=%h S=%h C=%h",
+                   value, dut.S.state, dut.C.state);
+        assert_kyber_storage_zero();
 
         // Exercise the firmware's real repeated-operation pattern with a
         // changing message seed. The old regression only issued a second

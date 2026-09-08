@@ -6,7 +6,7 @@
 > bị chặn bởi quyền phân phối Kyber RTL và top-level license. Kết quả hiện tại
 > không phải chứng nhận CAVP/FIPS 140-3 và không phải module mật mã production.
 
-Trạng thái dưới đây dùng bằng chứng đến **2026-09-06**. Nhánh ASIC hiện tại
+Trạng thái dưới đây dùng bằng chứng đến **2026-09-07**. Nhánh ASIC hiện tại
 `codex/asic-frontend-mlkem512` được tách từ integration
 `codex/fips202-mlkem`. Tag `fpga-rc4-baseline` giữ mốc Kyber/FPGA cũ để đối
 chiếu; tag `fpga-mlkem512-0.2.0-rc1` là artifact ML-KEM-512 hiện được chấp nhận.
@@ -17,9 +17,12 @@ Nhánh tích hợp đã hoàn tất cổng FIPS 202 byte-oriented và cổng fun
 bit-exact cho KeyGen, Encaps, Decaps và implicit rejection của ML-KEM-512.
 Artifact RC1 đã PASS board regression 10.000 giao dịch. Candidate v3 sau sửa
 FIFO/policy secret đã PASS lại full gate, Vivado implementation cách ly và
-board regression 10.000/10.000, nhưng chưa được quảng bá. AI pre-review sau đó
-phát hiện zeroization sâu của NTT RAM/sponge/FE/KDF chưa đóng, nên v3 không
-được nâng thành freeze cuối. Xem báo cáo
+board regression 10.000/10.000, nhưng không được quảng bá vì AI pre-review tìm
+thấy P0 zeroization sâu. Candidate v4 ngày 2026-09-07 đã thêm scrub cho
+PUF/FE/KDF/ML-KEM và PASS full regression offline cùng raw gate
+1.024/1.024. V4 chưa chạy Vivado hoặc board, chưa có review độc lập và chưa
+phải freeze. Xem hồ sơ
+[`docs/CRYPTO_RTL_FREEZE_CANDIDATE_V4_2026-09-07.md`](docs/CRYPTO_RTL_FREEZE_CANDIDATE_V4_2026-09-07.md), báo cáo
 [`docs/FIPS203_VERIFICATION_2026-09-04.md`](docs/FIPS203_VERIFICATION_2026-09-04.md)
 và
 [`docs/HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md`](docs/HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md).
@@ -41,13 +44,13 @@ Không có Xilinx IP sinh tự động (`.xci`) và không dùng Zynq PS. Source
 testbench, firmware, constraint, report Vivado, bitstream và host tool đều nằm
 trong repo độc lập này.
 
-## Trạng thái ML-KEM-512 RC1
+## Trạng thái ML-KEM-512
 
 | Giai đoạn | Trạng thái đúng hiện tại |
 |---|---|
 | FIPS 202 phục vụ ML-KEM | **HOÀN THÀNH functional**, chưa phải chứng nhận CAVP |
-| ML-KEM-512 theo FIPS 203 | **HOÀN THÀNH functional nội bộ** và đã test board; chưa phải chứng nhận |
-| Crypto RTL freeze | **BLOCKED tại candidate v3**; full gate/Vivado/board PASS nhưng secure zeroize sâu chưa đóng và chưa có review độc lập |
+| ML-KEM-512 theo FIPS 203 | **HOÀN THÀNH functional nội bộ**; RC1/v3 đã test board, v4 chưa; không phải chứng nhận |
+| Crypto RTL freeze | **CANDIDATE v4**; full offline freeze gate và manifest PASS, còn review độc lập/Vivado/board trước khi freeze |
 | FPGA implementation | **PASS** ở 50 MHz trên XC7Z020; artifact RC1 đã được chấp nhận |
 | Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
 | Qualification RO-PUF | **CHƯA HOÀN THÀNH**: thiếu same-root trên full-SoC, PVT, power-cycle và nhiều board |
@@ -70,6 +73,7 @@ gồm đầu ra và điều kiện chuyển từng pha, nằm tại
 | Clock PL | 50 MHz tại N18 |
 | UART | 115200 8N1, RX W8, TX W9 |
 | Regression RTL/full-system | PASS |
+| Candidate v4 secure-zeroize offline | PASS: PUF/FE/KDF/ML-KEM, deep RAM/FIFO/sponge scrub, live abort và AXI backpressure/write-race tests |
 | Cổng ASIC portability | PASS, không đưa LUT6/CARRY4/DSP primitive vào source list ASIC |
 | FIPS 202 cho ML-KEM | PASS 50/50: SHA3-256/512, SHAKE128/256, gồm 20 vector NIST CAVP |
 | ML-KEM-512 KeyGen | PASS 25/25 NIST ACVP: `ek` 800 byte, `dk` 1.632 byte bit-exact |
@@ -78,7 +82,8 @@ gồm đầu ra và điều kiện chuyển từng pha, nằm tại
 | Timing valid/invalid | PASS, cùng 17.338 cycle trong loopback RTL |
 | SHAKE256 KDF KAT | PASS bit-exact với Python `hashlib.shake_256`, cycle 148 |
 | Kyber raw single-attempt gate | PASS 1.024/1.024, mismatch 0, retry 0 |
-| Full-system simulation | PASS, 956.564 cycle trên nhánh ML-KEM |
+| Full-system simulation v4 | PASS, 958.516 cycle; protocol 1.3/capability `0x06` |
+| Vivado/board candidate v4 | **PENDING/PENDING**; không dùng kết quả v3 để xác nhận v4 |
 | Implementation ML-KEM RC1 | PASS ở 50 MHz, 49.909 LUT; WNS `+2,226 ns`, WHS `+0,034 ns` |
 | Vivado impact candidate v3 | PASS ở 50 MHz, 49.886 LUT; WNS `+4,732 ns`, WHS `+0,034 ns` |
 | Route/DRC candidate v3 | 70.741/70.741 net route đủ; 0 Error, 165 warning đã phân loại |
@@ -114,7 +119,8 @@ constraint lên 100 MHz mà không tái kiến trúc/pipeline và chạy lại s
   [`docs/README.md`](docs/README.md)
 - `phan_cong_nhom/`: tiến độ, phạm vi và tiêu chí hoàn thành của từng thành viên
 - `Kyber_System_Top.bit`: bitstream ML-KEM-512 `0.2.0-rc1` đã test board
-- `ARTIFACTS.sha256`: checksum bitstream, firmware, physical lock và fingerprint RO
+- `ARTIFACTS.sha256`: manifest của đúng bộ artifact RC1; không trộn firmware
+  candidate v4 với bitstream/report RC1 rồi cập nhật checksum
 
 Build/cache, waveform, helper data PUF gắn với board và dữ liệu local khác được
 loại bằng `.gitignore`.
@@ -139,8 +145,12 @@ RISC-V GCC toolchain. Chạy tuần tự để tránh dùng quá nhiều RAM:
 ```sh
 make -j1 crypto-freeze-gate
 make -j1 asic-frontend-check
-sha256sum -c ARTIFACTS.sha256
 ```
+
+`sha256sum -c ARTIFACTS.sha256` chỉ áp dụng khi checkout/đối chiếu đúng bộ file
+RC1. Trên working tree v4, firmware đã đổi sang protocol 1.3 trong khi bitstream
+root vẫn là RC1/protocol 1.2, nên checksum hỗn hợp đó không phải release gate
+hợp lệ.
 
 `kyber-long` là cổng bắt buộc của internal release: 1.024 message seed khác
 nhau, mỗi giao dịch đúng một attempt, không retry. Có thể chạy từng khối bằng
@@ -149,8 +159,9 @@ nhau, mỗi giao dịch đúng một attempt, không retry. Có thể chạy t�
 `make system`.
 
 `crypto-freeze-gate` chạy tuần tự toàn bộ regression, cổng 1.024 giao dịch,
-portability ASIC và đối chiếu SHA-256 của tập source mật mã. Manifest hiện là
-freeze candidate; xem `docs/CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md`.
+portability ASIC và đối chiếu SHA-256 của tập source mật mã. Hồ sơ mới nhất là
+[`docs/CRYPTO_RTL_FREEZE_CANDIDATE_V4_2026-09-07.md`](docs/CRYPTO_RTL_FREEZE_CANDIDATE_V4_2026-09-07.md);
+hồ sơ ngày 2026-09-04 được giữ làm lịch sử candidate trước.
 
 Không có một lệnh local nào tự chứng minh cả RTL, Vivado, board và PUF/PVT.
 Phạm vi các cổng được tách rõ:
@@ -179,9 +190,10 @@ portability, chưa phải ASIC sign-off. Xem `docs/ASIC_PORTABILITY.md` để bi
 contract macro RO và các bước PDK/memory/SDC/DFT/backend còn lại. Workspace mới
 và findings tái hiện được nằm tại [`asic/`](asic/README.md).
 
-Firmware mặc định dùng `RELEASE_BUILD=1`: không truyền shared secret qua UART.
-Bản `RELEASE_BUILD=0` chỉ dùng chẩn đoán và không được commit/phân phối như
-artifact release.
+Firmware v4 mặc định dùng `RELEASE_BUILD=1`: không truyền shared secret qua
+UART và đợi crypto-accelerator zeroize trước khi trả kết quả. Capability này
+không xóa PicoRV32, SoC RAM, bus staging hay scan/DFT. Bản `RELEASE_BUILD=0`
+chỉ dùng chẩn đoán và không được commit/phân phối như artifact release.
 
 ## Build Vivado
 
@@ -303,13 +315,16 @@ Không chạy `git init` lại. Trước khi commit:
 
 ```sh
 ./scripts/release_check.sh --internal
-sha256sum -c ARTIFACTS.sha256
 git diff --check
 git status
 git add .
 git commit -m "Cập nhật thay đổi đã kiểm tra"
 git push origin HEAD
 ```
+
+Chỉ chạy `sha256sum -c ARTIFACTS.sha256` trên bộ artifact RC1 nguyên vẹn hoặc
+sau khi đã tạo và test một bộ artifact mới đồng nhất. Không sửa manifest để hợp
+thức hóa bitstream cũ ghép với firmware mới.
 
 Chỉ push internal RC vào repo private cho đến khi hoàn thành các cổng license
 trong `NOTICE.md`.

@@ -13,6 +13,11 @@ sinh tự động.
 - LUT: 49.909/53.200 (`93,81%`)
 - Protocol: 1.2, release capability `0x06`, không retry
 
+Đây là hướng dẫn cho artifact RC1 ở root. Candidate v4 dùng protocol 1.3 và
+accelerator-zeroize sâu nhưng **chưa có bitstream/Vivado/board evidence** ngày
+2026-09-07. Không dùng các kết quả RC1/v3 để ghi PASS cho v4; khi build v4 phải
+nạp đúng file cách ly và mong đợi INFO `4B 50 01 03 06`.
+
 ## Đấu dây
 
 Dùng USB-UART mức 3,3 V:
@@ -59,8 +64,9 @@ PORT=/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
 python3 host/uart_host.py --port "$PORT" info
 ```
 
-Response release mong đợi: protocol 1.2, capability `0x06`, shared-secret export
-tắt, session diversification và zeroize bật, retry flag tắt.
+Với artifact RC1 root, response mong đợi là protocol 1.2/capability `0x06`.
+Với candidate v4, phải thấy protocol 1.3/capability `0x06`; bit 2 khi đó là
+crypto-accelerator zeroize. Cả hai đều tắt shared-secret export và retry flag.
 
 Giữ helper bên ngoài repo:
 

@@ -61,6 +61,8 @@ module kyber_loopback_test (
     Kyber_Server server_inst (
         .clk(clk),
         .rst(~rst_n),
+        .scrub_en(1'b0),
+        .scrub_addr(11'd0),
         .start(start),
         .wen(server_wen),
         .k(3'd2),
@@ -79,6 +81,8 @@ module kyber_loopback_test (
     Kyber_Client client_inst (
         .clk(clk),
         .rst(~rst_n),
+        .scrub_en(1'b0),
+        .scrub_addr(11'd0),
         .start(start),
         .wen(1'b1),  // Always write to client
         .k(3'd2),

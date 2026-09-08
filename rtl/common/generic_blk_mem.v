@@ -24,7 +24,9 @@ module blk_mem_gen_0 (
         .we_b(1'b0),
         .addr_b(addrb),
         .din_b(32'h0),
-        .dout_b(doutb)
+        .dout_b(doutb),
+        .scrub_en(1'b0),
+        .scrub_addr(11'd0)
     );
 
     assign clka = clk;
@@ -61,7 +63,9 @@ module blk_mem_gen_1 (
         .we_b(1'b0),
         .addr_b(addrb),
         .din_b(32'h0),
-        .dout_b(doutb)
+        .dout_b(doutb),
+        .scrub_en(1'b0),
+        .scrub_addr(11'd0)
     );
 
     assign clka = clk;
@@ -98,7 +102,9 @@ module blk_mem_gen_2 (
         .we_b(1'b0),
         .addr_b(addrb),
         .din_b(32'h0),
-        .dout_b(doutb)
+        .dout_b(doutb),
+        .scrub_en(1'b0),
+        .scrub_addr(11'd0)
     );
 
     assign clka = clk;
@@ -135,7 +141,9 @@ module blk_mem_gen_1 (
         .we_b(1'b0),
         .addr_b(addrb),
         .din_b(32'h0),
-        .dout_b(doutb)
+        .dout_b(doutb),
+        .scrub_en(1'b0),
+        .scrub_addr(11'd0)
     );
 
     assign clka = clk;
@@ -172,7 +180,9 @@ module blk_mem_gen_0 (
         .we_b(1'b0),
         .addr_b(addrb),
         .din_b(32'h0),
-        .dout_b(doutb)
+        .dout_b(doutb),
+        .scrub_en(1'b0),
+        .scrub_addr(11'd0)
     );
 
     assign clka = clk;

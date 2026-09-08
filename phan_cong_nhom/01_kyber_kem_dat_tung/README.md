@@ -1,6 +1,6 @@
 # Đạt và Tùng — Kyber/ML-KEM-512
 
-Cập nhật **2026-09-06**. Đây là phạm vi nghiên cứu và review độc lập; Long là
+Cập nhật **2026-09-07**. Đây là phạm vi nghiên cứu và review độc lập; Long là
 người thực hiện thay đổi RTL, tích hợp test và chốt artifact.
 
 ## Phạm vi nghiên cứu/đối chiếu
@@ -19,8 +19,9 @@ người thực hiện thay đổi RTL, tích hợp test và chốt artifact.
 - `sim/kyber/`
 - `sim/mlkem/`
 - `docs/FIPS203_VERIFICATION_2026-09-04.md`
-- `docs/CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md`
-- `manifests/crypto_rtl_freeze_candidate.sha256`
+- `docs/CRYPTO_RTL_FREEZE_CANDIDATE_V4_2026-09-07.md`
+- `manifests/crypto_rtl_freeze_candidate_v4.sha256`
+- `manifests/verification_inputs_candidate_v4.sha256`
 - `docs/PROVENANCE.md`
 
 ## Chia trách nhiệm review
@@ -40,8 +41,9 @@ người thực hiện thay đổi RTL, tích hợp test và chốt artifact.
 ## Đã hoàn thành
 
 - Legacy Kyber functional loopback: PASS, server/client cùng shared key.
-- AXI handshake/clear seed-status nhìn thấy: PASS 32 giao dịch; scrub RAM/sponge
-  chưa đóng ở candidate v3.
+- Candidate v4 AXI accelerator-zeroize PASS ở diagnostic và locked-secret:
+  scrub trực tiếp RAM/FIFO/sponge/core, live abort, stalled RDATA và competing
+  seed write; core được giữ reset trong quét 2.048 địa chỉ.
 - Raw gate: PASS 1.024/1.024, mismatch 0, retry 0, max attempt 1.
 - Codec round-trip: PASS.
 - Board full pipeline: PASS 10.000/10.000.
@@ -54,6 +56,9 @@ người thực hiện thay đổi RTL, tích hợp test và chốt artifact.
   50 MHz và board stress 10.000/10.000.
 - Candidate v3 PASS full RTL/ASIC front-end gate, Vivado và đúng-image board
   stress 10.000/10.000; không promote vì P0 secure-zeroize.
+- Candidate v4 PASS trọn `crypto-freeze-gate`: verification manifest, full
+  regression, raw 1.024/1.024, ASIC portability và crypto manifest; firmware
+  protocol 1.3. Vivado và board đúng image v4 còn PENDING.
 
 Kết luận đúng là **ML-KEM-512 internal algorithm functional PASS**. Đây không
 phải chứng nhận CAVP, FIPS 140-3 hoặc review mật mã độc lập.
@@ -68,9 +73,10 @@ phải chứng nhận CAVP, FIPS 140-3 hoặc review mật mã độc lập.
    test API khóa/ciphertext ngoài thay vì chỉ seed nội bộ.
 4. Thêm assertion cho FIFO underflow/overflow, FSM progress, số coefficient và
    quy tắc đúng một attempt.
-5. Đóng scrub NTT/FIFO/ciphertext RAM và sponge state; rà constant-time và
-   nguồn randomness cùng Minh và Việt Anh.
-6. Ký xác nhận review báo cáo JTAG/UART và stress 10.000/10.000 đã có; nếu phát
+5. Review scrub NTT/FIFO/ciphertext RAM, sponge, AXI backpressure và abort; chốt
+   contract scrub-before-first-START và response khi write bị từ chối lúc busy;
+   rà constant-time và nguồn randomness cùng Minh và Việt Anh.
+6. Sau Vivado/board v4, ký xác nhận đúng report/image; nếu phát
    hiện sai khác phải mở lại candidate và chạy lại gate.
 
 Đạt và Tùng chuẩn bị tài liệu, mapping và nhận xét review. Long thực hiện thay
@@ -83,7 +89,7 @@ phải chứng nhận CAVP, FIPS 140-3 hoặc review mật mã độc lập.
 - Phạm vi API nội bộ và lý do chưa hỗ trợ khóa ngoài được ghi rõ.
 - Corpus/API chỉ cần mở rộng khi claim dự án mở rộng; không gọi bộ test hiện tại
   là chứng nhận FIPS.
-- Nếu RTL thay đổi: Vivado timing/DRC và board stress được chạy lại.
+- Vivado timing/DRC và board stress đúng candidate v4 được chạy lại trước freeze.
 
 ## Lệnh kiểm tra hiện có
 

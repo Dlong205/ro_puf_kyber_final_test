@@ -82,7 +82,8 @@ module mlkem_keygen_probe (
 `endif
 
     Kyber_Server server_inst (
-        .clk(clk), .rst(~rst_n), .start(start_reg),
+        .clk(clk), .rst(~rst_n), .scrub_en(1'b0), .scrub_addr(11'd0),
+        .start(start_reg),
         .wen(client_valid_out), .k(3'd2), .ready_c(ready_c),
         .req_pk(req_pk), .din(dout_client), .ready_pk(ready_pk),
         .req_c(req_c), .valid(server_valid),
@@ -92,7 +93,8 @@ module mlkem_keygen_probe (
     );
 
     Kyber_Client client_inst (
-        .clk(clk), .rst(~rst_n), .start(start_reg),
+        .clk(clk), .rst(~rst_n), .scrub_en(1'b0), .scrub_addr(11'd0),
+        .start(start_reg),
         .wen(server_valid_out), .k(3'd2), .ready_pk(ready_pk),
         .req_c(req_c), .din(dout_server), .ready_c(ready_c),
         .req_pk(req_pk), .valid(client_valid),

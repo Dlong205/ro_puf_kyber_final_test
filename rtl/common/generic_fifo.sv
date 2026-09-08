@@ -168,7 +168,12 @@ module generic_fifo_sync #(
     output logic [WIDTH-1:0]       rd_data,
     output logic                   rd_empty,
     output logic                   rd_almost_empty,
-    output logic [$clog2(DEPTH):0] rd_count
+    output logic [$clog2(DEPTH):0] rd_count,
+
+    // Sequential physical erase driven by the shared Kyber scrub counter.
+    // Normal FIFO traffic is blocked while scrub_en is asserted.
+    input  logic                   scrub_en,
+    input  logic [10:0]            scrub_addr
 );
 
     localparam int ADDR_WIDTH = $clog2(DEPTH);
@@ -180,7 +185,7 @@ module generic_fifo_sync #(
     
     // Write pointer with synchronous reset
     always_ff @(posedge clk) begin
-        if (!rst_n) begin
+        if (!rst_n || scrub_en) begin
             wr_ptr <= '0;
         end else if (wr_en && !wr_full) begin
             wr_ptr <= wr_ptr + 1'b1;
@@ -189,14 +194,17 @@ module generic_fifo_sync #(
     
     // Write data
     always_ff @(posedge clk) begin
-        if (wr_en && !wr_full) begin
+        if (scrub_en) begin
+            if (scrub_addr < DEPTH)
+                mem[scrub_addr[ADDR_WIDTH-1:0]] <= '0;
+        end else if (wr_en && !wr_full) begin
             mem[wr_ptr[ADDR_WIDTH-1:0]] <= wr_data;
         end
     end
     
     // Read pointer
     always_ff @(posedge clk) begin
-        if (!rst_n) begin
+        if (!rst_n || scrub_en) begin
             rd_ptr <= '0;
         end else if (rd_en && !rd_empty) begin
             rd_ptr <= rd_ptr + 1'b1;
@@ -205,7 +213,7 @@ module generic_fifo_sync #(
     
     // Read data
     always_ff @(posedge clk) begin
-        if (!rst_n) begin
+        if (!rst_n || scrub_en) begin
             rd_data <= '0;
         end else if (rd_en && !rd_empty) begin
             rd_data <= mem[rd_ptr[ADDR_WIDTH-1:0]];

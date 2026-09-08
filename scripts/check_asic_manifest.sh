@@ -4,7 +4,12 @@ set -euo pipefail
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 filelist="$root_dir/asic/filelists/system_asic.f"
 include_files="$root_dir/asic/filelists/include_files.txt"
-manifest="$root_dir/asic/manifests/system_asic.sha256"
+manifest="${1:-$root_dir/asic/manifests/system_asic.sha256}"
+
+test -s "$manifest" || {
+  echo "ERROR: ASIC SHA-256 manifest is missing: $manifest" >&2
+  exit 1
+}
 
 if ! awk 'NF != 2 || length($1) != 64 || $1 !~ /^[0-9a-f]+$/ {bad=1}
           END {exit bad}' "$manifest"; then

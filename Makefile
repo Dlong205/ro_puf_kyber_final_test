@@ -9,7 +9,7 @@ SOC_REPRO_BIT := build/soc_repro/$(SOC_REPRO_RUN)/kyber_ro_puf_$(SOC_REPRO_RUN).
 # Verilator builds can exhaust RAM on the reference development host.
 .NOTPARALLEL:
 
-.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem kyber kyber-invalid axi axi-secure kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-filelist-check asic-manifest-check asic-frontend-check asic-backend-readiness asic-elaboration asic-portability crypto-freeze-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
+.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem kyber kyber-invalid axi axi-secure kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-filelist-check asic-manifest-check asic-frontend-check asic-backend-readiness asic-elaboration asic-portability crypto-freeze-check verification-inputs-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
 
 PUF_PORT ?= /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
 PUF_SAMPLES ?= 1000
@@ -120,8 +120,12 @@ asic-portability: ro-puf fuzzy-portable ntt-multiplier xilinx-ro-lint asic-reset
 crypto-freeze-check:
 	@./scripts/check_crypto_freeze.sh
 
+verification-inputs-check:
+	@./scripts/check_verification_inputs.sh
+
 # Force the complete candidate gate to run serially even if the caller uses -j.
 crypto-freeze-gate:
+	$(MAKE) -j1 verification-inputs-check
 	$(MAKE) -j1 regression
 	$(MAKE) -j1 kyber-long
 	$(MAKE) -j1 asic-portability

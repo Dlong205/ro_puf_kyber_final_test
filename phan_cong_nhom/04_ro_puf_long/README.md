@@ -1,6 +1,6 @@
 # Long — Chủ trì implementation và RO-PUF
 
-Cập nhật **2026-09-06**. Long là implementation owner duy nhất: tiếp nhận các
+Cập nhật **2026-09-07**. Long là implementation owner duy nhất: tiếp nhận các
 biên bản nghiên cứu/review, sửa RTL, tích hợp, chạy regression/Vivado/board và
 quyết định artifact nào được quảng bá.
 
@@ -54,6 +54,12 @@ quyết định artifact nào được quảng bá.
   INFO/enroll/reconstruct và stress 10.000/10.000; board sau đó đã nạp lại RC1.
 - ASIC-generic elaboration PASS; RO, BCH compare và NTT multiplier đã tách khỏi
   primitive vendor trong source list ASIC.
+- Candidate v4 đã thêm accelerator-zeroize cho PUF/FE/KDF/ML-KEM, reset thật
+  xuyên BCH và deep scrub Kyber; full offline freeze gate cùng ba manifest v4
+  PASS. Vivado/board v4 còn PENDING.
+- FE characterization PASS 7.728 check trong bán kính `t=8`; ca delta codeword
+  weight 41 có thể `success=1` nhưng sai root, đúng giới hạn expected ngoài
+  bán kính và không được diễn giải là mọi over-noise đều bị phát hiện.
 
 ## Giới hạn chưa được phép bỏ qua
 
@@ -70,8 +76,8 @@ quyết định artifact nào được quảng bá.
 
 ## Còn mở theo thứ tự ưu tiên
 
-1. Tạo candidate v4 đóng P0 secure-zeroize, chạy lại full gate/Vivado/board rồi
-   mới chuyển sang review độc lập và freeze.
+1. Review độc lập accelerator-zeroize trên manifest v4 đã khóa, chạy Vivado và
+   đúng-image board smoke/stress rồi mới freeze/promote.
 2. Thêm count-margin telemetry, tie/zero detection và số lỗi BCH đã sửa; ưu
    tiên challenge tạo bit 149.
 3. Đo same-root trên chính full-SoC hoặc bằng instrumentation không làm thay đổi
@@ -90,7 +96,8 @@ quyết định artifact nào được quảng bá.
 ## Definition of Done
 
 - Có dataset và báo cáo thống kê nhiều board/PVT/power-cycle tái lập được.
-- Reliability và entropy đạt ngưỡng đã chốt; over-noise bị phát hiện đúng.
+- Reliability và entropy đạt ngưỡng đã chốt; hành vi over-noise được đo và giới
+  hạn decoder được ghi rõ, không yêu cầu/phát biểu mọi over-noise đều bị phát hiện.
 - CDC/RDC được sign-off hoặc có waiver cụ thể cho từng đường.
 - ASIC macro có đủ Liberty, LEF, GDS, netlist và test-mode contract trước P&R.
 

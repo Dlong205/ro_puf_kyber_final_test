@@ -33,6 +33,7 @@ ERROR_NAMES = {
     0x06: "Kyber configuration error",
     0x07: "Kyber timeout",
     0x08: "Kyber server/client key mismatch",
+    0x09: "crypto-accelerator zeroize timeout",
 }
 
 HELPER_FILE = "helper.bin"
@@ -100,7 +101,7 @@ def do_info(ser):
     print(f"[+] Protocol {major}.{minor}, capabilities=0x{capabilities:02x}")
     print(f"    Shared-secret export: {'enabled (diagnostic)' if capabilities & 1 else 'disabled (release)'}")
     print(f"    Session diversification: {'yes' if capabilities & 2 else 'no'}")
-    print(f"    Kyber zeroize command: {'yes' if capabilities & 4 else 'no'}")
+    print(f"    Crypto-accelerator zeroize: {'yes' if capabilities & 4 else 'no'}")
     print(f"    Legacy Kyber retry flag: {'yes' if capabilities & 8 else 'no'}")
     return major == 1
 

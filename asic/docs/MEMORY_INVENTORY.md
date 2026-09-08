@@ -1,6 +1,7 @@
 # Memory inventory cho ASIC
 
-Kiểm kê ngày 2026-09-06 từ hierarchy `Kyber_System_Asic_Top`, profile k=2.
+Kiểm kê ban đầu ngày 2026-09-06, cập nhật policy scrub ngày 2026-09-07 từ
+hierarchy `Kyber_System_Asic_Top`, profile k=2.
 Số bit dưới đây là capacity logic, chưa gồm parity/ECC, banking, spare row,
 decoder hay overhead macro.
 
@@ -33,8 +34,9 @@ không có nghĩa là không chứa secret.
 
 ## Contract hành vi cần giữ
 
-- `generic_fifo_sync`: single-clock, registered read data; pointer reset không
-  xóa array; write/read bị chặn khi full/empty.
+- `generic_fifo_sync`: single-clock, registered read data; reset pointer không
+  tự xóa array. Candidate v4 bổ sung scrub address/write-zero tường minh; ASIC
+  macro adapter phải giữ contract này. Write/read thường bị chặn khi full/empty.
 - `generic_bram`: hai port dùng cùng clock trong wrapper hiện tại, synchronous
   read; nonblocking semantics cho giá trị cũ khi read/write cùng địa chỉ.
 - NTT ROM: synchronous registered output, 128x12, nội dung case tường minh.
@@ -42,11 +44,17 @@ không có nghĩa là không chứa secret.
   preload bằng `$readmemh` hiện chưa phải cơ chế boot ASIC.
 - Ciphertext replay: port A write/port B read cùng clock, read latency một cycle.
 
+Candidate v4 quét 2.048 địa chỉ, đủ bao phủ depth lớn nhất của RAM/FIFO ML-KEM,
+trong khi giữ core reset. RTL test kiểm tra trực tiếp array/state sau scrub.
+Điều này chưa chứng minh remanence vật lý của SRAM macro và không xóa firmware
+memory, PicoRV32 register file/stack hoặc bus staging ngoài accelerator.
+
 ## Việc phải làm khi có PDK/compiler
 
 1. Gom các depth/width thành danh sách macro khả dụng và lượng banking/mux cần.
 2. Viết wrapper riêng cho behavioral/FPGA/ASIC macro, giữ latency/collision.
 3. Chạy test độc lập cho mỗi adapter, sau đó ML-KEM KAT/rejection/full-system.
-4. Chốt memory BIST, repair, scan boundary và policy zeroize. Pointer reset đơn
-   thuần không xóa secret còn nằm trong SRAM.
+4. Chốt memory BIST, repair, scan boundary và policy zeroize. Adapter macro phải
+   thực hiện đủ write-zero sweep hoặc cơ chế erase tương đương đã được chứng
+   minh; pointer reset đơn thuần không xóa secret còn nằm trong SRAM.
 5. Chọn boot ROM/mask ROM/SRAM preload và chứng minh reset vector chạy thật.

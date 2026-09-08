@@ -3,7 +3,11 @@
 module kyber_axi_wrapper #(
     // Secret readback is locked by default. Diagnostic FPGA/test integrations
     // must opt in explicitly and must not use that setting as a production top.
-    parameter integer EXPOSE_SECRETS = 0
+    parameter integer EXPOSE_SECRETS = 0,
+    // Scrub every Kyber RAM/FIFO location before acknowledging zeroization.
+    // Keep enabled for secure/ASIC integrations. Resource-constrained FPGA
+    // experiments may explicitly disable it, but then receive reset-only erase.
+    parameter integer SECURE_SCRUB = 1
 ) (
     // Clock and Reset
     input  wire        S_AXI_ACLK,
@@ -41,7 +45,13 @@ module kyber_axi_wrapper #(
     // Direct status/key mirrors for board-level observability. Software still
     // accesses the same values through AXI-Lite.
     output wire        kem_done,
-    output wire [255:0] kem_key
+    output wire [255:0] kem_key,
+
+    // System-wide zeroize request and completion handshake. The request is a
+    // pulse; CTRL[1] remains a software-accessible equivalent request.
+    input  wire        secure_zeroize,
+    output wire        zeroize_busy,
+    output reg         zeroize_done
 );
 
     //----------------------------------------------
@@ -51,6 +61,8 @@ module kyber_axi_wrapper #(
     reg arready, rvalid;
     reg [31:0] rdata;
     reg [31:0] reg_data_out;
+    wire kyber_zeroize_accept;
+    wire kyber_sensitive_write_accept;
     
     assign S_AXI_AWREADY = awready;
     assign S_AXI_WREADY  = wready;
@@ -107,8 +119,16 @@ module kyber_axi_wrapper #(
             // AXI read data must remain stable for the whole RVALID/RREADY
             // handshake. Latch it when the address is accepted instead of
             // driving it only during the address phase.
-            if (slv_reg_rden)
+            // Do not retain a completed secret read in the AXI response
+            // register.  If a response is stalled, AXI requires RDATA to stay
+            // stable until RREADY; the zeroize FSM therefore withholds DONE
+            // until that outstanding response has been consumed.
+            if (kyber_zeroize_accept && !rvalid)
+                rdata <= 32'b0;
+            else if (slv_reg_rden)
                 rdata <= reg_data_out;
+            else if (rvalid && S_AXI_RREADY)
+                rdata <= 32'b0;
         end
     end
 
@@ -123,7 +143,6 @@ module kyber_axi_wrapper #(
     integer i;
 
     wire [7:0] awaddr_offset = S_AXI_AWADDR[7:0];
-    wire kyber_zeroize_accept;
     always @(posedge S_AXI_ACLK) begin
         if (!S_AXI_ARESETN) begin
             reg_k <= 3'd2;
@@ -139,7 +158,7 @@ module kyber_axi_wrapper #(
                     reg_seed_z[i] <= 32'h0;
                     reg_seed_m[i] <= 32'h0;
                 end
-            end else if (slv_reg_wren) begin
+            end else if (kyber_sensitive_write_accept) begin
                 if (awaddr_offset >= 8'h00 && awaddr_offset <= 8'h1C) begin
                     reg_seed_d[awaddr_offset[4:2]] <= S_AXI_WDATA;
                 end
@@ -176,22 +195,44 @@ module kyber_axi_wrapper #(
     reg kyber_client_done_seen;
     reg kyber_complete_d;
 
-    localparam [1:0] LAUNCH_IDLE  = 2'd0;
-    localparam [1:0] LAUNCH_RESET = 2'd1;
-    localparam [1:0] LAUNCH_START = 2'd2;
-    reg [1:0] launch_state;
+    localparam [2:0] LAUNCH_IDLE  = 3'd0;
+    localparam [2:0] LAUNCH_RESET = 3'd1;
+    localparam [2:0] LAUNCH_START = 3'd2;
+    localparam [2:0] LAUNCH_SCRUB = 3'd3;
+    localparam [2:0] LAUNCH_DRAIN = 3'd4;
+    reg [2:0] launch_state;
     reg launch_start_after_reset;
+    reg [10:0] scrub_addr;
 
     wire kyber_start_request = slv_reg_wren &&
                                (awaddr_offset == 8'h40) && S_AXI_WDATA[0];
     wire kyber_start_accept = kyber_start_request && !kyber_busy &&
                               (launch_state == LAUNCH_IDLE);
-    wire kyber_zeroize_request = slv_reg_wren &&
-                                 (awaddr_offset == 8'h40) && S_AXI_WDATA[1];
-    assign kyber_zeroize_accept = kyber_zeroize_request &&
-                                  (launch_state == LAUNCH_IDLE);
-    wire kyber_core_reset = !S_AXI_ARESETN || (launch_state == LAUNCH_RESET);
+    wire kyber_zeroize_request = secure_zeroize ||
+                                 (slv_reg_wren &&
+                                  (awaddr_offset == 8'h40) && S_AXI_WDATA[1]);
+    // Zeroize has priority over start and may abort an operation at any phase;
+    // a one-cycle security request must never be lost in RESET/START.
+    assign kyber_zeroize_accept = kyber_zeroize_request;
+    // Seeds and the active parameter are transaction state. Do not allow a
+    // second AXI writer to re-populate them during a KEM or during the scrub
+    // window that precedes zeroize_done.
+    assign kyber_sensitive_write_accept = slv_reg_wren && !kyber_busy &&
+                                          (launch_state == LAUNCH_IDLE) &&
+                                          !kyber_zeroize_request;
+    wire kyber_scrub_en = (SECURE_SCRUB != 0) &&
+                          (launch_state == LAUNCH_SCRUB);
+    wire kyber_core_reset = !S_AXI_ARESETN ||
+                            (launch_state == LAUNCH_RESET) ||
+                            (launch_state == LAUNCH_SCRUB) ||
+                            (launch_state == LAUNCH_DRAIN);
     wire kyber_core_start = (launch_state == LAUNCH_START);
+
+    assign zeroize_busy = kyber_zeroize_request ||
+                          ((launch_state == LAUNCH_RESET) &&
+                           !launch_start_after_reset) ||
+                          (launch_state == LAUNCH_SCRUB) ||
+                          (launch_state == LAUNCH_DRAIN);
 
     wire kyber_complete = (kyber_done_server || kyber_server_done_seen) &&
                           (kyber_done_client || kyber_client_done_seen);
@@ -206,23 +247,48 @@ module kyber_axi_wrapper #(
         if (!S_AXI_ARESETN) begin
             launch_state <= LAUNCH_IDLE;
             launch_start_after_reset <= 1'b0;
+            scrub_addr <= 11'd0;
+            zeroize_done <= 1'b0;
         end else begin
-            case (launch_state)
+            zeroize_done <= 1'b0;
+            if (kyber_zeroize_accept) begin
+                launch_start_after_reset <= 1'b0;
+                scrub_addr <= 11'd0;
+                launch_state <= LAUNCH_RESET;
+            end else case (launch_state)
                 LAUNCH_IDLE: begin
-                    if (kyber_zeroize_accept) begin
-                        launch_start_after_reset <= 1'b0;
-                        launch_state <= LAUNCH_RESET;
-                    end else if (kyber_start_accept) begin
+                    if (kyber_start_accept) begin
                         launch_start_after_reset <= 1'b1;
                         launch_state <= LAUNCH_RESET;
                     end
                 end
                 LAUNCH_RESET: begin
-                    launch_state <= launch_start_after_reset ? LAUNCH_START : LAUNCH_IDLE;
+                    if (launch_start_after_reset) begin
+                        launch_state <= LAUNCH_START;
+                    end else if (SECURE_SCRUB != 0) begin
+                        scrub_addr <= 11'd0;
+                        launch_state <= LAUNCH_SCRUB;
+                    end else begin
+                        launch_state <= LAUNCH_DRAIN;
+                    end
                 end
                 LAUNCH_START: begin
                     launch_start_after_reset <= 1'b0;
                     launch_state <= LAUNCH_IDLE;
+                end
+                LAUNCH_SCRUB: begin
+                    if (scrub_addr == 11'h7ff) begin
+                        scrub_addr <= 11'd0;
+                        launch_state <= LAUNCH_DRAIN;
+                    end else begin
+                        scrub_addr <= scrub_addr + 11'd1;
+                    end
+                end
+                LAUNCH_DRAIN: begin
+                    if (!rvalid) begin
+                        launch_state <= LAUNCH_IDLE;
+                        zeroize_done <= 1'b1;
+                    end
                 end
                 default:
                     launch_state <= LAUNCH_IDLE;
@@ -257,7 +323,7 @@ module kyber_axi_wrapper #(
                 kyber_key_match_sticky <= (kyber_K_server == kyber_K_client);
             end
 
-            if (slv_reg_wren && awaddr_offset == 8'h48) begin
+            if (kyber_sensitive_write_accept && awaddr_offset == 8'h48) begin
                 kyber_config_error <= (S_AXI_WDATA[2:0] != 3'd2);
             end
             
@@ -390,7 +456,9 @@ module kyber_axi_wrapper #(
         .seed_d     (flat_seed_d),
         .seed_z     (flat_seed_z),
         .K          (kyber_K_server),
-        .done       (kyber_done_server)
+        .done       (kyber_done_server),
+        .scrub_en   (kyber_scrub_en),
+        .scrub_addr (scrub_addr)
     );
 
     Kyber_Client C (
@@ -409,7 +477,9 @@ module kyber_axi_wrapper #(
         .dout       (dout_client),
         .seed_m     (flat_seed_m),
         .K          (kyber_K_client),
-        .done       (kyber_done_client)
+        .done       (kyber_done_client),
+        .scrub_en   (kyber_scrub_en),
+        .scrub_addr (scrub_addr)
     );
 
 endmodule

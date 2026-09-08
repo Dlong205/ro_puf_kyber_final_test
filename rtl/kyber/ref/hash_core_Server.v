@@ -21,6 +21,8 @@
 module hash_core_Server(
     input wire clk,
     input wire rst,
+    input wire scrub_en,
+    input wire [10:0] scrub_addr,
     input wire keccak_init,
     input wire keccak_init_hard,
     input wire squeeze_init,
@@ -113,6 +115,7 @@ module hash_core_Server(
     sha3_shake_core sponge (
         .clk        (clk),
         .rst        (rst),
+        .scrub      (scrub_en),
         .init       (sponge_init),
         .hard_init  (keccak_init_hard),
         .mode       (core_mode),
@@ -314,7 +317,9 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
     endcase
 
     always @(posedge clk) begin
-        if(decode_valid & ~decode_patt & ~decode_eta3)
+        if (rst || scrub_en)
+            fifo_data_dropped <= 12'b0;
+        else if(decode_valid & ~decode_patt & ~decode_eta3)
             case({ofifo_din_valid0,ofifo_din_valid1,matrix_parity})
             3'b 100 : fifo_data_dropped <= decode_dout[11:0];
             3'b 010, 3'b 111 : fifo_data_dropped <= decode_dout[23:12];
@@ -405,7 +410,9 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
         .rd_en(ififo_req),
         .dout(ififo_dout_int),
         .full(ififo_full),
-        .empty(ififo_empty)
+        .empty(ififo_empty),
+        .scrub_en(scrub_en),
+        .scrub_addr(scrub_addr)
     );
 
     assign {mode_w, absorb_w, last_w, ififo_dout} = ififo_dout_int;
@@ -429,7 +436,9 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
         .dout(ofifo0_dout),
         .full(ofifo0_full),
         .empty(ofifo0_empty),
-        .prog_full(ofifo0_prog_full)
+        .prog_full(ofifo0_prog_full),
+        .scrub_en(scrub_en),
+        .scrub_addr(scrub_addr)
     );
 
     fifo_wrapper_25_16 #(.DEPTH(256)) ofifo1_inst (
@@ -442,7 +451,9 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
         .dout(ofifo1_dout),
         .full(ofifo1_full),
         .empty(ofifo1_empty),
-        .prog_full(ofifo1_prog_full)
+        .prog_full(ofifo1_prog_full),
+        .scrub_en(scrub_en),
+        .scrub_addr(scrub_addr)
     );
 
     fifo_wrapper_40_32 #(.DEPTH(1024)) ofifo_inst (
@@ -453,7 +464,9 @@ wire sponge_hold = sponge_hold_set & ~sponge_done;
         .rd_en(decode_req),
         .dout(ofifo_dout),
         .full(ofifo_full),
-        .empty(ofifo_empty)
+        .empty(ofifo_empty),
+        .scrub_en(scrub_en),
+        .scrub_addr(scrub_addr)
     );
 
     decode_keccak decode(

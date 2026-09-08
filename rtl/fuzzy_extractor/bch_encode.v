@@ -15,6 +15,7 @@ module bch_encode #(
 	parameter PIPELINE_STAGES = 0
 ) (
 	input clk,
+	input reset,
 	input start,				/* First cycle */
 	input ce,				/* Accept input word/cycle output word */
 	input [BITS-1:0] data_in,		/* Input data */
@@ -68,7 +69,7 @@ module bch_encode #(
 	else
 		lfsr_counter #(M) u_counter(
 			.clk(clk),
-			.reset(ce && start),
+			.reset(reset || (ce && start)),
 			.ce(ce && busy),
 			.count(count)
 		);
@@ -82,7 +83,9 @@ module bch_encode #(
 			reg [RUNT-1:0] runt = 0;
 			assign shifted_in = (data_in << RUNT) | (start ? 0 : runt);
 			always @(posedge clk)
-				if (ce)
+				if (reset)
+					runt <= #TCQ 0;
+				else if (ce)
 					runt <= #TCQ data_in << REM;
 		end else
 			assign shifted_in = data_in;
@@ -101,9 +104,10 @@ module bch_encode #(
 			.out(in_enc)
 		);
 
-		pipeline_ce #(PIPELINE_STAGES > 0) u_enc_pipeline [`BCH_ECC_BITS(P)-1:0] (
+		pipeline_ce_reset #(PIPELINE_STAGES > 0) u_enc_pipeline [`BCH_ECC_BITS(P)-1:0] (
 			.clk(clk),
 			.ce(ce),
+			.reset(reset),
 			.i(in_enc),
 			.o(in_enc_pipelined)
 		);
@@ -124,9 +128,10 @@ module bch_encode #(
 	end else begin
 		wire [BITS-1:0] shifted_in_pipelined;
 
-		pipeline_ce #(PIPELINE_STAGES > 0) u_enc_pipeline [BITS-1:0] (
+		pipeline_ce_reset #(PIPELINE_STAGES > 0) u_enc_pipeline [BITS-1:0] (
 			.clk(clk),
 			.ce(ce),
+			.reset(reset),
 			.i(shifted_in),
 			.o(shifted_in_pipelined)
 		);
@@ -150,9 +155,10 @@ module bch_encode #(
 		assign lfsr_next = lfsr_rep(lfsr, shifted_in_pipelined);
 	end
 
-	pipeline_ce #(PIPELINE_STAGES) u_data_pipeline [BITS-1:0] (
+	pipeline_ce_reset #(PIPELINE_STAGES) u_data_pipeline [BITS-1:0] (
 		.clk(clk),
 		.ce(ce),
+		.reset(reset),
 		.i(data_in),
 		.o(data_in_pipelined)
 	);
@@ -168,7 +174,13 @@ module bch_encode #(
 	assign ready = !busy;
 
 	always @(posedge clk) begin
-		if (ce) begin
+		if (reset) begin
+			start_last <= #TCQ 0;
+			last <= #TCQ 0;
+			busy <= #TCQ 0;
+			load_lfsr <= #TCQ 0;
+			lfsr <= #TCQ 0;
+		end else if (ce) begin
 			start_last <= #TCQ start && !busy;
 			if (start) begin
 				last <= #TCQ CODE_CYCLES < 3; /* First cycle is last cycle */

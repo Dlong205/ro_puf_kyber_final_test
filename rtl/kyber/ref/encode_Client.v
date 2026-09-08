@@ -36,7 +36,9 @@ always @(*) begin
 end
 
 always @(posedge clk) begin
-	if(wen) case({k,sel})
+	if(rst)
+		sftreg <= 52'h0;
+	else if(wen) case({k,sel})
 		4'b 0100, 4'b 0110 : sftreg <= {din[19:0],sftreg[51:20]};
 		4'b 0101, 4'b 0111 : sftreg <= {din[7:0],sftreg[51:8]};
 		4'b 1000 : sftreg <= {din,sftreg[51:22]};

@@ -39,6 +39,7 @@ module Kyber_System_Asic_Top #(
     wire fe_start;
     wire fe_mode;
     wire kdf_start;
+    wire secure_zeroize;
     wire puf_done;
     wire fe_done;
     wire fe_success;
@@ -52,7 +53,8 @@ module Kyber_System_Asic_Top #(
 
     riscv_soc #(
         .CLKS_PER_BIT(UART_CLKS_PER_BIT),
-        .EXPOSE_KYBER_SECRETS(0)
+        .EXPOSE_KYBER_SECRETS(0),
+        .SECURE_KYBER_SCRUB(1)
     ) u_soc (
         .clk(clk_i),
         .rstn(rst_sys_n),
@@ -65,6 +67,7 @@ module Kyber_System_Asic_Top #(
         .fe_start(fe_start),
         .fe_mode(fe_mode),
         .kdf_start(kdf_start),
+        .secure_zeroize(secure_zeroize),
         .puf_done(puf_done),
         .fe_done(fe_done),
         .fe_success(fe_success),
@@ -77,6 +80,7 @@ module Kyber_System_Asic_Top #(
     kp_puf_top u_puf (
         .clk(clk_i),
         .rst_n(rst_sys_n),
+        .zeroize(secure_zeroize),
         .start(puf_start),
         .seed(PUF_SEED),
         .busy(),
@@ -87,6 +91,7 @@ module Kyber_System_Asic_Top #(
     fuzzy_extractor u_fe (
         .clk(clk_i),
         .rst_n(rst_sys_n),
+        .zeroize(secure_zeroize),
         .start(fe_start),
         .mode(fe_mode),
         .response_in(puf_resp),
@@ -101,6 +106,7 @@ module Kyber_System_Asic_Top #(
     kdf_keccak u_kdf (
         .clk(clk_i),
         .rst_n(rst_sys_n),
+        .zeroize(secure_zeroize),
         .start(kdf_start),
         .key_in(fe_key),
         .done(kdf_done),
