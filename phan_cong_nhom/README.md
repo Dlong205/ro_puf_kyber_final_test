@@ -6,6 +6,13 @@ chính thức chỉ nằm trong `rtl/`; không copy RTL vào thư mục cá nhâ
 Minh và Việt Anh thực hiện nghiên cứu/đối chiếu/review; Long là người thực hiện
 thay đổi RTL, tích hợp, chạy gate và chốt artifact.
 
+Cập nhật hướng phát triển **2026-09-09**: Long đang thực hiện nhánh
+`codex/fpga-v2-split`, bảo toàn v4 và đo từng khối trên Arty-35T trước khi
+thiết kế Edge không CPU. Phân công nghiên cứu/review không đổi. Đọc
+[nhận xét master plan](../docs/MASTER_PLAN_REVIEW_2026-09-09.md) và
+[báo cáo tài nguyên](../docs/FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md);
+chưa có full Edge/SPI/ASIC sign-off mới.
+
 ## Các mốc không được nhầm lẫn
 
 | Mốc | Ý nghĩa | Trạng thái |

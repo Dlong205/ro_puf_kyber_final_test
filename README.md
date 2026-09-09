@@ -49,6 +49,17 @@ trong repo độc lập này.
 
 ## Trạng thái ML-KEM-512
 
+Đợt phát triển **2026-09-09** đang ở nhánh `codex/fpga-v2-split`: bảo toàn
+baseline functional v4, đo từng khối trên Arty-35T, rồi tách Edge
+KeyGen/Decaps khỏi Encaps trên Zynq. Đây chưa phải bản Edge chạy board hoặc
+ASIC đã hoàn tất. Xem [nhận xét master plan và thứ tự triển khai đã chỉnh](docs/MASTER_PLAN_REVIEW_2026-09-09.md)
+và [tooling đo tài nguyên độc lập](experiments/fpga_split/README.md).
+
+[Số đo OOC đã hoàn tất](docs/FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md):
+KeyGen/Decaps 11.100 LUT, Encaps 13.687 LUT; tổng sơ bộ Edge kèm KDF/FE/PUF
+là 24.516 LUT, vượt 20.800 LUT của Arty-35T. Ưu tiên tối ưu/chia sẻ Keccak;
+chưa có kết quả full Edge P&R hoặc bitstream Arty.
+
 | Giai đoạn | Trạng thái đúng hiện tại |
 |---|---|
 | FIPS 202 phục vụ ML-KEM | **HOÀN THÀNH functional**, chưa phải chứng nhận CAVP |

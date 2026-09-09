@@ -1,0 +1,100 @@
+Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2020.1 (lin64) Build 2902540 Wed May 27 19:54:35 MDT 2020
+| Date         : Wed Sep  9 14:26:00 2026
+| Host         : donglong-P7xxTM-1 running 64-bit Ubuntu 22.04.5 LTS
+| Command      : report_utilization -hierarchical -hierarchical_depth 8 -file /home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/build/fpga_split/arty35t_probe_20260909/client/hierarchy.rpt
+| Design       : fpga_split_client_k2
+| Device       : 7a35ticsg324-1L
+| Design State : Synthesized
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++--------------------------+------------------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+|         Instance         |               Module               | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB36 | RAMB18 | DSP Blocks |
++--------------------------+------------------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+| fpga_split_client_k2     |                              (top) |      13687 |      13448 |       0 |  239 | 10249 |      7 |     11 |          2 |
+|   (fpga_split_client_k2) |                              (top) |          8 |          8 |       0 |    0 |     0 |      0 |      0 |          0 |
+|   u_client               |                       Kyber_Client |      13679 |      13440 |       0 |  239 | 10249 |      7 |     11 |          2 |
+|     (u_client)           |                       Kyber_Client |        272 |        140 |       0 |  132 |   920 |      0 |      0 |          0 |
+|     DFIFO                | fifo_wrapper_24_16__parameterized0 |         33 |         33 |       0 |    0 |    20 |      0 |      1 |          0 |
+|       inst               |  generic_fifo_sync__parameterized5 |         33 |         33 |       0 |    0 |    20 |      0 |      1 |          0 |
+|     IFIFO                |                 fifo_wrapper_32_16 |        120 |        120 |       0 |    0 |    16 |      0 |      1 |          0 |
+|       inst               |  generic_fifo_sync__parameterized3 |        120 |        120 |       0 |    0 |    16 |      0 |      1 |          0 |
+|     OFIFO                | fifo_wrapper_32_16__parameterized0 |         89 |         89 |       0 |    0 |    20 |      0 |      1 |          0 |
+|       inst               |  generic_fifo_sync__parameterized4 |         89 |         89 |       0 |    0 |    20 |      0 |      1 |          0 |
+|     decode               |                      decode_Client |         77 |         77 |       0 |    0 |    86 |      0 |      0 |          0 |
+|     encode               |                      encode_Client |        156 |        156 |       0 |    0 |    59 |      0 |      0 |          0 |
+|     hash                 |                   hash_core_Client |      11331 |      11331 |       0 |    0 |  8295 |      2 |      4 |          0 |
+|       (hash)             |                   hash_core_Client |         13 |         13 |       0 |    0 |    42 |      0 |      0 |          0 |
+|       decode             |                      decode_keccak |        134 |        134 |       0 |    0 |   106 |      0 |      0 |          0 |
+|       ififo_inst         |                 fifo_wrapper_36_32 |        125 |        125 |       0 |    0 |    18 |      0 |      1 |          0 |
+|         inst             |                  generic_fifo_sync |        125 |        125 |       0 |    0 |    18 |      0 |      1 |          0 |
+|       ofifo0_inst        |                 fifo_wrapper_24_16 |         25 |         25 |       0 |    0 |    35 |      1 |      1 |          0 |
+|         inst             |  generic_fifo_sync__parameterized0 |         25 |         25 |       0 |    0 |    35 |      1 |      1 |          0 |
+|       ofifo1_inst        |                 fifo_wrapper_25_16 |         89 |         89 |       0 |    0 |    18 |      0 |      1 |          0 |
+|         (ofifo1_inst)    |                 fifo_wrapper_25_16 |          0 |          0 |       0 |    0 |     0 |      0 |      0 |          0 |
+|         inst             |  generic_fifo_sync__parameterized1 |         89 |         89 |       0 |    0 |    18 |      0 |      1 |          0 |
+|       ofifo_inst         |                 fifo_wrapper_40_32 |         46 |         46 |       0 |    0 |    22 |      1 |      1 |          0 |
+|         inst             |  generic_fifo_sync__parameterized2 |         46 |         46 |       0 |    0 |    22 |      1 |      1 |          0 |
+|       sponge             |                    sha3_shake_core |      10899 |      10899 |       0 |    0 |  8054 |      0 |      0 |          0 |
+|         (sponge)         |                    sha3_shake_core |        984 |        984 |       0 |    0 |  6454 |      0 |      0 |          0 |
+|         algo_inst        |                          ALGORITHM |       9915 |       9915 |       0 |    0 |  1600 |      0 |      0 |          0 |
+|           STEP_MAPPING_1 |                             THETA1 |        320 |        320 |       0 |    0 |     0 |      0 |      0 |          0 |
+|           STEP_MAPPING_2 |                      THETA2_RHO_PI |       3203 |       3203 |       0 |    0 |     0 |      0 |      0 |          0 |
+|           STEP_MAPPING_5 |                               IOTA |       6392 |       6392 |       0 |    0 |  1600 |      0 |      0 |          0 |
+|     ntt                  |                    NTT_core_Client |       1601 |       1494 |       0 |  107 |   833 |      5 |      4 |          2 |
+|       (ntt)              |                    NTT_core_Client |        517 |        517 |       0 |    0 |   385 |      0 |      3 |          0 |
+|       BU                 |                      butterfly_Cli |        664 |        610 |       0 |   54 |   395 |      0 |      0 |          2 |
+|         (BU)             |                      butterfly_Cli |        325 |        325 |       0 |    0 |   173 |      0 |      0 |          0 |
+|         M0               |                     ntt_mult_12x12 |         47 |         47 |       0 |    0 |     0 |      0 |      0 |          1 |
+|           u_mult         |                    generic_mult_12 |         47 |         47 |       0 |    0 |     0 |      0 |      0 |          1 |
+|         M1               |                   ntt_mult_12x12_6 |         49 |         49 |       0 |    0 |     0 |      0 |      0 |          1 |
+|           u_mult         |                       generic_mult |         49 |         49 |       0 |    0 |     0 |      0 |      0 |          1 |
+|         R0               |                              reduc |        102 |         91 |       0 |   11 |    96 |      0 |      0 |          0 |
+|         R1               |                            reduc_7 |        102 |         91 |       0 |   11 |    96 |      0 |      0 |          0 |
+|         S0               |                      c_shift_ram_0 |         14 |          2 |       0 |   12 |    12 |      0 |      0 |          0 |
+|           inst           |                     generic_srl_11 |         14 |          2 |       0 |   12 |    12 |      0 |      0 |          0 |
+|         S1               |                    c_shift_ram_0_8 |         13 |          1 |       0 |   12 |    12 |      0 |      0 |          0 |
+|           inst           |                        generic_srl |         13 |          1 |       0 |   12 |    12 |      0 |      0 |          0 |
+|         S2               |                      c_shift_ram_1 |         10 |          6 |       0 |    4 |     2 |      0 |      0 |          0 |
+|           inst           |     generic_srl__parameterized0_10 |         10 |          6 |       0 |    4 |     2 |      0 |      0 |          0 |
+|         S3               |                    c_shift_ram_1_9 |          4 |          0 |       0 |    4 |     4 |      0 |      0 |          0 |
+|           inst           |        generic_srl__parameterized0 |          4 |          0 |       0 |    4 |     4 |      0 |      0 |          0 |
+|       RAM0               |                      blk_mem_gen_0 |          0 |          0 |       0 |    0 |     0 |      1 |      0 |          0 |
+|         inst             |                     generic_bram_5 |          0 |          0 |       0 |    0 |     0 |      1 |      0 |          0 |
+|       RAM1               |                    blk_mem_gen_0_0 |         32 |         32 |       0 |    0 |     0 |      1 |      0 |          0 |
+|         inst             |                       generic_bram |         32 |         32 |       0 |    0 |     0 |      1 |      0 |          0 |
+|       RAM2               |                      blk_mem_gen_2 |         12 |         12 |       0 |    0 |     0 |      1 |      0 |          0 |
+|         inst             |     generic_bram__parameterized0_4 |         12 |         12 |       0 |    0 |     0 |      1 |      0 |          0 |
+|       RAM3               |                    blk_mem_gen_2_1 |         79 |         79 |       0 |    0 |     0 |      1 |      0 |          0 |
+|         inst             |       generic_bram__parameterized0 |         79 |         79 |       0 |    0 |     0 |      1 |      0 |          0 |
+|       RAM4               |                      blk_mem_gen_1 |         31 |         31 |       0 |    0 |     0 |      1 |      1 |          0 |
+|         inst             |       generic_bram__parameterized1 |         31 |         31 |       0 |    0 |     0 |      1 |      1 |          0 |
+|       S10                |                      c_shift_ram_8 |          4 |          3 |       0 |    1 |     1 |      0 |      0 |          0 |
+|         inst             |      generic_srl__parameterized6_3 |          4 |          3 |       0 |    1 |     1 |      0 |      0 |          0 |
+|       S10N               |                    c_shift_ram_8_2 |          3 |          2 |       0 |    1 |     1 |      0 |      0 |          0 |
+|         inst             |        generic_srl__parameterized6 |          3 |          2 |       0 |    1 |     1 |      0 |      0 |          0 |
+|       S11                |                     c_shift_ram_11 |          1 |          0 |       0 |    1 |     1 |      0 |      0 |          0 |
+|         inst             |        generic_srl__parameterized7 |          1 |          0 |       0 |    1 |     1 |      0 |      0 |          0 |
+|       S4                 |                    c_shift_ram_3_5 |        189 |        184 |       0 |    5 |     5 |      0 |      0 |          0 |
+|         inst             |        generic_srl__parameterized1 |        189 |        184 |       0 |    5 |     5 |      0 |      0 |          0 |
+|       S5                 |                      c_shift_ram_4 |         16 |          8 |       0 |    8 |     8 |      0 |      0 |          0 |
+|         inst             |        generic_srl__parameterized2 |         16 |          8 |       0 |    8 |     8 |      0 |      0 |          0 |
+|       S6                 |                    c_shift_ram_4_6 |         12 |          6 |       0 |    6 |     6 |      0 |      0 |          0 |
+|         inst             |        generic_srl__parameterized3 |         12 |          6 |       0 |    6 |     6 |      0 |      0 |          0 |
+|       S7                 |                      c_shift_ram_5 |         14 |          7 |       0 |    7 |     7 |      0 |      0 |          0 |
+|         inst             |        generic_srl__parameterized4 |         14 |          7 |       0 |    7 |     7 |      0 |      0 |          0 |
+|       S9                 |                      c_shift_ram_6 |         27 |          3 |       0 |   24 |    24 |      0 |      0 |          0 |
+|         inst             |        generic_srl__parameterized5 |         27 |          3 |       0 |   24 |    24 |      0 |      0 |          0 |
++--------------------------+------------------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+
+

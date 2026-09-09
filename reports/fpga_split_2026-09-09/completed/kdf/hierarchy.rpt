@@ -1,0 +1,34 @@
+Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2020.1 (lin64) Build 2902540 Wed May 27 19:54:35 MDT 2020
+| Date         : Wed Sep  9 14:18:46 2026
+| Host         : donglong-P7xxTM-1 running 64-bit Ubuntu 22.04.5 LTS
+| Command      : report_utilization -hierarchical -hierarchical_depth 8 -file /home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/build/fpga_split/arty35t_probe_20260909/kdf/hierarchy.rpt
+| Design       : kdf_keccak
+| Device       : 7a35ticsg324-1L
+| Design State : Synthesized
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++----------------------+---------------------+------------+------------+---------+------+------+--------+--------+------------+
+|       Instance       |        Module       | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs | RAMB36 | RAMB18 | DSP Blocks |
++----------------------+---------------------+------------+------------+---------+------+------+--------+--------+------------+
+| kdf_keccak           |               (top) |       9129 |       9129 |       0 |    0 | 3999 |      0 |      0 |          0 |
+|   (kdf_keccak)       |               (top) |        440 |        440 |       0 |    0 |  719 |      0 |      0 |          0 |
+|   keccak_inst        | keccak_f1600_server |       8689 |       8689 |       0 |    0 | 3280 |      0 |      0 |          0 |
+|     (keccak_inst)    | keccak_f1600_server |        171 |        171 |       0 |    0 | 1680 |      0 |      0 |          0 |
+|     algo_inst        |           ALGORITHM |       8518 |       8518 |       0 |    0 | 1600 |      0 |      0 |          0 |
+|       STEP_MAPPING_1 |              THETA1 |        320 |        320 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       STEP_MAPPING_3 |                CHI1 |       1730 |       1730 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       STEP_MAPPING_5 |                IOTA |       6468 |       6468 |       0 |    0 | 1600 |      0 |      0 |          0 |
++----------------------+---------------------+------------+------------+---------+------+------+--------+--------+------------+
+
+

@@ -1,0 +1,249 @@
+Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2020.1 (lin64) Build 2902540 Wed May 27 19:54:35 MDT 2020
+| Date         : Wed Sep  9 14:21:06 2026
+| Host         : donglong-P7xxTM-1 running 64-bit Ubuntu 22.04.5 LTS
+| Command      : report_utilization -hierarchical -hierarchical_depth 8 -file /home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/build/fpga_split/arty35t_probe_20260909/fe/hierarchy.rpt
+| Design       : fuzzy_extractor
+| Device       : 7a35ticsg324-1L
+| Design State : Synthesized
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++--------------------------------------------+------------------------------------------------------+------------+------------+---------+------+------+--------+--------+------------+
+|                  Instance                  |                        Module                        | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs | RAMB36 | RAMB18 | DSP Blocks |
++--------------------------------------------+------------------------------------------------------+------------+------------+---------+------+------+--------+--------+------------+
+| fuzzy_extractor                            |                                                (top) |       4090 |       4090 |       0 |    0 | 3568 |      0 |      0 |          0 |
+|   (fuzzy_extractor)                        |                                                (top) |       1424 |       1424 |       0 |    0 | 1989 |      0 |      0 |          0 |
+|   u_decode                                 |                                       xilinx_decoder |       2453 |       2453 |       0 |    0 | 1455 |      0 |      0 |          0 |
+|     (u_decode)                             |                                       xilinx_decoder |          9 |          9 |       0 |    0 |    0 |      0 |      0 |          0 |
+|     u_bch_syndrome                         |                                         bch_syndrome |        491 |        491 |       0 |    0 |  371 |      0 |      0 |          0 |
+|       (u_bch_syndrome)                     |                                         bch_syndrome |          8 |          8 |       0 |    0 |    2 |      0 |      0 |          0 |
+|       COUNTER.u_counter                    |                                      lfsr_counter_74 |          4 |          4 |       0 |    0 |    9 |      0 |      0 |          0 |
+|       SYNDROMES[0].METHOD2.u_syn2a         |                                        dsynN_method2 |         43 |         43 |       0 |    0 |    9 |      0 |      0 |          0 |
+|       SYNDROMES[1].METHOD2.u_syn2a         |                        dsynN_method2__parameterized0 |         37 |         37 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         (SYNDROMES[1].METHOD2.u_syn2a)     |                        dsynN_method2__parameterized0 |         35 |         35 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         u_lfsr_term                        |                            lfsr_term__parameterized1 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|           (u_lfsr_term)                    |                            lfsr_term__parameterized1 |          1 |          1 |       0 |    0 |    0 |      0 |      0 |          0 |
+|           u_adder                          |                finite_parallel_adder__parameterized0 |          1 |          1 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       SYNDROMES[2].METHOD2.u_syn2a         |                        dsynN_method2__parameterized1 |         29 |         29 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         (SYNDROMES[2].METHOD2.u_syn2a)     |                        dsynN_method2__parameterized1 |         27 |         27 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         u_lfsr_term                        |                            lfsr_term__parameterized2 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       SYNDROMES[3].METHOD2.u_syn2a         |                        dsynN_method2__parameterized2 |         29 |         29 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         (SYNDROMES[3].METHOD2.u_syn2a)     |                        dsynN_method2__parameterized2 |         28 |         28 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         u_lfsr_term                        |                            lfsr_term__parameterized3 |          1 |          1 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       SYNDROMES[4].METHOD1.u_syn1a         |                                        dsynN_method1 |         86 |         86 |       0 |    0 |   81 |      0 |      0 |          0 |
+|         (SYNDROMES[4].METHOD1.u_syn1a)     |                                        dsynN_method1 |         77 |         77 |       0 |    0 |   81 |      0 |      0 |          0 |
+|         u_adder                            |             finite_parallel_adder__parameterized1_77 |          9 |          9 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       SYNDROMES[5].METHOD1.u_syn1a         |                        dsynN_method1__parameterized0 |         66 |         66 |       0 |    0 |   81 |      0 |      0 |          0 |
+|         (SYNDROMES[5].METHOD1.u_syn1a)     |                        dsynN_method1__parameterized0 |         57 |         57 |       0 |    0 |   81 |      0 |      0 |          0 |
+|         u_adder                            |             finite_parallel_adder__parameterized1_76 |          9 |          9 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       SYNDROMES[6].METHOD1.u_syn1a         |                        dsynN_method1__parameterized1 |         94 |         94 |       0 |    0 |   81 |      0 |      0 |          0 |
+|         (SYNDROMES[6].METHOD1.u_syn1a)     |                        dsynN_method1__parameterized1 |         85 |         85 |       0 |    0 |   81 |      0 |      0 |          0 |
+|         u_adder                            |             finite_parallel_adder__parameterized1_75 |          9 |          9 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       SYNDROMES[7].METHOD1.u_syn1a         |                        dsynN_method1__parameterized2 |         95 |         95 |       0 |    0 |   81 |      0 |      0 |          0 |
+|         (SYNDROMES[7].METHOD1.u_syn1a)     |                        dsynN_method1__parameterized2 |         86 |         86 |       0 |    0 |   81 |      0 |      0 |          0 |
+|         u_adder                            |                finite_parallel_adder__parameterized1 |          9 |          9 |       0 |    0 |    0 |      0 |      0 |          0 |
+|     u_bma                                  |                                 bch_sigma_bma_serial |        374 |        374 |       0 |    0 |  410 |      0 |      0 |          0 |
+|       (u_bma)                              |                                 bch_sigma_bma_serial |        148 |        148 |       0 |    0 |  133 |      0 |      0 |          0 |
+|       msm_serial_standard_multiplier       |                           serial_standard_multiplier |         17 |         17 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         (msm_serial_standard_multiplier)   |                           serial_standard_multiplier |          8 |          8 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         u_adder                            |                finite_parallel_adder__parameterized3 |          9 |          9 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       u_bch_n_counter                      |                                              counter |         13 |         13 |       0 |    0 |    4 |      0 |      0 |          0 |
+|       u_bch_syndrome_shuffle               |                                 bch_syndrome_shuffle |          0 |          0 |       0 |    0 |  135 |      0 |      0 |          0 |
+|       u_cN[0]                              |                                  finite_serial_adder |          9 |          9 |       0 |    0 |    9 |      0 |      0 |          0 |
+|       u_cN[1]                              |                               finite_serial_adder_66 |          6 |          6 |       0 |    0 |    9 |      0 |      0 |          0 |
+|       u_cN[2]                              |                               finite_serial_adder_67 |         13 |         13 |       0 |    0 |    9 |      0 |      0 |          0 |
+|       u_cN[3]                              |                               finite_serial_adder_68 |          9 |          9 |       0 |    0 |    9 |      0 |      0 |          0 |
+|       u_cN[4]                              |                               finite_serial_adder_69 |          9 |          9 |       0 |    0 |    9 |      0 |      0 |          0 |
+|       u_cN[5]                              |                               finite_serial_adder_70 |          9 |          9 |       0 |    0 |    9 |      0 |      0 |          0 |
+|       u_cN[6]                              |                               finite_serial_adder_71 |          9 |          9 |       0 |    0 |    9 |      0 |      0 |          0 |
+|       u_cN[7]                              |                               finite_serial_adder_72 |          9 |          9 |       0 |    0 |    9 |      0 |      0 |          0 |
+|       u_cN[8]                              |                               finite_serial_adder_73 |         10 |         10 |       0 |    0 |    9 |      0 |      0 |          0 |
+|       u_counter                            |                              counter__parameterized0 |          3 |          3 |       0 |    0 |    3 |      0 |      0 |          0 |
+|       u_dinv                               |                                       finite_divider |         68 |         68 |       0 |    0 |   23 |      0 |      0 |          0 |
+|         (u_dinv)                           |                                       finite_divider |         65 |         65 |       0 |    0 |   19 |      0 |      0 |          0 |
+|         u_counter                          |                         lfsr_counter__parameterized0 |          3 |          3 |       0 |    0 |    4 |      0 |      0 |          0 |
+|       u_serial_mixed_multiplier            |                          serial_mixed_multiplier_dss |         42 |         42 |       0 |    0 |   22 |      0 |      0 |          0 |
+|         (u_serial_mixed_multiplier)        |                          serial_mixed_multiplier_dss |         40 |         40 |       0 |    0 |   19 |      0 |      0 |          0 |
+|         u_counter                          |                         lfsr_counter__parameterized1 |          2 |          2 |       0 |    0 |    3 |      0 |      0 |          0 |
+|     u_error_tmec                           |                                       bch_error_tmec |       1297 |       1297 |       0 |    0 |  650 |      0 |      0 |          0 |
+|       u_chien                              |                                            bch_chien |       1281 |       1281 |       0 |    0 |  650 |      0 |      0 |          0 |
+|         BIT[0].REG[0].ORIG.u_chien_reg     |                                        bch_chien_reg |         10 |         10 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[0].REG[1].ORIG.u_chien_reg     |                        bch_chien_reg__parameterized0 |         16 |         16 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[0].REG[2].ORIG.u_chien_reg     |                        bch_chien_reg__parameterized1 |         20 |         20 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[0].REG[3].ORIG.u_chien_reg     |                        bch_chien_reg__parameterized2 |         16 |         16 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[0].REG[4].ORIG.u_chien_reg     |                        bch_chien_reg__parameterized3 |         19 |         19 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[0].REG[5].ORIG.u_chien_reg     |                        bch_chien_reg__parameterized4 |         10 |         10 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[0].REG[6].ORIG.u_chien_reg     |                        bch_chien_reg__parameterized5 |         14 |         14 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[0].REG[7].ORIG.u_chien_reg     |                        bch_chien_reg__parameterized6 |         22 |         22 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           (BIT[0].REG[7].ORIG.u_chien_reg) |                        bch_chien_reg__parameterized6 |         13 |         13 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           u_mult_start                     |  parallel_standard_multiplier_const2__parameterized6 |          9 |          9 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         BIT[0].REG[8].ORIG.u_chien_reg     |                        bch_chien_reg__parameterized7 |         26 |         26 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[1].REG[0].ORIG.u_chien_reg     |                        bch_chien_reg__parameterized8 |         13 |         13 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[1].REG[1].ORIG.u_chien_reg     |                        bch_chien_reg__parameterized9 |         13 |         13 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[1].REG[2].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized10 |         21 |         21 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[1].REG[3].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized11 |         17 |         17 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           (BIT[1].REG[3].ORIG.u_chien_reg) |                       bch_chien_reg__parameterized11 |         10 |         10 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           u_mult_start                     | parallel_standard_multiplier_const2__parameterized11 |          7 |          7 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         BIT[1].REG[4].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized12 |         17 |         17 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[1].REG[5].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized13 |         14 |         14 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[1].REG[6].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized14 |         16 |         16 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[1].REG[7].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized15 |         16 |         16 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[1].REG[8].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized16 |         26 |         26 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[2].REG[0].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized17 |         10 |         10 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[2].REG[1].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized18 |         17 |         17 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[2].REG[2].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized19 |         18 |         18 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[2].REG[3].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized20 |         12 |         12 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           (BIT[2].REG[3].ORIG.u_chien_reg) |                       bch_chien_reg__parameterized20 |          9 |          9 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           u_mult_start                     | parallel_standard_multiplier_const2__parameterized20 |          3 |          3 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         BIT[2].REG[4].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized21 |         20 |         20 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[2].REG[5].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized22 |         18 |         18 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[2].REG[6].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized23 |         21 |         21 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[2].REG[7].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized24 |         18 |         18 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[2].REG[8].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized25 |         24 |         24 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[3].REG[0].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized26 |         14 |         14 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[3].REG[1].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized27 |         16 |         16 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           (BIT[3].REG[1].ORIG.u_chien_reg) |                       bch_chien_reg__parameterized27 |          9 |          9 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           u_mult_start                     | parallel_standard_multiplier_const2__parameterized27 |          7 |          7 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         BIT[3].REG[2].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized28 |         27 |         27 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[3].REG[3].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized29 |         16 |         16 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[3].REG[4].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized30 |         19 |         19 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[3].REG[5].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized31 |         14 |         14 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[3].REG[6].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized32 |         17 |         17 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[3].REG[7].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized33 |         15 |         15 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[3].REG[8].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized34 |         20 |         20 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[4].REG[0].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized35 |         12 |         12 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           (BIT[4].REG[0].ORIG.u_chien_reg) |                       bch_chien_reg__parameterized35 |          8 |          8 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           u_mult_start                     | parallel_standard_multiplier_const2__parameterized35 |          4 |          4 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         BIT[4].REG[1].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized36 |         16 |         16 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[4].REG[2].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized37 |         26 |         26 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[4].REG[3].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized38 |         13 |         13 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[4].REG[4].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized39 |         18 |         18 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[4].REG[5].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized40 |         16 |         16 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[4].REG[6].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized41 |         17 |         17 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[4].REG[7].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized42 |         10 |         10 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[4].REG[8].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized43 |         25 |         25 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[5].REG[0].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized44 |         13 |         13 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           (BIT[5].REG[0].ORIG.u_chien_reg) |                       bch_chien_reg__parameterized44 |          9 |          9 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           u_mult_start                     | parallel_standard_multiplier_const2__parameterized44 |          4 |          4 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         BIT[5].REG[1].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized45 |         17 |         17 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           (BIT[5].REG[1].ORIG.u_chien_reg) |                       bch_chien_reg__parameterized45 |         10 |         10 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           u_mult_start                     | parallel_standard_multiplier_const2__parameterized45 |          7 |          7 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         BIT[5].REG[2].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized46 |         28 |         28 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[5].REG[3].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized47 |         12 |         12 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[5].REG[4].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized48 |         20 |         20 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[5].REG[5].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized49 |         15 |         15 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[5].REG[6].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized50 |         17 |         17 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[5].REG[7].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized51 |         12 |         12 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[5].REG[8].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized52 |         30 |         30 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[6].REG[0].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized53 |         18 |         18 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           (BIT[6].REG[0].ORIG.u_chien_reg) |                       bch_chien_reg__parameterized53 |         11 |         11 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           u_mult_start                     | parallel_standard_multiplier_const2__parameterized52 |          7 |          7 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         BIT[6].REG[1].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized54 |         15 |         15 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[6].REG[2].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized55 |         29 |         29 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[6].REG[3].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized56 |         12 |         12 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[6].REG[4].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized57 |         21 |         21 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[6].REG[5].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized58 |         20 |         20 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[6].REG[6].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized59 |         20 |         20 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[6].REG[7].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized60 |         16 |         16 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[6].REG[8].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized61 |         24 |         24 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[7].REG[0].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized62 |         19 |         19 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           (BIT[7].REG[0].ORIG.u_chien_reg) |                       bch_chien_reg__parameterized62 |         11 |         11 |       0 |    0 |    9 |      0 |      0 |          0 |
+|           u_mult_start                     | parallel_standard_multiplier_const2__parameterized61 |          8 |          8 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         BIT[7].REG[1].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized63 |         14 |         14 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[7].REG[2].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized64 |         29 |         29 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[7].REG[3].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized65 |         16 |         16 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[7].REG[4].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized66 |         13 |         13 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[7].REG[5].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized67 |         17 |         17 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[7].REG[6].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized68 |         19 |         19 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[7].REG[7].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized69 |         13 |         13 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         BIT[7].REG[8].ORIG.u_chien_reg     |                       bch_chien_reg__parameterized70 |         27 |         27 |       0 |    0 |    9 |      0 |      0 |          0 |
+|         u_first_pipeline                   |                                 pipeline_ce_reset_65 |          0 |          0 |       0 |    0 |    2 |      0 |      0 |          0 |
+|       u_zero[0]                            |                                             zero_cla |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         u_cla                              |                                            eq_cla_62 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|           u_cla                            |                                       compare_cla_63 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|             u_xilinx                       |                                compare_cla_xilinx_64 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       u_zero[1]                            |                                          zero_cla_37 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         u_cla                              |                                            eq_cla_59 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|           u_cla                            |                                       compare_cla_60 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|             u_xilinx                       |                                compare_cla_xilinx_61 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       u_zero[2]                            |                                          zero_cla_38 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         u_cla                              |                                            eq_cla_56 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|           u_cla                            |                                       compare_cla_57 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|             u_xilinx                       |                                compare_cla_xilinx_58 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       u_zero[3]                            |                                          zero_cla_39 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         u_cla                              |                                            eq_cla_53 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|           u_cla                            |                                       compare_cla_54 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|             u_xilinx                       |                                compare_cla_xilinx_55 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       u_zero[4]                            |                                          zero_cla_40 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         u_cla                              |                                            eq_cla_50 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|           u_cla                            |                                       compare_cla_51 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|             u_xilinx                       |                                compare_cla_xilinx_52 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       u_zero[5]                            |                                          zero_cla_41 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         u_cla                              |                                            eq_cla_47 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|           u_cla                            |                                       compare_cla_48 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|             u_xilinx                       |                                compare_cla_xilinx_49 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       u_zero[6]                            |                                          zero_cla_42 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         u_cla                              |                                            eq_cla_44 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|           u_cla                            |                                       compare_cla_45 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|             u_xilinx                       |                                compare_cla_xilinx_46 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       u_zero[7]                            |                                          zero_cla_43 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         u_cla                              |                                               eq_cla |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|           u_cla                            |                                          compare_cla |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|             u_xilinx                       |                                   compare_cla_xilinx |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|     u_pipeline[0]                          |                    pipeline_ce_reset__parameterized2 |          1 |          1 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[10]                         |                 pipeline_ce_reset__parameterized2_20 |         46 |         46 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[11]                         |                 pipeline_ce_reset__parameterized2_21 |         28 |         28 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[12]                         |                 pipeline_ce_reset__parameterized2_22 |         28 |         28 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[13]                         |                 pipeline_ce_reset__parameterized2_23 |         28 |         28 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[14]                         |                 pipeline_ce_reset__parameterized2_24 |         28 |         28 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[15]                         |                 pipeline_ce_reset__parameterized2_25 |         46 |         46 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[16]                         |                 pipeline_ce_reset__parameterized2_26 |         28 |         28 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[17]                         |                 pipeline_ce_reset__parameterized2_27 |         29 |         29 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[1]                          |                 pipeline_ce_reset__parameterized2_28 |          1 |          1 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[2]                          |                 pipeline_ce_reset__parameterized2_29 |          1 |          1 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[3]                          |                 pipeline_ce_reset__parameterized2_30 |          1 |          1 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[4]                          |                 pipeline_ce_reset__parameterized2_31 |          1 |          1 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[5]                          |                 pipeline_ce_reset__parameterized2_32 |          1 |          1 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[6]                          |                 pipeline_ce_reset__parameterized2_33 |          1 |          1 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[7]                          |                 pipeline_ce_reset__parameterized2_34 |          1 |          1 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[8]                          |                 pipeline_ce_reset__parameterized2_35 |          3 |          3 |       0 |    0 |    1 |      0 |      0 |          0 |
+|     u_pipeline[9]                          |                 pipeline_ce_reset__parameterized2_36 |         10 |         10 |       0 |    0 |    7 |      0 |      0 |          0 |
+|   u_encode                                 |                                        xilinx_encode |        213 |        213 |       0 |    0 |  124 |      0 |      0 |          0 |
+|     u_encode                               |                                           bch_encode |        140 |        140 |       0 |    0 |   84 |      0 |      0 |          0 |
+|       (u_encode)                           |                                           bch_encode |         73 |         73 |       0 |    0 |   75 |      0 |      0 |          0 |
+|       u_counter                            |                                         lfsr_counter |          8 |          8 |       0 |    0 |    9 |      0 |      0 |          0 |
+|       u_in_terms                           |                                            lfsr_term |         28 |         28 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       u_lfsr_terms                         |                                         lfsr_term_19 |         31 |         31 |       0 |    0 |    0 |      0 |      0 |          0 |
+|     u_input[0]                             |                                    pipeline_ce_reset |          2 |          2 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_input[1]                             |                                  pipeline_ce_reset_0 |          2 |          2 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_input[2]                             |                                  pipeline_ce_reset_1 |          7 |          7 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_input[3]                             |                                  pipeline_ce_reset_2 |          7 |          7 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_input[4]                             |                                  pipeline_ce_reset_3 |          7 |          7 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_input[5]                             |                                  pipeline_ce_reset_4 |          7 |          7 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_input[6]                             |                                  pipeline_ce_reset_5 |          7 |          7 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_input[7]                             |                                  pipeline_ce_reset_6 |          7 |          7 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_input[8]                             |                                  pipeline_ce_reset_7 |          7 |          7 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_input[9]                             |                                  pipeline_ce_reset_8 |          9 |          9 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_output[10]                           |                                  pipeline_ce_reset_9 |          1 |          1 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_output[11]                           |                                 pipeline_ce_reset_10 |          1 |          1 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_output[2]                            |                                 pipeline_ce_reset_11 |          0 |          0 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_output[3]                            |                                 pipeline_ce_reset_12 |          3 |          3 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_output[4]                            |                                 pipeline_ce_reset_13 |          1 |          1 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_output[5]                            |                                 pipeline_ce_reset_14 |          1 |          1 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_output[6]                            |                                 pipeline_ce_reset_15 |          1 |          1 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_output[7]                            |                                 pipeline_ce_reset_16 |          1 |          1 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_output[8]                            |                                 pipeline_ce_reset_17 |          1 |          1 |       0 |    0 |    2 |      0 |      0 |          0 |
+|     u_output[9]                            |                                 pipeline_ce_reset_18 |          1 |          1 |       0 |    0 |    2 |      0 |      0 |          0 |
++--------------------------------------------+------------------------------------------------------+------------+------------+---------+------+------+--------+--------+------------+
+
+

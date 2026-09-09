@@ -1,0 +1,250 @@
+{
+  "scope": "OOC synthesis only; not routed, board tested or full Edge fit",
+  "run": "arty35t_probe_20260909",
+  "blocks": [
+    {
+      "block": "server",
+      "metadata": {
+        "block": "server",
+        "top": "fpga_split_server_k2",
+        "part": "xc7a35ticsg324-1L",
+        "clock_period_ns": "20.000",
+        "flow": "synthesis_out_of_context_only",
+        "vivado": "2020.1",
+        "k": "2",
+        "puf_backend": "not_applicable"
+      },
+      "resources": {
+        "lut": {
+          "used": 11100.0,
+          "available": 20800.0
+        },
+        "registers": {
+          "used": 10841.0,
+          "available": 41600.0
+        },
+        "bram36_tiles": {
+          "used": 14.0,
+          "available": 50.0
+        },
+        "dsp": {
+          "used": 2.0,
+          "available": 90.0
+        }
+      },
+      "report_sha256": {
+        "COMPLETE": "20948125ed55787624a9358221b0e6738f9d532860daddc50f6cd8537e72386e",
+        "metadata.tsv": "2585d0f241458367db43c15eea9abff874468c4edc4d8c4f0cdad2c047f21bee",
+        "source_manifest.sha256": "cf75e90959cdac0c69244e5c530cba95e5f5f8d4557f70ccc480c031b0977439",
+        "source_commit.txt": "ae388f987efd17bd93dad49b08b3e1162182574fe247c1667c5f7ad3bd210083",
+        "source_worktree_status.txt": "abd611d5f89dfd2882bde83bd900354e66af334fa9c1ed6e6fc8c3547be487cd",
+        "inputs.txt": "1d63c047a5593eaa6b6fb7a43294b691085061b5b3f496c120db9604386ac8f2",
+        "utilization.rpt": "edc515f18049d9dcde5afe9cdae67ec6200f10339653b58f26529dddf3da575e",
+        "hierarchy.rpt": "37a6015acfabfb0f7aa1279de0a6a19e90e17325680a910f7a695cd2abf143e9",
+        "timing_preliminary.rpt": "8730bc4f95fdfcadc919f568df44eac5aba535cb2497f9057fd1048e887d0aa4",
+        "check_timing.rpt": "a3a408244789a402a63cda74f15e492d67103fdd35cf3b0fa682814b252cfe07"
+      },
+      "diagnostics": {
+        "warning_lines": 114,
+        "critical_warnings": [
+          "CRITICAL WARNING: [Synth 8-2490] overwriting previous definition of module LUT1 [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/kyber/ref/LUT.v:26]"
+        ],
+        "errors": []
+      }
+    },
+    {
+      "block": "client",
+      "metadata": {
+        "block": "client",
+        "top": "fpga_split_client_k2",
+        "part": "xc7a35ticsg324-1L",
+        "clock_period_ns": "20.000",
+        "flow": "synthesis_out_of_context_only",
+        "vivado": "2020.1",
+        "k": "2",
+        "puf_backend": "not_applicable"
+      },
+      "resources": {
+        "lut": {
+          "used": 13687.0,
+          "available": 20800.0
+        },
+        "registers": {
+          "used": 10249.0,
+          "available": 41600.0
+        },
+        "bram36_tiles": {
+          "used": 12.5,
+          "available": 50.0
+        },
+        "dsp": {
+          "used": 2.0,
+          "available": 90.0
+        }
+      },
+      "report_sha256": {
+        "COMPLETE": "4baf5f19b468ef6cfb36f68987c4b03df22b2706d4daf701af7b1f6b29a67d92",
+        "metadata.tsv": "0f29c050d0270f0f681ec06fb8edc039367c10af3beb8a2d8733831e8f2c0162",
+        "source_manifest.sha256": "cf75e90959cdac0c69244e5c530cba95e5f5f8d4557f70ccc480c031b0977439",
+        "source_commit.txt": "ae388f987efd17bd93dad49b08b3e1162182574fe247c1667c5f7ad3bd210083",
+        "source_worktree_status.txt": "49704c47e2327cdfa7ad08ddaf61d508c3fd2e64aff928bbc7af21c1b64ead55",
+        "inputs.txt": "1d63c047a5593eaa6b6fb7a43294b691085061b5b3f496c120db9604386ac8f2",
+        "utilization.rpt": "d1da628a0a393c1037dfa478e3971fdd43a5a2b4f0dbb951c31482eaf87fd96a",
+        "hierarchy.rpt": "e862cb0d88d7c0a256fd6dc590cf99cd25f0277b9167a7c5f5f966dc69400aca",
+        "timing_preliminary.rpt": "272fe9e3a8982a03b80fd1ff6e6b888422caee8fad82442f89f20b4d1ce06d99",
+        "check_timing.rpt": "f3acfcedc1b45671901c05da09d08527f5b126c24c9108d266c22d486d10db3d"
+      },
+      "diagnostics": {
+        "warning_lines": 114,
+        "critical_warnings": [
+          "CRITICAL WARNING: [Synth 8-2490] overwriting previous definition of module LUT1 [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/kyber/ref/LUT.v:26]"
+        ],
+        "errors": []
+      }
+    },
+    {
+      "block": "kdf",
+      "metadata": {
+        "block": "kdf",
+        "top": "kdf_keccak",
+        "part": "xc7a35ticsg324-1L",
+        "clock_period_ns": "20.000",
+        "flow": "synthesis_out_of_context_only",
+        "vivado": "2020.1",
+        "k": "not_applicable",
+        "puf_backend": "not_applicable"
+      },
+      "resources": {
+        "lut": {
+          "used": 9129.0,
+          "available": 20800.0
+        },
+        "registers": {
+          "used": 3999.0,
+          "available": 41600.0
+        },
+        "bram36_tiles": {
+          "used": 0.0,
+          "available": 50.0
+        },
+        "dsp": {
+          "used": 0.0,
+          "available": 90.0
+        }
+      },
+      "report_sha256": {
+        "COMPLETE": "b940e201bb2851bab6c8562574fc1fecbf18115e460790c39953bdef8a7239ff",
+        "metadata.tsv": "a17bfc5f9f5296fb3e4b0a3de75a00b73937d714fd583bbed33e7212d934d277",
+        "source_manifest.sha256": "dd4a2f5ab9ff6c1cf8bbfd09a24b1a60ed9be2de6118d636879a83773d2d3d43",
+        "source_commit.txt": "ae388f987efd17bd93dad49b08b3e1162182574fe247c1667c5f7ad3bd210083",
+        "source_worktree_status.txt": "9b2fee1f96999254a9e0dd8a6676c0645297bf1c53134635b58cfc882eff6f8a",
+        "inputs.txt": "cc7de4d3cfaca9a38a4f52c41b9e8c5d74c33b7a301b42158fd569269d53f092",
+        "utilization.rpt": "cb6c7b26da88d52ccecf337d6b1507d0b5865acb631de8ae40ea73268dce7589",
+        "hierarchy.rpt": "88210e1532ffc676726813595b2330cbba81bf91bbaff732df4b65d158501469",
+        "timing_preliminary.rpt": "09cb60c410e49230691249ad6ac31f6ff6ef2f9dcf9f04a4b1b52caa1b4b53e8",
+        "check_timing.rpt": "1e29a166a034effd5d74191243b850d421f68691346b798c6a8efb979c74df80"
+      },
+      "diagnostics": {
+        "warning_lines": 1,
+        "critical_warnings": [],
+        "errors": []
+      }
+    },
+    {
+      "block": "fe",
+      "metadata": {
+        "block": "fe",
+        "top": "fuzzy_extractor",
+        "part": "xc7a35ticsg324-1L",
+        "clock_period_ns": "20.000",
+        "flow": "synthesis_out_of_context_only",
+        "vivado": "2020.1",
+        "k": "not_applicable",
+        "puf_backend": "not_applicable"
+      },
+      "resources": {
+        "lut": {
+          "used": 4090.0,
+          "available": 20800.0
+        },
+        "registers": {
+          "used": 3568.0,
+          "available": 41600.0
+        },
+        "bram36_tiles": {
+          "used": 0.0,
+          "available": 50.0
+        },
+        "dsp": {
+          "used": 0.0,
+          "available": 90.0
+        }
+      },
+      "report_sha256": {
+        "COMPLETE": "985df1b772d2a519bc0d0631d701a9780474fc7e1d3c7401c1cc65adf07942c8",
+        "metadata.tsv": "7d7023ffc25c7474ab8cd89184d8175765fe2db6050d9fa3e1af4b936c433740",
+        "source_manifest.sha256": "612c5e0e5c39d5ff142ea5ce2c5aba32f4ae3b44f3594b65db3b7501b8b67079",
+        "source_commit.txt": "ae388f987efd17bd93dad49b08b3e1162182574fe247c1667c5f7ad3bd210083",
+        "source_worktree_status.txt": "9b2fee1f96999254a9e0dd8a6676c0645297bf1c53134635b58cfc882eff6f8a",
+        "inputs.txt": "447e7fe46007d231a7e2d05d838a34fdc2874e965e432ba42027553abb75d1b1",
+        "utilization.rpt": "138e9de0760c99aa2042ce172ca8a6021d04c1d72f3ef36d3441079b1d911f46",
+        "hierarchy.rpt": "66fa22f519230de552e5630948c0cd8c5965ba4f24cd3c1019fd47b25984a38d",
+        "timing_preliminary.rpt": "463839637b8ca60b40653871f675e2cac6a8faa2c7dc63252ec5d87bab808db2",
+        "check_timing.rpt": "7790ebfad2d986f18c33dfdb06f179f6452dd31c386e448e91cc9d33437dc423"
+      },
+      "diagnostics": {
+        "warning_lines": 103,
+        "critical_warnings": [],
+        "errors": []
+      }
+    },
+    {
+      "block": "puf",
+      "metadata": {
+        "block": "puf",
+        "top": "kp_puf_top",
+        "part": "xc7a35ticsg324-1L",
+        "clock_period_ns": "20.000",
+        "flow": "synthesis_out_of_context_only",
+        "vivado": "2020.1",
+        "k": "not_applicable",
+        "puf_backend": "xilinx_lut"
+      },
+      "resources": {
+        "lut": {
+          "used": 197.0,
+          "available": 20800.0
+        },
+        "registers": {
+          "used": 382.0,
+          "available": 41600.0
+        },
+        "bram36_tiles": {
+          "used": 0.0,
+          "available": 50.0
+        },
+        "dsp": {
+          "used": 0.0,
+          "available": 90.0
+        }
+      },
+      "report_sha256": {
+        "COMPLETE": "5da7097e77ff9b8714ebe76214111ed6e2f48469f8342fd34076bf37b18384b3",
+        "metadata.tsv": "e6e48ed2f244391eeca7dd96d925ba22987d85da2d6f3c5aec4a6a22eb9d2d83",
+        "source_manifest.sha256": "dd8b726458fcc005793ea68c6830da8c65e6ff2bdf1a49b83939d0002acf6d15",
+        "source_commit.txt": "ae388f987efd17bd93dad49b08b3e1162182574fe247c1667c5f7ad3bd210083",
+        "source_worktree_status.txt": "49704c47e2327cdfa7ad08ddaf61d508c3fd2e64aff928bbc7af21c1b64ead55",
+        "inputs.txt": "3c00ed0b3bb59df00b0490be7fa94cdd8c3a84f215e8345995dfef5996c6233f",
+        "utilization.rpt": "5677fcad61c0299f68060cf2b30352f60fbe7dd62ff5fc3cdafb24576cf23386",
+        "hierarchy.rpt": "5f4eb5a943f9fb5671e26eaa40b3b11d79c62c2d76d0fd27745ec498fcf42e80",
+        "timing_preliminary.rpt": "92275f2b88b643bb9195393c1f74e287118a57329e6aad5eb223d4d991d244da",
+        "check_timing.rpt": "d569071108ac6ffd059bf9b09b7b2def4aa343627344ad31e2367091d54359ff"
+      },
+      "diagnostics": {
+        "warning_lines": 1,
+        "critical_warnings": [],
+        "errors": []
+      }
+    }
+  ]
+}

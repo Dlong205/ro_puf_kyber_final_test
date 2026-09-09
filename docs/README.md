@@ -10,6 +10,10 @@ PASS offline/Vivado/board nhưng chưa freeze/promote vì còn review độc l�
 | Cần biết | Tài liệu chuẩn |
 |---|---|
 | Dự án đang ở bước nào | [`PROJECT_STATUS.md`](PROJECT_STATUS.md) |
+| Master plan mới: tách Edge Arty/Zynq trước ASIC | [`MASTER_PLAN_REVIEW_2026-09-09.md`](MASTER_PLAN_REVIEW_2026-09-09.md) |
+| Kiểm tra/đóng gói snapshot functional v4 | [`FPGA_V4_BASELINE_GUIDE.md`](FPGA_V4_BASELINE_GUIDE.md) |
+| Thí nghiệm tài nguyên từng khối Arty-35T | [`../experiments/fpga_split/README.md`](../experiments/fpga_split/README.md) |
+| Kết quả đo Arty-35T và điểm cần tối ưu | [`FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md`](FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md) |
 | Lộ trình hoàn thiện toàn hệ thống đến ASIC và silicon | [`KE_HOACH_HOAN_THIEN_ASIC.md`](KE_HOACH_HOAN_THIEN_ASIC.md) |
 | Có thể phát hành ở mức nào | [`RELEASE_READINESS.md`](RELEASE_READINESS.md) |
 | Xác minh FIPS 202 | [`FIPS202_VERIFICATION_2026-09-03.md`](FIPS202_VERIFICATION_2026-09-03.md) |

@@ -1,0 +1,10 @@
+ M README.md
+ M docs/PROJECT_STATUS.md
+ M docs/README.md
+?? docs/FPGA_V4_BASELINE_GUIDE.md
+?? docs/MASTER_PLAN_REVIEW_2026-09-09.md
+?? experiments/
+?? manifests/fpga_v4_baseline.json
+?? reports/fpga_split_2026-09-09/
+?? scripts/check_fpga_v4_baseline.py
+?? scripts/tests/

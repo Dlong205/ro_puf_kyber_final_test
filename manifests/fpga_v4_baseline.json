@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "baseline_id": "fpga-candidate-v4-author-verified-2026-09-08",
+  "status": "functional-reference-only; not production, crypto freeze or PUF qualification",
+  "source_commit": "5943cebd79738c12e21dbe79210ff821d1776d78",
+  "evidence_commit": "73988d68de391169da87938988388d8906b8f4eb",
+  "part": "xc7z020clg400-2",
+  "top": "Kyber_System_Top",
+  "clock_mhz": 50,
+  "vivado": "2020.1 build 2902540",
+  "source_archive": {
+    "paths": ["rtl", "firmware", "constraints", "scripts", "sim", "host", "manifests", "asic", "Makefile", "VERSION", "LICENSES", "NOTICE.md", ".gitattributes"],
+    "sha256": "bdbbb300fff9baa5e1131d419dd6f457eaaab278af380bfea5196c140102ccbc",
+    "size": 1669120
+  },
+  "artifacts": [
+    {
+      "path": "artifacts/Kyber_System_Top.bit", "origin": "build",
+      "source_path": "build/soc_repro/candidate_v4_final/kyber_ro_puf_candidate_v4_final.runs/impl_1/Kyber_System_Top.bit",
+      "sha256": "bc3a8ab8cac94c00ad3f02f5c3165ff9f8bbacf13db7ba0952003bb90946260a", "size": 4045676
+    },
+    {
+      "path": "artifacts/Kyber_System_Top_routed.dcp", "origin": "build",
+      "source_path": "build/soc_repro/candidate_v4_final/kyber_ro_puf_candidate_v4_final.runs/impl_1/Kyber_System_Top_routed.dcp",
+      "sha256": "9cd81b827a0414e746eae699beebf68076e8e967d300f6b30b97712869f68ff4", "size": 32257277
+    },
+    {
+      "path": "firmware/firmware.hex", "origin": "source_git", "source_path": "firmware/firmware.hex",
+      "sha256": "2a6b3e2f303261f78903f05548ed7adda1a6335dcd4ee5a8145f26b9cb44f553", "size": 4347
+    },
+    {
+      "path": "constraints/kp_zynq_7020.xdc", "origin": "source_git", "source_path": "constraints/kp_zynq_7020.xdc",
+      "sha256": "2df9b0bb63000e633ad2013b37f44522f81460a1788276d2ffa16cf123f5ff2f", "size": 1668
+    },
+    {
+      "path": "constraints/ro_placement_rc1_zynq7020.xdc", "origin": "source_git", "source_path": "constraints/ro_placement_rc1_zynq7020.xdc",
+      "sha256": "fd901ba857d0612747d6ca3ea8262231d811f355dd9b5c535b6208e30e357501", "size": 30061
+    },
+    {
+      "path": "constraints/ro_physical_lock_rc1_zynq7020.xdc", "origin": "source_git", "source_path": "constraints/ro_physical_lock_rc1_zynq7020.xdc",
+      "sha256": "7c2e9bd21ded5731e8c5fbee174fd14f095fb043fbb7a8c0a2b3212a44b25c74", "size": 85550
+    },
+    {
+      "path": "constraints/ro_physical_fingerprint_rc1_zynq7020.tsv", "origin": "source_git", "source_path": "constraints/ro_physical_fingerprint_rc1_zynq7020.tsv",
+      "sha256": "1fbad9f1d1ec3a04560d506979778991311a00e84d3b31c7e8e56596db464c23", "size": 44218
+    },
+    {
+      "path": "reports/post_synth_utilization.rpt", "origin": "build", "source_path": "build/soc_repro/candidate_v4_final/reports/post_synth_utilization.rpt",
+      "sha256": "a2c5661ddcf7824141639dd1c61e5db6a1c4aa4b2a6c9f74fc36285424850969", "size": 8308
+    },
+    {
+      "path": "reports/post_route_utilization.rpt", "origin": "build", "source_path": "build/soc_repro/candidate_v4_final/reports/post_route_utilization.rpt",
+      "sha256": "e54bf12121483d322234578748f5ff94a74a3a52a3a6291aee4da2e839ec10c2", "size": 10493
+    },
+    {
+      "path": "reports/post_route_timing.rpt", "origin": "build", "source_path": "build/soc_repro/candidate_v4_final/reports/post_route_timing.rpt",
+      "sha256": "93b52df86288ea7c9f66b831e278f87d430cd0a62ddbf0d95cd0b5e9161d6fcf", "size": 28266
+    },
+    {
+      "path": "reports/post_route_status.rpt", "origin": "build", "source_path": "build/soc_repro/candidate_v4_final/reports/post_route_status.rpt",
+      "sha256": "213cd72b18fdd623661ddb4f35cf5dd00925f0df3e327cc36d7956df09b94ec2", "size": 714
+    },
+    {
+      "path": "reports/post_route_drc.rpt", "origin": "build", "source_path": "build/soc_repro/candidate_v4_final/reports/post_route_drc.rpt",
+      "sha256": "6bd1fa2d34ef21e7297d854c424200691b687ff43a57dfbc1fce9aebf2fc923d", "size": 95281
+    },
+    {
+      "path": "reports/post_route_methodology.rpt", "origin": "build", "source_path": "build/soc_repro/candidate_v4_final/reports/post_route_methodology.rpt",
+      "sha256": "bdb74816846f9456448a04ef9ba9383a28fa393bc76a76ceb2ea58cc367b683c", "size": 26463
+    },
+    {
+      "path": "reports/ro_physical_fingerprint.tsv", "origin": "build", "source_path": "build/soc_repro/candidate_v4_final/reports/ro_physical_fingerprint.tsv",
+      "sha256": "1fbad9f1d1ec3a04560d506979778991311a00e84d3b31c7e8e56596db464c23", "size": 44218
+    },
+    {
+      "path": "evidence/VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md", "origin": "evidence_git", "source_path": "docs/VIVADO_IMPACT_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md",
+      "sha256": "6887cb84213457a66dd9805804e23c9648ac894ff868045c4b6d79e697626cb8", "size": 4606
+    },
+    {
+      "path": "evidence/HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md", "origin": "evidence_git", "source_path": "docs/HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md",
+      "sha256": "9204daca2760291902044154d4c5ca0c7bc5ab7fef38953c211fd38a03eba32c", "size": 2731
+    }
+  ]
+}

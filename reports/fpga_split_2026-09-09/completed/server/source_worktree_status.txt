@@ -1,0 +1,4 @@
+?? docs/MASTER_PLAN_REVIEW_2026-09-09.md
+?? experiments/
+?? manifests/fpga_v4_baseline.json
+?? scripts/check_fpga_v4_baseline.py

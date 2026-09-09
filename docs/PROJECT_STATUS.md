@@ -8,6 +8,16 @@ RC1 là bằng chứng bổ sung, không phải một phiên bản production m�
 
 ## Tóm tắt theo cổng quyết định
 
+Cập nhật phát triển **2026-09-09**: nhánh `codex/fpga-v2-split` tách từ
+`73988d6`, triển khai [master plan đã hiệu chỉnh](MASTER_PLAN_REVIEW_2026-09-09.md).
+Đợt đầu đã đóng gói/kiểm snapshot v4 và hoàn tất synthesis OOC 5 khối trên
+Arty-35T: KeyGen/Decaps 11.100 LUT, Encaps 13.687, KDF 9.129, FE 4.090,
+PUF 197. Xem [report và giới hạn](FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md).
+Tổng ngân sách Edge nguyên trạng vượt LUT; ưu tiên tối ưu/chia sẻ KDF/Keccak. Chưa có
+full Edge top, SPI liên board hoặc ASIC backend mới; không thay đổi kết luận
+freeze/release bên dưới. Các kết quả board ngày 08-09 là lịch sử, không chứng
+minh board vẫn đang được nạp cùng image sau khi mất nguồn.
+
 | Cổng | Quyết định | Bằng chứng/điều kiện còn lại |
 |---|---|---|
 | FIPS 202 byte-oriented cần cho ML-KEM | **DONE functional** | 50/50; chưa phải chứng nhận CAVP |

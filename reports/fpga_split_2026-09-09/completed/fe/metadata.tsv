@@ -1,0 +1,8 @@
+block	fe
+top	fuzzy_extractor
+part	xc7a35ticsg324-1L
+clock_period_ns	20.000
+flow	synthesis_out_of_context_only
+vivado	2020.1
+k	not_applicable
+puf_backend	not_applicable

@@ -4,6 +4,13 @@ Ngày lập: **2026-09-06**, cập nhật tiến độ **2026-09-08**. Đây là
 đã thực hiện. Long thực hiện implementation và tích hợp; các thành viên khác
 nghiên cứu, đối chiếu và hỗ trợ review theo khả năng thực tế.
 
+**Điều chỉnh kiến trúc ngày 2026-09-09:** kế hoạch mới ưu tiên Edge
+KeyGen/Decaps không CPU trên Arty và Encaps trên Zynq trước ASIC Edge. Xem
+[master plan đã review](MASTER_PLAN_REVIEW_2026-09-09.md) và
+[số đo tài nguyên thực](FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md).
+Các gate ASIC bên dưới vẫn áp dụng theo phạm vi; top SoC có PicoRV32 hiện tại
+không tự trở thành top Edge mới. Baseline v4 được bảo toàn, chưa promote.
+
 ## 1. Đích hoàn thành
 
 | Mốc | Sản phẩm bàn giao | Ý nghĩa |

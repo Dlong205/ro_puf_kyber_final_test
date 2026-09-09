@@ -1,0 +1,99 @@
+Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2020.1 (lin64) Build 2902540 Wed May 27 19:54:35 MDT 2020
+| Date         : Wed Sep  9 14:21:58 2026
+| Host         : donglong-P7xxTM-1 running 64-bit Ubuntu 22.04.5 LTS
+| Command      : report_utilization -hierarchical -hierarchical_depth 8 -file /home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/build/fpga_split/arty35t_probe_20260909/puf/hierarchy.rpt
+| Design       : kp_puf_top
+| Device       : 7a35ticsg324-1L
+| Design State : Synthesized
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++--------------------+------------------------------------+------------+------------+---------+------+-----+--------+--------+------------+
+|      Instance      |               Module               | Total LUTs | Logic LUTs | LUTRAMs | SRLs | FFs | RAMB36 | RAMB18 | DSP Blocks |
++--------------------+------------------------------------+------------+------------+---------+------+-----+--------+--------+------------+
+| kp_puf_top         |                              (top) |        197 |        197 |       0 |    0 | 382 |      0 |      0 |          0 |
+|   (kp_puf_top)     |                              (top) |          0 |          0 |       0 |    0 |   2 |      0 |      0 |          0 |
+|   comp_inst        |                      kp_comparator |          0 |          0 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   counter0         |                     kp_counter_puf |         18 |         18 |       0 |    0 |  36 |      0 |      0 |          0 |
+|   counter1         |                   kp_counter_puf_0 |         18 |         18 |       0 |    0 |  36 |      0 |      0 |          0 |
+|   ctrl_inst        |                     kp_puf_control |         36 |         36 |       0 |    0 |  36 |      0 |      0 |          0 |
+|   lfsr_inst        |                            kp_lfsr |         11 |         11 |       0 |    0 |   8 |      0 |      0 |          0 |
+|   ring0[0].ro0     |                         kp_ro_cell |          5 |          5 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     (ring0[0].ro0) |                         kp_ro_cell |          1 |          1 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      |                  kp_ro_cell_xilinx |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring0[10].ro0    |         kp_ro_cell__parameterized9 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      |  kp_ro_cell_xilinx__parameterized9 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring0[11].ro0    |        kp_ro_cell__parameterized10 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized10 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring0[12].ro0    |        kp_ro_cell__parameterized11 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized11 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring0[13].ro0    |        kp_ro_cell__parameterized12 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized12 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring0[14].ro0    |        kp_ro_cell__parameterized13 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized13 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring0[15].ro0    |        kp_ro_cell__parameterized14 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized14 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring0[1].ro0     |         kp_ro_cell__parameterized0 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      |  kp_ro_cell_xilinx__parameterized0 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring0[2].ro0     |         kp_ro_cell__parameterized1 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      |  kp_ro_cell_xilinx__parameterized1 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring0[3].ro0     |         kp_ro_cell__parameterized2 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      |  kp_ro_cell_xilinx__parameterized2 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring0[4].ro0     |         kp_ro_cell__parameterized3 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      |  kp_ro_cell_xilinx__parameterized3 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring0[5].ro0     |         kp_ro_cell__parameterized4 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      |  kp_ro_cell_xilinx__parameterized4 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring0[6].ro0     |         kp_ro_cell__parameterized5 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      |  kp_ro_cell_xilinx__parameterized5 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring0[7].ro0     |         kp_ro_cell__parameterized6 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      |  kp_ro_cell_xilinx__parameterized6 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring0[8].ro0     |         kp_ro_cell__parameterized7 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      |  kp_ro_cell_xilinx__parameterized7 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring0[9].ro0     |         kp_ro_cell__parameterized8 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      |  kp_ro_cell_xilinx__parameterized8 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[0].ro1     |        kp_ro_cell__parameterized15 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized15 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[10].ro1    |        kp_ro_cell__parameterized25 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized25 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[11].ro1    |        kp_ro_cell__parameterized26 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized26 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[12].ro1    |        kp_ro_cell__parameterized27 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized27 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[13].ro1    |        kp_ro_cell__parameterized28 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized28 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[14].ro1    |        kp_ro_cell__parameterized29 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized29 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[15].ro1    |        kp_ro_cell__parameterized30 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized30 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[1].ro1     |        kp_ro_cell__parameterized16 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized16 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[2].ro1     |        kp_ro_cell__parameterized17 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized17 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[3].ro1     |        kp_ro_cell__parameterized18 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized18 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[4].ro1     |        kp_ro_cell__parameterized19 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized19 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[5].ro1     |        kp_ro_cell__parameterized20 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized20 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[6].ro1     |        kp_ro_cell__parameterized21 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized21 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[7].ro1     |        kp_ro_cell__parameterized22 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized22 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[8].ro1     |        kp_ro_cell__parameterized23 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized23 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   ring1[9].ro1     |        kp_ro_cell__parameterized24 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|     u_backend      | kp_ro_cell_xilinx__parameterized24 |          4 |          4 |       0 |    0 |   0 |      0 |      0 |          0 |
+|   shiftreg_inst    |                        kp_shiftReg |          1 |          1 |       0 |    0 | 264 |      0 |      0 |          0 |
++--------------------+------------------------------------+------------+------------+---------+------+-----+--------+--------+------------+
+
+
