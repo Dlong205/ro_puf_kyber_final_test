@@ -1,0 +1,3 @@
+3f05802e5129a2a49102434f37e9432016e44516b0fb0224541b1b41f1c1e694  rtl/top/edge_mlkem_core.sv
+ac52a5c08b05d92ac89cc2eb2808a14998ee9542dfce37c655dcd35df8776d11  sim/edge_mlkem/Makefile
+5097c0aacb6c47b4c010f89ea7044ede796ea2b78db838ccdd9046cb697317b7  sim/edge_mlkem/tb_edge_mlkem_core.sv

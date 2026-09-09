@@ -1,0 +1,20 @@
+ M README.md
+ M docs/FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md
+ M docs/PROJECT_STATUS.md
+ M docs/README.md
+ M experiments/fpga_split/README.md
+ M experiments/fpga_split/run_ooc.sh
+ M experiments/fpga_split/sources.tcl
+ M experiments/fpga_split/summarize.py
+ M experiments/fpga_split/synth_block.tcl
+?? docs/EDGE_CONTROL_CONTRACT.md
+?? manifests/edge_control_v01.sha256
+?? reports/fpga_split_2026-09-09/seedctl_v01/
+?? reports/fpga_split_2026-09-10/
+?? rtl/top/edge_control_plane.sv
+?? rtl/top/edge_kem_scrub_controller.sv
+?? rtl/top/edge_mlkem_core.sv
+?? rtl/top/edge_seed_controller.sv
+?? scripts/check_edge_control.sh
+?? sim/edge_mlkem/
+?? sim/edge_seed/

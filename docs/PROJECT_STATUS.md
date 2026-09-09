@@ -1,6 +1,6 @@
 # Trạng thái xác minh — integration `0.2.0-rc2-dev`, artifact `0.2.0-rc1`
 
-Bằng chứng cập nhật đến **2026-09-08**. Nhánh làm việc tích hợp là
+Bằng chứng cập nhật đến **2026-09-10**. Nhánh làm việc tích hợp là
 `codex/asic-frontend-mlkem512`, tách từ `codex/fips202-mlkem`; artifact FPGA được chấp nhận nằm tại tag
 `fpga-mlkem512-0.2.0-rc1`. Tag `fpga-rc4-baseline` chỉ được giữ làm mốc so
 sánh Kyber/FPGA cũ. Các kết quả characterization và physical route-lock sau
@@ -8,15 +8,22 @@ RC1 là bằng chứng bổ sung, không phải một phiên bản production m�
 
 ## Tóm tắt theo cổng quyết định
 
-Cập nhật phát triển **2026-09-09**: nhánh `codex/fpga-v2-split` tách từ
+Cập nhật phát triển **2026-09-09—10**: nhánh `codex/fpga-v2-split` tách từ
 `73988d6`, triển khai [master plan đã hiệu chỉnh](MASTER_PLAN_REVIEW_2026-09-09.md).
 Đợt đầu đã đóng gói/kiểm snapshot v4 và hoàn tất synthesis OOC 5 khối trên
 Arty-35T: KeyGen/Decaps 11.100 LUT, Encaps 13.687, KDF 9.129, FE 4.090,
 PUF 197. Xem [report và giới hạn](FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md).
-Tổng ngân sách Edge nguyên trạng vượt LUT; ưu tiên tối ưu/chia sẻ KDF/Keccak. Chưa có
-full Edge top, SPI liên board hoặc ASIC backend mới; không thay đổi kết luận
+`edgecore` tích hợp KDF + scrub + KeyGen/Decaps đã OOC PASS nhưng dùng 25.540
+LUT (122,79% A7-35T), nên cấu trúc hiện tại NO-GO cho P&R trên board này.
+Chưa có full Edge top, SPI liên board hoặc ASIC backend mới; không thay đổi kết luận
 freeze/release bên dưới. Các kết quả board ngày 08-09 là lịch sử, không chứng
 minh board vẫn đang được nạp cùng image sau khi mất nguồn.
+
+Controller đã PASS KDF thật, mapping `d/z`, busy/held-start,
+abort/no-late-start, scrub state và quét RAM Kyber. `edge_mlkem_core` nối vào
+Server thật đã PASS một ca valid và một ca ciphertext sửa, cùng latency 19.535 chu kỳ đến
+`secret_valid`, rồi full scrub đạt 21.585 chu kỳ. Framed stream/backpressure,
+confirmation, FE/PUF, CDC và board top vẫn còn mở.
 
 | Cổng | Quyết định | Bằng chứng/điều kiện còn lại |
 |---|---|---|

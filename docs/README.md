@@ -1,6 +1,6 @@
 # Chỉ mục tài liệu
 
-Bằng chứng đến **2026-09-08** cho integration `0.2.0-rc2-dev`. Artifact FPGA được
+Bằng chứng đến **2026-09-10** cho integration `0.2.0-rc2-dev`. Artifact FPGA được
 chấp nhận vẫn là ML-KEM-512 `0.2.0-rc1`; các tài liệu sau RC1 bổ sung
 characterization, physical route-lock và candidate v4 cách ly. Candidate v4 đã
 PASS offline/Vivado/board nhưng chưa freeze/promote vì còn review độc lập.
@@ -14,6 +14,7 @@ PASS offline/Vivado/board nhưng chưa freeze/promote vì còn review độc l�
 | Kiểm tra/đóng gói snapshot functional v4 | [`FPGA_V4_BASELINE_GUIDE.md`](FPGA_V4_BASELINE_GUIDE.md) |
 | Thí nghiệm tài nguyên từng khối Arty-35T | [`../experiments/fpga_split/README.md`](../experiments/fpga_split/README.md) |
 | Kết quả đo Arty-35T và điểm cần tối ưu | [`FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md`](FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md) |
+| Contract điều khiển Edge không CPU | [`EDGE_CONTROL_CONTRACT.md`](EDGE_CONTROL_CONTRACT.md) |
 | Lộ trình hoàn thiện toàn hệ thống đến ASIC và silicon | [`KE_HOACH_HOAN_THIEN_ASIC.md`](KE_HOACH_HOAN_THIEN_ASIC.md) |
 | Có thể phát hành ở mức nào | [`RELEASE_READINESS.md`](RELEASE_READINESS.md) |
 | Xác minh FIPS 202 | [`FIPS202_VERIFICATION_2026-09-03.md`](FIPS202_VERIFICATION_2026-09-03.md) |

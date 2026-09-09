@@ -1,0 +1,54 @@
+{
+  "scope": "OOC synthesis only; not routed, board tested or full Edge fit",
+  "run": "arty35t_edgecore_clean_20260910",
+  "blocks": [
+    {
+      "block": "edgecore",
+      "metadata": {
+        "block": "edgecore",
+        "top": "edge_mlkem_core",
+        "part": "xc7a35ticsg324-1L",
+        "clock_period_ns": "20.000",
+        "flow": "synthesis_out_of_context_only",
+        "vivado": "2020.1",
+        "k": "2",
+        "puf_backend": "not_applicable"
+      },
+      "resources": {
+        "lut": {
+          "used": 25540.0,
+          "available": 20800.0
+        },
+        "registers": {
+          "used": 15436.0,
+          "available": 41600.0
+        },
+        "bram36_tiles": {
+          "used": 14.0,
+          "available": 50.0
+        },
+        "dsp": {
+          "used": 2.0,
+          "available": 90.0
+        }
+      },
+      "report_sha256": {
+        "COMPLETE": "8f8baa9513511b9bbd7d6e07a430d49b0727034a453e1d66942a23cc9726d531",
+        "metadata.tsv": "e51c9658c4d663719c5e91e58dc30e49c52521d1efe59e342c86d9c0f6fccfa5",
+        "source_manifest.sha256": "de9bbf15b73f551506ba8fa1cbf406bfc074412942664e8bd0bf7aecc55b3415",
+        "source_commit.txt": "09b710be5627e2f80f556c9261304b3905206ee91d959393d8e894d4fa26d717",
+        "source_worktree_status.txt": "390ba2ada2d7bf6e2aa98ba54f107267b592521b7bfb760ef1ed0eddedfd02b2",
+        "inputs.txt": "23db04e9e9ff4a72bb356b575b79678f3577d672b3dbb50a9e059848b77942a7",
+        "utilization.rpt": "f13454042c034bb9ccaebfb003315ee4b4a620e4d01b1a6a4b8a67f56f1a6637",
+        "hierarchy.rpt": "ee2086c14fc56af1480237880e3fe8b2f4f3dadfdd1a91ad3dc344618ec40135",
+        "timing_preliminary.rpt": "ff57dd44d69d4fa5ed9f90bd6b2e1c2fed751eb0336c0ed3e8c9f369b3604822",
+        "check_timing.rpt": "c488127d7f1b3944530f2cbeb1b46324a2aa9061bdb5e299a5d6ce38cbdd3bf5"
+      },
+      "diagnostics": {
+        "warning_lines": 114,
+        "critical_warnings": [],
+        "errors": []
+      }
+    }
+  ]
+}

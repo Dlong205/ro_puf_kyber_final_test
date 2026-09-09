@@ -1,0 +1,7 @@
+ M experiments/fpga_split/README.md
+ M experiments/fpga_split/run_ooc.sh
+ M experiments/fpga_split/sources.tcl
+ M experiments/fpga_split/synth_block.tcl
+?? docs/EDGE_CONTROL_CONTRACT.md
+?? rtl/top/edge_seed_controller.sv
+?? sim/edge_seed/

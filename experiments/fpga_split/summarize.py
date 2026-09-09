@@ -33,7 +33,7 @@ def export(run, destination):
         raise ValueError("Output exists: choose a fresh directory")
     blocks = []
     payloads = []
-    for block in ("server", "client", "kdf", "fe", "puf"):
+    for block in ("server", "client", "edgecore", "kdf", "seedctl", "fe", "puf"):
         folder = run / block
         if not (folder / "COMPLETE").is_file():
             continue

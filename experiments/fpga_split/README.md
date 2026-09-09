@@ -4,8 +4,10 @@ Thư mục này chỉ cung cấp thí nghiệm synthesis OOC cho RTL hiện tạ
 top hai board, giao tiếp SPI, firmware mới hoặc bitstream Arty.
 
 Các profile: `client` = `Kyber_Client` Encaps; `server` = `Kyber_Server`
-KeyGen/Decaps; `kdf` = `kdf_keccak`; `fe` = `fuzzy_extractor`; `puf` =
-`kp_puf_top` dùng 128 LUT RO Xilinx. Client/Server cố định `k=2`; các input
+KeyGen/Decaps; `edgecore` = KDF + direct seed + scrub controller + Server;
+`kdf` = `kdf_keccak`; `fe` = `fuzzy_extractor`; `puf` =
+`kp_puf_top` dùng 128 LUT RO Xilinx; `seedctl` = KDF cùng controller đường
+seed nội bộ thử nghiệm. Client/Server cố định `k=2`; các input
 scrub và toàn bộ output, kể cả K/key/seed/response, được giữ ở biên OOC để
 tránh phép đo nhỏ giả tạo do synthesis xóa logic không quan sát được. Các
 cổng rộng này phục vụ phép đo, không phải đề xuất đưa secret ra chân board.
@@ -17,7 +19,8 @@ FPGA_SPLIT_MEMORY_GIB=4 VIVADO=/media/donglong/tools/Xilinx/Vivado/2020.1/bin/vi
   bash experiments/fpga_split/run_ooc.sh client arty35t_probe_01
 ```
 
-Thay `client` bằng `server`, `kdf`, `fe`, `puf` để đo tiếp. Cùng `run-id`
+Thay `client` bằng `server`, `edgecore`, `kdf`, `seedctl`, `fe`, `puf` để đo
+tiếp. Cùng `run-id`
 được dùng cho các block khác nhau; mỗi block chỉ được tạo một lần. Mặc định
 target `xc7a35ticsg324-1L`, clock tham chiếu 50 MHz, Vivado một thread,
 20 phút/block, memory cap 8 GiB. Launcher khóa một worker cho thí nghiệm;

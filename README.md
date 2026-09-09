@@ -6,7 +6,7 @@
 > bị chặn bởi quyền phân phối Kyber RTL và top-level license. Kết quả hiện tại
 > không phải chứng nhận CAVP/FIPS 140-3 và không phải module mật mã production.
 
-Trạng thái dưới đây dùng bằng chứng đến **2026-09-08**. Nhánh ASIC hiện tại
+Trạng thái dưới đây dùng bằng chứng đến **2026-09-10**. Nhánh ASIC hiện tại
 `codex/asic-frontend-mlkem512` được tách từ integration
 `codex/fips202-mlkem`. Tag `fpga-rc4-baseline` giữ mốc Kyber/FPGA cũ để đối
 chiếu; tag `fpga-mlkem512-0.2.0-rc1` là artifact ML-KEM-512 hiện được chấp nhận.
@@ -56,9 +56,16 @@ ASIC đã hoàn tất. Xem [nhận xét master plan và thứ tự triển khai 
 và [tooling đo tài nguyên độc lập](experiments/fpga_split/README.md).
 
 [Số đo OOC đã hoàn tất](docs/FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md):
-KeyGen/Decaps 11.100 LUT, Encaps 13.687 LUT; tổng sơ bộ Edge kèm KDF/FE/PUF
-là 24.516 LUT, vượt 20.800 LUT của Arty-35T. Ưu tiên tối ưu/chia sẻ Keccak;
-chưa có kết quả full Edge P&R hoặc bitstream Arty.
+KeyGen/Decaps 11.100 LUT, Encaps 13.687 LUT. `edgecore` tích hợp KDF, scrub và
+KeyGen/Decaps dùng 25.540 LUT, tức 122,79% A7-35T trước cả FE/PUF/transport.
+Vì vậy cấu trúc hiện tại **không vừa Arty-35T**; chưa có full Edge P&R hay
+bitstream Arty và bước kế tiếp phải tối ưu/chia sẻ Keccak hoặc đổi FPGA.
+
+Contract Edge không CPU đang được triển khai tại
+[docs/EDGE_CONTROL_CONTRACT.md](docs/EDGE_CONTROL_CONTRACT.md). Đường FE key →
+KDF → `d,z` → scrub → `Kyber_Server` đã PASS valid/invalid loopback, thời gian
+cố định và zeroize. Đây chưa phải board top/interface freeze: framed stream,
+confirmation, FE/PUF và CDC vẫn còn mở.
 
 | Giai đoạn | Trạng thái đúng hiện tại |
 |---|---|

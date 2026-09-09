@@ -1,0 +1,36 @@
+Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2020.1 (lin64) Build 2902540 Wed May 27 19:54:35 MDT 2020
+| Date         : Wed Sep  9 15:15:58 2026
+| Host         : donglong-P7xxTM-1 running 64-bit Ubuntu 22.04.5 LTS
+| Command      : report_utilization -hierarchical -hierarchical_depth 8 -file /home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/build/fpga_split/arty35t_seedctl_20260909/seedctl/hierarchy.rpt
+| Design       : edge_seed_controller
+| Device       : 7a35ticsg324-1L
+| Design State : Synthesized
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++--------------------------+---------------------+------------+------------+---------+------+------+--------+--------+------------+
+|         Instance         |        Module       | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs | RAMB36 | RAMB18 | DSP Blocks |
++--------------------------+---------------------+------------+------------+---------+------+------+--------+--------+------------+
+| edge_seed_controller     |               (top) |       9378 |       9378 |       0 |    0 | 4517 |      0 |      0 |          0 |
+|   (edge_seed_controller) |               (top) |          4 |          4 |       0 |    0 |  518 |      0 |      0 |          0 |
+|   u_kdf                  |          kdf_keccak |       9374 |       9374 |       0 |    0 | 3999 |      0 |      0 |          0 |
+|     (u_kdf)              |          kdf_keccak |        709 |        709 |       0 |    0 |  719 |      0 |      0 |          0 |
+|     keccak_inst          | keccak_f1600_server |       8665 |       8665 |       0 |    0 | 3280 |      0 |      0 |          0 |
+|       (keccak_inst)      | keccak_f1600_server |        146 |        146 |       0 |    0 | 1680 |      0 |      0 |          0 |
+|       algo_inst          |           ALGORITHM |       8519 |       8519 |       0 |    0 | 1600 |      0 |      0 |          0 |
+|         STEP_MAPPING_1   |              THETA1 |        320 |        320 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         STEP_MAPPING_3   |                CHI1 |       1730 |       1730 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         STEP_MAPPING_5   |                IOTA |       6469 |       6469 |       0 |    0 | 1600 |      0 |      0 |          0 |
++--------------------------+---------------------+------------+------------+---------+------+------+--------+--------+------------+
+
+

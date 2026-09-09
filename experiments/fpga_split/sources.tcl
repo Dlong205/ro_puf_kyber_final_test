@@ -30,7 +30,7 @@ namespace eval fpga_split {
         rtl/kyber/ref/encode_Client.v rtl/kyber/ref/encode_Server.v
         rtl/kyber/ref/decode_Client.v rtl/kyber/ref/decode_Server.v
         rtl/kyber/ref/decode_keccak.v rtl/kyber/ref/fifo_wrappers.v
-        rtl/kyber/ref/LUT.v rtl/kyber/ref/mux4to2.v
+        rtl/kyber/ref/mux4to2.v
         rtl/kyber/ref/pattern.v rtl/kyber/ref/reduc.v
         rtl/kyber/ref/sha3_shake_core.v
         experiments/fpga_split/k2_ooc_tops.sv
@@ -56,12 +56,14 @@ namespace eval fpga_split {
     }
     variable tops [dict create client fpga_split_client_k2 \
         server fpga_split_server_k2 kdf kdf_keccak \
+        edgecore edge_mlkem_core \
+        seedctl edge_seed_controller \
         fe fuzzy_extractor puf kp_puf_top]
 
     proc top {block} {
         variable tops
         if {![dict exists $tops $block]} {
-            error "Unknown block '$block'; choose client, server, kdf, fe or puf"
+            error "Unknown block '$block'; choose client, server, edgecore, kdf, seedctl, fe or puf"
         }
         return [dict get $tops $block]
     }
@@ -72,7 +74,16 @@ namespace eval fpga_split {
         top $block
         switch -- $block {
             client - server {set rel [concat $common $keccak $kyber]}
+            edgecore {set rel [concat $common $keccak $kyber {
+                rtl/top/kdf_keccak.sv
+                rtl/top/edge_seed_controller.sv
+                rtl/top/edge_kem_scrub_controller.sv
+                rtl/top/edge_control_plane.sv
+                rtl/top/edge_mlkem_core.sv
+            }]}
             kdf {set rel [concat $common $keccak {rtl/top/kdf_keccak.sv}]}
+            seedctl {set rel [concat $common $keccak \
+                {rtl/top/kdf_keccak.sv rtl/top/edge_seed_controller.sv}]}
             fe {set rel $fe}
             puf {set rel $puf}
         }
@@ -97,7 +108,7 @@ namespace eval fpga_split {
         variable root; variable here
         set result [sources $block]
         switch -- $block {
-            client - server - kdf {
+            client - server - edgecore - kdf - seedctl {
                 lappend result [file join $root rtl hash_core keccak_pkg.vh]
             }
             fe {

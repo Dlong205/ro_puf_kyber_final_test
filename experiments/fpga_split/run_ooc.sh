@@ -2,12 +2,12 @@
 set -euo pipefail
 
 if [[ $# -lt 1 || $# -gt 2 ]]; then
-    echo "Usage: bash experiments/fpga_split/run_ooc.sh <client|server|kdf|fe|puf> [run-id]" >&2
+    echo "Usage: bash experiments/fpga_split/run_ooc.sh <client|server|edgecore|kdf|seedctl|fe|puf> [run-id]" >&2
     exit 2
 fi
 block=$1
 run_id=${2:-$(date -u +%Y%m%dT%H%M%SZ)}
-case "$block" in client|server|kdf|fe|puf) ;; *) echo "Unknown block: $block" >&2; exit 2;; esac
+case "$block" in client|server|edgecore|kdf|seedctl|fe|puf) ;; *) echo "Unknown block: $block" >&2; exit 2;; esac
 [[ "$run_id" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "Invalid run-id" >&2; exit 2; }
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_dir=$(cd -- "$script_dir/../.." && pwd)
