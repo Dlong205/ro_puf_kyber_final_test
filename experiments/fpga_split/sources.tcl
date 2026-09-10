@@ -57,13 +57,14 @@ namespace eval fpga_split {
     variable tops [dict create client fpga_split_client_k2 \
         server fpga_split_server_k2 kdf kdf_keccak \
         edgecore edge_mlkem_core \
+        edgefull edge_puf_mlkem_core \
         seedctl edge_seed_controller \
         fe fuzzy_extractor puf kp_puf_top]
 
     proc top {block} {
         variable tops
         if {![dict exists $tops $block]} {
-            error "Unknown block '$block'; choose client, server, edgecore, kdf, seedctl, fe or puf"
+            error "Unknown block '$block'; choose client, server, edgecore, edgefull, kdf, seedctl, fe or puf"
         }
         return [dict get $tops $block]
     }
@@ -75,15 +76,23 @@ namespace eval fpga_split {
         switch -- $block {
             client - server {set rel [concat $common $keccak $kyber]}
             edgecore {set rel [concat $common $keccak $kyber {
-                rtl/top/kdf_keccak.sv
+                rtl/top/kdf_keccak_compact.sv
                 rtl/top/edge_seed_controller.sv
                 rtl/top/edge_kem_scrub_controller.sv
                 rtl/top/edge_control_plane.sv
                 rtl/top/edge_mlkem_core.sv
             }]}
+            edgefull {set rel [concat $common $keccak $kyber $fe $puf {
+                rtl/top/kdf_keccak_compact.sv
+                rtl/top/edge_seed_controller.sv
+                rtl/top/edge_kem_scrub_controller.sv
+                rtl/top/edge_control_plane.sv
+                rtl/top/edge_mlkem_core.sv
+                rtl/top/edge_puf_mlkem_core.sv
+            }]}
             kdf {set rel [concat $common $keccak {rtl/top/kdf_keccak.sv}]}
-            seedctl {set rel [concat $common $keccak \
-                {rtl/top/kdf_keccak.sv rtl/top/edge_seed_controller.sv}]}
+            seedctl {set rel [concat \
+                {rtl/top/kdf_keccak_compact.sv rtl/top/edge_seed_controller.sv}]}
             fe {set rel $fe}
             puf {set rel $puf}
         }
@@ -108,7 +117,7 @@ namespace eval fpga_split {
         variable root; variable here
         set result [sources $block]
         switch -- $block {
-            client - server - edgecore - kdf - seedctl {
+            client - server - edgecore - edgefull - kdf - seedctl {
                 lappend result [file join $root rtl hash_core keccak_pkg.vh]
             }
             fe {

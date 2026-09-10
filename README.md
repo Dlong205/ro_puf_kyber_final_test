@@ -56,16 +56,22 @@ ASIC đã hoàn tất. Xem [nhận xét master plan và thứ tự triển khai 
 và [tooling đo tài nguyên độc lập](experiments/fpga_split/README.md).
 
 [Số đo OOC đã hoàn tất](docs/FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md):
-KeyGen/Decaps 11.100 LUT, Encaps 13.687 LUT. `edgecore` tích hợp KDF, scrub và
-KeyGen/Decaps dùng 25.540 LUT, tức 122,79% A7-35T trước cả FE/PUF/transport.
-Vì vậy cấu trúc hiện tại **không vừa Arty-35T**; chưa có full Edge P&R hay
-bitstream Arty và bước kế tiếp phải tối ưu/chia sẻ Keccak hoặc đổi FPGA.
+KeyGen/Decaps 11.100 LUT, Encaps 13.687 LUT. Bản `edgecore` cũ dùng KDF lớn
+chiếm 25.540 LUT và không fit. Sau khi thay riêng đường Edge bằng KDF
+SHAKE256 compact bit-exact, top `edge_puf_mlkem_core` gồm RO-PUF + FE + KDF +
+scrub + KeyGen/Decaps dùng **19.566/20.800 LUT (94,07%)**, 19.403 register,
+14 BRAM36 và 2 DSP. Đây là **OOC resource fit có điều kiện**, chưa phải board
+fit: chỉ còn 1.234 LUT, chưa có transport/confirmation, placement/routing,
+constraint chân, timing closure hay bitstream Arty.
 
 Contract Edge không CPU đang được triển khai tại
 [docs/EDGE_CONTROL_CONTRACT.md](docs/EDGE_CONTROL_CONTRACT.md). Đường FE key →
-KDF → `d,z` → scrub → `Kyber_Server` đã PASS valid/invalid loopback, thời gian
-cố định và zeroize. Đây chưa phải board top/interface freeze: framed stream,
-confirmation, FE/PUF và CDC vẫn còn mở.
+KDF compact → `d,z` → scrub → `Kyber_Server` đã PASS valid/invalid loopback,
+thời gian cố định và zeroize. Wrapper OOC đã nối cả PUF và FE thật; wrapper
+này đã qua test FSM handoff với stub và elaboration/synthesis, chưa có test
+functional end-to-end dùng toàn bộ module thật. Đây
+chưa phải board top/interface freeze: framed stream, confirmation, constraint
+Arty, CDC sign-off và P&R vẫn còn mở.
 
 | Giai đoạn | Trạng thái đúng hiện tại |
 |---|---|
@@ -73,6 +79,7 @@ confirmation, FE/PUF và CDC vẫn còn mở.
 | ML-KEM-512 theo FIPS 203 | **HOÀN THÀNH functional nội bộ**; v4 đã test board; không phải chứng nhận |
 | Crypto RTL freeze | **CANDIDATE v4**; offline/Vivado/board PASS, còn review độc lập trước khi freeze |
 | FPGA implementation | **PASS** candidate v4 ở 50 MHz; artifact root được chấp nhận vẫn là RC1 |
+| Edge trên Arty A7-35T | **CONDITIONAL OOC FIT**: 19.566/20.800 LUT; chưa P&R/board/transport |
 | Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
 | Qualification RO-PUF | **CHƯA HOÀN THÀNH**: thiếu same-root trên full-SoC, PVT, power-cycle và nhiều board |
 | ASIC front-end | **ĐANG TRIỂN KHAI**: top/reset/filelist/manifest và structural lint đã có; chưa có PDK/backend |
@@ -102,6 +109,8 @@ gồm đầu ra và điều kiện chuyển từng pha, nằm tại
 | ML-KEM-512 Decaps | PASS 25/25 valid + 175/175 rejection; K/J khớp oracle độc lập |
 | Timing valid/invalid | PASS, cùng 17.338 cycle trong loopback RTL |
 | SHAKE256 KDF KAT | PASS bit-exact với Python `hashlib.shake_256`, cycle 148 |
+| Edge SHAKE256 compact KAT | PASS bit-exact, cycle 411; zeroize PASS |
+| Edge PUF+FE+KDF+KeyGen/Decaps OOC | PASS tài nguyên: 19.566 LUT (94,07%); chưa P&R/board |
 | Kyber raw single-attempt gate | PASS 1.024/1.024, mismatch 0, retry 0 |
 | Full-system simulation v4 | PASS, 958.516 cycle; protocol 1.3/capability `0x06` |
 | Vivado candidate v4 | PASS: 50.902 LUT sau route, WNS `+3,268 ns`, WHS `+0,037 ns`, 0 routing error |

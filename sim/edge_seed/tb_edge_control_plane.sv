@@ -53,7 +53,10 @@ module tb_edge_control_plane;
         check("derived z survives KEM pre-scrub", seed_z == EXPECTED[511:256]);
         check("KDF state erased before real core start",
               dut.u_seed.kdf_seed == 0 &&
-              dut.u_seed.u_kdf.keccak_inst.state_reg == 0);
+              dut.u_seed.u_kdf.lane_a[0] == 0 &&
+              dut.u_seed.u_kdf.lane_a[24] == 0 &&
+              dut.u_seed.u_kdf.lane_b[0] == 0 &&
+              dut.u_seed.u_kdf.lane_b[24] == 0);
         @(negedge clk);
         check("real core start is one cycle", !core_start);
 

@@ -34,15 +34,15 @@ if {[llength [get_cells -hier -quiet -filter {IS_BLACKBOX == 1}]] != 0} {
 }
 # All real top-level outputs are ports. In particular K/seed/key/PUF response
 # must not be tied off just to make an artificial small resource estimate.
-set required_bus [dict get [dict create client K server K edgecore shared_secret kdf seed_out \
+set required_bus [dict get [dict create client K server K edgecore shared_secret edgefull shared_secret kdf seed_out \
     seedctl seed_ fe key_out puf response] $block]
 set observable [get_ports -quiet "${required_bus}*"]
-set required_width [dict get [dict create client 256 server 256 edgecore 256 kdf 512 \
+set required_width [dict get [dict create client 256 server 256 edgecore 256 edgefull 256 kdf 512 \
     seedctl 512 fe 192 puf 264] $block]
 if {[llength $observable] != $required_width} {
     error "Required output bus was lost: $required_bus"
 }
-if {$block eq "puf"} {
+if {$block in {puf edgefull}} {
     set ro_luts [get_cells -hier -quiet -filter \
         {NAME =~ "*ring*LUT6*"}]
     if {[llength $ro_luts] != 128} {
@@ -63,8 +63,8 @@ puts $fd "part\t$part"
 puts $fd "clock_period_ns\t20.000"
 puts $fd "flow\tsynthesis_out_of_context_only"
 puts $fd "vivado\t[version -short]"
-puts $fd "k\t[expr {$block in {client server edgecore} ? 2 : {not_applicable}}]"
-puts $fd "puf_backend\t[expr {$block eq {puf} ? {xilinx_lut} : {not_applicable}}]"
+puts $fd "k\t[expr {$block in {client server edgecore edgefull} ? 2 : {not_applicable}}]"
+puts $fd "puf_backend\t[expr {$block in {puf edgefull} ? {xilinx_lut} : {not_applicable}}]"
 close $fd
 set fd [open [file join $out_dir COMPLETE] w]
 puts $fd "OOC_SYNTH_PASS block=$block top=$top part=$part"

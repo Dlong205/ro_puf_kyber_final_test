@@ -9,7 +9,7 @@ HASH := ../../rtl/kyber/ref/keccak_f1600_server.v \
         ../../rtl/hash_core/CHI2.v ../../rtl/hash_core/Chi_3_Iota.v \
         ../../rtl/hash_core/IOTA.v ../../rtl/hash_core/RC.v \
         ../../rtl/hash_core/ADDER.v
-RTL := $(HASH) ../../rtl/top/kdf_keccak.sv ../../rtl/top/edge_seed_controller.sv
+RTL := ../../rtl/top/kdf_keccak_compact.sv ../../rtl/top/edge_seed_controller.sv
 
 $(EXE): $(RTL) tb_edge_seed_controller.sv
 	$(VERILATOR) --binary --timing -j 1 --Mdir $(MDIR) --top-module $(TOP) \
@@ -21,10 +21,10 @@ $(EXE): $(RTL) tb_edge_seed_controller.sv
 run: $(EXE)
 	@$(EXE)
 
-check: run scrub plane
+check: compact-kat run scrub plane
 
 clean:
-	rm -rf $(MDIR) obj_dir_scrub obj_dir_plane
+	rm -rf $(MDIR) obj_dir_kat obj_dir_scrub obj_dir_plane
 
 scrub:
 	$(VERILATOR) --binary --timing -j 1 --Mdir obj_dir_scrub \
@@ -43,4 +43,11 @@ plane:
 		../../rtl/top/edge_control_plane.sv tb_edge_control_plane.sv
 	@obj_dir_plane/Vtb_edge_control_plane
 
-.PHONY: check run scrub plane clean
+compact-kat:
+	$(VERILATOR) --binary --timing -j 1 --Mdir obj_dir_kat \
+		--top-module tb_kdf_compact -Wall -Wno-fatal \
+		-Wno-DECLFILENAME -Wno-TIMESCALEMOD -Wno-WIDTHTRUNC \
+		../../rtl/top/kdf_keccak_compact.sv tb_kdf_compact.sv
+	@obj_dir_kat/Vtb_kdf_compact
+
+.PHONY: check compact-kat run scrub plane clean

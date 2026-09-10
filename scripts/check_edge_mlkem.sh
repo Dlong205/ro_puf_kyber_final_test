@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-manifest=${1:-$repo_dir/manifests/edge_mlkem_integration_v01.sha256}
+manifest=${1:-$repo_dir/manifests/edge_mlkem_integration_v02.sha256}
 expected=$(mktemp)
 listed=$(mktemp)
 trap 'rm -f "$expected" "$listed"' EXIT
@@ -33,5 +33,5 @@ bash scripts/check_crypto_freeze.sh manifests/crypto_rtl_freeze_candidate_v4.sha
 bash scripts/check_edge_control.sh
 make -j1 -C sim/edge_mlkem check
 
-echo "EDGE_MLKEM_INTEGRATION_V01_GATE=PASS"
+echo "EDGE_MLKEM_INTEGRATION_V02_GATE=PASS"
 echo "Scope: direct legacy stream integration; independent J oracle, framed transport and confirmation remain external gates."

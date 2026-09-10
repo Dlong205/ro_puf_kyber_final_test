@@ -4,7 +4,8 @@ Thư mục này chỉ cung cấp thí nghiệm synthesis OOC cho RTL hiện tạ
 top hai board, giao tiếp SPI, firmware mới hoặc bitstream Arty.
 
 Các profile: `client` = `Kyber_Client` Encaps; `server` = `Kyber_Server`
-KeyGen/Decaps; `edgecore` = KDF + direct seed + scrub controller + Server;
+KeyGen/Decaps; `edgecore` = KDF compact + direct seed + scrub controller +
+Server; `edgefull` = PUF + FE + KDF compact + scrub + Server;
 `kdf` = `kdf_keccak`; `fe` = `fuzzy_extractor`; `puf` =
 `kp_puf_top` dùng 128 LUT RO Xilinx; `seedctl` = KDF cùng controller đường
 seed nội bộ thử nghiệm. Client/Server cố định `k=2`; các input
@@ -19,7 +20,8 @@ FPGA_SPLIT_MEMORY_GIB=4 VIVADO=/media/donglong/tools/Xilinx/Vivado/2020.1/bin/vi
   bash experiments/fpga_split/run_ooc.sh client arty35t_probe_01
 ```
 
-Thay `client` bằng `server`, `edgecore`, `kdf`, `seedctl`, `fe`, `puf` để đo
+Thay `client` bằng `server`, `edgecore`, `edgefull`, `kdf`, `seedctl`, `fe`,
+`puf` để đo
 tiếp. Cùng `run-id`
 được dùng cho các block khác nhau; mỗi block chỉ được tạo một lần. Mặc định
 target `xc7a35ticsg324-1L`, clock tham chiếu 50 MHz, Vivado một thread,
@@ -51,6 +53,15 @@ quan sát/khả năng tối ưu khác khi tích hợp. Timing sau synthesis ch�
 tham khảo, chưa bao gồm route thật và thiếu IO constraints. PUF profile
 không dùng placement/route-lock của Zynq; Arty cần enrollment và kiểm tra
 PUF riêng sau khi placement/routing của chính Arty đã được chốt.
+
+Kết quả chọn hiện tại của `edgefull` là 19.566/20.800 LUT (94,07%), 19.403
+register, 14 BRAM36 và 2 DSP. Đây chỉ là resource candidate OOC; chỉ còn
+1.234 LUT cho toàn bộ transport/confirmation/board glue và chưa chạy P&R.
+Gate kiểm report đã xuất:
+
+```bash
+bash scripts/check_edge_arty35t_candidate.sh
+```
 
 Xuất report đã hoàn tất sang thư mục mới (không copy DCP/log Vivado):
 

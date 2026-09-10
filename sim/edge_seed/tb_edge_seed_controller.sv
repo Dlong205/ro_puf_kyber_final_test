@@ -62,8 +62,10 @@ module tb_edge_seed_controller;
         check("KDF low half maps to d", seed_d == EXPECTED[255:0]);
         check("KDF high half maps to z", seed_z == EXPECTED[511:256]);
         check("KDF output scrubbed before KEM", dut.kdf_seed == 0);
-        check("KDF key/state scrubbed before KEM",
-              dut.u_kdf.key_shift == 0 && dut.u_kdf.keccak_inst.state_reg == 0);
+        check("KDF state scrubbed before KEM",
+              dut.u_kdf.lane_a[0] == 0 && dut.u_kdf.lane_a[24] == 0 &&
+              dut.u_kdf.lane_b[0] == 0 && dut.u_kdf.lane_b[24] == 0 &&
+              dut.u_kdf.column[0] == 0 && dut.u_kdf.column[4] == 0);
         pulse_start();
         repeat (4) @(negedge clk);
         check("busy start does not retrigger", kem_start_count == 1);

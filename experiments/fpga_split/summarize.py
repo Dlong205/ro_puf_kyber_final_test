@@ -33,7 +33,7 @@ def export(run, destination):
         raise ValueError("Output exists: choose a fresh directory")
     blocks = []
     payloads = []
-    for block in ("server", "client", "edgecore", "kdf", "seedctl", "fe", "puf"):
+    for block in ("server", "client", "edgecore", "edgefull", "kdf", "seedctl", "fe", "puf"):
         folder = run / block
         if not (folder / "COMPLETE").is_file():
             continue
@@ -70,7 +70,7 @@ def export(run, destination):
         output = destination / relative
         output.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, output)
-    summary = {"scope": "OOC synthesis only; not routed, board tested or full Edge fit",
+    summary = {"scope": "OOC synthesis only; not routed, board tested or proof of board fit",
                "run": run.name, "blocks": blocks}
     (destination / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(json.dumps(summary, indent=2))

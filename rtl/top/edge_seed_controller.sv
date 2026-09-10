@@ -38,7 +38,7 @@ module edge_seed_controller (
     assign done      = (state == ST_DONE);
     assign kem_start = (state == ST_KEM_START);
 
-    kdf_keccak u_kdf (
+    kdf_keccak_compact u_kdf (
         .clk(clk),
         .rst_n(rst_n),
         .zeroize(kdf_zeroize),

@@ -1,0 +1,87 @@
+{
+  "scope": "OOC synthesis only; not routed, board tested or proof of board fit",
+  "run": "arty35t_edgefull_compact_handoff_20260910",
+  "blocks": [
+    {
+      "block": "edgefull",
+      "metadata": {
+        "block": "edgefull",
+        "top": "edge_puf_mlkem_core",
+        "part": "xc7a35ticsg324-1L",
+        "clock_period_ns": "20.000",
+        "flow": "synthesis_out_of_context_only",
+        "vivado": "2020.1",
+        "k": "2",
+        "puf_backend": "xilinx_lut"
+      },
+      "resources": {
+        "lut": {
+          "used": 19566.0,
+          "available": 20800.0
+        },
+        "registers": {
+          "used": 19403.0,
+          "available": 41600.0
+        },
+        "bram36_tiles": {
+          "used": 14.0,
+          "available": 50.0
+        },
+        "dsp": {
+          "used": 2.0,
+          "available": 90.0
+        }
+      },
+      "report_sha256": {
+        "COMPLETE": "474bd27031acba3a6e7641c536696204b1a3758a85c1a3ebd952b634cf381be1",
+        "metadata.tsv": "d4f0fd43f01875f69cb09be117ca10b4d1b45b121b8c5b0fdde4d2efaeef3616",
+        "source_manifest.sha256": "84adb5dd3aa5212cf2f80001f3253a0c3971057ae53045b4b3c91b0ab000fc68",
+        "source_commit.txt": "449ee9387890051396292677bd3c07890b1c60e9a150c3039990c2e2bbd56779",
+        "source_worktree_status.txt": "780f5d253951ba9ee5644ccd9c136a58ea3a1849de219510255ecb7e9530b780",
+        "inputs.txt": "f891c4b7e5287800b6e6ac52887ae2b027a82d8fd74c2c5c2bbcaa245f9edbd2",
+        "utilization.rpt": "500c6df0e71d636c1f8aba703881bc242d672fd354a30af36e884a424286cad7",
+        "hierarchy.rpt": "56e6608286790c3af07868b75210464a86348d2326ed074ace8702bd4b0b68c8",
+        "timing_preliminary.rpt": "83f50c6dff821a1bcedb971e8741d5147de31f6904c0bb8fa55fb4ee73ba61a4",
+        "check_timing.rpt": "e27f9b05cf302cc333a8dbbce8031f1f2a68f59c920da8a992a142df55233ab6"
+      },
+      "diagnostics": {
+        "warning_lines": 216,
+        "critical_warnings": [
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]",
+          "CRITICAL WARNING: [Synth 8-295] found timing loop. [/home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_fpga_delivery/rtl/puf/kp_ro_cell_xilinx.sv:6]"
+        ],
+        "errors": []
+      }
+    }
+  ]
+}

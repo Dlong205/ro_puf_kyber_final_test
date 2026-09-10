@@ -1,15 +1,18 @@
-# Contract điều khiển Edge không CPU — bản 0.1
+# Contract điều khiển Edge không CPU — bản 0.2
 
-Trạng thái: **đang triển khai**, chưa phải interface freeze. Phạm vi hiện có
-là đường `FE key → KDF → d,z → scrub → Kyber_Server`; FE/PUF vật lý, framed
-stream/SPI và confirmation chưa được kết nối.
+Trạng thái: **đang triển khai**, chưa phải interface freeze. Đường functional
+hiện có là `FE key → KDF compact → d,z → scrub → Kyber_Server`. Wrapper
+`edge_puf_mlkem_core` đã nối thêm RO-PUF và fuzzy extractor thật và qua OOC
+synthesis. Unit test FSM xác nhận khóa FE còn hợp lệ đúng cạnh KDF chốt rồi
+được xóa ngay sau handoff; chưa có simulation end-to-end với toàn bộ module
+thật. Framed stream/SPI và confirmation chưa được kết nối.
 
 ## Chuỗi giao dịch
 
 ```text
 IDLE
   -> nhận start + FE key 192 bit
-  -> KDF SHAKE256 tạo 512 bit
+  -> KDF SHAKE256 compact tạo 512 bit
   -> chốt d = word 0..7, z = word 8..15
   -> scrub key/output/state KDF
   -> pulse kem_start với d,z ổn định
@@ -70,11 +73,12 @@ Wrapper resource OOC cố ý đưa seed ra biên để synthesis không xóa log
 - Test scrub sequencer/control plane: thứ tự KDF scrub, quét đủ dải KEM,
   one-cycle start/done, abort và idle-zeroize — PASS ở controller-level.
 - `edge_mlkem_core` nối control plane vào `Kyber_Server`: valid loopback khớp
-  khóa, ciphertext sửa bị reject, hai đường cùng 21.585 chu kỳ, zeroize xóa K
+  khóa, ciphertext sửa bị reject, hai đường cùng 21.850 chu kỳ, zeroize xóa K
   và đưa Server idle — PASS. Ca invalid integration kiểm hành vi/mismatch;
   oracle `J(z||c)` bit-exact độc lập vẫn dựa trên gate v4 hiện có.
-- Một ca valid và một ca ciphertext sửa đều đạt `secret_valid` ở 19.535 chu
-  kỳ; tổng gồm scrub cuối là 21.585 chu kỳ. Đây chưa phải chứng minh
+- Một ca valid và một ca ciphertext sửa đều đạt `secret_valid` ở 19.800 chu
+  kỳ; tổng gồm scrub cuối là 21.850 chu kỳ. KDF compact riêng PASS KAT
+  SHAKE256 bit-exact ở 411 chu kỳ và zeroize. Đây chưa phải chứng minh
   constant-time tổng quát. Cần thêm: framed stream backpressure/reset,
   KAT KeyGen/Decaps qua API Edge, confirmation và CDC.
 - Mọi thay đổi chia sẻ Keccak phải giữ test KDF/FIPS 202/ML-KEM/zeroize và
@@ -85,8 +89,9 @@ Chạy gate controller-level hiện tại:
 ```bash
 bash scripts/check_edge_control.sh
 bash scripts/check_edge_mlkem.sh
+bash scripts/check_edge_arty35t_candidate.sh
 ```
 
-Hai manifest `edge_control_v01.sha256` và `edge_mlkem_integration_v01.sha256`
+Hai manifest `edge_control_v02.sha256` và `edge_mlkem_integration_v02.sha256`
 khóa controller và lớp tích hợp. Đây là manifest phát triển riêng, không thay
 thế manifest crypto candidate v4 hoặc tạo freeze/tag mới.

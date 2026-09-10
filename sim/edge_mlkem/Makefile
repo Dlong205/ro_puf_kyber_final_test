@@ -32,7 +32,7 @@ KYBER := ../../rtl/kyber/ref/Kyber_Server.v \
          ../../rtl/kyber/ref/fifo_wrappers.v ../../rtl/kyber/ref/LUT.v \
          ../../rtl/kyber/ref/mux4to2.v ../../rtl/kyber/ref/pattern.v \
          ../../rtl/kyber/ref/reduc.v
-CONTROL := ../../rtl/top/kdf_keccak.sv \
+CONTROL := ../../rtl/top/kdf_keccak_compact.sv \
            ../../rtl/top/edge_seed_controller.sv \
            ../../rtl/top/edge_kem_scrub_controller.sv \
            ../../rtl/top/edge_control_plane.sv \

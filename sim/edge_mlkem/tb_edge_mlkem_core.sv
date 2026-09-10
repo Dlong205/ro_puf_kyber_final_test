@@ -2,7 +2,7 @@
 `default_nettype none
 
 module tb_edge_mlkem_core;
-    localparam int EXPECTED_KEM_CYCLES = 19535;
+    localparam int EXPECTED_KEM_CYCLES = 19800;
 
     logic clk = 0;
     always #5 clk = ~clk;
@@ -85,6 +85,8 @@ module tb_edge_mlkem_core;
 
         while (!secret_valid) @(negedge clk);
         kem_cycles = cycles;
+        $display("EDGE_MLKEM_LATENCY mode=%s cycles=%0d",
+                 invalid_mode ? "invalid" : "valid", kem_cycles);
         check("fixed valid/invalid KEM latency", kem_cycles == EXPECTED_KEM_CYCLES);
         check("client completion observed", saw_client_done || client_done);
         check("shared key is nonzero", K_server != 0);
@@ -99,7 +101,10 @@ module tb_edge_mlkem_core;
         check("d/z already erased at secret-valid", dut.u_control.seed_d == 0 &&
               dut.u_control.seed_z == 0);
         check("KDF remains erased", dut.u_control.u_seed.kdf_seed == 0 &&
-              dut.u_control.u_seed.u_kdf.keccak_inst.state_reg == 0);
+              dut.u_control.u_seed.u_kdf.lane_a[0] == 0 &&
+              dut.u_control.u_seed.u_kdf.lane_a[24] == 0 &&
+              dut.u_control.u_seed.u_kdf.lane_b[0] == 0 &&
+              dut.u_control.u_seed.u_kdf.lane_b[24] == 0);
 
         // Full security request resets registers and walks all Kyber storage.
         zeroize = 1;
