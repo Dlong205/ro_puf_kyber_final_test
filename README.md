@@ -79,7 +79,7 @@ Arty, CDC sign-off và P&R vẫn còn mở.
 | ML-KEM-512 theo FIPS 203 | **HOÀN THÀNH functional nội bộ**; v4 đã test board; không phải chứng nhận |
 | Crypto RTL freeze | **CANDIDATE v4**; offline/Vivado/board PASS, còn review độc lập trước khi freeze |
 | FPGA implementation | **PASS** candidate v4 ở 50 MHz; artifact root được chấp nhận vẫn là RC1 |
-| Edge trên Arty A7-35T | **CONDITIONAL OOC FIT**: 19.566/20.800 LUT; chưa P&R/board/transport |
+| Edge trên Arty A7-35T | **CONDITIONAL OOC FIT**: 19.566/20.800 LUT; PUF-only board PASS nhưng full Edge chưa P&R/board/transport |
 | Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
 | Qualification RO-PUF | **CHƯA HOÀN THÀNH**: thiếu same-root trên full-SoC, PVT, power-cycle và nhiều board |
 | ASIC front-end | **ĐANG TRIỂN KHAI**: top/reset/filelist/manifest và structural lint đã có; chưa có PDK/backend |
@@ -294,6 +294,17 @@ make -j1 fuzzy-characterization
 make -j1 puf-characterization-sim
 make -j1 -C sim/puf_characterization CLKS_PER_BIT=434
 make -j1 puf-metrics-test
+```
+
+Bring-up PUF-only trên Arty A7-35T ngày 2026-09-10 đã PASS bitgen, timing
+100 MHz, JTAG/UART và 10.000 mẫu: HD tối đa 6, 0 mẫu vượt BCH `t=8`. Placement
+và routing RO chưa khóa; chỉ số này không được suy sang full Edge. Xem
+[`docs/HARDWARE_TEST_REPORT_ARTY_PUF_2026-09-10.md`](docs/HARDWARE_TEST_REPORT_ARTY_PUF_2026-09-10.md).
+
+```sh
+make -j1 arty-puf-characterization-bitstream VIVADO=/absolute/path/to/vivado
+make -j1 arty-puf-characterization-program VIVADO=/absolute/path/to/vivado
+make -j1 arty-puf-raw-characterize PUF_SAMPLES=1000
 ```
 
 Image PUF-only đo response thô dùng project riêng và map 128 LUT từ RC1:

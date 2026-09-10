@@ -199,6 +199,21 @@ def main():
         "--report",
         help="Optional JSON summary path; raw responses are never written",
     )
+    parser.add_argument(
+        "--target-part",
+        default="xc7z020clg400-2",
+        help="FPGA part used to build the supplied bitstream",
+    )
+    parser.add_argument(
+        "--ro-placement-locked",
+        action="store_true",
+        help="Record that RO cell LOC/BEL placement is constrained",
+    )
+    parser.add_argument(
+        "--ro-routing-locked",
+        action="store_true",
+        help="Record that RO routing is fixed by explicit route constraints",
+    )
     args = parser.parse_args()
     if args.count <= 0:
         parser.error("--count must be greater than zero")
@@ -221,14 +236,14 @@ def main():
         "elapsed_seconds": elapsed,
         "board_count": 1,
         "top": "Puf_Characterization_Top",
-        "target_part": "xc7z020clg400-2",
+        "target_part": args.target_part,
         "seed_hex": "42",
         "ref_cycles": 255,
         "response_bits": RAW_BITS,
         "lfsr_period": 255,
         "repeated_challenge_count": REPEATED_CHALLENGE_COUNT,
-        "ro_lut_loc_bel_locked": True,
-        "ro_routing_locked": False,
+        "ro_lut_loc_bel_locked": args.ro_placement_locked,
+        "ro_routing_locked": args.ro_routing_locked,
         "release_equivalence_established": False,
         "local_bitstream_sha256": sha256_file(bitstream_path),
         "bitstream_identity_scope": (

@@ -4,8 +4,9 @@ Ngày 2026-09-09. Nhánh `codex/fpga-v2-split`, RTL mật mã giữ nguyên tạ
 `73988d6`; wrapper đo cố định `k=2` nằm trong `experiments/fpga_split/`.
 Kết quả baseline ngày 09-09 được giữ để đối chiếu. Cập nhật 10-09 bổ sung
 KDF compact và top tích hợp `edge_puf_mlkem_core` có RO-PUF, FE, KDF, scrub
-và KeyGen/Decaps. Tất cả vẫn là **synthesis out-of-context**: chưa có
-transport/confirmation, P&R, bitstream Arty hoặc kiểm thử board.
+và KeyGen/Decaps. Full Edge vẫn chỉ là **synthesis out-of-context**: chưa có
+transport/confirmation, P&R, bitstream hoặc kiểm thử board. Một ảnh PUF-only
+riêng đã chạy Arty ngày 10-09; kết quả đó không chứng minh full Edge fit.
 
 ## Phương pháp
 
@@ -88,6 +89,12 @@ Kết luận cho A7-35T chuyển từ NO-GO tuyệt đối sang **CONDITIONAL tr
 Thiết kế đã nằm dưới capacity nhưng headroom quá nhỏ để thêm giao tiếp một
 cách tùy ý. Không được tuyên bố fit board cho đến khi có board top tối giản,
 constraint đúng part/pin/clock, placement/route, timing closure và test thật.
+
+Bring-up PUF-only sau đó đã PASS 100 MHz và 10.000 mẫu trên một board, HD tối
+đa 6 và 0 mẫu vượt BCH `t=8`. Xem
+[báo cáo phần cứng Arty PUF](HARDWARE_TEST_REPORT_ARTY_PUF_2026-09-10.md).
+Placement/routing PUF chưa khóa và đây không phải board-top Edge, nên quyết
+định full Edge vẫn giữ **CONDITIONAL OOC FIT**.
 
 Trong hierarchy của `server`, `hash` dùng 8.166 LUT, riêng sponge dùng
 7.736 LUT. Cần đo chi phí state/permutation/control và chốt lịch ownership

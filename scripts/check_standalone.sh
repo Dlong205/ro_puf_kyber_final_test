@@ -23,6 +23,7 @@ required=(
   firmware/main.c
   firmware/firmware.hex
   constraints/kp_zynq_7020.xdc
+  constraints/puf_characterization_arty_a7_35t.xdc
   constraints/ro_placement_rc1_zynq7020.xdc
   constraints/ro_physical_lock_rc1_zynq7020.xdc
   constraints/ro_physical_fingerprint_rc1_zynq7020.tsv
@@ -30,6 +31,10 @@ required=(
   scripts/create_puf_characterization_project.tcl
   scripts/build_puf_characterization.tcl
   scripts/program_puf_characterization.tcl
+  scripts/create_arty_puf_characterization_project.tcl
+  scripts/build_arty_puf_characterization.tcl
+  scripts/program_arty_puf_characterization.tcl
+  scripts/detect_jtag.tcl
   scripts/ro_physical_common.tcl
   scripts/export_ro_physical_lock.tcl
   scripts/audit_ro_physical_lock.tcl

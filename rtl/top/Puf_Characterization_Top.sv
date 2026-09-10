@@ -2,7 +2,9 @@
 
 // Standalone PUF-only top for laboratory characterization. It intentionally
 // exposes raw responses over UART and must not be shipped as a release image.
-module Puf_Characterization_Top(
+module Puf_Characterization_Top #(
+    parameter integer UART_CLKS_PER_BIT = 434
+)(
     input  wire       CLK100MHZ,
     input  wire [1:0] SW,
     input  wire       UART_RXD,
@@ -39,7 +41,7 @@ module Puf_Characterization_Top(
         .response(puf_response)
     );
 
-    puf_characterization_uart #(.CLKS_PER_BIT(434)) u_uart (
+    puf_characterization_uart #(.CLKS_PER_BIT(UART_CLKS_PER_BIT)) u_uart (
         .clk(clk),
         .rst_n(por_done),
         .uart_rx_i(UART_RXD),
