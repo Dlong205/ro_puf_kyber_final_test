@@ -1,6 +1,6 @@
 # Trạng thái xác minh — integration `0.2.0-rc2-dev`, artifact `0.2.0-rc1`
 
-Bằng chứng cập nhật đến **2026-09-10**. Nhánh làm việc tích hợp là
+Bằng chứng cập nhật đến **2026-09-12**. Nhánh làm việc tích hợp là
 `codex/asic-frontend-mlkem512`, tách từ `codex/fips202-mlkem`; artifact FPGA được chấp nhận nằm tại tag
 `fpga-mlkem512-0.2.0-rc1`. Tag `fpga-rc4-baseline` chỉ được giữ làm mốc so
 sánh Kyber/FPGA cũ. Các kết quả characterization và physical route-lock sau
@@ -14,13 +14,15 @@ Cập nhật phát triển **2026-09-09—10**: nhánh `codex/fpga-v2-split` tá
 Arty-35T: KeyGen/Decaps 11.100 LUT, Encaps 13.687, KDF legacy 9.129, FE 4.090,
 PUF 197. Bản `edgecore` đầu tiên dùng 25.540 LUT (122,79%) và không fit. Đường
 Edge sau đó được thay bằng KDF SHAKE256 compact; full top
-`edge_puf_mlkem_core` nối RO-PUF + FE + KDF + scrub + KeyGen/Decaps đạt
-**19.566/20.800 LUT (94,07%)**, 19.403 register, 14 BRAM36 và 2 DSP. Xem
-[report và giới hạn](FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md). Kết luận mới
-là **CONDITIONAL OOC FIT**, không phải board fit: biên LUT chỉ 1.234 và chưa
-có framed transport/confirmation, pin/clock constraint, P&R, timing closure
-hay bitstream Arty. Các kết quả board ngày 08-09 là lịch sử của Zynq, không
-chứng minh Edge image mới đã chạy trên Arty.
+`edge_puf_mlkem_core` nối RO-PUF + FE + KDF + scrub + KeyGen/Decaps đã
+place/route ở 100 MHz với **19.257/20.800 LUT logic (92,58%)**, 19.402
+register, 14 BRAM tile và 2 DSP. Post-route optimization đạt WNS +0,072 ns,
+WHS +0,058 ns, 0 net chưa route. Xem [report và giới hạn resource ban đầu](FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md)
+và [timing closure 100 MHz](ARTY_A7_35T_100MHZ_CLOSURE_2026-09-12.md). Kết
+luận mới là **OOC TIMING/RESOURCE FIT**, không phải board fit: chưa có framed
+transport/confirmation, pin/I/O constraint hay bitstream full Edge Arty. Các
+kết quả board ngày 08-09 là lịch sử của Zynq, không chứng minh Edge image mới
+đã chạy trên Arty.
 
 Controller đã PASS KDF compact thật, mapping `d/z`, busy/held-start,
 abort/no-late-start, scrub state và quét RAM Kyber. KDF compact PASS KAT
@@ -37,7 +39,7 @@ stream/backpressure, confirmation, CDC sign-off và board top vẫn còn mở.
 | ML-KEM-512/FIPS 203 | **DONE functional nội bộ** | KAT/oracle, regression và board PASS; còn review độc lập |
 | Crypto RTL freeze cuối | **CANDIDATE v4** | Offline, Vivado và đúng-image board PASS; còn review độc lập trước freeze/promote |
 | FPGA RC nội bộ | **GO cho RC1 đã tag** | Candidate v4 đã có build/board evidence cách ly nhưng chưa thay artifact RC1 ở root |
-| Edge Arty-35T | **CONDITIONAL OOC FIT** | 94,07% LUT; PUF-only đã chạy board, full Edge vẫn cần board top cực gọn và full P&R/timing/board |
+| Edge Arty-35T | **OOC 100 MHz PASS** | 92,58% LUT logic, WNS +0,072 ns, WHS +0,058 ns; full Edge vẫn cần board top/transport/bitstream/test |
 | Physical reproducibility của RO | **DONE cho full-SoC RC1** | Hai build sạch khớp 136 endpoint/128 route; không thay thế qualification vật lý |
 | Freeze RO-PUF | **NO-GO** | Thiếu same-root full-SoC, count-margin, cold/warm boot, PVT, aging và nhiều board |
 | ASIC front-end P0/P2 | **ĐANG TRIỂN KHAI** | Top/reset/filelist/elaboration PASS; accelerator zeroize đã thêm, còn PDK/memory/CPU-bus/DFT/security findings |
@@ -58,7 +60,7 @@ stream/backpressure, confirmation, CDC sign-off và board top vẫn còn mở.
 | SHAKE256 KDF known-answer | PASS bit-exact với datapath cố định, cycle 148 |
 | Edge SHAKE256 compact | PASS KAT bit-exact ở cycle 411 và zeroize; chỉ dùng cho nhánh Edge |
 | Edge valid/invalid + scrub | PASS cùng 19.800 cycle đến secret, 21.850 cycle tổng |
-| Full Edge OOC Arty-35T | PASS tài nguyên 19.566/20.800 LUT; 32 timing-loop warning RO dự kiến; chưa P&R/board |
+| Full Edge OOC Arty-35T | PASS 100 MHz: 19.257/20.800 LUT logic, WNS +0,072 ns, WHS +0,058 ns, route đủ; còn 40 REQP warning cần sửa trước bitstream board |
 | PUF-only Arty-35T | PASS bitgen/timing 100 MHz/JTAG/UART; 10.000 mẫu có HD max 6, 0 mẫu vượt BCH t=8; chưa khóa route/PVT |
 | ML-KEM-512 integrated functional loopback | PASS, cycle 17.338 |
 | AXI register/handshake/accelerator scrub | PASS ở diagnostic và locked-secret; kiểm RAM/FIFO/sponge/core, live abort, stalled RDATA và competing write |

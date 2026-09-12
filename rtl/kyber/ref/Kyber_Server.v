@@ -74,16 +74,6 @@ wire [31:0] keccak_dout;
 reg [2:0] keccak_ctr;
 wire [5:0] squeeze_ctr;
 
-// The rebuilt SHA3 core exposes a ready/valid stream, while the legacy Kyber
-// FSM expects the first digest word to remain stationary until its capture
-// state is active.  Hold the stream and reset only the local word index on the
-// transition into each fixed-size digest capture window.
-wire squeeze_init_early = (state != next_state) &&
-	((next_state == 6'h14) ||
-	 (next_state == 6'h21) ||
-	 (next_state == 6'h2b) ||
-	 (next_state == 6'h2e));
-
 reg [31:0] ififo_din;
 reg ififo_last;
 reg ififo_absorb;
@@ -101,6 +91,23 @@ wire ofifo0_prog_full;
 wire ofifo1_prog_full;
 wire ofifo1_full, ofifo1_empty;
 reg ofifo_ena;
+
+// The rebuilt SHA3 core exposes a ready/valid stream, while the legacy Kyber
+// FSM expects the first digest word to remain stationary until its capture
+// state is active.  Generate the pulse directly from the four incoming arcs.
+// Do not decode next_state here: that made this high-fanout control depend on
+// the complete Server FSM (including FIFO-full/NTT feedback), producing the
+// worst 100 MHz path into hundreds of sponge block_reg clock enables.
+wire state13_stall = ((patt_bit | eta3_bit) & ofifo1_full) |
+			     (~patt_bit & ~eta3_bit & ofifo0_full);
+wire enter_capture_14 = (state == 6'h13) && !state13_stall &&
+			((keccak_ctr == 3'h0) || (keccak_ctr == 3'h6));
+wire enter_capture_21 = (state == 6'h20) && keccak_ready;
+wire enter_capture_2b = (state == 6'h2a) && keccak_ready;
+wire enter_capture_2e = (state == 6'h13) && !state13_stall &&
+			(keccak_ctr == 3'h3) && !ofifo_ena;
+wire squeeze_init_early = enter_capture_14 | enter_capture_21 |
+			  enter_capture_2b | enter_capture_2e;
 
 wire [31:0] IFIFO_dout;
 wire IFIFO_full, IFIFO_empty;
@@ -193,7 +200,7 @@ always @(posedge clk) begin
         state11_delay_ctr <= 0;
         keccak_init_pulse <= 0;
     end else begin
-        if (state == 6'h a && next_state == 6'h 11)
+        if (state == 6'h a)
             state11_delay_ctr <= 0;
 		else if (state == 6'h 11)
 			// J(z || c) spans six SHAKE256 rate blocks.  State 11 waits
@@ -207,7 +214,10 @@ always @(posedge clk) begin
         
         // Start a new hash only on the normal padding path.  The direct a->11
         // path is a continuation of the message already being absorbed.
-        keccak_init_pulse <= (state == 6'h 10 && next_state == 6'h 11);
+        // State 10 has only one exit condition.  Decode that condition
+        // locally so this high-fanout pulse does not inherit the complete
+        // next_state cone (FIFO/NTT feedback included).
+        keccak_init_pulse <= (state == 6'h10 && pad_ctr == 5'h0);
         state <= next_state;
     end
 end

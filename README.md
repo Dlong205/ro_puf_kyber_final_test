@@ -6,7 +6,7 @@
 > bị chặn bởi quyền phân phối Kyber RTL và top-level license. Kết quả hiện tại
 > không phải chứng nhận CAVP/FIPS 140-3 và không phải module mật mã production.
 
-Trạng thái dưới đây dùng bằng chứng đến **2026-09-10**. Nhánh ASIC hiện tại
+Trạng thái dưới đây dùng bằng chứng đến **2026-09-12**. Nhánh ASIC hiện tại
 `codex/asic-frontend-mlkem512` được tách từ integration
 `codex/fips202-mlkem`. Tag `fpga-rc4-baseline` giữ mốc Kyber/FPGA cũ để đối
 chiếu; tag `fpga-mlkem512-0.2.0-rc1` là artifact ML-KEM-512 hiện được chấp nhận.
@@ -59,10 +59,12 @@ và [tooling đo tài nguyên độc lập](experiments/fpga_split/README.md).
 KeyGen/Decaps 11.100 LUT, Encaps 13.687 LUT. Bản `edgecore` cũ dùng KDF lớn
 chiếm 25.540 LUT và không fit. Sau khi thay riêng đường Edge bằng KDF
 SHAKE256 compact bit-exact, top `edge_puf_mlkem_core` gồm RO-PUF + FE + KDF +
-scrub + KeyGen/Decaps dùng **19.566/20.800 LUT (94,07%)**, 19.403 register,
-14 BRAM36 và 2 DSP. Đây là **OOC resource fit có điều kiện**, chưa phải board
-fit: chỉ còn 1.234 LUT, chưa có transport/confirmation, placement/routing,
-constraint chân, timing closure hay bitstream Arty.
+scrub + KeyGen/Decaps đã place/route ở 100 MHz với **19.257/20.800 LUT logic
+(92,58%)**, 19.402 register, 14 BRAM tile và 2 DSP. Post-route physical
+optimization đạt WNS `+0,072 ns`, WHS `+0,058 ns`, 0 net chưa route. Đây là
+**OOC timing/resource fit**, chưa phải board fit vì chưa có transport,
+confirmation, constraint chân/I/O hay bitstream full Edge cho Arty. Xem
+[báo cáo closure 100 MHz](docs/ARTY_A7_35T_100MHZ_CLOSURE_2026-09-12.md).
 
 Contract Edge không CPU đang được triển khai tại
 [docs/EDGE_CONTROL_CONTRACT.md](docs/EDGE_CONTROL_CONTRACT.md). Đường FE key →
@@ -79,7 +81,7 @@ Arty, CDC sign-off và P&R vẫn còn mở.
 | ML-KEM-512 theo FIPS 203 | **HOÀN THÀNH functional nội bộ**; v4 đã test board; không phải chứng nhận |
 | Crypto RTL freeze | **CANDIDATE v4**; offline/Vivado/board PASS, còn review độc lập trước khi freeze |
 | FPGA implementation | **PASS** candidate v4 ở 50 MHz; artifact root được chấp nhận vẫn là RC1 |
-| Edge trên Arty A7-35T | **CONDITIONAL OOC FIT**: 19.566/20.800 LUT; PUF-only board PASS nhưng full Edge chưa P&R/board/transport |
+| Edge trên Arty A7-35T | **OOC 100 MHz PASS**: WNS +0,072 ns, WHS +0,058 ns, 19.257 LUT logic; PUF-only board PASS, full Edge board/transport còn mở |
 | Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
 | Qualification RO-PUF | **CHƯA HOÀN THÀNH**: thiếu same-root trên full-SoC, PVT, power-cycle và nhiều board |
 | ASIC front-end | **ĐANG TRIỂN KHAI**: top/reset/filelist/manifest và structural lint đã có; chưa có PDK/backend |
@@ -110,7 +112,7 @@ gồm đầu ra và điều kiện chuyển từng pha, nằm tại
 | Timing valid/invalid | PASS, cùng 17.338 cycle trong loopback RTL |
 | SHAKE256 KDF KAT | PASS bit-exact với Python `hashlib.shake_256`, cycle 148 |
 | Edge SHAKE256 compact KAT | PASS bit-exact, cycle 411; zeroize PASS |
-| Edge PUF+FE+KDF+KeyGen/Decaps OOC | PASS tài nguyên: 19.566 LUT (94,07%); chưa P&R/board |
+| Edge PUF+FE+KDF+KeyGen/Decaps OOC | PASS 100 MHz: 19.257 LUT logic (92,58%), WNS +0,072 ns, WHS +0,058 ns; chưa board bitstream |
 | Kyber raw single-attempt gate | PASS 1.024/1.024, mismatch 0, retry 0 |
 | Full-system simulation v4 | PASS, 958.516 cycle; protocol 1.3/capability `0x06` |
 | Vivado candidate v4 | PASS: 50.902 LUT sau route, WNS `+3,268 ns`, WHS `+0,037 ns`, 0 routing error |
@@ -131,9 +133,10 @@ Artifact RC1 dùng 49.909/53.200 Slice LUT (`93,81%`); candidate v4 dùng
 50.902 LUT (`95,68%`), 30.958 register, 30,5 BRAM tile và 4 DSP. Candidate v4
 dùng 13.283/13.300 slice (`99,87%`). KDF tích hợp dùng datapath SHAKE256 cố
 định 24-byte → 64-byte để tránh bản sao state 1600-bit của controller tổng
-quát; KDF và full-system đều đã regression lại. Thiết kế vẫn gần đầy chip và
-candidate v4 có setup margin 3,268 ns tại 50 MHz, nên không thể chỉ đổi
-constraint lên 100 MHz mà không tái kiến trúc/pipeline và chạy lại sign-off.
+quát; KDF và full-system đều đã regression lại. Thiết kế Zynq vẫn gần đầy
+chip. Nhánh Edge A7-35T đã đạt 100 MHz sau khi rút gọn control cone của Server
+và chạy post-route physical optimization; kết quả này không được suy ngược
+sang full Zynq candidate v4 nếu chưa chạy lại flow.
 
 ## Cấu trúc
 
