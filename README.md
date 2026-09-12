@@ -59,9 +59,10 @@ và [tooling đo tài nguyên độc lập](experiments/fpga_split/README.md).
 KeyGen/Decaps 11.100 LUT, Encaps 13.687 LUT. Bản `edgecore` cũ dùng KDF lớn
 chiếm 25.540 LUT và không fit. Sau khi thay riêng đường Edge bằng KDF
 SHAKE256 compact bit-exact, top `edge_puf_mlkem_core` gồm RO-PUF + FE + KDF +
-scrub + KeyGen/Decaps đã place/route ở 100 MHz với **19.257/20.800 LUT logic
-(92,58%)**, 19.402 register, 14 BRAM tile và 2 DSP. Post-route physical
-optimization đạt WNS `+0,072 ns`, WHS `+0,058 ns`, 0 net chưa route. Đây là
+scrub + KeyGen/Decaps đã place/route ở 100 MHz với **19.166/20.800 LUT logic
+(92,14%)**, 19.403 register, 14 BRAM tile và 2 DSP. Bản cuối đạt WNS
+`+0,092 ns`, WHS `+0,053 ns`, 0 net chưa route và đã loại 40 warning
+reset–BRAM. Đây là
 **OOC timing/resource fit**, chưa phải board fit vì chưa có transport,
 confirmation, constraint chân/I/O hay bitstream full Edge cho Arty. Xem
 [báo cáo closure 100 MHz](docs/ARTY_A7_35T_100MHZ_CLOSURE_2026-09-12.md).
@@ -81,7 +82,7 @@ Arty, CDC sign-off và P&R vẫn còn mở.
 | ML-KEM-512 theo FIPS 203 | **HOÀN THÀNH functional nội bộ**; v4 đã test board; không phải chứng nhận |
 | Crypto RTL freeze | **CANDIDATE v4**; offline/Vivado/board PASS, còn review độc lập trước khi freeze |
 | FPGA implementation | **PASS** candidate v4 ở 50 MHz; artifact root được chấp nhận vẫn là RC1 |
-| Edge trên Arty A7-35T | **OOC 100 MHz PASS**: WNS +0,072 ns, WHS +0,058 ns, 19.257 LUT logic; PUF-only board PASS, full Edge board/transport còn mở |
+| Edge trên Arty A7-35T | **OOC 100 MHz PASS**: WNS +0,092 ns, WHS +0,053 ns, 19.166 LUT logic; PUF-only board PASS sanity, full Edge board/transport còn mở |
 | Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
 | Qualification RO-PUF | **CHƯA HOÀN THÀNH**: thiếu same-root trên full-SoC, PVT, power-cycle và nhiều board |
 | ASIC front-end | **ĐANG TRIỂN KHAI**: top/reset/filelist/manifest và structural lint đã có; chưa có PDK/backend |
@@ -112,7 +113,7 @@ gồm đầu ra và điều kiện chuyển từng pha, nằm tại
 | Timing valid/invalid | PASS, cùng 17.338 cycle trong loopback RTL |
 | SHAKE256 KDF KAT | PASS bit-exact với Python `hashlib.shake_256`, cycle 148 |
 | Edge SHAKE256 compact KAT | PASS bit-exact, cycle 411; zeroize PASS |
-| Edge PUF+FE+KDF+KeyGen/Decaps OOC | PASS 100 MHz: 19.257 LUT logic (92,58%), WNS +0,072 ns, WHS +0,058 ns; chưa board bitstream |
+| Edge PUF+FE+KDF+KeyGen/Decaps OOC | PASS 100 MHz: 19.166 LUT logic (92,14%), WNS +0,092 ns, WHS +0,053 ns; chưa board bitstream |
 | Kyber raw single-attempt gate | PASS 1.024/1.024, mismatch 0, retry 0 |
 | Full-system simulation v4 | PASS, 958.516 cycle; protocol 1.3/capability `0x06` |
 | Vivado candidate v4 | PASS: 50.902 LUT sau route, WNS `+3,268 ns`, WHS `+0,037 ns`, 0 routing error |

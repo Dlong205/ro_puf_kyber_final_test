@@ -15,9 +15,10 @@ Arty-35T: KeyGen/Decaps 11.100 LUT, Encaps 13.687, KDF legacy 9.129, FE 4.090,
 PUF 197. Bản `edgecore` đầu tiên dùng 25.540 LUT (122,79%) và không fit. Đường
 Edge sau đó được thay bằng KDF SHAKE256 compact; full top
 `edge_puf_mlkem_core` nối RO-PUF + FE + KDF + scrub + KeyGen/Decaps đã
-place/route ở 100 MHz với **19.257/20.800 LUT logic (92,58%)**, 19.402
-register, 14 BRAM tile và 2 DSP. Post-route optimization đạt WNS +0,072 ns,
-WHS +0,058 ns, 0 net chưa route. Xem [report và giới hạn resource ban đầu](FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md)
+place/route ở 100 MHz với **19.166/20.800 LUT logic (92,14%)**, 19.403
+register, 14 BRAM tile và 2 DSP. Bản cuối dùng reset đồng bộ cho scrub
+state/address, đạt WNS +0,092 ns, WHS +0,053 ns, 0 net chưa route và không còn
+warning reset–BRAM `REQP-1839/1840`. Xem [report và giới hạn resource ban đầu](FPGA_SPLIT_RESOURCE_BASELINE_2026-09-09.md)
 và [timing closure 100 MHz](ARTY_A7_35T_100MHZ_CLOSURE_2026-09-12.md). Kết
 luận mới là **OOC TIMING/RESOURCE FIT**, không phải board fit: chưa có framed
 transport/confirmation, pin/I/O constraint hay bitstream full Edge Arty. Các
@@ -39,7 +40,7 @@ stream/backpressure, confirmation, CDC sign-off và board top vẫn còn mở.
 | ML-KEM-512/FIPS 203 | **DONE functional nội bộ** | KAT/oracle, regression và board PASS; còn review độc lập |
 | Crypto RTL freeze cuối | **CANDIDATE v4** | Offline, Vivado và đúng-image board PASS; còn review độc lập trước freeze/promote |
 | FPGA RC nội bộ | **GO cho RC1 đã tag** | Candidate v4 đã có build/board evidence cách ly nhưng chưa thay artifact RC1 ở root |
-| Edge Arty-35T | **OOC 100 MHz PASS** | 92,58% LUT logic, WNS +0,072 ns, WHS +0,058 ns; full Edge vẫn cần board top/transport/bitstream/test |
+| Edge Arty-35T | **OOC 100 MHz PASS** | 92,14% LUT logic, WNS +0,092 ns, WHS +0,053 ns; full Edge vẫn cần board top/transport/bitstream/test |
 | Physical reproducibility của RO | **DONE cho full-SoC RC1** | Hai build sạch khớp 136 endpoint/128 route; không thay thế qualification vật lý |
 | Freeze RO-PUF | **NO-GO** | Thiếu same-root full-SoC, count-margin, cold/warm boot, PVT, aging và nhiều board |
 | ASIC front-end P0/P2 | **ĐANG TRIỂN KHAI** | Top/reset/filelist/elaboration PASS; accelerator zeroize đã thêm, còn PDK/memory/CPU-bus/DFT/security findings |
@@ -60,8 +61,8 @@ stream/backpressure, confirmation, CDC sign-off và board top vẫn còn mở.
 | SHAKE256 KDF known-answer | PASS bit-exact với datapath cố định, cycle 148 |
 | Edge SHAKE256 compact | PASS KAT bit-exact ở cycle 411 và zeroize; chỉ dùng cho nhánh Edge |
 | Edge valid/invalid + scrub | PASS cùng 19.800 cycle đến secret, 21.850 cycle tổng |
-| Full Edge OOC Arty-35T | PASS 100 MHz: 19.257/20.800 LUT logic, WNS +0,072 ns, WHS +0,058 ns, route đủ; còn 40 REQP warning cần sửa trước bitstream board |
-| PUF-only Arty-35T | PASS bitgen/timing 100 MHz/JTAG/UART; 10.000 mẫu có HD max 6, 0 mẫu vượt BCH t=8; chưa khóa route/PVT |
+| Full Edge OOC Arty-35T | PASS 100 MHz: 19.166/20.800 LUT logic, WNS +0,092 ns, WHS +0,053 ns, route đủ; 40 REQP warning đã loại |
+| PUF-only Arty-35T | PASS bitgen/timing 100 MHz/JTAG/UART; replug 1.000 mẫu có HD max 5, 0 mẫu vượt BCH t=8 nhưng worst-bit 45,4%; chưa khóa route/PVT |
 | ML-KEM-512 integrated functional loopback | PASS, cycle 17.338 |
 | AXI register/handshake/accelerator scrub | PASS ở diagnostic và locked-secret; kiểm RAM/FIFO/sponge/core, live abort, stalled RDATA và competing write |
 | Kyber raw gate dài | PASS 1.024/1.024, mismatch 0, recovered 0, max attempts 1 |

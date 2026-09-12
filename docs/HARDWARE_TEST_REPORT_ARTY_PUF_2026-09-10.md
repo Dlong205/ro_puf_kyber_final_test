@@ -67,3 +67,17 @@ Test protocol mô phỏng và 5 unit test metric đều PASS.
 Quyết định: giữ kết quả làm baseline bring-up. Bước đúng tiếp theo là hoàn
 thiện board top/transport tối thiểu của Edge, full P&R trên A7-35T, sau đó mới
 khóa placement/route RO từ checkpoint Edge được chấp nhận và enroll lại.
+
+## Kiểm tra lại sau khi cắm board — 2026-09-12
+
+Board Digilent `210319A278D0A` được nhận qua JTAG/UART, ảnh PUF-only cùng hash
+ở trên được nạp volatile và thu 1.000 mẫu mới. HD so với consensus có mean
+`1,554`, p99 `4`, max `5`; HD so với mẫu enrollment có mean `2,188`, max `5`.
+Không có mẫu nào vượt BCH `t=8`, uniformity trung bình `48,211%` và không có
+response toàn 0/toàn 1.
+
+Kết quả này chỉ xác nhận biên sửa lỗi tại điều kiện hiện tại. Có 11 bit từng
+dao động; bit 218 có minority rate `45,4%`, bit 121 `40,1%` và bit 228 `32,0%`.
+Do placement/routing RO vẫn chưa khóa, đây là **PASS sanity/ECC margin nhưng
+NO-GO cho PUF freeze**. Tóm tắt không chứa raw response nằm tại
+`reports/arty_puf_characterization/hardware_replug_sanity_1000_2026-09-12.json`.

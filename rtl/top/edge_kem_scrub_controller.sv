@@ -44,7 +44,12 @@ module edge_kem_scrub_controller #(
     assign core_start = (state == ST_START);
     assign scrub_en   = (state == ST_SCRUB);
 
-    always @(posedge clk or negedge rst_n) begin
+    // Keep the scrub state/address reset synchronous.  Both signals select
+    // inferred BRAM ports inside Kyber_Server; an asynchronous reset here
+    // propagates onto RAM address pins and triggers Vivado REQP-1839/1840.
+    // core_reset remains asserted directly from rst_n, so the accelerator is
+    // still held inactive immediately while this sequencer waits for a clock.
+    always @(posedge clk) begin
         if (!rst_n) begin
             state              <= ST_IDLE;
             launch_after_scrub <= 1'b0;
