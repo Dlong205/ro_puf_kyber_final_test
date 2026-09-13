@@ -12,6 +12,22 @@ VIVADO=/absolute/path/to/vivado \
 
 Flow luôn dùng một worker, mặc định giới hạn 4 GiB RAM và không cho swap storm.
 
+## Board top chẩn đoán
+
+`run_edge_arty_diag.sh` tổng hợp full Edge cùng UART và pinout Arty A7-35T.
+Với RTL hiện tại, đây là phép thử capacity có chủ đích và dừng NO-FIT tại
+26.815/20.800 Slice LUT; nó không sinh bitstream release. UART riêng vẫn có
+testbench bit-level PASS trong `sim/edge_uart`.
+
+```sh
+make -j1 -C sim/edge_uart clean check
+VIVADO=/absolute/path/to/vivado \
+  bash experiments/fpga_100mhz/run_edge_arty_diag.sh ten_luot_chay
+```
+
+Chi tiết và các phương án checkpoint đã loại được ghi tại
+`docs/ARTY_A7_35T_BOARD_TOP_CAPACITY_2026-09-13.md`.
+
 Kết quả tham chiếu ngày 2026-09-12 cho `xc7a35ticsg324-1L`:
 
 - 19.257 LUT logic (92,58%), 14 BRAM, 2 DSP;

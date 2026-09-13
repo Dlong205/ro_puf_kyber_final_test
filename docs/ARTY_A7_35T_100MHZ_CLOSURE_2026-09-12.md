@@ -4,7 +4,8 @@
 
 Full `edge_puf_mlkem_core` đã đạt timing OOC ở 100 MHz trên part
 `xc7a35ticsg324-1L`. Đây là bằng chứng core fit và đóng timing; chưa phải
-bitstream board vì top OOC chưa gán chân I/O/UART của Arty.
+bitstream board. Phép thử board top/UART ngày 2026-09-13 đã xác nhận NO-FIT;
+xem [báo cáo dung lượng board top](ARTY_A7_35T_BOARD_TOP_CAPACITY_2026-09-13.md).
 
 ## Kết quả cuối
 
@@ -68,7 +69,9 @@ scrub và ML-KEM valid/invalid đều PASS sau thay đổi RTL. Bộ bằng ch�
 
 ## Phạm vi chưa được chứng minh
 
-- Chưa tạo/nạp bitstream full Edge cho Arty vì chưa có board top và pinout.
+- Đã bổ sung board top/pinout/UART chẩn đoán ngày 2026-09-13, nhưng synthesis
+  xác nhận NO-FIT (26.815/20.800 Slice LUT); vì vậy không tạo/nạp bitstream
+  full Edge sai điều kiện lên Arty-35T.
 - Chưa có timing sign-off với package I/O delay thực tế.
 - Placement/routing RO đã được khóa và audit trong full Edge OOC. Vẫn cần board
   top và đúng image khóa RO để kiểm tra power-cycle/PVT/count-margin/nhiều board;
@@ -77,8 +80,9 @@ scrub và ML-KEM valid/invalid đều PASS sau thay đổi RTL. Bộ bằng ch�
   có chủ đích (32 `LUTLP-2`, 128 `PDCN-1569`) và 6 warning tối ưu vật lý/DSP
   (2 `DPOP-2`, 2 `PDRC-153`, 2 `PLHOLDVIO-2`). Không còn warning
   `REQP-1839/1840`.
-- JTAG/UART đã được nhận lại và ảnh PUF-only đã được nạp/test; full Edge vẫn
-  chưa có board top/transport nên chưa thể nạp image tích hợp.
+- JTAG/UART đã được nhận lại và ảnh PUF-only đã được nạp/test. Board top/UART
+  full Edge đã được viết và unit-test, nhưng không fit A7-35T nên không có
+  image tích hợp để nạp.
 
 Các báo cáo cuối nằm trong
 `reports/fpga_100mhz_arty35t_syncscrub_2026-09-12/`; thư mục không có hậu tố

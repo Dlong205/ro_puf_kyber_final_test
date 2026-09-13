@@ -7,6 +7,8 @@ required=(
   rtl/top/Kyber_System_Top.sv
   rtl/top/Puf_Characterization_Top.sv
   rtl/top/puf_characterization_uart.sv
+  rtl/top/Edge_Arty_Diagnostic_Top.sv
+  rtl/top/edge_uart_transport.sv
   rtl/puf/kp_puf_top.sv
   rtl/puf/kp_ro_cell.sv
   rtl/puf/kp_ro_cell_model.sv
@@ -24,6 +26,7 @@ required=(
   firmware/firmware.hex
   constraints/kp_zynq_7020.xdc
   constraints/puf_characterization_arty_a7_35t.xdc
+  constraints/edge_arty_diagnostic_35t.xdc
   constraints/ro_placement_rc1_zynq7020.xdc
   constraints/ro_physical_lock_rc1_zynq7020.xdc
   constraints/ro_physical_fingerprint_rc1_zynq7020.tsv
@@ -35,6 +38,8 @@ required=(
   scripts/build_arty_puf_characterization.tcl
   scripts/program_arty_puf_characterization.tcl
   scripts/detect_jtag.tcl
+  experiments/fpga_100mhz/edge_arty_diag_implement.tcl
+  experiments/fpga_100mhz/run_edge_arty_diag.sh
   scripts/ro_physical_common.tcl
   scripts/export_ro_physical_lock.tcl
   scripts/audit_ro_physical_lock.tcl
@@ -44,6 +49,8 @@ required=(
   scripts/check_ro_route_repro.sh
   scripts/inspect_ro_routes.tcl
   sim/system/system_uart_main.cpp
+  sim/edge_uart/tb_edge_uart_transport.sv
+  docs/ARTY_A7_35T_BOARD_TOP_CAPACITY_2026-09-13.md
   docs/board_pin_mapping.xls
   docs/RO_PHYSICAL_REPRODUCIBILITY_2026-09-05.md
   reports/ro_physical_fingerprint.tsv

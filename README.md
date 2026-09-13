@@ -63,8 +63,10 @@ scrub + KeyGen/Decaps đã place/route ở 100 MHz với **19.166/20.800 LUT log
 (92,14%)**, 19.403 register, 14 BRAM tile và 2 DSP. Bản cuối đạt WNS
 `+0,092 ns`, WHS `+0,053 ns`, 0 net chưa route và đã loại 40 warning
 reset–BRAM. Đây là
-**OOC timing/resource fit**, chưa phải board fit vì chưa có transport,
-confirmation, constraint chân/I/O hay bitstream full Edge cho Arty. Xem
+**OOC timing/resource fit**, chưa phải board fit. Board top, UART chẩn đoán và
+constraint chân đã được bổ sung sau đó, nhưng synthesis xác nhận NO-FIT
+(26.815/20.800 Slice LUT); confirmation release-grade và bitstream full Edge
+vì vậy chưa có. Xem
 [báo cáo closure 100 MHz](docs/ARTY_A7_35T_100MHZ_CLOSURE_2026-09-12.md).
 Một build OOC tiếp theo đã khóa placement toàn vùng PUF và fixed route 128 RO,
 đạt WNS `+0,053 ns`, WHS `+0,046 ns`, 0 routing error và fingerprint khớp
@@ -76,8 +78,9 @@ KDF compact → `d,z` → scrub → `Kyber_Server` đã PASS valid/invalid loopb
 thời gian cố định và zeroize. Wrapper OOC đã nối cả PUF và FE thật; wrapper
 này đã qua test FSM handoff với stub và elaboration/synthesis, chưa có test
 functional end-to-end dùng toàn bộ module thật. Đây
-chưa phải board top/interface freeze: framed stream, confirmation, constraint
-Arty, CDC sign-off và P&R vẫn còn mở.
+chưa phải board interface freeze: UART chẩn đoán đã PASS unit test nhưng full
+board top NO-FIT; framed transport release-grade, confirmation, CDC sign-off
+và P&R trên target đủ lớn vẫn còn mở.
 
 | Giai đoạn | Trạng thái đúng hiện tại |
 |---|---|
@@ -85,7 +88,7 @@ Arty, CDC sign-off và P&R vẫn còn mở.
 | ML-KEM-512 theo FIPS 203 | **HOÀN THÀNH functional nội bộ**; v4 đã test board; không phải chứng nhận |
 | Crypto RTL freeze | **CANDIDATE v4**; offline/Vivado/board PASS, còn review độc lập trước khi freeze |
 | FPGA implementation | **PASS** candidate v4 ở 50 MHz; artifact root được chấp nhận vẫn là RC1 |
-| Edge trên Arty A7-35T | **OOC 100 MHz + RO LOCK PASS**: v08 WNS +0,053 ns, WHS +0,046 ns, 19.935 LUT logic, route sạch/fingerprint khớp; PUF-only board PASS sanity, full Edge board/transport còn mở |
+| Edge trên Arty A7-35T | **OOC 100 MHz + RO LOCK PASS**, nhưng **full board top + UART NO-FIT**: v08 OOC WNS +0,053 ns, WHS +0,046 ns; board top cần 26.815/20.800 Slice LUT; PUF-only board vẫn PASS |
 | Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
 | Qualification RO-PUF | **CHƯA HOÀN THÀNH**: thiếu same-root trên full-SoC, PVT, power-cycle và nhiều board |
 | ASIC front-end | **ĐANG TRIỂN KHAI**: top/reset/filelist/manifest và structural lint đã có; chưa có PDK/backend |
