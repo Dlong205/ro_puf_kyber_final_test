@@ -25,6 +25,27 @@ Candidate `state10pulse_v05` đầu tiên đóng timing ở WNS +0,072 ns nhưng
 `syncscrub_v06` đổi riêng state/address scrub sang reset đồng bộ, loại toàn bộ
 `REQP-1839/1840`, giảm 91 LUT và đóng timing ở WNS +0,092 ns.
 
+## Bổ sung 2026-09-13: khóa vật lý RO-PUF
+
+Candidate `kdfwidece_puflock_v08` áp dụng khóa placement cho toàn bộ 1.166
+primitive của `u_puf`, LOCK_PINS cho 136 endpoint và FIXED_ROUTE cho 128 net
+RO. Sau khi tách các bank `lane_b` và `seed_out` của KDF thành process riêng
+với enable fanout có giới hạn, bản khóa vật lý đã route 100% và đạt:
+
+| Chỉ tiêu | v08 khóa RO |
+|---|---:|
+| Setup slack (WNS) | +0,053 ns |
+| Hold slack (WHS) | +0,046 ns |
+| LUT logic | 19.935 / 20.800 (95,84%) |
+| Slice LUT tổng | 20.126 / 20.800 (96,76%) |
+| Register | 19.398 / 41.600 (46,63%) |
+| Unrouted / partially routed / routing error | 0 / 0 / 0 |
+
+Validator độc lập xác nhận 136 endpoint và 128 route đều cố định; fingerprint
+v08 khớp byte-for-byte baseline. Regression KDF KAT/zeroize, Edge controller,
+scrub và ML-KEM valid/invalid đều PASS sau thay đổi RTL. Bộ bằng chứng nằm tại
+[`../reports/fpga_100mhz_arty35t_puflock_2026-09-13/`](../reports/fpga_100mhz_arty35t_puflock_2026-09-13/).
+
 ## Thay đổi RTL tạo closure
 
 - Thay decode toàn bộ `next_state` của `squeeze_init_early` bằng bốn cung vào
@@ -49,8 +70,9 @@ Candidate `state10pulse_v05` đầu tiên đóng timing ở WNS +0,072 ns nhưng
 
 - Chưa tạo/nạp bitstream full Edge cho Arty vì chưa có board top và pinout.
 - Chưa có timing sign-off với package I/O delay thực tế.
-- RO-PUF cần khóa placement/routing và kiểm tra lại nhiều build/PVT; timing
-  closure của logic đồng bộ không thay thế qualification vật lý của PUF.
+- Placement/routing RO đã được khóa và audit trong full Edge OOC. Vẫn cần board
+  top và đúng image khóa RO để kiểm tra power-cycle/PVT/count-margin/nhiều board;
+  timing closure của logic đồng bộ không thay thế qualification vật lý của PUF.
 - DRC không có error và còn 166 warning: 160 warning gắn với cấu trúc RO-PUF
   có chủ đích (32 `LUTLP-2`, 128 `PDCN-1569`) và 6 warning tối ưu vật lý/DSP
   (2 `DPOP-2`, 2 `PDRC-153`, 2 `PLHOLDVIO-2`). Không còn warning

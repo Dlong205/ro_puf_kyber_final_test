@@ -1,6 +1,6 @@
 # Trạng thái xác minh — integration `0.2.0-rc2-dev`, artifact `0.2.0-rc1`
 
-Bằng chứng cập nhật đến **2026-09-12**. Nhánh làm việc tích hợp là
+Bằng chứng cập nhật đến **2026-09-13**. Nhánh làm việc tích hợp là
 `codex/asic-frontend-mlkem512`, tách từ `codex/fips202-mlkem`; artifact FPGA được chấp nhận nằm tại tag
 `fpga-mlkem512-0.2.0-rc1`. Tag `fpga-rc4-baseline` chỉ được giữ làm mốc so
 sánh Kyber/FPGA cũ. Các kết quả characterization và physical route-lock sau
@@ -25,6 +25,12 @@ transport/confirmation, pin/I/O constraint hay bitstream full Edge Arty. Các
 kết quả board ngày 08-09 là lịch sử của Zynq, không chứng minh Edge image mới
 đã chạy trên Arty.
 
+Ngày 2026-09-13, full Edge OOC đã PASS thêm một implementation với toàn vùng
+PUF khóa placement, 136 endpoint khóa pin và 128 feedback net khóa route. Bản
+v08 đạt WNS +0,053 ns, WHS +0,046 ns và 0 routing error; fingerprint vật lý
+khớp baseline. Việc này đóng cổng tái lập implementation OOC, nhưng chưa thay
+thế qualification trên board vì chưa có full Edge board image dùng khóa này.
+
 Controller đã PASS KDF compact thật, mapping `d/z`, busy/held-start,
 abort/no-late-start, scrub state và quét RAM Kyber. KDF compact PASS KAT
 bit-exact và zeroize ở 411 chu kỳ. `edge_mlkem_core` nối Server thật đã PASS
@@ -40,7 +46,7 @@ stream/backpressure, confirmation, CDC sign-off và board top vẫn còn mở.
 | ML-KEM-512/FIPS 203 | **DONE functional nội bộ** | KAT/oracle, regression và board PASS; còn review độc lập |
 | Crypto RTL freeze cuối | **CANDIDATE v4** | Offline, Vivado và đúng-image board PASS; còn review độc lập trước freeze/promote |
 | FPGA RC nội bộ | **GO cho RC1 đã tag** | Candidate v4 đã có build/board evidence cách ly nhưng chưa thay artifact RC1 ở root |
-| Edge Arty-35T | **OOC 100 MHz PASS** | 92,14% LUT logic, WNS +0,092 ns, WHS +0,053 ns; full Edge vẫn cần board top/transport/bitstream/test |
+| Edge Arty-35T | **OOC 100 MHz + RO LOCK PASS** | v08: 95,84% LUT logic, WNS +0,053 ns, WHS +0,046 ns, route sạch và fingerprint khớp; vẫn cần board top/transport/bitstream/test |
 | Physical reproducibility của RO | **DONE cho full-SoC RC1** | Hai build sạch khớp 136 endpoint/128 route; không thay thế qualification vật lý |
 | Freeze RO-PUF | **NO-GO** | Thiếu same-root full-SoC, count-margin, cold/warm boot, PVT, aging và nhiều board |
 | ASIC front-end P0/P2 | **ĐANG TRIỂN KHAI** | Top/reset/filelist/elaboration PASS; accelerator zeroize đã thêm, còn PDK/memory/CPU-bus/DFT/security findings |
@@ -62,6 +68,7 @@ stream/backpressure, confirmation, CDC sign-off và board top vẫn còn mở.
 | Edge SHAKE256 compact | PASS KAT bit-exact ở cycle 411 và zeroize; chỉ dùng cho nhánh Edge |
 | Edge valid/invalid + scrub | PASS cùng 19.800 cycle đến secret, 21.850 cycle tổng |
 | Full Edge OOC Arty-35T | PASS 100 MHz: 19.166/20.800 LUT logic, WNS +0,092 ns, WHS +0,053 ns, route đủ; 40 REQP warning đã loại |
+| Full Edge OOC khóa RO Arty-35T | PASS 100 MHz: 19.935/20.800 LUT logic, WNS +0,053 ns, WHS +0,046 ns, 0 routing error; 136 endpoint/128 route và fingerprint PASS |
 | PUF-only Arty-35T | PASS bitgen/timing 100 MHz/JTAG/UART; replug 1.000 mẫu có HD max 5, 0 mẫu vượt BCH t=8 nhưng worst-bit 45,4%; chưa khóa route/PVT |
 | ML-KEM-512 integrated functional loopback | PASS, cycle 17.338 |
 | AXI register/handshake/accelerator scrub | PASS ở diagnostic và locked-secret; kiểm RAM/FIFO/sponge/core, live abort, stalled RDATA và competing write |

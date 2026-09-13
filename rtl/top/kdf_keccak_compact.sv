@@ -31,6 +31,20 @@ module kdf_keccak_compact (
     reg [63:0] lane_b [0:24];
     reg [63:0] column [0:4];
     integer i;
+    integer j;
+
+    // lane_b has 1600 flip-flops but is written in only two states.  Keep the
+    // two enables explicit and bounded-fanout so Vivado can replicate their
+    // decode locally instead of routing one device-wide CE net through the
+    // nearly full Edge implementation.
+    (* keep = "true", max_fanout = 64 *)
+    wire lane_b_clear = (state == ST_IDLE) && start;
+    (* keep = "true", max_fanout = 64 *)
+    wire lane_b_load = (state == ST_RHOPI);
+    (* keep = "true", max_fanout = 64 *)
+    wire seed_out_clear = (state == ST_IDLE) && start;
+    (* keep = "true", max_fanout = 64 *)
+    wire seed_out_load = (state == ST_FINISH);
 
     function automatic [63:0] rol64;
         input [63:0] value;
@@ -121,12 +135,9 @@ module kdf_keccak_compact (
             state       <= ST_IDLE;
             round_index <= 5'd0;
             step_index  <= 3'd0;
-            seed_out    <= 512'd0;
             done        <= 1'b0;
-            for (i = 0; i < 25; i = i + 1) begin
+            for (i = 0; i < 25; i = i + 1)
                 lane_a[i] <= 64'd0;
-                lane_b[i] <= 64'd0;
-            end
             for (i = 0; i < 5; i = i + 1)
                 column[i] <= 64'd0;
         end else begin
@@ -134,10 +145,8 @@ module kdf_keccak_compact (
             case (state)
                 ST_IDLE: begin
                     if (start) begin
-                        for (i = 0; i < 25; i = i + 1) begin
+                        for (i = 0; i < 25; i = i + 1)
                             lane_a[i] <= 64'd0;
-                            lane_b[i] <= 64'd0;
-                        end
                         for (i = 0; i < 5; i = i + 1)
                             column[i] <= 64'd0;
                         // 24-byte message, SHAKE suffix 0x1f at byte 24,
@@ -149,7 +158,6 @@ module kdf_keccak_compact (
                         lane_a[16] <= 64'h8000000000000000;
                         round_index <= 5'd0;
                         step_index  <= 3'd0;
-                        seed_out    <= 512'd0;
                         state       <= ST_COL;
                     end
                 end
@@ -217,8 +225,6 @@ module kdf_keccak_compact (
                 // Rho rotations and Pi permutation are wiring-only and are
                 // captured together into the alternate lane bank.
                 ST_RHOPI: begin
-                    for (i = 0; i < 25; i = i + 1)
-                        lane_b[pi_index(i)] <= rol64(lane_a[i], rho_offset(i));
                     step_index <= 3'd0;
                     state <= ST_CHI;
                 end
@@ -280,8 +286,6 @@ module kdf_keccak_compact (
                 end
 
                 ST_FINISH: begin
-                    seed_out <= {lane_a[7], lane_a[6], lane_a[5], lane_a[4],
-                                 lane_a[3], lane_a[2], lane_a[1], lane_a[0]};
                     done <= 1'b1;
                     state <= ST_IDLE;
                 end
@@ -289,6 +293,35 @@ module kdf_keccak_compact (
                 default: state <= ST_IDLE;
             endcase
         end
+    end
+
+    // Separate the alternate bank from the main state-machine process so the
+    // physical tool sees the bounded-fanout write enables above.  Functional
+    // timing is unchanged: ST_RHOPI loads lane_b and ST_CHI consumes it on the
+    // following cycle.
+    always @(posedge clk or negedge rst_n or posedge zeroize) begin
+        if (!rst_n || zeroize) begin
+            for (j = 0; j < 25; j = j + 1)
+                lane_b[j] <= 64'd0;
+        end else if (lane_b_clear) begin
+            for (j = 0; j < 25; j = j + 1)
+                lane_b[j] <= 64'd0;
+        end else if (lane_b_load) begin
+            for (j = 0; j < 25; j = j + 1)
+                lane_b[pi_index(j)] <= rol64(lane_a[j], rho_offset(j));
+        end
+    end
+
+    // seed_out is another wide, sparsely-written bank.  Giving it its own
+    // bounded-fanout enables avoids a single 512-sink CE net in dense builds.
+    always @(posedge clk or negedge rst_n or posedge zeroize) begin
+        if (!rst_n || zeroize)
+            seed_out <= 512'd0;
+        else if (seed_out_clear)
+            seed_out <= 512'd0;
+        else if (seed_out_load)
+            seed_out <= {lane_a[7], lane_a[6], lane_a[5], lane_a[4],
+                         lane_a[3], lane_a[2], lane_a[1], lane_a[0]};
     end
 endmodule
 

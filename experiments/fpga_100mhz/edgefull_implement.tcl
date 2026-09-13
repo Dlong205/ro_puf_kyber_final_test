@@ -5,10 +5,10 @@ set here [file dirname [file normalize [info script]]]
 set root_dir [file normalize [file join $here ../..]]
 source [file join $root_dir experiments fpga_split sources.tcl]
 
-if {[llength $argv] != 2} {
-    error "usage: edgefull_implement.tcl <part> <absolute-output-directory>"
+if {[llength $argv] < 2 || [llength $argv] > 3} {
+    error "usage: edgefull_implement.tcl <part> <absolute-output-directory> ?ro-lock.xdc?"
 }
-lassign $argv part out_dir
+lassign $argv part out_dir ro_lock_xdc
 if {![regexp {^xc7[A-Za-z0-9-]+$} $part] ||
     [llength [get_parts -quiet $part]] != 1} {
     error "Invalid or unavailable part: $part"
@@ -29,6 +29,17 @@ foreach path [fpga_split::sources edgefull] {
 read_xdc [file join $here clock_100mhz.xdc]
 synth_design -mode out_of_context -top [fpga_split::top edgefull] \
     -part $part -flatten_hierarchy rebuilt
+
+# A complete RO lock is an implementation constraint and therefore resolves
+# only after synthesis has rebuilt the hierarchy.  Keep it optional so the
+# unconstrained feasibility baseline remains reproducible.
+if {[llength $argv] == 3} {
+    set ro_lock_xdc [file normalize $ro_lock_xdc]
+    if {![file isfile $ro_lock_xdc]} {
+        error "RO physical lock not found: $ro_lock_xdc"
+    }
+    read_xdc $ro_lock_xdc
+}
 
 if {[llength [get_cells -hier -quiet -filter {IS_BLACKBOX == 1}]] != 0} {
     error "Unresolved black boxes in Edge design"
@@ -67,6 +78,11 @@ if {[llength $initial_setup_path] &&
     phys_opt_design -directive AggressiveExplore
     route_design
 }
+set route_report [report_route_status -return_string]
+if {![regexp {# of nets with routing errors[^:]*:[[:space:]]*([0-9]+)} \
+        $route_report unused route_errors]} {
+    error "Could not parse routing-error count"
+}
 report_route_status -file [file join $out_dir post_route_status.rpt]
 report_timing_summary -delay_type min_max -report_unconstrained \
     -max_paths 20 -file [file join $out_dir post_route_timing.rpt]
@@ -90,6 +106,10 @@ puts $fd "setup_slack_ns\t$setup_slack"
 puts $fd "hold_slack_ns\t$hold_slack"
 puts $fd "unrouted_nets\t[llength $unrouted]"
 puts $fd "partially_routed_nets\t[llength $partial]"
+puts $fd "routing_errors\t$route_errors"
 close $fd
-puts "EDGE_100MHZ_RESULT setup_slack_ns=$setup_slack hold_slack_ns=$hold_slack unrouted=[llength $unrouted] partial=[llength $partial]"
+puts "EDGE_100MHZ_RESULT setup_slack_ns=$setup_slack hold_slack_ns=$hold_slack unrouted=[llength $unrouted] partial=[llength $partial] routing_errors=$route_errors"
+if {$route_errors != 0} {
+    error "Implementation has $route_errors routing error(s)"
+}
 close_project

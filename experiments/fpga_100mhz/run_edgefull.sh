@@ -8,6 +8,7 @@ run_id=${1:-$(date -u +%Y%m%dT%H%M%SZ)}
 part=${FPGA_100MHZ_PART:-xc7a35ticsg324-1L}
 memory_gib=${FPGA_100MHZ_MEMORY_GIB:-4}
 timeout_duration=${FPGA_100MHZ_TIMEOUT:-30m}
+ro_lock_xdc=${FPGA_100MHZ_RO_LOCK_XDC:-}
 [[ "$run_id" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "Invalid run id" >&2; exit 2; }
 [[ "$memory_gib" =~ ^[1-9][0-9]*$ ]] || { echo "Invalid memory cap" >&2; exit 2; }
 command -v "$vivado_bin" >/dev/null || { echo "Vivado not found: $vivado_bin" >&2; exit 2; }
@@ -28,9 +29,17 @@ sha256sum -- "$script_dir/edgefull_implement.tcl" \
 git rev-parse HEAD > "$out_dir/source_commit.txt"
 git status --porcelain=v1 > "$out_dir/source_worktree_status.txt"
 
+vivado_args=("$part" "$out_dir")
+if [[ -n "$ro_lock_xdc" ]]; then
+    [[ -s "$ro_lock_xdc" ]] || { echo "RO lock not found: $ro_lock_xdc" >&2; exit 2; }
+    ro_lock_xdc=$(realpath -- "$ro_lock_xdc")
+    vivado_args+=("$ro_lock_xdc")
+    sha256sum -- "$ro_lock_xdc" >> "$out_dir/source_manifest.sha256"
+fi
+
 vivado_command=(nice -n 10 timeout --signal=TERM --kill-after=30s "$timeout_duration"
     "$vivado_bin" -mode batch -nojournal -log "$out_dir/vivado.log"
-    -source "$script_dir/edgefull_implement.tcl" -tclargs "$part" "$out_dir")
+    -source "$script_dir/edgefull_implement.tcl" -tclargs "${vivado_args[@]}")
 printf 'Edge 100MHz part=%s memory_cap=%sGiB output=%s\n' "$part" "$memory_gib" "$out_dir"
 if command -v systemd-run >/dev/null && systemctl --user show-environment >/dev/null 2>&1; then
     systemd-run --user --scope --quiet -p "MemoryMax=${memory_gib}G" \

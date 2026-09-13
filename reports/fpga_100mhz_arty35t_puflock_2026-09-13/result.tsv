@@ -1,0 +1,9 @@
+part	xc7a35ticsg324-1L
+clock_period_ns	10.000
+ro_luts	128
+ro_loop_nets	128
+setup_slack_ns	0.053
+hold_slack_ns	0.046
+unrouted_nets	0
+partially_routed_nets	0
+routing_errors	0

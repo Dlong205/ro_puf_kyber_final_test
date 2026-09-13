@@ -6,7 +6,7 @@
 > bị chặn bởi quyền phân phối Kyber RTL và top-level license. Kết quả hiện tại
 > không phải chứng nhận CAVP/FIPS 140-3 và không phải module mật mã production.
 
-Trạng thái dưới đây dùng bằng chứng đến **2026-09-12**. Nhánh ASIC hiện tại
+Trạng thái dưới đây dùng bằng chứng đến **2026-09-13**. Nhánh ASIC hiện tại
 `codex/asic-frontend-mlkem512` được tách từ integration
 `codex/fips202-mlkem`. Tag `fpga-rc4-baseline` giữ mốc Kyber/FPGA cũ để đối
 chiếu; tag `fpga-mlkem512-0.2.0-rc1` là artifact ML-KEM-512 hiện được chấp nhận.
@@ -66,6 +66,9 @@ reset–BRAM. Đây là
 **OOC timing/resource fit**, chưa phải board fit vì chưa có transport,
 confirmation, constraint chân/I/O hay bitstream full Edge cho Arty. Xem
 [báo cáo closure 100 MHz](docs/ARTY_A7_35T_100MHZ_CLOSURE_2026-09-12.md).
+Một build OOC tiếp theo đã khóa placement toàn vùng PUF và fixed route 128 RO,
+đạt WNS `+0,053 ns`, WHS `+0,046 ns`, 0 routing error và fingerprint khớp
+baseline. Xem [bộ bằng chứng khóa RO](reports/fpga_100mhz_arty35t_puflock_2026-09-13/README.md).
 
 Contract Edge không CPU đang được triển khai tại
 [docs/EDGE_CONTROL_CONTRACT.md](docs/EDGE_CONTROL_CONTRACT.md). Đường FE key →
@@ -82,7 +85,7 @@ Arty, CDC sign-off và P&R vẫn còn mở.
 | ML-KEM-512 theo FIPS 203 | **HOÀN THÀNH functional nội bộ**; v4 đã test board; không phải chứng nhận |
 | Crypto RTL freeze | **CANDIDATE v4**; offline/Vivado/board PASS, còn review độc lập trước khi freeze |
 | FPGA implementation | **PASS** candidate v4 ở 50 MHz; artifact root được chấp nhận vẫn là RC1 |
-| Edge trên Arty A7-35T | **OOC 100 MHz PASS**: WNS +0,092 ns, WHS +0,053 ns, 19.166 LUT logic; PUF-only board PASS sanity, full Edge board/transport còn mở |
+| Edge trên Arty A7-35T | **OOC 100 MHz + RO LOCK PASS**: v08 WNS +0,053 ns, WHS +0,046 ns, 19.935 LUT logic, route sạch/fingerprint khớp; PUF-only board PASS sanity, full Edge board/transport còn mở |
 | Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
 | Qualification RO-PUF | **CHƯA HOÀN THÀNH**: thiếu same-root trên full-SoC, PVT, power-cycle và nhiều board |
 | ASIC front-end | **ĐANG TRIỂN KHAI**: top/reset/filelist/manifest và structural lint đã có; chưa có PDK/backend |
@@ -114,6 +117,7 @@ gồm đầu ra và điều kiện chuyển từng pha, nằm tại
 | SHAKE256 KDF KAT | PASS bit-exact với Python `hashlib.shake_256`, cycle 148 |
 | Edge SHAKE256 compact KAT | PASS bit-exact, cycle 411; zeroize PASS |
 | Edge PUF+FE+KDF+KeyGen/Decaps OOC | PASS 100 MHz: 19.166 LUT logic (92,14%), WNS +0,092 ns, WHS +0,053 ns; chưa board bitstream |
+| Edge OOC với khóa vật lý RO | PASS 100 MHz: 19.935 LUT logic (95,84%), WNS +0,053 ns, WHS +0,046 ns; 136 endpoint/128 fixed route và fingerprint PASS |
 | Kyber raw single-attempt gate | PASS 1.024/1.024, mismatch 0, retry 0 |
 | Full-system simulation v4 | PASS, 958.516 cycle; protocol 1.3/capability `0x06` |
 | Vivado candidate v4 | PASS: 50.902 LUT sau route, WNS `+3,268 ns`, WHS `+0,037 ns`, 0 routing error |
