@@ -10,11 +10,12 @@ SOC_REPRO_BIT := build/soc_repro/$(SOC_REPRO_RUN)/kyber_ro_puf_$(SOC_REPRO_RUN).
 # Verilator builds can exhaust RAM on the reference development host.
 .NOTPARALLEL:
 
-.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize arty-puf-characterization-project arty-puf-characterization-bitstream arty-puf-characterization-program arty-puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem kyber kyber-invalid axi axi-secure kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-filelist-check asic-manifest-check asic-frontend-check asic-backend-readiness asic-elaboration asic-portability crypto-freeze-check verification-inputs-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
+.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-margin-characterize arty-puf-characterization-project arty-puf-characterization-bitstream arty-puf-characterization-program arty-puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem kyber kyber-invalid axi axi-secure kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-filelist-check asic-manifest-check asic-frontend-check asic-backend-readiness asic-elaboration asic-portability crypto-freeze-check verification-inputs-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
 
 PUF_PORT ?= /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
 ARTY_PUF_PORT ?= $(firstword $(wildcard /dev/serial/by-id/usb-Digilent_Digilent_USB_Device_*-if01-port0))
 PUF_SAMPLES ?= 1000
+PUF_MARGIN_REPORT ?= reports/puf_characterization/private_margin_latest.json
 PUF_CHAR_BIT := build/puf_characterization/puf_characterization_zynq7020.runs/impl_1/Puf_Characterization_Top.bit
 ARTY_PUF_BIT := build/arty_puf_characterization/puf_characterization_arty_a7_35t.runs/impl_1/Puf_Characterization_Top.bit
 
@@ -51,6 +52,9 @@ puf-characterization-program:
 
 puf-raw-characterize:
 	python3 -u host/puf_raw_characterize.py --port "$(PUF_PORT)" --count $(PUF_SAMPLES) --bitstream "$(PUF_CHAR_BIT)"
+
+puf-margin-characterize:
+	python3 -u host/puf_margin_characterize.py --port "$(PUF_PORT)" --count $(PUF_SAMPLES) --bitstream "$(PUF_CHAR_BIT)" --report "$(PUF_MARGIN_REPORT)"
 
 arty-puf-characterization-project:
 	$(VIVADO) -mode batch -nolog -nojournal -source scripts/create_arty_puf_characterization_project.tcl

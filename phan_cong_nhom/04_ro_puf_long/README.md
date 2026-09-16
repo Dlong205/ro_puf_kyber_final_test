@@ -1,6 +1,6 @@
 # Long — Chủ trì implementation và RO-PUF
 
-Cập nhật **2026-09-08**. Long là implementation owner duy nhất: tiếp nhận các
+Cập nhật **2026-09-16**. Long là implementation owner duy nhất: tiếp nhận các
 biên bản nghiên cứu/review, sửa RTL, tích hợp, chạy regression/Vivado/board và
 quyết định artifact nào được quảng bá.
 
@@ -22,6 +22,7 @@ quyết định artifact nào được quảng bá.
 - `sim/fuzzy_extractor/`
 - `sim/portability/`
 - `host/puf_raw_characterize.py`
+- `host/puf_margin_characterize.py`
 - `host/tests/test_puf_raw_characterize.py`
 - `constraints/kp_zynq_7020.xdc`
 - `constraints/ro_physical_lock_rc1_zynq7020.xdc`
@@ -31,6 +32,7 @@ quyết định artifact nào được quảng bá.
 - `scripts/check_ro_route_repro.sh`
 - `docs/ASIC_PORTABILITY.md`
 - `docs/PUF_CHARACTERIZATION_2026-09-05.md`
+- `docs/PUF_MARGIN_TELEMETRY_2026-09-16.md`
 - `docs/RO_PHYSICAL_REPRODUCIBILITY_2026-09-05.md`
 
 ## Đã hoàn thành
@@ -61,6 +63,9 @@ quyết định artifact nào được quảng bá.
 - FE characterization PASS 7.728 check trong bán kính `t=8`; ca delta codeword
   weight 41 có thể `success=1` nhưng sai root, đúng giới hạn expected ngoài
   bán kính và không được diễn giải là mọi over-noise đều bị phát hiện.
+- Count-margin telemetry v1.1 đã PASS mô phỏng, Vivado và Zynq: 100/100 frame,
+  0 flip/tie trong phiên ngắn. Kết quả xác nhận 264 vị trí chỉ có 255 challenge
+  duy nhất; lọc từ margin 4 chỉ còn 263 vị trí nên chưa thể chốt mask N=264.
 
 ## Giới hạn chưa được phép bỏ qua
 
@@ -79,8 +84,8 @@ quyết định artifact nào được quảng bá.
 
 1. Review độc lập accelerator-zeroize trên manifest v4 và bằng chứng
    Vivado/đúng-image board ngày 2026-09-08; xử lý finding rồi mới freeze/promote.
-2. Thêm count-margin telemetry, tie/zero detection và số lỗi BCH đã sửa; ưu
-   tiên challenge tạo bit 149.
+2. Mở rộng candidate pool/challenge space rồi chọn mapping 264 vị trí ổn định;
+   count-margin telemetry đã có, còn tie/zero/stuck policy và số lỗi BCH thực sửa.
 3. Đo same-root trên chính full-SoC hoặc bằng instrumentation không làm thay đổi
    physical fingerprint RC1.
 4. Chạy tối thiểu 100 warm reset, 100 cold power-cycle, PVT an toàn, aging và

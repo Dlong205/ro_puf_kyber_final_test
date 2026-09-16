@@ -79,7 +79,9 @@ module edge_puf_mlkem_core (
     kp_puf_top u_puf (
         .clk(clk), .rst_n(rst_n), .zeroize(puf_zeroize),
         .start(puf_start), .seed(puf_seed), .busy(puf_busy),
-        .done(puf_done), .response(puf_response)
+        .done(puf_done), .response(puf_response),
+        .telemetry_valid(), .telemetry_index(), .telemetry_challenge(),
+        .telemetry_count0(), .telemetry_count1(), .telemetry_winner()
     );
 
     fuzzy_extractor u_fe (

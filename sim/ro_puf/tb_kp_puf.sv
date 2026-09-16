@@ -31,7 +31,9 @@ module tb_kp_puf_simple (
         .seed     (seed),
         .busy     (busy),
         .done     (done),
-        .response (response)
+        .response (response),
+        .telemetry_valid(), .telemetry_index(), .telemetry_challenge(),
+        .telemetry_count0(), .telemetry_count1(), .telemetry_winner()
     );
 
     task automatic check(input string name, input logic condition);

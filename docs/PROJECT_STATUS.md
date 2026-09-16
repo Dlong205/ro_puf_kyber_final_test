@@ -1,6 +1,6 @@
 # Trạng thái xác minh — integration `0.2.0-rc2-dev`, artifact `0.2.0-rc1`
 
-Bằng chứng cập nhật đến **2026-09-13**. Nhánh làm việc tích hợp là
+Bằng chứng cập nhật đến **2026-09-16**. Nhánh làm việc tích hợp là
 `codex/asic-frontend-mlkem512`, tách từ `codex/fips202-mlkem`; artifact FPGA được chấp nhận nằm tại tag
 `fpga-mlkem512-0.2.0-rc1`. Tag `fpga-rc4-baseline` chỉ được giữ làm mốc so
 sánh Kyber/FPGA cũ. Các kết quả characterization và physical route-lock sau
@@ -50,7 +50,8 @@ confirmation, CDC sign-off và board top trên target đủ lớn vẫn còn m�
 | FPGA RC nội bộ | **GO cho RC1 đã tag** | Candidate v4 đã có build/board evidence cách ly nhưng chưa thay artifact RC1 ở root |
 | Edge Arty-35T | **OOC PASS, full board top NO-FIT** | v08 OOC: 95,84% LUT logic, WNS +0,053 ns, WHS +0,046 ns, route sạch/fingerprint khớp; board top + UART cần 26.815/20.800 Slice LUT nên không có bitstream full Edge |
 | Physical reproducibility của RO | **DONE cho full-SoC RC1** | Hai build sạch khớp 136 endpoint/128 route; không thay thế qualification vật lý |
-| Freeze RO-PUF | **NO-GO** | Thiếu same-root full-SoC, count-margin, cold/warm boot, PVT, aging và nhiều board |
+| Count-margin RO-PUF | **PASS bước instrumentation** | Zynq 100/100 frame; 255/264 challenge duy nhất, chưa đủ để chốt mask N=264 |
+| Freeze RO-PUF | **NO-GO** | Thiếu same-root full-SoC, candidate pool đủ lớn, cold/warm boot, PVT, aging và nhiều board |
 | ASIC front-end P0/P2 | **ĐANG TRIỂN KHAI** | Top/reset/filelist/elaboration PASS; accelerator zeroize đã thêm, còn PDK/memory/CPU-bus/DFT/security findings |
 | Full ASIC backend/sign-off | **CHƯA BẮT ĐẦU** | Cần PDK/library, macro RO, memory mapping, SDC/CDC/DFT và crypto RTL freeze |
 | Public/production release | **NO-GO** | License, security review và qualification PUF chưa đóng |

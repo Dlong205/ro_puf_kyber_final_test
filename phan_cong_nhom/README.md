@@ -1,6 +1,6 @@
 # Phân công và tiến độ nhóm
 
-Bằng chứng cập nhật đến **2026-09-08**; phân công đồng bộ cho nhánh tích hợp
+Bằng chứng cập nhật đến **2026-09-16**; phân công đồng bộ cho nhánh tích hợp
 `codex/asic-frontend-mlkem512`, tách từ `codex/fips202-mlkem`. Source RTL
 chính thức chỉ nằm trong `rtl/`; không copy RTL vào thư mục cá nhân. Đạt, Tùng,
 Minh và Việt Anh thực hiện nghiên cứu/đối chiếu/review; Long là người thực hiện
@@ -33,8 +33,9 @@ chưa có full Edge/SPI/ASIC sign-off mới.
 | FPGA XC7Z020 50 MHz | PASS implementation/timing/DRC và board stress 10.000/10.000 |
 | RO physical reproducibility | PASS full-SoC: 136 endpoint, 128 fixed route, hai build sạch khớp fingerprint |
 | RO-PUF ngắn hạn | PASS sơ bộ trên một board/image PUF-only: 10.000 mẫu, HD max 1 |
+| RO-PUF count-margin | PASS instrumentation/Zynq 100 mẫu; 255/264 challenge duy nhất, chưa chốt mask |
 | Crypto RTL freeze cuối | CANDIDATE v4: offline/Vivado/board PASS; còn review độc lập |
-| Freeze RO-PUF | NO-GO: thiếu same-root full-SoC, count-margin, PVT, power-cycle và nhiều board |
+| Freeze RO-PUF | NO-GO: thiếu same-root full-SoC, candidate pool đủ lớn, PVT, power-cycle và nhiều board |
 | ASIC | Portability/elaboration PASS; backend/sign-off chưa bắt đầu |
 | Public release | BỊ CHẶN bởi license và các gate production còn mở |
 
@@ -46,7 +47,7 @@ chưa có full Edge/SPI/ASIC sign-off mới.
 | Tùng | Vi kiến trúc Kyber/ML-KEM: Client/Server, NTT, codec, FIFO/BRAM/AXI, liveness và single-attempt | Regression 1.024 raw + board 10.000 PASS | Review assertion/invariant, latency/resource và không starvation/underflow |
 | Minh | Threat model, lưu khóa, helper, access policy, provisioning và zeroization | V4 accelerator scrub/deep AXI tests PASS offline | Review boundary CPU/bus/SoC RAM/scan, reset/lỗi/timeout/tamper/storage |
 | Việt Anh | KDF, Keccak, FIPS 202, domain separation và byte ordering | 50/50 FIPS 202 + KDF fixed-profile PASS | Review độc lập mapping H/G/J/PRF/XOF và ranh giới serialization |
-| Long | Toàn bộ implementation/tích hợp/release, fuzzy extractor, firmware/UART/host, RO-PUF, FPGA và ASIC portability | V4 offline/Vivado/board PASS; RC1 root vẫn là artifact đã chấp nhận | Điều phối review độc lập để khóa v4; rồi same-root/count-margin/PVT/nhiều board và PDK/macro ASIC |
+| Long | Toàn bộ implementation/tích hợp/release, fuzzy extractor, firmware/UART/host, RO-PUF, FPGA và ASIC portability | V4 offline/Vivado/board PASS; count-margin Zynq PASS bước instrumentation; RC1 root vẫn là artifact đã chấp nhận | Mở rộng candidate pool, same-root/PVT/nhiều board và PDK/macro ASIC |
 
 Chi tiết từng phần:
 
@@ -96,7 +97,8 @@ fingerprint với RC1 và board regression theo
 1. Review độc lập accelerator-zeroize và crypto trên tập source/test v4 đã khóa.
 2. ~~Chạy Vivado implementation rồi đúng-image board smoke/stress cho v4.~~
    PASS ngày 2026-09-08; không thay RC1 root.
-3. Same-root full-SoC, count-margin, warm/cold boot, PVT và nhiều board cho PUF.
+3. Candidate pool/mapping đủ N=264, same-root full-SoC, warm/cold boot, PVT và
+   nhiều board cho PUF.
 4. Chốt CPU/bus/scan boundary, contract macro RO, memory mapping, SDC/CDC/DFT
    và PDK.
 5. Chỉ sau các cổng trên mới gọi full ASIC backend và sign-off.

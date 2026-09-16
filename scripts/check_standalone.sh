@@ -31,6 +31,7 @@ required=(
   constraints/ro_physical_lock_rc1_zynq7020.xdc
   constraints/ro_physical_fingerprint_rc1_zynq7020.tsv
   host/puf_raw_characterize.py
+  host/puf_margin_characterize.py
   scripts/create_puf_characterization_project.tcl
   scripts/build_puf_characterization.tcl
   scripts/program_puf_characterization.tcl

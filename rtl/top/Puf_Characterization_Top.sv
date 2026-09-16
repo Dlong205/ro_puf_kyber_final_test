@@ -27,6 +27,12 @@ module Puf_Characterization_Top #(
     wire puf_done;
     wire tx_active;
     wire [263:0] puf_response;
+    wire         telemetry_valid;
+    wire [8:0]   telemetry_index;
+    wire [7:0]   telemetry_challenge;
+    wire [31:0]  telemetry_count0;
+    wire [31:0]  telemetry_count1;
+    wire         telemetry_winner;
 
     // Keep the instance name identical to the release top so its LOC/BEL map
     // resolves to the same 128 physical LUTs.
@@ -38,7 +44,13 @@ module Puf_Characterization_Top #(
         .seed(8'h42),
         .busy(puf_busy),
         .done(puf_done),
-        .response(puf_response)
+        .response(puf_response),
+        .telemetry_valid(telemetry_valid),
+        .telemetry_index(telemetry_index),
+        .telemetry_challenge(telemetry_challenge),
+        .telemetry_count0(telemetry_count0),
+        .telemetry_count1(telemetry_count1),
+        .telemetry_winner(telemetry_winner)
     );
 
     puf_characterization_uart #(.CLKS_PER_BIT(UART_CLKS_PER_BIT)) u_uart (
@@ -49,7 +61,13 @@ module Puf_Characterization_Top #(
         .tx_active(tx_active),
         .puf_start(puf_start),
         .puf_done(puf_done),
-        .puf_response(puf_response)
+        .puf_response(puf_response),
+        .telemetry_valid(telemetry_valid),
+        .telemetry_index(telemetry_index),
+        .telemetry_challenge(telemetry_challenge),
+        .telemetry_count0(telemetry_count0),
+        .telemetry_count1(telemetry_count1),
+        .telemetry_winner(telemetry_winner)
     );
 
     assign LED[0] = tx_active;

@@ -110,7 +110,9 @@ module Kyber_System_Top(
         .seed(8'h42),
         .busy(),
         .done(puf_done),
-        .response(puf_resp)
+        .response(puf_resp),
+        .telemetry_valid(), .telemetry_index(), .telemetry_challenge(),
+        .telemetry_count0(), .telemetry_count1(), .telemetry_winner()
     );
 
     // ==========================================

@@ -31,6 +31,12 @@ public:
         dut.rst_n = 0;
         dut.uart_rx_i = 1;
         dut.puf_done = 0;
+        dut.telemetry_valid = 0;
+        dut.telemetry_index = 0;
+        dut.telemetry_challenge = 0;
+        dut.telemetry_count0 = 0;
+        dut.telemetry_count1 = 0;
+        dut.telemetry_winner = 0;
         for (unsigned i = 0; i < 9; ++i) dut.puf_response[i] = 0;
         reset();
     }
@@ -62,6 +68,7 @@ public:
         dut.rst_n = 0;
         dut.uart_rx_i = 1;
         dut.puf_done = 0;
+        dut.telemetry_valid = 0;
         tick(8);
         receiving = false;
         previous_start = false;
@@ -97,8 +104,54 @@ public:
     void info() {
         const auto old_starts = starts;
         send(0x00);
-        expect({0x50, 0x55, 0x46, 0x01, 0x00, 0x01}, "INFO");
+        expect({0x50, 0x55, 0x46, 0x01, 0x01, 0x03}, "INFO");
         require(starts == old_starts, "INFO started PUF");
+    }
+
+    static void append_u16(std::vector<uint8_t>& bytes, uint16_t value) {
+        bytes.push_back(uint8_t(value));
+        bytes.push_back(uint8_t(value >> 8));
+    }
+
+    static void append_u32(std::vector<uint8_t>& bytes, uint32_t value) {
+        for (unsigned shift = 0; shift < 32; shift += 8)
+            bytes.push_back(uint8_t(value >> shift));
+    }
+
+    void margin() {
+        const auto old_starts = starts;
+        send(0x71);
+        require(starts == old_starts + 1, "MARGIN did not emit exactly one start");
+
+        std::vector<uint8_t> expected{0xaa};
+        for (unsigned index = 0; index < 264; ++index) {
+            const uint8_t challenge = uint8_t(0x42 + index * 17);
+            const uint32_t count0 = 1000 + index * 3;
+            const uint32_t count1 = 1500 + index * 5;
+            const uint32_t difference = count1 - count0;
+            const uint8_t winner = count0 > count1 ? 0 : 1;
+
+            dut.telemetry_index = index;
+            dut.telemetry_challenge = challenge;
+            dut.telemetry_count0 = count0;
+            dut.telemetry_count1 = count1;
+            dut.telemetry_winner = winner;
+            dut.telemetry_valid = 1;
+            // Exercise the real final-record/puf_done same-edge condition.
+            dut.puf_done = index == 263;
+            tick();
+            dut.telemetry_valid = 0;
+            dut.puf_done = 0;
+
+            append_u16(expected, index);
+            expected.push_back(challenge);
+            expected.push_back(uint8_t(winner));
+            append_u32(expected, count0);
+            append_u32(expected, count1);
+            append_u32(expected, difference);
+        }
+        expect(expected, "MARGIN");
+        require(starts == old_starts + 1, "MARGIN emitted spurious second start");
     }
 
     void response(const std::array<uint8_t, 33>& bytes) {
@@ -182,6 +235,10 @@ int main(int argc, char** argv) {
         bytes.fill(0xaa);
         t.raw(bytes);
         std::cout << "PASS RAW status+33 bytes, all 256 byte values, response latch, 11 repeated requests\n";
+
+        t.margin();
+        t.info();
+        std::cout << "PASS MARGIN status+264 coherent indexed records and final-record race\n";
 
         for (uint8_t command : {uint8_t(0x01), uint8_t(0x55), uint8_t(0xff)}) {
             const auto old_starts = t.starts;

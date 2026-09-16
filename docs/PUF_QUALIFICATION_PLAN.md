@@ -1,6 +1,6 @@
 # Kế hoạch qualification RO-PUF
 
-Bằng chứng cập nhật đến **2026-09-05**; kế hoạch đồng bộ **2026-09-06**.
+Bằng chứng cập nhật đến **2026-09-16**.
 
 | Hạng mục | Trạng thái |
 |---|---|
@@ -8,7 +8,8 @@ Bằng chứng cập nhật đến **2026-09-05**; kế hoạch đồng bộ **2
 | Campaign raw PUF-only 10.000 mẫu, một board/điều kiện phòng | PASS sơ bộ; HD max 1, một bit dao động |
 | Khóa/tái lập physical route miền RO full-SoC | PASS; 136 endpoint/128 route, hai build sạch |
 | Same-root trên full-SoC RC1 | CHƯA ĐO |
-| Count-margin và số lỗi BCH đã sửa trên board | CHƯA CÓ telemetry |
+| Count-margin trên board | PASS instrumentation + 100 mẫu ngắn hạn; xem báo cáo 2026-09-16 |
+| Số lỗi BCH thực sửa/same-root | CHƯA CÓ telemetry trên image tích hợp |
 | Warm/cold boot, PVT, aging và nhiều board | CHƯA CHẠY |
 | Entropy/uniqueness/helper leakage | CHƯA ĐỦ DỮ LIỆU |
 | Freeze PUF | NO-GO |
@@ -76,9 +77,12 @@ dataset từ image PUF-only phải có SHA-256 bitstream riêng và **không g�
 dataset RC1**. Để đo trực tiếp RC1 cần instrumentation tích hợp hoặc phép quan
 sát same-root không làm đổi implementation.
 
-Image chẩn đoán v1 chỉ xuất raw 264 bit qua UART (`INFO=0x00`, `RAW=0x70`).
-Các trường count-margin và số lỗi BCH bên dưới vẫn là hạng mục tiếp theo,
-chưa được coi là hoàn thành bởi phép đo raw v1.
+Image chẩn đoán v1.1 đã xuất raw 264 bit (`RAW=0x70`) và 264 bản ghi
+`count0/count1/margin` (`MARGIN=0x71`). Campaign 100 mẫu ngày 2026-09-16 PASS
+giao thức và không thấy flip/tie trong một phiên nguồn, nhưng phát hiện chỉ có
+255 challenge duy nhất và không còn đủ N=264 khi lọc từ margin 4. Xem
+[`PUF_MARGIN_TELEMETRY_2026-09-16.md`](PUF_MARGIN_TELEMETRY_2026-09-16.md).
+Số lỗi BCH thực sửa và same-root trên image tích hợp vẫn còn mở.
 
 Các metric cần tính:
 

@@ -154,6 +154,12 @@ hệ thống được viết bằng RTL và không dùng IP Xilinx sinh tự đ�
 
 ### P3 — Hoàn thiện kiến trúc và qualification RO-PUF
 
+Tiến độ 2026-09-16: instrumentation `count0/count1/count-margin` đã PASS trên
+Zynq với 100/100 frame. Phép đo xác nhận 264 vị trí hiện chỉ có 255 challenge
+duy nhất và lọc `margin p01 >= 4` chỉ còn 263 vị trí. Vì vậy P3 chuyển sang mở
+rộng candidate pool/mapping trước khi chốt reliability mask; chưa freeze PUF.
+Xem [`PUF_MARGIN_TELEMETRY_2026-09-16.md`](PUF_MARGIN_TELEMETRY_2026-09-16.md).
+
 Việc thực hiện:
 
 - Chốt mức entropy cần có sau helper leakage và tiêu chí root-key failure.

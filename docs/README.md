@@ -1,6 +1,6 @@
 # Chỉ mục tài liệu
 
-Bằng chứng đến **2026-09-10** cho integration `0.2.0-rc2-dev`. Artifact FPGA được
+Bằng chứng đến **2026-09-16** cho integration `0.2.0-rc2-dev`. Artifact FPGA được
 chấp nhận vẫn là ML-KEM-512 `0.2.0-rc1`; các tài liệu sau RC1 bổ sung
 characterization, physical route-lock và candidate v4 cách ly. Candidate v4 đã
 PASS offline/Vivado/board nhưng chưa freeze/promote vì còn review độc lập.
@@ -24,6 +24,7 @@ PASS offline/Vivado/board nhưng chưa freeze/promote vì còn review độc l�
 | Board regression đúng image candidate v4 | [`HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md`](HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md) |
 | Kết quả FPGA ML-KEM RC1 | [`HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md`](HARDWARE_TEST_REPORT_MLKEM_CANDIDATE_2026-09-04.md) |
 | Characterization RO-PUF | [`PUF_CHARACTERIZATION_2026-09-05.md`](PUF_CHARACTERIZATION_2026-09-05.md) |
+| Count-margin RO-PUF trên Zynq | [`PUF_MARGIN_TELEMETRY_2026-09-16.md`](PUF_MARGIN_TELEMETRY_2026-09-16.md) |
 | Kế hoạch qualification RO-PUF | [`PUF_QUALIFICATION_PLAN.md`](PUF_QUALIFICATION_PLAN.md) |
 | Tái lập placement/routing RO | [`RO_PHYSICAL_REPRODUCIBILITY_2026-09-05.md`](RO_PHYSICAL_REPRODUCIBILITY_2026-09-05.md) |
 | Ranh giới FPGA → ASIC | [`ASIC_PORTABILITY.md`](ASIC_PORTABILITY.md) |

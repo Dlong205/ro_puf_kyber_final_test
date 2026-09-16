@@ -20,7 +20,10 @@ CMD_RAW = 0x70
 STATUS_SUCCESS = 0xAA
 RAW_BYTES = 33
 RAW_BITS = 264
-EXPECTED_INFO = b"PUF\x01\x00\x01"
+SUPPORTED_INFO = {
+    b"PUF\x01\x00\x01",  # characterization protocol 1.0: raw only
+    b"PUF\x01\x01\x03",  # characterization protocol 1.1: raw + margin
+}
 REPEATED_CHALLENGE_OFFSET = 255
 REPEATED_CHALLENGE_COUNT = RAW_BITS - REPEATED_CHALLENGE_OFFSET
 
@@ -66,8 +69,8 @@ def collect(port_name, count, timeout):
         time.sleep(0.1)
         port.reset_input_buffer()
         port.write(bytes([CMD_INFO]))
-        info = read_exact(port, len(EXPECTED_INFO))
-        if info != EXPECTED_INFO:
+        info = read_exact(port, 6)
+        if info not in SUPPORTED_INFO:
             raise RuntimeError("wrong image or unsupported characterization protocol")
 
         # Keep this measurement separate from the statistical sample set. It
