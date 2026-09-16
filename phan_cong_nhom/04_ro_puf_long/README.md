@@ -23,6 +23,7 @@ quyết định artifact nào được quảng bá.
 - `sim/portability/`
 - `host/puf_raw_characterize.py`
 - `host/puf_margin_characterize.py`
+- `host/puf_allpairs_characterize.py`
 - `host/tests/test_puf_raw_characterize.py`
 - `constraints/kp_zynq_7020.xdc`
 - `constraints/ro_physical_lock_rc1_zynq7020.xdc`
@@ -33,6 +34,7 @@ quyết định artifact nào được quảng bá.
 - `docs/ASIC_PORTABILITY.md`
 - `docs/PUF_CHARACTERIZATION_2026-09-05.md`
 - `docs/PUF_MARGIN_TELEMETRY_2026-09-16.md`
+- `docs/PUF_ALLPAIRS_CHARACTERIZATION_2026-09-16.md`
 - `docs/RO_PHYSICAL_REPRODUCIBILITY_2026-09-05.md`
 
 ## Đã hoàn thành
@@ -66,6 +68,9 @@ quyết định artifact nào được quảng bá.
 - Count-margin telemetry v1.1 đã PASS mô phỏng, Vivado và Zynq: 100/100 frame,
   0 flip/tie trong phiên ngắn. Kết quả xác nhận 264 vị trí chỉ có 255 challenge
   duy nhất; lọc từ margin 4 chỉ còn 263 vị trí nên chưa thể chốt mask N=264.
+- All-pairs protocol 2.0 đã PASS 496 cặp/100 frame trên Zynq; 487 cặp đạt
+  margin p01 từ 4 và preview N=264 cân bằng degree 16–17. Mapping chi tiết vẫn
+  private và chưa promote vì còn thiếu train/holdout nhiều board/PVT.
 
 ## Giới hạn chưa được phép bỏ qua
 
@@ -84,8 +89,8 @@ quyết định artifact nào được quảng bá.
 
 1. Review độc lập accelerator-zeroize trên manifest v4 và bằng chứng
    Vivado/đúng-image board ngày 2026-09-08; xử lý finding rồi mới freeze/promote.
-2. Mở rộng candidate pool/challenge space rồi chọn mapping 264 vị trí ổn định;
-   count-margin telemetry đã có, còn tie/zero/stuck policy và số lỗi BCH thực sửa.
+2. Candidate pool 496 cặp đã có; thu train/holdout nhiều board/PVT rồi chốt
+   mapping 264 vị trí có version/hash, tie/zero/stuck policy và integrity binding.
 3. Đo same-root trên chính full-SoC hoặc bằng instrumentation không làm thay đổi
    physical fingerprint RC1.
 4. Chạy tối thiểu 100 warm reset, 100 cold power-cycle, PVT an toàn, aging và

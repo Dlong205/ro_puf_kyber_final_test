@@ -29,6 +29,7 @@ hardware_helper.bin
 # characterization campaigns local; only aggregate, non-identifying summaries
 # belong in the public repository.
 reports/puf_characterization/private_*.json
+reports/puf_allpairs_characterization/private_*.json
 **/__pycache__/
 *.py[cod]
 

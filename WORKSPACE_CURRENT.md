@@ -8,9 +8,10 @@ tiếp tục sửa nếu chưa có quyết định rõ ràng.
 
 - Nhánh: `codex/fpga-v2-split`.
 - Artifact FPGA được chấp nhận: ML-KEM-512 `0.2.0-rc1`.
-- Hạng mục mới đầu tiên: count-margin telemetry RO-PUF trên Zynq.
-- Báo cáo: `docs/PUF_MARGIN_TELEMETRY_2026-09-16.md`.
-- Trạng thái: instrumentation/board PASS; RO-PUF chưa freeze.
+- Hạng mục 1: count-margin telemetry RO-PUF trên Zynq — PASS.
+- Hạng mục 2: candidate pool toàn bộ 496 cặp — RTL/Vivado/board PASS.
+- Báo cáo mới nhất: `docs/PUF_ALLPAIRS_CHARACTERIZATION_2026-09-16.md`.
+- Trạng thái: đủ candidate pool để chọn N=264; mapping chưa freeze.
 
 ## Quy tắc dữ liệu
 
@@ -23,6 +24,5 @@ tiếp tục sửa nếu chưa có quyết định rõ ràng.
 
 ## Hướng phát triển kế tiếp
 
-Mở rộng candidate pool RO, loại challenge lặp và chọn cố định 264 vị trí theo
-reliability trước khi chạy lại same-root, warm/cold boot, PVT và nhiều board.
-
+Thu thập nhiều board/PVT, chọn mapping 264 cặp bằng train/holdout và định danh
+mapping bằng version/hash trước khi chạy same-root/BCH trên đường tích hợp.

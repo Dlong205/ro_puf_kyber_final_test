@@ -9,6 +9,7 @@ Bằng chứng cập nhật đến **2026-09-16**.
 | Khóa/tái lập physical route miền RO full-SoC | PASS; 136 endpoint/128 route, hai build sạch |
 | Same-root trên full-SoC RC1 | CHƯA ĐO |
 | Count-margin trên board | PASS instrumentation + 100 mẫu ngắn hạn; xem báo cáo 2026-09-16 |
+| Candidate pool 496 cặp | PASS diagnostic 100 mẫu; đủ ứng viên N=264, chưa chốt mapping |
 | Số lỗi BCH thực sửa/same-root | CHƯA CÓ telemetry trên image tích hợp |
 | Warm/cold boot, PVT, aging và nhiều board | CHƯA CHẠY |
 | Entropy/uniqueness/helper leakage | CHƯA ĐỦ DỮ LIỆU |
@@ -131,7 +132,8 @@ Chỉ chốt sau khi có raw dataset và báo cáo tái lập được:
   phát hiện mọi mẫu lỗi trên 8 bit. Thêm kiểm tra same-root và chính sách
   xác thực helper/khóa phù hợp threat model.
 - LFSR 8 bit, seed `0x42`, lặp sau 255 challenge; 264 phép đo lặp lại 9
-  challenge đầu. Phải đánh giá tương quan và không coi 264 bit là độc lập.
+  challenge đầu trong release hiện tại. Image all-pairs đã loại giới hạn này
+  ở candidate pool, nhưng mapping release vẫn phải qua train/holdout nhiều board.
 - INIT LUT FPGA không dùng các chân `cfg` để đổi hàm logic RO; challenge
   chọn cặp trong 32 RO. Độ dài FE 192 bit/KDF 512 bit không chứng minh entropy
   tương ứng. Cần dữ liệu nhiều board và mô hình entropy có tính helper leakage.

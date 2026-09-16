@@ -7,9 +7,12 @@ required=(
   rtl/top/Kyber_System_Top.sv
   rtl/top/Puf_Characterization_Top.sv
   rtl/top/puf_characterization_uart.sv
+  rtl/top/Puf_AllPairs_Characterization_Top.sv
+  rtl/top/puf_allpairs_uart.sv
   rtl/top/Edge_Arty_Diagnostic_Top.sv
   rtl/top/edge_uart_transport.sv
   rtl/puf/kp_puf_top.sv
+  rtl/puf/kp_puf_allpairs_top.sv
   rtl/puf/kp_ro_cell.sv
   rtl/puf/kp_ro_cell_model.sv
   rtl/puf/kp_ro_cell_xilinx.sv
@@ -32,9 +35,13 @@ required=(
   constraints/ro_physical_fingerprint_rc1_zynq7020.tsv
   host/puf_raw_characterize.py
   host/puf_margin_characterize.py
+  host/puf_allpairs_characterize.py
   scripts/create_puf_characterization_project.tcl
   scripts/build_puf_characterization.tcl
   scripts/program_puf_characterization.tcl
+  scripts/create_puf_allpairs_project.tcl
+  scripts/build_puf_allpairs.tcl
+  scripts/program_puf_allpairs.tcl
   scripts/create_arty_puf_characterization_project.tcl
   scripts/build_arty_puf_characterization.tcl
   scripts/program_arty_puf_characterization.tcl

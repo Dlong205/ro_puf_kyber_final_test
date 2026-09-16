@@ -158,7 +158,11 @@ Tiến độ 2026-09-16: instrumentation `count0/count1/count-margin` đã PASS 
 Zynq với 100/100 frame. Phép đo xác nhận 264 vị trí hiện chỉ có 255 challenge
 duy nhất và lọc `margin p01 >= 4` chỉ còn 263 vị trí. Vì vậy P3 chuyển sang mở
 rộng candidate pool/mapping trước khi chốt reliability mask; chưa freeze PUF.
-Xem [`PUF_MARGIN_TELEMETRY_2026-09-16.md`](PUF_MARGIN_TELEMETRY_2026-09-16.md).
+Image all-pairs sau đó đã PASS RTL/Vivado/board 100 mẫu: 487/496 cặp đạt
+`margin p01 >= 4` và preview chọn đủ N=264 với degree 16–17. Bước còn lại là
+train/holdout nhiều board/PVT, không promote preview một board. Xem
+[`PUF_MARGIN_TELEMETRY_2026-09-16.md`](PUF_MARGIN_TELEMETRY_2026-09-16.md) và
+[`PUF_ALLPAIRS_CHARACTERIZATION_2026-09-16.md`](PUF_ALLPAIRS_CHARACTERIZATION_2026-09-16.md).
 
 Việc thực hiện:
 

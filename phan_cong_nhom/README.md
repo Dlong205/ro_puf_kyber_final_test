@@ -34,8 +34,9 @@ chưa có full Edge/SPI/ASIC sign-off mới.
 | RO physical reproducibility | PASS full-SoC: 136 endpoint, 128 fixed route, hai build sạch khớp fingerprint |
 | RO-PUF ngắn hạn | PASS sơ bộ trên một board/image PUF-only: 10.000 mẫu, HD max 1 |
 | RO-PUF count-margin | PASS instrumentation/Zynq 100 mẫu; 255/264 challenge duy nhất, chưa chốt mask |
+| RO-PUF all-pairs | PASS diagnostic 496 cặp/100 mẫu; đủ pool N=264, chưa chốt mapping nhiều board |
 | Crypto RTL freeze cuối | CANDIDATE v4: offline/Vivado/board PASS; còn review độc lập |
-| Freeze RO-PUF | NO-GO: thiếu same-root full-SoC, candidate pool đủ lớn, PVT, power-cycle và nhiều board |
+| Freeze RO-PUF | NO-GO: thiếu mapping train/holdout, same-root full-SoC, PVT, power-cycle và nhiều board |
 | ASIC | Portability/elaboration PASS; backend/sign-off chưa bắt đầu |
 | Public release | BỊ CHẶN bởi license và các gate production còn mở |
 

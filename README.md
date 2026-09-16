@@ -34,6 +34,8 @@ Vivado và board candidate v4 được ghi tại
 và
 [`docs/HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md`](docs/HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md).
 Qualification RO-PUF mới nhất nằm tại
+[`docs/PUF_ALLPAIRS_CHARACTERIZATION_2026-09-16.md`](docs/PUF_ALLPAIRS_CHARACTERIZATION_2026-09-16.md);
+count-margin 264 vị trí nằm tại
 [`docs/PUF_MARGIN_TELEMETRY_2026-09-16.md`](docs/PUF_MARGIN_TELEMETRY_2026-09-16.md);
 campaign raw trước đó nằm tại
 [`docs/PUF_CHARACTERIZATION_2026-09-05.md`](docs/PUF_CHARACTERIZATION_2026-09-05.md).
@@ -92,7 +94,7 @@ và P&R trên target đủ lớn vẫn còn mở.
 | FPGA implementation | **PASS** candidate v4 ở 50 MHz; artifact root được chấp nhận vẫn là RC1 |
 | Edge trên Arty A7-35T | **OOC 100 MHz + RO LOCK PASS**, nhưng **full board top + UART NO-FIT**: v08 OOC WNS +0,053 ns, WHS +0,046 ns; board top cần 26.815/20.800 Slice LUT; PUF-only board vẫn PASS |
 | Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
-| Qualification RO-PUF | **INSTRUMENTATION MARGIN PASS, CHƯA FREEZE**: 100/100 frame trên Zynq; chỉ 255/264 challenge duy nhất, còn thiếu same-root, candidate pool đủ lớn, PVT, power-cycle và nhiều board |
+| Qualification RO-PUF | **ALL-PAIRS DIAGNOSTIC PASS, CHƯA FREEZE**: 496 cặp/100 frame trên Zynq, đủ pool N=264; còn thiếu mapping train/holdout nhiều board, same-root, PVT và power-cycle |
 | ASIC front-end | **ĐANG TRIỂN KHAI**: top/reset/filelist/manifest và structural lint đã có; chưa có PDK/backend |
 | Phát hành nội bộ | Có thể chia sẻ RC trong repo private kèm giới hạn đã ghi |
 | Public/production release | **NO-GO** do license, PUF qualification và security review |
@@ -138,6 +140,7 @@ gồm đầu ra và điều kiện chuyển từng pha, nằm tại
 | Hiệu năng board candidate v4 | `29,694 ms/giao dịch`, `33,677 giao dịch/s` ở run 10.000 |
 | RO-PUF ngắn hạn PUF-only | 10.000 mẫu: HD max/p99 = 1, 0 mẫu > t=8, 1 bit dao động; chưa đạt gate entropy/PVT |
 | RO-PUF count-margin Zynq | 100/100 frame hợp lệ, 0 flip/tie; margin min 2 nhưng chỉ 255 challenge duy nhất, chưa thể chốt reliability mask N=264 |
+| RO-PUF all-pairs Zynq | 496 cặp, 100/100 frame; 487 cặp đạt margin p01>=4, preview chọn đủ 264 với degree 16–17; chưa phải mapping release |
 | Public release | **BỊ CHẶN**, xem `NOTICE.md` |
 
 Artifact RC1 dùng 49.909/53.200 Slice LUT (`93,81%`); candidate v4 dùng

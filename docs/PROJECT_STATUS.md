@@ -51,7 +51,8 @@ confirmation, CDC sign-off và board top trên target đủ lớn vẫn còn m�
 | Edge Arty-35T | **OOC PASS, full board top NO-FIT** | v08 OOC: 95,84% LUT logic, WNS +0,053 ns, WHS +0,046 ns, route sạch/fingerprint khớp; board top + UART cần 26.815/20.800 Slice LUT nên không có bitstream full Edge |
 | Physical reproducibility của RO | **DONE cho full-SoC RC1** | Hai build sạch khớp 136 endpoint/128 route; không thay thế qualification vật lý |
 | Count-margin RO-PUF | **PASS bước instrumentation** | Zynq 100/100 frame; 255/264 challenge duy nhất, chưa đủ để chốt mask N=264 |
-| Freeze RO-PUF | **NO-GO** | Thiếu same-root full-SoC, candidate pool đủ lớn, cold/warm boot, PVT, aging và nhiều board |
+| Candidate pool 496 cặp | **PASS diagnostic** | RTL/Vivado/Zynq 100/100; 487 cặp đạt margin p01>=4, preview N=264 cân bằng degree |
+| Freeze RO-PUF | **NO-GO** | Thiếu mapping train/holdout nhiều board, same-root full-SoC, cold/warm boot, PVT và aging |
 | ASIC front-end P0/P2 | **ĐANG TRIỂN KHAI** | Top/reset/filelist/elaboration PASS; accelerator zeroize đã thêm, còn PDK/memory/CPU-bus/DFT/security findings |
 | Full ASIC backend/sign-off | **CHƯA BẮT ĐẦU** | Cần PDK/library, macro RO, memory mapping, SDC/CDC/DFT và crypto RTL freeze |
 | Public/production release | **NO-GO** | License, security review và qualification PUF chưa đóng |
