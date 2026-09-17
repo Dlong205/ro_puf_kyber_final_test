@@ -1,6 +1,6 @@
 # Kế hoạch qualification RO-PUF
 
-Bằng chứng cập nhật đến **2026-09-16**.
+Bằng chứng cập nhật đến **2026-09-17**.
 
 | Hạng mục | Trạng thái |
 |---|---|
@@ -10,6 +10,8 @@ Bằng chứng cập nhật đến **2026-09-16**.
 | Same-root trên full-SoC RC1 | CHƯA ĐO |
 | Count-margin trên board | PASS instrumentation + 100 mẫu ngắn hạn; xem báo cáo 2026-09-16 |
 | Candidate pool 496 cặp | PASS diagnostic 100 mẫu; đủ ứng viên N=264, chưa chốt mapping |
+| Tool chọn mapping train/holdout | PASS 19/19 host metrics test; một-board preview bị giữ ở provisional |
+| Mapping reliability-qualified | CHƯA CÓ; cần tối thiểu 3 board training + 2 board holdout độc lập |
 | Số lỗi BCH thực sửa/same-root | CHƯA CÓ telemetry trên image tích hợp |
 | Warm/cold boot, PVT, aging và nhiều board | CHƯA CHẠY |
 | Entropy/uniqueness/helper leakage | CHƯA ĐỦ DỮ LIỆU |
@@ -133,7 +135,9 @@ Chỉ chốt sau khi có raw dataset và báo cáo tái lập được:
   xác thực helper/khóa phù hợp threat model.
 - LFSR 8 bit, seed `0x42`, lặp sau 255 challenge; 264 phép đo lặp lại 9
   challenge đầu trong release hiện tại. Image all-pairs đã loại giới hạn này
-  ở candidate pool, nhưng mapping release vẫn phải qua train/holdout nhiều board.
+  ở candidate pool. Tool chọn mapping train/holdout đã có tại
+  `host/puf_mapping_train.py`, nhưng mapping release vẫn phải có dữ liệu nhiều
+  board theo [`PUF_MAPPING_WORKFLOW.md`](PUF_MAPPING_WORKFLOW.md).
 - INIT LUT FPGA không dùng các chân `cfg` để đổi hàm logic RO; challenge
   chọn cặp trong 32 RO. Độ dài FE 192 bit/KDF 512 bit không chứng minh entropy
   tương ứng. Cần dữ liệu nhiều board và mô hình entropy có tính helper leakage.

@@ -271,6 +271,14 @@ def main():
     parser.add_argument("--timeout", type=float, default=15.0)
     parser.add_argument("--bitstream", required=True)
     parser.add_argument("--report", required=True)
+    parser.add_argument(
+        "--board-id", default="UNSPECIFIED",
+        help="Pseudonymous device ID; required later for train/holdout qualification"
+    )
+    parser.add_argument(
+        "--condition-id", default="UNSPECIFIED",
+        help="Campaign condition/boot label, for example room-coldboot-001"
+    )
     parser.add_argument("--thresholds", default="0,1,2,4,8,16,32")
     parser.add_argument("--max-minority-rate", type=float, default=1.0)
     parser.add_argument("--selection-threshold", type=int, default=4)
@@ -310,6 +318,8 @@ def main():
         "started_utc": started_utc,
         "elapsed_seconds": elapsed,
         "board_count": 1,
+        "board_id": args.board_id,
+        "condition_id": args.condition_id,
         "top": "Puf_AllPairs_Characterization_Top",
         "target_part": "xc7z020clg400-2",
         "protocol": "2.0",

@@ -34,6 +34,8 @@ và
 [`docs/HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md`](docs/HARDWARE_TEST_REPORT_CRYPTO_CANDIDATE_V4_2026-09-08.md).
 Qualification RO-PUF mới nhất nằm tại
 [`docs/PUF_ALLPAIRS_CHARACTERIZATION_2026-09-16.md`](docs/PUF_ALLPAIRS_CHARACTERIZATION_2026-09-16.md);
+quy trình chọn mapping độc lập training/holdout nằm tại
+[`docs/PUF_MAPPING_WORKFLOW.md`](docs/PUF_MAPPING_WORKFLOW.md);
 count-margin 264 vị trí nằm tại
 [`docs/PUF_MARGIN_TELEMETRY_2026-09-16.md`](docs/PUF_MARGIN_TELEMETRY_2026-09-16.md);
 campaign raw trước đó nằm tại
@@ -95,7 +97,7 @@ SESSION và stress 100/100 trên board. Xem
 | Edge trên Arty A7-35T | **OOC 100 MHz + RO LOCK PASS**, nhưng **full board top + UART NO-FIT**: v08 OOC WNS +0,053 ns, WHS +0,046 ns; board top cần 26.815/20.800 Slice LUT; PUF-only board vẫn PASS |
 | Edge trên Zynq-7020 | **FULL BOARD PASS 100 MHz**: 20.974 LUT, WNS +0,562 ns, WHS +0,045 ns; INFO/ENROLL/SESSION và stress 100/100 PASS |
 | Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
-| Qualification RO-PUF | **ALL-PAIRS DIAGNOSTIC PASS, CHƯA FREEZE**: 496 cặp/100 frame trên Zynq, đủ pool N=264; còn thiếu mapping train/holdout nhiều board, same-root, PVT và power-cycle |
+| Qualification RO-PUF | **TOOL MAPPING PASS, CHƯA FREEZE**: 496 cặp/100 frame trên Zynq, đủ pool N=264; workflow train/holdout đã test nhưng một-board data chỉ provisional; còn thiếu tối thiểu 3+2 board, same-root, PVT và power-cycle |
 | ASIC front-end | **ĐANG TRIỂN KHAI**: top/reset/filelist/manifest và structural lint đã có; chưa có PDK/backend |
 | Phát hành nội bộ | Có thể chia sẻ RC trong repo private kèm giới hạn đã ghi |
 | Public/production release | **NO-GO** do license, PUF qualification và security review |
@@ -343,6 +345,12 @@ xác 136 endpoint/128 route của RC1 cho các build tương lai, nhưng điều
 làm image PUF-only tương đương. Count-margin, same-root trên
 board, PVT và nhiều board vẫn cần thực hiện theo
 [`docs/PUF_QUALIFICATION_PLAN.md`](docs/PUF_QUALIFICATION_PLAN.md).
+
+Tool `host/puf_mapping_train.py` đã tách nghiêm ngặt dữ liệu training và
+holdout, kiểm cùng bitstream và phát manifest có version/hash. Campaign hiện
+tại chỉ có một board nên tool trả `provisional`; chưa có mapping nào được đưa
+vào release RTL. Cách thu thập và điều kiện 3 training + 2 holdout board nằm
+tại [`docs/PUF_MAPPING_WORKFLOW.md`](docs/PUF_MAPPING_WORKFLOW.md).
 
 ## Phạm vi FIPS và giới hạn
 

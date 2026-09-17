@@ -10,13 +10,19 @@ SOC_REPRO_BIT := build/soc_repro/$(SOC_REPRO_RUN)/kyber_ro_puf_$(SOC_REPRO_RUN).
 # Verilator builds can exhaust RAM on the reference development host.
 .NOTPARALLEL:
 
-.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-margin-characterize puf-allpairs-sim puf-allpairs-project puf-allpairs-bitstream puf-allpairs-program puf-allpairs-characterize arty-puf-characterization-project arty-puf-characterization-bitstream arty-puf-characterization-program arty-puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem edge-uart edge-uart-mlkem kyber kyber-invalid axi axi-secure kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-filelist-check asic-manifest-check asic-frontend-check asic-backend-readiness asic-elaboration asic-portability crypto-freeze-check verification-inputs-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
+.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-margin-characterize puf-allpairs-sim puf-allpairs-project puf-allpairs-bitstream puf-allpairs-program puf-allpairs-characterize puf-mapping-train arty-puf-characterization-project arty-puf-characterization-bitstream arty-puf-characterization-program arty-puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem edge-uart edge-uart-mlkem kyber kyber-invalid axi axi-secure kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-filelist-check asic-manifest-check asic-frontend-check asic-backend-readiness asic-elaboration asic-portability crypto-freeze-check verification-inputs-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
 
 PUF_PORT ?= /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
 ARTY_PUF_PORT ?= $(firstword $(wildcard /dev/serial/by-id/usb-Digilent_Digilent_USB_Device_*-if01-port0))
 PUF_SAMPLES ?= 1000
 PUF_MARGIN_REPORT ?= reports/puf_characterization/private_margin_latest.json
 PUF_ALLPAIRS_REPORT ?= reports/puf_allpairs_characterization/private_allpairs_latest.json
+PUF_BOARD_ID ?= UNSPECIFIED
+PUF_CONDITION_ID ?= UNSPECIFIED
+PUF_MAPPING_TRAINING ?=
+PUF_MAPPING_HOLDOUT ?=
+PUF_MAPPING_VERSION ?= provisional-v0
+PUF_MAPPING_MANIFEST ?= reports/puf_mapping/provisional_mapping.json
 PUF_CHAR_BIT := build/puf_characterization/puf_characterization_zynq7020.runs/impl_1/Puf_Characterization_Top.bit
 PUF_ALLPAIRS_XPR := build/puf_allpairs_characterization/puf_allpairs_zynq7020.xpr
 PUF_ALLPAIRS_BIT := build/puf_allpairs_characterization/puf_allpairs_zynq7020.runs/impl_1/Puf_AllPairs_Characterization_Top.bit
@@ -75,7 +81,13 @@ puf-allpairs-program:
 	$(VIVADO) -mode batch -nolog -nojournal -source scripts/program_puf_allpairs.tcl
 
 puf-allpairs-characterize:
-	python3 -u host/puf_allpairs_characterize.py --port "$(PUF_PORT)" --count $(PUF_SAMPLES) --bitstream "$(PUF_ALLPAIRS_BIT)" --report "$(PUF_ALLPAIRS_REPORT)"
+	python3 -u host/puf_allpairs_characterize.py --port "$(PUF_PORT)" --count $(PUF_SAMPLES) --bitstream "$(PUF_ALLPAIRS_BIT)" --report "$(PUF_ALLPAIRS_REPORT)" --board-id "$(PUF_BOARD_ID)" --condition-id "$(PUF_CONDITION_ID)"
+
+# Explicit training and holdout file lists are mandatory. This target writes a
+# provisional manifest unless the default 3-training/2-holdout board gates pass.
+puf-mapping-train:
+	@test -n "$(PUF_MAPPING_TRAINING)" || { echo "Set PUF_MAPPING_TRAINING to private campaign JSON files" >&2; exit 2; }
+	python3 -u host/puf_mapping_train.py --training $(PUF_MAPPING_TRAINING) --holdout $(PUF_MAPPING_HOLDOUT) --version "$(PUF_MAPPING_VERSION)" --manifest "$(PUF_MAPPING_MANIFEST)"
 
 arty-puf-characterization-project:
 	$(VIVADO) -mode batch -nolog -nojournal -source scripts/create_arty_puf_characterization_project.tcl
