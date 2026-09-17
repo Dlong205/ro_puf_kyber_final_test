@@ -1,7 +1,7 @@
 # Trạng thái xác minh — integration `0.2.0-rc2-dev`, artifact `0.2.0-rc1`
 
-Bằng chứng cập nhật đến **2026-09-16**. Nhánh làm việc tích hợp là
-`codex/asic-frontend-mlkem512`, tách từ `codex/fips202-mlkem`; artifact FPGA được chấp nhận nằm tại tag
+Bằng chứng cập nhật đến **2026-09-17**. Nhánh phát triển FPGA hiện tại là
+`codex/fpga-v2-split`; artifact FPGA được chấp nhận nằm tại tag
 `fpga-mlkem512-0.2.0-rc1`. Tag `fpga-rc4-baseline` chỉ được giữ làm mốc so
 sánh Kyber/FPGA cũ. Các kết quả characterization và physical route-lock sau
 RC1 là bằng chứng bổ sung, không phải một phiên bản production mới.
@@ -37,10 +37,13 @@ abort/no-late-start, scrub state và quét RAM Kyber. KDF compact PASS KAT
 bit-exact và zeroize ở 411 chu kỳ. `edge_mlkem_core` nối Server thật đã PASS
 một ca valid và một ca ciphertext sửa, cùng latency 19.800 chu kỳ đến
 `secret_valid`, rồi full scrub đạt 21.850 chu kỳ. Full wrapper PUF/FE/Edge đã
-PASS unit test cạnh handoff FE→KDF, elaborate và OOC synth, nhưng chưa có
-simulation end-to-end với toàn bộ module thật. UART transport chẩn đoán đã
-PASS bit-level unit test; framed stream/backpressure release-grade,
-confirmation, CDC sign-off và board top trên target đủ lớn vẫn còn mở.
+PASS unit test cạnh handoff FE→KDF, elaborate và OOC synth. UART transport đã
+PASS bit-level unit test và integration thật với Kyber Client/Server: nhận đủ
+public key/ciphertext, `equal=1`, shared secret khớp và trả result tag. Full
+board top Zynq đã fit/route ở 100 MHz với WNS `+0,326 ns`, WHS `+0,041 ns`,
+nhưng bitstream này có trước bản sửa giữ `ready_c`; build lại và board SESSION
+cuối đang chờ ổ Vivado được mount. Xem
+[báo cáo bring-up Zynq 100 MHz](ZYNQ_EDGE_100MHZ_BRINGUP_2026-09-17.md).
 
 | Cổng | Quyết định | Bằng chứng/điều kiện còn lại |
 |---|---|---|
@@ -49,6 +52,7 @@ confirmation, CDC sign-off và board top trên target đủ lớn vẫn còn m�
 | Crypto RTL freeze cuối | **CANDIDATE v4** | Offline, Vivado và đúng-image board PASS; còn review độc lập trước freeze/promote |
 | FPGA RC nội bộ | **GO cho RC1 đã tag** | Candidate v4 đã có build/board evidence cách ly nhưng chưa thay artifact RC1 ở root |
 | Edge Arty-35T | **OOC PASS, full board top NO-FIT** | v08 OOC: 95,84% LUT logic, WNS +0,053 ns, WHS +0,046 ns, route sạch/fingerprint khớp; board top + UART cần 26.815/20.800 Slice LUT nên không có bitstream full Edge |
+| Edge Zynq-7020 100 MHz | **P&R PASS, board retest PENDING** | Full board top 20.997 LUT, WNS +0,326 ns, WHS +0,041 ns, route sạch; handshake UART→NTT đã PASS integration sau sửa, cần build/nạp lại khi Vivado được mount |
 | Physical reproducibility của RO | **DONE cho full-SoC RC1** | Hai build sạch khớp 136 endpoint/128 route; không thay thế qualification vật lý |
 | Count-margin RO-PUF | **PASS bước instrumentation** | Zynq 100/100 frame; 255/264 challenge duy nhất, chưa đủ để chốt mask N=264 |
 | Candidate pool 496 cặp | **PASS diagnostic** | RTL/Vivado/Zynq 100/100; 487 cặp đạt margin p01>=4, preview N=264 cân bằng degree |

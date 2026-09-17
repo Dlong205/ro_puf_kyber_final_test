@@ -10,6 +10,7 @@ release/
 *.str
 webtalk*.jou
 webtalk*.log
+usage_statistics_webtalk.*
 
 # Verilator and generated simulation sources
 sim/*/obj_dir*/

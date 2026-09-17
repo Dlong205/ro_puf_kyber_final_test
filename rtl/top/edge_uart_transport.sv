@@ -75,9 +75,13 @@ module edge_uart_transport #(
     reg [31:0] word_shift;
     reg [31:0] nonce;
     reg [31:0] result_tag;
-    reg        ct_word_valid;
+    reg        ct_buffer_ready;
+    reg [31:0] ct_buffer [0:CT_WORDS-1];
 
-    assign peer_ready_c = ct_word_valid;
+    // Kyber_Server samples ready_c before entering its continuous ciphertext
+    // receive state.  UART is far too slow to supply that stream on demand,
+    // so acknowledge readiness only after the complete ciphertext is buffered.
+    assign peer_ready_c = ct_buffer_ready;
 
     uart_rx #(.CLKS_PER_BIT(CLKS_PER_BIT)) u_rx (
         .i_Clock(clk), .i_Rst(~rst_n), .i_Rx_Serial(uart_rx_i),
@@ -138,7 +142,7 @@ module edge_uart_transport #(
             word_shift      <= 32'd0;
             nonce           <= 32'd0;
             result_tag      <= 32'd0;
-            ct_word_valid   <= 1'b0;
+            ct_buffer_ready <= 1'b0;
         end else begin
             core_start      <= 1'b0;
             core_zeroize    <= 1'b0;
@@ -293,6 +297,7 @@ module edge_uart_transport #(
                     if (tx_done_pulse) begin
                         item_count <= 10'd0;
                         byte_count <= 2'd0;
+                        ct_buffer_ready <= 1'b0;
                         state <= S_CT_RX;
                     end
                 end
@@ -301,9 +306,15 @@ module edge_uart_transport #(
                     if (rx_dv) begin
                         word_shift[8*byte_count +: 8] <= rx_byte;
                         if (byte_count == 2'd3) begin
-                            stream_in_data <= {rx_byte, word_shift[23:0]};
-                            ct_word_valid <= 1'b1;
-                            state <= S_CT_DELIVER;
+                            ct_buffer[item_count] <= {rx_byte, word_shift[23:0]};
+                            byte_count <= 2'd0;
+                            if (item_count == CT_WORDS-1) begin
+                                item_count <= 10'd0;
+                                ct_buffer_ready <= 1'b1;
+                                state <= S_CT_DELIVER;
+                            end else begin
+                                item_count <= item_count + 1'b1;
+                            end
                         end else begin
                             byte_count <= byte_count + 1'b1;
                         end
@@ -311,21 +322,24 @@ module edge_uart_transport #(
                 end
 
                 S_CT_DELIVER: begin
-                    if (req_c && ct_word_valid) begin
+                    if (req_c && ct_buffer_ready) begin
+                        stream_in_data <= ct_buffer[item_count];
                         stream_in_valid <= 1'b1;
-                        ct_word_valid <= 1'b0;
-                        byte_count <= 2'd0;
-                        if (item_count == CT_WORDS-1)
+                        if (item_count == CT_WORDS-1) begin
                             state <= S_SECRET_WAIT;
-                        else begin
+                        end else begin
                             item_count <= item_count + 1'b1;
-                            state <= S_CT_RX;
                         end
                     end
                 end
 
                 S_SECRET_WAIT: begin
                     if (secret_valid) begin
+                        // Kyber_Server continues to use ready_c after the last
+                        // ciphertext word while its NTT enters the CCA path.
+                        // Match Kyber_Client: retire ready_c only when the
+                        // shared secret is complete.
+                        ct_buffer_ready <= 1'b0;
                         result_tag <= nonce ^ shared_secret[31:0] ^
                             shared_secret[63:32] ^ shared_secret[95:64] ^
                             shared_secret[127:96] ^ shared_secret[159:128] ^
@@ -359,6 +373,7 @@ module edge_uart_transport #(
                     result_tag <= 32'd0;
                     stream_in_data <= 32'd0;
                     word_shift <= 32'd0;
+                    ct_buffer_ready <= 1'b0;
                     state <= S_IDLE;
                 end
 

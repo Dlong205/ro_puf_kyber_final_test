@@ -97,8 +97,11 @@ module tb_edge_uart_transport;
             pk_index <= pk_index + 1;
             if (pk_index == 1) begin
                 ready_pk <= 1'b0;
-                req_c <= 1'b1;
             end
+        end else if (!req_c && peer_ready_c) begin
+            // Match Kyber_Server: enter the receive state only after the
+            // peer says the complete ciphertext stream is available.
+            req_c <= 1'b1;
         end else if (stream_in_valid) begin
             if (!req_c)
                 $fatal(1, "ciphertext delivered outside request window");
@@ -176,7 +179,12 @@ module tb_edge_uart_transport;
         for (index = 0; index < 8; index = index + 1)
             expect_uart(index[7:0]);
         expect_uart(8'h43);
-        for (index = 0; index < 8; index = index + 1)
+        for (index = 0; index < 4; index = index + 1)
+            send_uart(8'ha0 + index[7:0]);
+        repeat (4) @(posedge clk);
+        if (peer_ready_c)
+            $fatal(1, "transport announced ciphertext before full buffering");
+        for (index = 4; index < 8; index = index + 1)
             send_uart(8'ha0 + index[7:0]);
 
         expected_tag = 32'h12345678 ^ 32'h01234567 ^ 32'h89abcdef ^

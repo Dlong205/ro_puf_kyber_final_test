@@ -28,6 +28,21 @@ VIVADO=/absolute/path/to/vivado \
 Chi tiết và các phương án checkpoint đã loại được ghi tại
 `docs/ARTY_A7_35T_BOARD_TOP_CAPACITY_2026-09-13.md`.
 
+### Zynq-7020 full board top
+
+`run_edge_zynq_diag.sh` dùng oscillator 50 MHz tại N18, tạo clock core
+100 MHz bằng `PLLE2_BASE`, áp pin UART/SW/LED và tái sử dụng placement map của
+128 RO. Flow tạo bitstream chỉ khi timing và routing đều đạt.
+
+```sh
+make -j1 edge-uart-mlkem
+VIVADO=/absolute/path/to/vivado \
+  bash experiments/fpga_100mhz/run_edge_zynq_diag.sh ten_luot_chay
+```
+
+Kết quả và điều kiện board retest nằm tại
+`docs/ZYNQ_EDGE_100MHZ_BRINGUP_2026-09-17.md`.
+
 Kết quả tham chiếu ngày 2026-09-12 cho `xc7a35ticsg324-1L`:
 
 - 19.257 LUT logic (92,58%), 14 BRAM, 2 DSP;
