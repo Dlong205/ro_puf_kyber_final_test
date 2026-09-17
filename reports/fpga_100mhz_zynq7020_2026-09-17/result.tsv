@@ -1,0 +1,10 @@
+part	xc7z020clg400-2
+input_clock_period_ns	20.000
+core_clock_period_ns	10.000
+core_clocks	clk_100_raw
+ro_luts	128
+ro_placed_luts	128
+ro_loop_nets	128
+setup_slack_ns	0.562
+hold_slack_ns	0.045
+routing_errors	0

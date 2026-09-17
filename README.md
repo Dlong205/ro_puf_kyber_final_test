@@ -81,9 +81,9 @@ KDF compact → `d,z` → scrub → `Kyber_Server` đã PASS valid/invalid loopb
 thời gian cố định và zeroize. Wrapper OOC đã nối cả PUF và FE thật; wrapper
 này đã qua test FSM handoff, valid/invalid ML-KEM và integration end-to-end
 với UART + Kyber Client/Server thật. Trên Zynq-7020, full board top đã fit và
-đạt timing 100 MHz (WNS `+0,326 ns`, WHS `+0,041 ns`). Lỗi transport hạ
-`ready_c` quá sớm đã được tái hiện và sửa trong mô phỏng; build/nạp lại
-bitstream sau sửa đang chờ ổ Vivado được mount. Xem
+đạt timing 100 MHz (WNS `+0,562 ns`, WHS `+0,045 ns`). Lỗi transport hạ
+`ready_c` quá sớm đã được tái hiện và sửa; bitstream cuối PASS INFO, ENROLL,
+SESSION và stress 100/100 trên board. Xem
 [báo cáo Zynq Edge 100 MHz](docs/ZYNQ_EDGE_100MHZ_BRINGUP_2026-09-17.md).
 
 | Giai đoạn | Trạng thái đúng hiện tại |
@@ -93,7 +93,7 @@ bitstream sau sửa đang chờ ổ Vivado được mount. Xem
 | Crypto RTL freeze | **CANDIDATE v4**; offline/Vivado/board PASS, còn review độc lập trước khi freeze |
 | FPGA implementation | **PASS** candidate v4 ở 50 MHz; artifact root được chấp nhận vẫn là RC1 |
 | Edge trên Arty A7-35T | **OOC 100 MHz + RO LOCK PASS**, nhưng **full board top + UART NO-FIT**: v08 OOC WNS +0,053 ns, WHS +0,046 ns; board top cần 26.815/20.800 Slice LUT; PUF-only board vẫn PASS |
-| Edge trên Zynq-7020 | **FULL BOARD TOP FIT/P&R 100 MHz**: 20.997 LUT, WNS +0,326 ns, WHS +0,041 ns; integration handshake đã sửa/PASS, chờ build và board SESSION cuối |
+| Edge trên Zynq-7020 | **FULL BOARD PASS 100 MHz**: 20.974 LUT, WNS +0,562 ns, WHS +0,045 ns; INFO/ENROLL/SESSION và stress 100/100 PASS |
 | Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
 | Qualification RO-PUF | **ALL-PAIRS DIAGNOSTIC PASS, CHƯA FREEZE**: 496 cặp/100 frame trên Zynq, đủ pool N=264; còn thiếu mapping train/holdout nhiều board, same-root, PVT và power-cycle |
 | ASIC front-end | **ĐANG TRIỂN KHAI**: top/reset/filelist/manifest và structural lint đã có; chưa có PDK/backend |

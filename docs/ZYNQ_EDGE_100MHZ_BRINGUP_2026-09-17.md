@@ -8,22 +8,23 @@ KeyGen/Decaps và UART **fit và đạt timing ở 100 MHz** trên
 `PLLE2_BASE` trong board shell tạo clock core 100 MHz. Thiết kế không dùng
 Xilinx IP sinh tự động và primitive clock không đi vào ASIC file list.
 
-Kết quả implementation trước bản sửa handshake cuối:
+Kết quả implementation cuối từ commit
+`2f7b60368486444553c3aecf4d955e183fb4cd94`:
 
 | Chỉ số | Kết quả |
 |---|---:|
 | Clock vào / clock core | 50 MHz / 100 MHz |
-| WNS / WHS | `+0,326 ns` / `+0,041 ns` |
+| WNS / WHS | `+0,562 ns` / `+0,045 ns` |
 | Routing error | 0 |
-| Slice LUT | 20.997 / 53.200 (39,47%) |
-| Slice register | 19.907 / 106.400 (18,71%) |
+| Slice LUT | 20.974 / 53.200 (39,42%) |
+| Slice register | 19.908 / 106.400 (18,71%) |
 | BRAM tile / DSP | 14 / 2 |
 | PLL / BUFG | 1 / 4 |
 | RO đã tìm thấy/đặt cố định | 128 / 128 |
 
-Bitstream này đã được nạp volatile và PASS `INFO`, `ENROLL`, tạo đủ public
-key. Test SESSION ban đầu treo sau khi nhận ciphertext. Mô phỏng tích hợp mới
-đã tái hiện đúng lỗi này và xác định nguyên nhân không phải timing: UART
+Bitstream thử trước đó đã PASS `INFO`, `ENROLL`, tạo đủ public key nhưng
+SESSION treo sau khi nhận ciphertext. Mô phỏng tích hợp mới đã tái hiện đúng
+lỗi này và xác định nguyên nhân không phải timing: UART
 transport hạ `ready_c` ngay sau word ciphertext thứ 192, trong khi NTT Server
 vẫn cần tín hiệu này ở state nội bộ `0x0e` để đi vào CCA datapath.
 
@@ -54,17 +55,24 @@ make -j1 -C sim/edge_mlkem clean check
 
 ## Trạng thái phần cứng cuối
 
-Chưa được phép gọi bitstream implementation ở bảng trên là artifact cuối vì
-nó được tạo trước thay đổi giữ `ready_c`. Bản sửa chỉ thêm một thay đổi control
-nhỏ nhưng vẫn phải build lại, xác nhận timing/DRC, nạp đúng hash và chạy SESSION
-trên board. Tại thời điểm chốt báo cáo này, ổ chứa Vivado chưa được mount nên
-cổng build lại đang **PENDING**, không phải FAIL.
+Bitstream cuối có SHA-256:
 
-Điều kiện đóng hạng mục:
+```text
+11423b477b8478f0f7265605b518fab45d0d85b9cd69b01211d7e82f556133bd
+```
 
-- build sạch top `Edge_Zynq_Diagnostic_100MHz_Top`;
-- WNS/WHS không âm, routing error = 0, DRC không có Error/Critical Warning;
-- ghi SHA-256 bitstream mới;
-- nạp volatile và PASS INFO, ENROLL, SESSION với ciphertext hợp lệ;
-- sau test, phục hồi image RC1 nếu tiếp tục dùng board cho baseline release.
+Kết quả board XC7Z020:
 
+- PASS INFO `45 41 01 00 07`;
+- PASS ENROLL;
+- PASS một SESSION đối chiếu đầy đủ bằng ciphertext sinh từ pq-crystals Kyber
+  reference đã pin;
+- PASS stress `100/100` SESSION liên tiếp: mỗi vòng reconstruct PUF, xuất đủ
+  public key, decaps ciphertext hợp lệ và trả đúng diagnostic tag;
+- không còn timeout tại Server state `0x2c`/NTT state `0x0e`.
+
+Artifact nằm tại
+`artifacts/zynq_edge_100mhz_2026-09-17/`; timing/DRC/route report nằm tại
+`reports/fpga_100mhz_zynq7020_2026-09-17/`. DRC có 0 Error; 163 warning là
+nhóm RO LUT/loop và Zynq PS7 không dùng đã biết. Đây là ảnh diagnostic, chưa
+thay thế artifact ML-KEM RC1 và chưa phải production confirmation protocol.

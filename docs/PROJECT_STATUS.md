@@ -40,9 +40,8 @@ một ca valid và một ca ciphertext sửa, cùng latency 19.800 chu kỳ đ�
 PASS unit test cạnh handoff FE→KDF, elaborate và OOC synth. UART transport đã
 PASS bit-level unit test và integration thật với Kyber Client/Server: nhận đủ
 public key/ciphertext, `equal=1`, shared secret khớp và trả result tag. Full
-board top Zynq đã fit/route ở 100 MHz với WNS `+0,326 ns`, WHS `+0,041 ns`,
-nhưng bitstream này có trước bản sửa giữ `ready_c`; build lại và board SESSION
-cuối đang chờ ổ Vivado được mount. Xem
+board top Zynq đã fit/route ở 100 MHz với WNS `+0,562 ns`, WHS `+0,045 ns`;
+bitstream sau sửa đã PASS INFO, ENROLL, SESSION đầy đủ và stress 100/100. Xem
 [báo cáo bring-up Zynq 100 MHz](ZYNQ_EDGE_100MHZ_BRINGUP_2026-09-17.md).
 
 | Cổng | Quyết định | Bằng chứng/điều kiện còn lại |
@@ -52,7 +51,7 @@ cuối đang chờ ổ Vivado được mount. Xem
 | Crypto RTL freeze cuối | **CANDIDATE v4** | Offline, Vivado và đúng-image board PASS; còn review độc lập trước freeze/promote |
 | FPGA RC nội bộ | **GO cho RC1 đã tag** | Candidate v4 đã có build/board evidence cách ly nhưng chưa thay artifact RC1 ở root |
 | Edge Arty-35T | **OOC PASS, full board top NO-FIT** | v08 OOC: 95,84% LUT logic, WNS +0,053 ns, WHS +0,046 ns, route sạch/fingerprint khớp; board top + UART cần 26.815/20.800 Slice LUT nên không có bitstream full Edge |
-| Edge Zynq-7020 100 MHz | **P&R PASS, board retest PENDING** | Full board top 20.997 LUT, WNS +0,326 ns, WHS +0,041 ns, route sạch; handshake UART→NTT đã PASS integration sau sửa, cần build/nạp lại khi Vivado được mount |
+| Edge Zynq-7020 100 MHz | **P&R + BOARD PASS** | Full board top 20.974 LUT, WNS +0,562 ns, WHS +0,045 ns, route sạch; PASS INFO/ENROLL/SESSION và stress 100/100 |
 | Physical reproducibility của RO | **DONE cho full-SoC RC1** | Hai build sạch khớp 136 endpoint/128 route; không thay thế qualification vật lý |
 | Count-margin RO-PUF | **PASS bước instrumentation** | Zynq 100/100 frame; 255/264 challenge duy nhất, chưa đủ để chốt mask N=264 |
 | Candidate pool 496 cặp | **PASS diagnostic** | RTL/Vivado/Zynq 100/100; 487 cặp đạt margin p01>=4, preview N=264 cân bằng degree |
