@@ -4,11 +4,17 @@
 module kp_puf_top (
     input wire clk, input wire rst_n, input wire zeroize, input wire start,
     input wire [7:0] seed, output reg busy, output reg done,
-    output reg [263:0] response
+    output reg [263:0] response,
+    output reg telemetry_valid, output reg [8:0] telemetry_index,
+    output reg [7:0] telemetry_challenge, output reg [31:0] telemetry_count0,
+    output reg [31:0] telemetry_count1, output reg telemetry_winner
 );
     always @(posedge clk or negedge rst_n or posedge zeroize) begin
         if (!rst_n || zeroize) begin
             busy <= 1'b0; done <= 1'b0; response <= 264'd0;
+            telemetry_valid <= 1'b0; telemetry_index <= 9'd0;
+            telemetry_challenge <= 8'd0; telemetry_count0 <= 32'd0;
+            telemetry_count1 <= 32'd0; telemetry_winner <= 1'b0;
         end else begin
             done <= busy;
             busy <= start;
