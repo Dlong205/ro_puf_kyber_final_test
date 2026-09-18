@@ -10,7 +10,7 @@ SOC_REPRO_BIT := build/soc_repro/$(SOC_REPRO_RUN)/kyber_ro_puf_$(SOC_REPRO_RUN).
 # Verilator builds can exhaust RAM on the reference development host.
 .NOTPARALLEL:
 
-.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-margin-characterize puf-allpairs-sim puf-allpairs-project puf-allpairs-bitstream puf-allpairs-program puf-allpairs-characterize puf-allpairs-lock-export puf-allpairs-lock-check puf-allpairs64-sim puf-allpairs64-project puf-allpairs64-bitstream puf-allpairs64-program puf-allpairs64-characterize puf-allpairs64-lock-export puf-allpairs64-lock-check puf64-microbench-project puf64-microbench-bitstream puf64-microbench-program puf64-microbench-placement-export puf-mapping-train arty-puf-characterization-project arty-puf-characterization-bitstream arty-puf-characterization-program arty-puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem edge-uart edge-uart-mlkem edge-root-binding edge-asic-top kyber kyber-invalid axi axi-secure kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-filelist-check asic-manifest-check asic-frontend-check asic-backend-readiness asic-elaboration asic-portability crypto-freeze-check verification-inputs-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
+.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-margin-characterize puf-allpairs-sim puf-allpairs-project puf-allpairs-bitstream puf-allpairs-program puf-allpairs-characterize puf-allpairs-lock-export puf-allpairs-lock-check puf-allpairs64-sim puf-allpairs64-project puf-allpairs64-bitstream puf-allpairs64-program puf-allpairs64-characterize puf-allpairs64-lock-export puf-allpairs64-lock-check puf64-microbench-project puf64-microbench-bitstream puf64-microbench-program puf64-microbench-placement-export puf64-bench-project puf64-bench-bitstream puf64-bench-program puf64-bench-diag puf-mapping-train arty-puf-characterization-project arty-puf-characterization-bitstream arty-puf-characterization-program arty-puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem edge-uart edge-uart-mlkem edge-root-binding edge-asic-top kyber kyber-invalid axi axi-secure kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-filelist-check asic-manifest-check asic-frontend-check asic-backend-readiness asic-elaboration asic-portability crypto-freeze-check verification-inputs-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
 
 PUF_PORT ?= /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
 ARTY_PUF_PORT ?= $(firstword $(wildcard /dev/serial/by-id/usb-Digilent_Digilent_USB_Device_*-if01-port0))
@@ -146,6 +146,21 @@ puf64-microbench-program:
 
 puf64-microbench-placement-export:
 	$(VIVADO) -mode batch -nolog -nojournal -source scripts/export_puf64_microbench_placement.tcl
+
+# C1-C4 diagnostic RO bench (NUM_RO configurable; diagnostic-only output).
+PUF64_BENCH_NUM_RO ?= 4
+puf64-bench-project:
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/create_puf64_bench_project.tcl -tclargs $(PUF64_BENCH_NUM_RO)
+
+puf64-bench-bitstream:
+	@test -f build/puf64_bench/puf64_bench_zynq7020.xpr || $(MAKE) -j1 puf64-bench-project VIVADO=$(VIVADO)
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/build_puf64_bench.tcl -tclargs $(PUF64_BENCH_NUM_RO)
+
+puf64-bench-program:
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/program_puf64_bench.tcl
+
+puf64-bench-diag:
+	python3 -u host/puf64_bench_diag.py --port "$(PUF_PORT)" --num-ro $(PUF64_BENCH_NUM_RO)
 
 puf-mapping-train:
 	@test -n "$(PUF_MAPPING_TRAINING)" || { echo "Set PUF_MAPPING_TRAINING to private campaign JSON files" >&2; exit 2; }
