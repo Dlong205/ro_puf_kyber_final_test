@@ -18,6 +18,7 @@ module Puf_AllPairs64_Characterization_Top #(
     localparam integer NUM_RO = 64;
     localparam integer PAIR_COUNT = NUM_RO * (NUM_RO - 1) / 2;
     localparam integer REF_CYCLES = 1023;
+    localparam integer BUILD_ID = 16'h0001;
     localparam integer INPUT_CLOCK_HZ = 50000000;
     localparam integer SYSTEM_CLOCK_HZ = 100000000;
     localparam integer MEASUREMENT_WINDOW_NS = (REF_CYCLES * 1000) / (SYSTEM_CLOCK_HZ / 1000000);
@@ -100,7 +101,9 @@ module Puf_AllPairs64_Characterization_Top #(
         .INPUT_CLOCK_HZ(INPUT_CLOCK_HZ),
         .SYSTEM_CLOCK_HZ(SYSTEM_CLOCK_HZ),
         .REF_CYCLES_INFO(REF_CYCLES),
-        .MEASUREMENT_WINDOW_NS(MEASUREMENT_WINDOW_NS)
+        .MEASUREMENT_WINDOW_NS(MEASUREMENT_WINDOW_NS),
+        .WIDTH(16), .TOPOLOGY_ID(16'hC0DE), .BUILD_ID(BUILD_ID),
+        .IS_DIAGNOSTIC(0)
     ) u_uart (
         .clk(clk_sys), .rst_n(por_done),
         .uart_rx_i(UART_RXD), .uart_tx_o(UART_TXD), .tx_active(tx_active),

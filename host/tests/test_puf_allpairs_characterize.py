@@ -231,9 +231,10 @@ class AllPairsMetricsTest(unittest.TestCase):
         expected64 = bytes([0x50, 0x55, 0x46, 0x03, 64, 0xE0, 0x07, 0x07,
                             0x80, 0xF0, 0xFA, 0x02,
                             0x00, 0xE1, 0xF5, 0x05,
-                            0xFF, 0x03, 0x01, 0xF6, 0x27])
+                            0xFF, 0x03, 0x01, 0xF6, 0x27,
+                            0x10, 0xDE, 0xC0, 0x00, 0x01, 0x00])
         self.assertEqual(PUF.expected_info_bytes(64, 2016), expected64)
-        self.assertEqual(len(expected64), 21)
+        self.assertEqual(len(expected64), 27)
 
     def test_probe_image_detects_both_variants(self):
         legacy = FakePort(b"PUF\x02\x00\x07")
@@ -243,6 +244,9 @@ class AllPairsMetricsTest(unittest.TestCase):
         self.assertEqual(detected[:2], (64, 2016))
         self.assertEqual(detected[3]["system_clock_hz"], 100000000)
         self.assertEqual(detected[3]["mmcm_locked"], 1)
+        self.assertEqual(detected[3]["width"], 16)
+        self.assertEqual(detected[3]["topology_id"], 0xC0DE)
+        self.assertEqual(detected[3]["build_id"], 0x0001)
         bad = FakePort(b"PUF\xFF\x00")
         with self.assertRaises(RuntimeError):
             PUF.probe_image(bad)

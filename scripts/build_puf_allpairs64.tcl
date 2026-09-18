@@ -43,6 +43,7 @@ report_utilization -file [file join $report_dir post_synth_utilization.rpt]
 close_design
 
 reset_run impl_1
+set_property STEPS.route_design.ARGS.directive AggressiveExplore [get_runs impl_1]
 launch_runs impl_1 -to_step write_bitstream -jobs 1
 wait_on_run impl_1
 set impl_status [get_property STATUS [get_runs impl_1]]

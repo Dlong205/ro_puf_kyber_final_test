@@ -54,6 +54,10 @@ def expected_info_bytes(ro_count, pair_count):
             0xFF, 0x03,               # ref_cycles = 1023
             0x01,                     # mmcm_locked
             0xF6, 0x27,               # measurement_window_ns = 10230
+            0x10,                     # WIDTH = 16
+            0xDE, 0xC0,               # topology_id = 0xC0DE
+            0x00,                     # flags (production, not diagnostic)
+            0x01, 0x00,               # build_id = 0x0001
         ])
     raise ValueError(f"unsupported NUM_RO={ro_count}")
 
@@ -93,7 +97,7 @@ def probe_image(port):
         if tail[0] != 0x00:
             raise RuntimeError("PUF32 INFO reserved byte is non-zero")
     elif proto == 0x03:
-        payload = read_exact(port, 17)
+        payload = read_exact(port, 23)
         ro_count = payload[0]
         pair_count = payload[1] | (payload[2] << 8)
         capabilities = payload[3]
@@ -103,6 +107,10 @@ def probe_image(port):
             "ref_cycles": payload[12] | (payload[13] << 8),
             "mmcm_locked": payload[14],
             "measurement_window_ns": payload[15] | (payload[16] << 8),
+            "width": payload[17],
+            "topology_id": payload[18] | (payload[19] << 8),
+            "flags": payload[20],
+            "build_id": payload[21] | (payload[22] << 8),
         }
     else:
         raise RuntimeError(f"unknown all-pairs protocol version {proto:#04x}")
@@ -615,6 +623,17 @@ def main():
         measurements, elapsed, device_info = collect(
             args.port, args.count, args.timeout, ro_count
         )
+        if golden_manifest is not None:
+            for key in ("build_id", "topology_id", "width", "ref_cycles",
+                        "system_clock_hz", "input_clock_hz"):
+                expected = golden_manifest.get(key)
+                actual = device_info.get(key)
+                if expected is not None and expected != actual:
+                    print(
+                        f"ERROR: device {key}={actual} contradicts golden {expected}",
+                        file=sys.stderr,
+                    )
+                    return 1
         result = analyze(
             measurements, thresholds, args.max_minority_rate,
             selection_threshold=args.selection_threshold,
@@ -660,6 +679,7 @@ def main():
         "build_datetime": "2026-09-18",
         "placement_fingerprint_sha256": fingerprint_hash,
         "release_equivalence_established": False,
+        "device_info": device_info,
     }
     report = Path(args.report)
     report.parent.mkdir(parents=True, exist_ok=True)

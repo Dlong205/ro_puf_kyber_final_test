@@ -15,7 +15,11 @@ module puf_allpairs_uart #(
     parameter integer INPUT_CLOCK_HZ = 50000000,
     parameter integer SYSTEM_CLOCK_HZ = 50000000,
     parameter integer REF_CYCLES_INFO = 255,
-    parameter integer MEASUREMENT_WINDOW_NS = 0
+    parameter integer MEASUREMENT_WINDOW_NS = 0,
+    parameter integer WIDTH = 16,
+    parameter integer TOPOLOGY_ID = 16'hC0DE,
+    parameter integer BUILD_ID = 16'h0001,
+    parameter integer IS_DIAGNOSTIC = 0
 )(
     input  wire                     clk,
     input  wire                     rst_n,
@@ -46,7 +50,7 @@ module puf_allpairs_uart #(
     // INFO payload length: 6 bytes (protocol 2.0, NUM_RO=32) or 21 bytes
     // (protocol 3.0, NUM_RO=64) carrying num_ro, pair_count, clock/MMCM and
     // measurement-window identity.
-    localparam integer INFO_BYTES = (NUM_RO == 32) ? 6 : 21;
+    localparam integer INFO_BYTES = (NUM_RO == 32) ? 6 : 27;
 
     localparam [2:0] S_IDLE = 3'd0;
     localparam [2:0] S_WAIT_PUF = 3'd1;
@@ -157,7 +161,11 @@ module puf_allpairs_uart #(
                             };
                         end else begin
                             tx_shift <= {
-                                {(RESPONSE_BITS-168){1'b0}},
+                                {(RESPONSE_BITS-216){1'b0}},
+                                8'(BUILD_ID >> 8), 8'(BUILD_ID),
+                                8'({7'b0, IS_DIAGNOSTIC}),
+                                8'(TOPOLOGY_ID >> 8), 8'(TOPOLOGY_ID),
+                                8'(WIDTH),
                                 8'(MEASUREMENT_WINDOW_NS >> 8),
                                 8'(MEASUREMENT_WINDOW_NS),
                                 8'(mmcm_locked),
