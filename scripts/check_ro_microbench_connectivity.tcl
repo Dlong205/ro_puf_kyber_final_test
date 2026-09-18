@@ -72,5 +72,31 @@ proc check_ro_microbench_connectivity {stage} {
         }
     }
 
-    puts "MICROBENCH ${stage}_PASS prescaler=$presc tap=$tap_net driver=$driver_cell Qclk=$clock_loads Qen=$enable_path"
+    set clock_prims [get_cells -quiet -hierarchical -filter {REF_NAME =~ "BUFG*" || REF_NAME =~ "BUFH*" || REF_NAME =~ "BUFR*"}]
+    foreach cp $clock_prims {
+        set din [get_pins -quiet -of_objects $cp -filter {DIRECTION == IN}]
+        set innet [get_nets -quiet -of_objects $din]
+        if {[string match "*u_bench*" $innet]} {
+            error "MICROBENCH $stage: RO/prescaler net promoted to [get_property REF_NAME $cp]: $innet"
+        }
+    }
+    set bufgs [get_cells -quiet -hierarchical -filter {REF_NAME =~ "BUFG*"}]
+    puts "MICROBENCH ${stage}_BUFG_COUNT=[llength $bufgs]"
+
+    set stage_ffs [get_cells -quiet -hierarchical \
+        -filter {REF_NAME == "FDCE" && DONT_TOUCH == 1 && NAME =~ "*u_bench*stage*"}]
+    if {[llength $stage_ffs] == 0} {
+        error "MICROBENCH $stage: no ripple counter stages found"
+    }
+    foreach ff $stage_ffs {
+        set cpin [get_pins -quiet -of_objects $ff -filter {REF_PIN_NAME == "C"}]
+        set cnet [get_nets -quiet -of_objects $cpin]
+        set loads [get_pins -quiet -of_objects $cnet -filter {REF_PIN_NAME == "C"}]
+        if {[llength $loads] > 1} {
+            error "MICROBENCH $stage: ripple clock net fanout > 1: $cnet"
+        }
+    }
+    puts "MICROBENCH ${stage}_RIPPLE_STAGES=[llength $stage_ffs]"
+
+    puts "MICROBENCH ${stage}_PASS prescaler=$presc tap=$tap_net driver=$driver_cell Qclk=$clock_loads Qen=$enable_path stages=[llength $stage_ffs]"
 }

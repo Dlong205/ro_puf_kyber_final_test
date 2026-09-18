@@ -1,15 +1,16 @@
 `timescale 1ns / 1ps
 
-// Phase B microbenchmark core: one production-topology RO, one explicit FDCE
-// divide-by-two prescaler (D = ~Q), a free-running toggle counter and a
-// windowed measurement counter, all captured into the system clock domain
-// after the RO is stopped (stop-then-capture).
+// C0 measurement core: one production-topology RO, one explicit FDCE
+// divide-by-two prescaler, and a LOCAL RIPPLE counter built from explicit
+// FDCE stages so every clock net has fanout 1 and no RO/prescaler net is
+// promoted to BUFG/BUFH or converted to a 100 MHz clock-enable.
 module puf64_ro_microbench #(
     parameter integer REF_CYCLES = 1023,
     parameter integer CLEAR_CYCLES = 8,
-    parameter integer SETTLE_CYCLES = 4,
+    parameter integer SETTLE_CYCLES = 8,
     parameter integer CAPTURE_TIMEOUT = 1024,
-    parameter integer RO_FREQ_OFFSET = 1
+    parameter integer RO_FREQ_OFFSET = 1,
+    parameter integer WIDTH = 16
 )(
     input  logic        clk,
     input  logic        rst_n,
@@ -33,7 +34,7 @@ module puf64_ro_microbench #(
 
     logic [2:0] state;
     logic [15:0] window_cnt;
-    logic [3:0] settle_cnt;
+    logic [4:0] settle_cnt;
     logic [11:0] timeout_cnt;
     reg async_clear;
     reg ro_en_r;
@@ -49,26 +50,28 @@ module puf64_ro_microbench #(
         .Q(presc_q), .C(ro_tap), .CE(1'b1), .CLR(async_clear), .D(~presc_q)
     );
 
-    (* keep = "true" *) reg [31:0] free_q;
-    (* keep = "true" *) reg [31:0] meas_q;
-    always_ff @(posedge presc_q or posedge async_clear) begin
-        if (async_clear) free_q <= '0;
-        else free_q <= free_q + 1'b1;
-    end
-    always_ff @(posedge presc_q or posedge async_clear) begin
-        if (async_clear) meas_q <= '0;
-        else if (count_en_r) meas_q <= meas_q + 1'b1;
-    end
+    // Local ripple counter: stage k is clocked only by stage k-1 (or the
+    // prescaler for stage 0), so no clock net has more than one load.
+    (* keep = "true" *) wire [WIDTH-1:0] ripple_q;
+    (* keep = "true" *) wire [WIDTH:0] ripple_clk;
+    assign ripple_clk[0] = presc_q;
+    genvar k;
+    generate
+        for (k = 0; k < WIDTH; k = k + 1) begin : stage
+            (* DONT_TOUCH = "true" *) FDCE ff (
+                .Q(ripple_q[k]), .C(ripple_clk[k]),
+                .CE(1'b1), .CLR(async_clear), .D(~ripple_q[k])
+            );
+            assign ripple_clk[k+1] = ripple_q[k];
+        end
+    endgenerate
 
-    reg [31:0] free_s1, free_s2, free_s3;
-    reg [31:0] meas_s1, meas_s2, meas_s3;
+    reg [WIDTH-1:0] cap_s1, cap_s2, cap_s3;
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            free_s1 <= '0; free_s2 <= '0; free_s3 <= '0;
-            meas_s1 <= '0; meas_s2 <= '0; meas_s3 <= '0;
+            cap_s1 <= '0; cap_s2 <= '0; cap_s3 <= '0;
         end else begin
-            free_s1 <= free_q; free_s2 <= free_s1; free_s3 <= free_s2;
-            meas_s1 <= meas_q; meas_s2 <= meas_s1; meas_s3 <= meas_s2;
+            cap_s1 <= ripple_q; cap_s2 <= cap_s1; cap_s3 <= cap_s2;
         end
     end
 
@@ -93,7 +96,6 @@ module puf64_ro_microbench #(
                     if (start) begin
                         async_clear <= 1'b1;
                         ro_en_r <= 1'b0;
-                        count_en_r <= 1'b0;
                         window_cnt <= '0;
                         settle_cnt <= '0;
                         timeout_cnt <= '0;
@@ -132,14 +134,14 @@ module puf64_ro_microbench #(
                         settle_cnt <= settle_cnt + 1'b1;
                 end
                 S_CAPTURE: begin
-                    if (free_s2 == free_s3 && meas_s2 == meas_s3) begin
-                        captured_free <= free_s2;
-                        captured_measure <= meas_s2;
+                    if (cap_s2 == cap_s3) begin
+                        captured_measure <= {{(32-WIDTH){1'b0}}, cap_s2};
+                        captured_free <= {{(32-WIDTH){1'b0}}, cap_s2};
                         capture_stable <= 1'b1;
                         state <= S_DONE;
                     end else if (timeout_cnt == CAPTURE_TIMEOUT - 1) begin
-                        captured_free <= free_s2;
-                        captured_measure <= meas_s2;
+                        captured_measure <= {{(32-WIDTH){1'b0}}, cap_s2};
+                        captured_free <= {{(32-WIDTH){1'b0}}, cap_s2};
                         capture_stable <= 1'b0;
                         capture_timeout <= 1'b1;
                         state <= S_DONE;
