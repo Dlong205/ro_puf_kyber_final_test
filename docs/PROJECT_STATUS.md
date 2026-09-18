@@ -6,6 +6,16 @@ Bằng chứng cập nhật đến **2026-09-18**. Nhánh phát triển FPGA hi�
 sánh Kyber/FPGA cũ. Các kết quả characterization và physical route-lock sau
 RC1 là bằng chứng bổ sung, không phải một phiên bản production mới.
 
+**Checkpoint 2026-09-18 (frontend/portability — KHÔNG phải ASIC freeze):**
+`make crypto-freeze-gate` PASS toàn bộ (verification-inputs, regression,
+kyber-long, asic-portability, crypto-freeze-check). `Edge_Puf_Mlkem_Asic_Top`
+chỉ là ranh giới RTL kiểm tính portable cho tương lai: chuỗi
+FE → KCV → KDF → ML-KEM mô phỏng qua boundary, elaborate Verilator với
+`KP_TARGET_ASIC` sạch finding cấu trúc. Chưa chứng minh RO-PUF vật lý trên
+ASIC; chưa triển khai synthesis standard-cell, STA, floorplan hay backend.
+Nhánh ASIC tạm dừng; giai đoạn kế tiếp là chọn/khóa mapping và kiểm chứng độ
+ổn định RO-PUF thực tế trên 1 Zynq + 2 Arty, rồi mới FE thật và end-to-end ML-KEM.
+
 ## Tóm tắt theo cổng quyết định
 
 Cập nhật phát triển **2026-09-09—10**: nhánh `codex/fpga-v2-split` tách từ

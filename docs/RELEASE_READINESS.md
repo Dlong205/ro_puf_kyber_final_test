@@ -28,6 +28,12 @@ nội dung triển khai FPGA với public/production release. Trạng thái cậ
 | Full ASIC backend/sign-off | **CHƯA**, thiếu PDK/macro/memory/SDC/DFT và các freeze đầu vào |
 | Public release | **BỊ CHẶN** bởi quyền phân phối/top-level license |
 
+> **Nhận định 2026-09-18:** `crypto-freeze-gate` PASS là **checkpoint
+> frontend/portability**, không phải ASIC freeze. `Edge_Puf_Mlkem_Asic_Top`
+> chứng minh RTL chain sạch để migrate sau này; chưa có bằng chứng RO-PUF
+> vật lý trên ASIC và chưa triển khai synthesis/backend. Nhánh ASIC tạm dừng,
+> ưu tiên chọn/khóa mapping + độ ổn định RO-PUF thật trên FPGA.
+
 ## Cổng kỹ thuật FPGA
 
 | Cổng | Trạng thái |
