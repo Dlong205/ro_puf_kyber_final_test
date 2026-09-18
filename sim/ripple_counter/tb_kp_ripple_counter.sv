@@ -37,7 +37,7 @@ module tb_kp_ripple_counter;
 
     function integer expected_q(input integer n);
         begin
-            expected_q = ((n + 1) / 2) % MODULO;
+            expected_q = (n / 2) % MODULO;
         end
     endfunction
 
@@ -84,6 +84,14 @@ module tb_kp_ripple_counter;
         #20;
         check_q(0, "reset_while_ro_off");
 
+        // Independent truth table (no implementation formula): N -> q
+        do_clear();
+        check_q(0, "tt_N0_eq_0");
+        pulse(); check_q(0, "tt_N1_eq_0");
+        pulse(); check_q(1, "tt_N2_eq_1");
+        pulse(); check_q(1, "tt_N3_eq_1");
+        pulse(); check_q(2, "tt_N4_eq_2");
+
         do_clear();
         for (i = 0; i < 20; i = i + 1)
             pulse();
@@ -128,7 +136,7 @@ module tb_kp_ripple_counter;
         if (failures) begin
             $fatal(1, "%0d ripple counter checks failed", failures);
         end
-        $display("ALL RIPPLE COUNTER TESTS PASSED (q = ceil(N_edges/2) mod 2^%0d)", WIDTH);
+        $display("ALL RIPPLE COUNTER TESTS PASSED (q = floor(N_edges/2) mod 2^%0d)", WIDTH);
         $finish;
     end
 endmodule
