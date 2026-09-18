@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""Collect private count-margin telemetry for all C(32,2)=496 RO pairs."""
+"""Collect private count-margin telemetry for an all-pairs RO pool.
+
+PUF32 baseline:  NUM_RO=32, C(32,2)=496 pairs, protocol 2.0.
+PUF64 candidate: NUM_RO=64, C(64,2)=2016 pairs, protocol 3.0.
+
+The variant is auto-detected from the device INFO reply and cross-checked
+against --num-ro when provided.  Mixing reports from different pools or boards
+is refused downstream.
+"""
 
 import argparse
 from datetime import datetime, timezone
@@ -19,18 +27,38 @@ import serial
 CMD_INFO = 0x00
 CMD_MARGIN = 0x71
 STATUS_SUCCESS = 0xAA
-EXPECTED_INFO = b"PUF\x02\x00\x07"
 RO_COUNT = 32
 PAIR_COUNT = 496
 RECORD_SIZE = 16
 RECORD_STRUCT = struct.Struct("<HBBIII")
+ICON_MAGIC = b"PUF"
 
 
-def canonical_pairs():
-    return [(a, b) for a in range(RO_COUNT) for b in range(a + 1, RO_COUNT)]
+def canonical_pairs(ro_count=None):
+    ro_count = ro_count or RO_COUNT
+    return [(a, b) for a in range(ro_count) for b in range(a + 1, ro_count)]
 
 
-EXPECTED_PAIRS = canonical_pairs()
+def expected_info_bytes(ro_count, pair_count):
+    """INFO payload returned by the rtl endpoint for a given pool."""
+    if ro_count == 32:
+        return b"PUF\x02\x00\x07"
+    if ro_count == 64:
+        return bytes([0x50, 0x55, 0x46, 0x03, ro_count,
+                      pair_count & 0xFF, (pair_count >> 8) & 0xFF, 0x07])
+    raise ValueError(f"unsupported NUM_RO={ro_count}")
+
+
+def protocol_label(ro_count):
+    return "2.0" if ro_count == 32 else "3.0"
+
+
+def ro_bits(ro_count):
+    return max(1, (ro_count - 1).bit_length())
+
+
+def index_bits(pair_count):
+    return max(1, (pair_count - 1).bit_length())
 
 
 def read_exact(port, length):
@@ -40,43 +68,72 @@ def read_exact(port, length):
     return data
 
 
+def probe_image(port):
+    """Detect the on-board pool from CMD_INFO without trusting the CLI."""
+    port.write(bytes([CMD_INFO]))
+    header = read_exact(port, 4)
+    if header[:3] != ICON_MAGIC:
+        raise RuntimeError(
+            f"wrong image: expected 'PUF' magic, got {header[:3]!r}"
+        )
+    proto = header[3]
+    if proto == 0x02:
+        tail = read_exact(port, 2)
+        ro_count, pair_count, capabilities = 32, 496, tail[1]
+        if tail[0] != 0x00:
+            raise RuntimeError("PUF32 INFO reserved byte is non-zero")
+    elif proto == 0x03:
+        payload = read_exact(port, 4)
+        ro_count = payload[0]
+        pair_count = payload[1] | (payload[2] << 8)
+        capabilities = payload[3]
+    else:
+        raise RuntimeError(f"unknown all-pairs protocol version {proto:#04x}")
+    if ro_count not in (32, 64):
+        raise RuntimeError(f"unsupported NUM_RO={ro_count}")
+    if pair_count != ro_count * (ro_count - 1) // 2:
+        raise RuntimeError("device INFO self-report contradicts C(NUM_RO,2)")
+    return ro_count, pair_count, capabilities
+
+
 def percentile_nearest_rank(values, percentile):
     ordered = sorted(values)
     rank = max(1, math.ceil(percentile * len(ordered)))
     return ordered[rank - 1]
 
 
-def assess_order_structure(measurements, max_phi_pairs=1000):
-    """Screen the structural entropy ceiling of the 496-response pool.
+def assess_order_structure(measurements, ro_count=RO_COUNT,
+                           pair_count=PAIR_COUNT, max_phi_pairs=1000):
+    """Screen the structural entropy ceiling of the pair-response pool.
 
-    All 496 responses compare the same 32 ring frequencies, so a stable device
-    produces essentially one total ordering of the 32 ROs.  The maximum number
-    of such orderings is 32! which bounds the entropy that any 264-pair mapping
-    can extract.  This routine measures, from the per-frame winner bits:
+    All responses compare the same NUM_RO ring frequencies, so a stable device
+    produces essentially one total ordering of the ROs.  The maximum number of
+    such orderings is NUM_RO! which bounds the entropy any pair mapping can
+    extract.  This routine measures, from the per-frame winner bits:
 
     - transitivity/cycle rate: the fraction of triples (a<b<c) that violate the
       ordering assumption of a consistent tournament.  Zero cycle rate per frame
-      means the frame is exactly one total ordering of the ROs (32! states);
+      means the frame is exactly one total ordering of the ROs (NUM_RO! states);
     - correlation between pair responses over samples (phi coefficient on a
       deterministic sample of pair combinations).  Constant responses inside one
       power-on show as zero-variance series (in-window variation is not entropy);
-    - the honest entropy ceiling log2(32!), plus a cross-device note.
+    - the honest entropy ceiling log2(NUM_RO!), plus a cross-device note.
 
     This is a screening metric, not a full entropy estimator: conditional entropy
     given public helper data and the frozen mapping still requires a separate
     analysis.
     """
     sample_count = len(measurements)
-    triples = [(a, b, c) for a in range(RO_COUNT)
-               for b in range(a + 1, RO_COUNT)
-               for c in range(b + 1, RO_COUNT)]
+    triples = [(a, b, c) for a in range(ro_count)
+               for b in range(a + 1, ro_count)
+               for c in range(b + 1, ro_count)]
     triple_count = len(triples)
     cycle_violations = []
     winner_frame = []
     for frame in measurements:
         # winner == 0 means count0 > count1, i.e. the first RO in the pair is
         # faster.  faster_matrix[i][j] = 1 if RO i is faster than RO j.
-        faster = [[0] * RO_COUNT for _ in range(RO_COUNT)]
+        faster = [[0] * ro_count for _ in range(ro_count)]
         for a, b, winner, tie, count0, count1, margin in frame:
             faster[a][b] = 0 if winner else 1
             faster[b][a] = 1 if winner else 0
@@ -96,8 +153,8 @@ def assess_order_structure(measurements, max_phi_pairs=1000):
     phi_samples = []
     phi_undefined = 0
     all_combos = [
-        (i, j) for i in range(PAIR_COUNT)
-        for j in range(i + 1, PAIR_COUNT)
+        (i, j) for i in range(pair_count)
+        for j in range(i + 1, pair_count)
     ]
     combo_step = max(1, len(all_combos) // max_phi_pairs)
     pair_combos = all_combos[::combo_step]
@@ -121,9 +178,9 @@ def assess_order_structure(measurements, max_phi_pairs=1000):
     phi_abs_list = sorted(phi_samples)
     phi_p95 = (phi_abs_list[int(0.95 * len(phi_abs_list))]
                if phi_abs_list else None)
-    ceiling_bits = math.log2(math.factorial(RO_COUNT))
+    ceiling_bits = math.log2(math.factorial(ro_count))
     max_minority = 0.0
-    for index in range(PAIR_COUNT):
+    for index in range(pair_count):
         ones = sum(frame[index][2] for frame in measurements)
         minority = min(ones, sample_count - ones)
         rate = 100.0 * minority / sample_count
@@ -131,8 +188,8 @@ def assess_order_structure(measurements, max_phi_pairs=1000):
     return {
         "metric": "order-structure screening (not a full entropy estimator)",
         "sample_count": sample_count,
-        "ro_count": RO_COUNT,
-        "pair_count": PAIR_COUNT,
+        "ro_count": ro_count,
+        "pair_count": pair_count,
         "order_cycle_rate_percent": {
             "mean": round(cycle_rate_mean, 4),
             "max_single_sample": round(100.0 * max(cycle_violations) / triple_count, 4),
@@ -148,43 +205,61 @@ def assess_order_structure(measurements, max_phi_pairs=1000):
         },
         "bias_strongest_minority_percent": round(max_minority, 4),
         "entropy_ceiling_bits": round(ceiling_bits, 3),
-        "entropy_ceiling_explains_states": "32!",
+        "entropy_ceiling_explains_states": f"{ro_count}!",
         "above_128bit_target": ceiling_bits >= 128.0,
         "interpretation": (
-            "Fixed-frequency ROs place every response near a total ordering of "
-            "the 32 oscillators; 264 selected comparisons do not create 264 "
-            "independent entropy bits. log2(32!) ~= 117.7 bit is below the "
-            "128-bit ML-KEM-512 target, before any bias or selection loss. "
-            "Constant in-window responses are expected and mean zero in-window "
-            "variation, not real entropy. Conditional entropy given public "
-            "helper/mapping needs a separate device-ensemble and helper "
-            "analysis. Correlation screening is NOT complete from one device."
+            f"Fixed-frequency ROs place every response near a total ordering of "
+            f"the {ro_count} oscillators; selected comparisons do not create "
+            f"{pair_count} independent entropy bits beyond log2({ro_count}!) "
+            f"= {round(ceiling_bits, 1)} bit.  Constant in-window responses "
+            f"are expected and mean zero in-window variation, not real entropy. "
+            f"Conditional entropy given public helper/mapping needs a separate "
+            f"device-ensemble and helper analysis. Correlation screening is NOT "
+            f"complete from one device."
         ),
     }
 
 
-def read_margin(port):
+def decode_pair_fields(pair_a_raw, pair_flags, ro_count):
+    """Decode the 16-byte record pair fields for the detected NUM_RO.
+
+    PUF32 (protocol 2.0): byte2 = {3'b0, pair_a[4:0]},
+                          byte3 = {1'b0, tie, winner, pair_b[4:0]}.
+    PUF64 (protocol 3.0): byte2 = {2'b0, pair_a[5:0]},
+                          byte3 = {pair_b[5], RESERVED, tie, winner, pair_b[4:0]}.
+    """
+    rb = ro_bits(ro_count)
+    pair_a = pair_a_raw & ((1 << rb) - 1)
+    if pair_a_raw & ~((1 << rb) - 1):
+        raise RuntimeError("reserved pair_a bits are set")
+    winner = (pair_flags >> 5) & 1
+    tie = (pair_flags >> 6) & 1
+    pair_b_low = pair_flags & 0x1F
+    pair_b_high = (pair_flags >> 7) & 1
+    pair_b = pair_b_low | (pair_b_high << 5) if ro_count > 32 else pair_b_low
+    return pair_a, pair_b, winner, tie
+
+
+def read_margin(port, ro_count, pair_count):
+    expected_pairs = canonical_pairs(ro_count)
     port.write(bytes([CMD_MARGIN]))
     status = read_exact(port, 1)[0]
     if status != STATUS_SUCCESS:
         raise RuntimeError("all-pairs measurement returned non-success status")
-    payload = read_exact(port, PAIR_COUNT * RECORD_SIZE)
+    payload = read_exact(port, pair_count * RECORD_SIZE)
     records = []
-    for expected_index, expected_pair in enumerate(EXPECTED_PAIRS):
+    for expected_index, expected_pair in enumerate(expected_pairs):
         offset = expected_index * RECORD_SIZE
         index, pair_a_raw, pair_flags, count0, count1, margin = (
             RECORD_STRUCT.unpack_from(payload, offset)
         )
-        pair_a = pair_a_raw & 0x1F
-        pair_b = pair_flags & 0x1F
-        winner = (pair_flags >> 5) & 1
-        tie = (pair_flags >> 6) & 1
+        pair_a, pair_b, winner, tie = decode_pair_fields(
+            pair_a_raw, pair_flags, ro_count
+        )
         if index != expected_index:
             raise RuntimeError(
                 f"telemetry index mismatch: expected {expected_index}, got {index}"
             )
-        if pair_a_raw & 0xE0 or pair_flags & 0x80:
-            raise RuntimeError(f"reserved pair bits set at index {index}")
         if (pair_a, pair_b) != expected_pair:
             raise RuntimeError(
                 f"pair schedule mismatch at {index}: expected {expected_pair}, "
@@ -200,18 +275,23 @@ def read_margin(port):
     return records
 
 
-def collect(port_name, count, timeout):
+def collect(port_name, count, timeout, ro_count):
+    pair_count = ro_count * (ro_count - 1) // 2
     measurements = []
     started = time.perf_counter()
     with serial.Serial(port_name, 115200, timeout=timeout) as port:
         time.sleep(0.1)
         port.reset_input_buffer()
-        port.write(bytes([CMD_INFO]))
-        info = read_exact(port, len(EXPECTED_INFO))
-        if info != EXPECTED_INFO:
-            raise RuntimeError("wrong image or all-pairs protocol 2.0 is unsupported")
+        detected_ro, detected_pairs, capabilities = probe_image(port)
+        if detected_ro != ro_count:
+            raise RuntimeError(
+                f"NUM_RO mismatch: --num-ro says {ro_count}, device reports "
+                f"{detected_ro}"
+            )
+        if detected_pairs != pair_count:
+            raise RuntimeError("device self-report contradicts --num-ro pool size")
         for index in range(count):
-            measurements.append(read_margin(port))
+            measurements.append(read_margin(port, ro_count, pair_count))
             if (index + 1) % 10 == 0 or index + 1 == count:
                 print(f"[{index + 1}/{count}] all-pairs frames collected", flush=True)
     return measurements, time.perf_counter() - started
@@ -230,7 +310,7 @@ def summary_stats(values):
 
 
 def select_balanced(entries, select_count, margin_threshold,
-                    max_minority_rate, max_ro_degree):
+                    max_minority_rate, max_ro_degree, ro_count=RO_COUNT):
     """Produce a deterministic preview while limiting repeated use of one RO.
 
     This is not an entropy estimator and must not be promoted directly into a
@@ -252,7 +332,7 @@ def select_balanced(entries, select_count, margin_threshold,
             entry["pair"][1],
         )
     )
-    degree = [0] * RO_COUNT
+    degree = [0] * ro_count
     selected = []
     remaining = candidates[:]
     while remaining and len(selected) < select_count:
@@ -300,16 +380,18 @@ def select_balanced(entries, select_count, margin_threshold,
 
 
 def analyze(measurements, thresholds, max_minority_rate,
-            select_count=264, selection_threshold=4, max_ro_degree=17):
+            select_count=264, selection_threshold=4, max_ro_degree=17,
+            ro_count=RO_COUNT, pair_count=PAIR_COUNT):
     if not measurements:
         raise ValueError("at least one all-pairs measurement is required")
     sample_count = len(measurements)
     for frame in measurements:
-        if len(frame) != PAIR_COUNT:
+        if len(frame) != pair_count:
             raise ValueError("all-pairs frame has the wrong record count")
 
+    expected_pairs = canonical_pairs(ro_count)
     per_pair = []
-    for index, expected_pair in enumerate(EXPECTED_PAIRS):
+    for index, expected_pair in enumerate(expected_pairs):
         records = [frame[index] for frame in measurements]
         pairs = {(record[0], record[1]) for record in records}
         if pairs != {expected_pair}:
@@ -343,32 +425,39 @@ def analyze(measurements, thresholds, max_minority_rate,
             {
                 "margin_p01_threshold": threshold,
                 "accepted_pair_count": len(accepted),
-                "n264_pool_capacity_met": len(accepted) >= 264,
+                "n264_pool_capacity_met": len(accepted) >= select_count,
             }
         )
 
     preview = select_balanced(
         per_pair, select_count, selection_threshold,
-        max_minority_rate, max_ro_degree
+        max_minority_rate, max_ro_degree, ro_count=ro_count
     )
+    ceiling = math.log2(math.factorial(ro_count))
     return {
-        "metric_scope": "private 32-RO all-pairs count-margin telemetry",
+        "metric_scope": (
+            f"private {ro_count}-RO all-pairs count-margin telemetry"
+        ),
         "sample_count": sample_count,
-        "ro_count": RO_COUNT,
-        "pair_count": PAIR_COUNT,
-        "pair_schedule": "lexicographic unordered pairs, 0 <= a < b < 32",
+        "ro_count": ro_count,
+        "pair_count": pair_count,
+        "pair_schedule": f"lexicographic unordered pairs, 0 <= a < b < {ro_count}",
         "per_pair": per_pair,
         "threshold_sweep": sweeps,
         "selection_preview": preview,
-        "assessment": assess_order_structure(measurements),
+        "assessment": assess_order_structure(
+            measurements, ro_count=ro_count, pair_count=pair_count
+        ),
         "security": {
             "contains_raw_response_values": False,
             "contains_device_fingerprinting_metadata": True,
             "public_repository_allowed": False,
         },
         "interpretation": (
-            "More pair comparisons improve the candidate pool, not the entropy "
-            "upper bound of 32 underlying oscillator frequencies."
+            f"More pair comparisons improve the candidate pool, not the entropy "
+            f"upper bound of the {ro_count} underlying oscillator frequencies: "
+            f"log2({ro_count}!) = {round(ceiling, 1)} bit structural ceiling. "
+            f"Selection chooses FE positions; it does not certify entropy."
         ),
     }
 
@@ -396,13 +485,18 @@ def git_commit_hash(root=None):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Characterize every unordered pair of 32 physical ROs"
+        description="Characterize every unordered pair of NUM_RO physical ROs"
     )
     parser.add_argument("--port", required=True)
     parser.add_argument("--count", type=int, default=100)
     parser.add_argument("--timeout", type=float, default=15.0)
     parser.add_argument("--bitstream", required=True)
     parser.add_argument("--report", required=True)
+    parser.add_argument(
+        "--num-ro", type=int, default=None, choices=[32, 64],
+        help="Expected pool size; if omitted the device INFO reply selects it. "
+             "A mismatch between CLI and device is refused."
+    )
     parser.add_argument(
         "--board-id", default="UNSPECIFIED",
         help="Pseudonymous device ID; required later for train/holdout qualification"
@@ -435,8 +529,8 @@ def main():
         parser.error("--max-minority-rate must be between 0 and 50")
     if args.selection_threshold < 0:
         parser.error("--selection-threshold must be non-negative")
-    if not 1 <= args.max_ro_degree <= 31:
-        parser.error("--max-ro-degree must be between 1 and 31")
+    if not 1 <= args.max_ro_degree <= 63:
+        parser.error("--max-ro-degree must be between 1 and 63")
     if args.boot_index <= 0:
         parser.error("--boot-index must be a positive integer")
     try:
@@ -455,13 +549,20 @@ def main():
             parser.error("--fingerprint-file must name an existing file")
         fingerprint_hash = sha256_file(fingerprint_path)
 
+    ro_count = args.num_ro or RO_COUNT
+    pair_count = ro_count * (ro_count - 1) // 2
+    deployment_top = (
+        "Puf_AllPairs_Characterization_Top" if ro_count == 32
+        else "Puf_AllPairs64_Characterization_Top"
+    )
     started_utc = datetime.now(timezone.utc).isoformat()
     try:
-        measurements, elapsed = collect(args.port, args.count, args.timeout)
+        measurements, elapsed = collect(args.port, args.count, args.timeout, ro_count)
         result = analyze(
             measurements, thresholds, args.max_minority_rate,
             selection_threshold=args.selection_threshold,
             max_ro_degree=args.max_ro_degree,
+            ro_count=ro_count, pair_count=pair_count,
         )
     except (RuntimeError, ValueError, serial.SerialException) as error:
         print(f"ERROR: {error}", file=sys.stderr)
@@ -474,9 +575,11 @@ def main():
         "board_id": args.board_id,
         "boot_index": args.boot_index,
         "condition_id": args.condition_id,
-        "top": "Puf_AllPairs_Characterization_Top",
+        "top": deployment_top,
         "target_part": "xc7z020clg400-2",
-        "protocol": "2.0",
+        "protocol": protocol_label(ro_count),
+        "num_ro": ro_count,
+        "pair_count": pair_count,
         "ref_cycles": 255,
         "clock_mhz": 100,
         "local_bitstream_sha256": sha256_file(bitstream),
@@ -489,7 +592,8 @@ def main():
     report.parent.mkdir(parents=True, exist_ok=True)
     report.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
 
-    print("=== RO-PUF 32-RO ALL-PAIRS CHARACTERIZATION ===")
+    print(f"=== RO-PUF {ro_count}-RO ALL-PAIRS CHARACTERIZATION (protocol "
+          f"{protocol_label(ro_count)}) ===")
     print(f"samples={result['sample_count']} pairs={result['pair_count']}")
     for sweep in result["threshold_sweep"]:
         print(
@@ -512,11 +616,12 @@ def main():
     assessment = result["assessment"]
     print(
         "order_cycle_rate_mean=%.3f%% zero_cycle_sample=%s%% "
-        "entropy_ceiling=%.2f bits (32!) above_128=%s"
+        "entropy_ceiling=%.2f bits (%d!) above_128=%s"
         % (
             assessment["order_cycle_rate_percent"]["mean"],
             assessment["order_cycle_rate_percent"]["zero_cycle_sample_rate_percent"],
             assessment["entropy_ceiling_bits"],
+            ro_count,
             "YES" if assessment["above_128bit_target"] else "NO",
         )
     )

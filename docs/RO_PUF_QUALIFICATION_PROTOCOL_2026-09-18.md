@@ -169,3 +169,59 @@ section 4bis.
 6. End-to-end board: `RO-PUF → FE → KCV → KDF → ML-KEM-512` trên từng trường
    hợp (enroll→reconstruct cùng board, power-cycle rồi reconstruct, helper sai
    board/bị sửa, reset giữa chừng, noise >8) và thống kê nhiều phiên.
+
+## 9. PUF64 — pool 64 RO, protocol 3.0 (đang triển khai)
+
+Mở rộng mục tiêu lên **64 RO** trên cùng Zynq-7020, **giữ nguyên PUF32 làm
+baseline** (image `Puf_AllPairs_Characterization_Top` + giao thức 2.0 không bị
+sửa đè). Toàn bộ RTL/host được **parameter hóa theo `NUM_RO`**; biến thể 64 nằm
+ở cây project/sim/scripts riêng (`puf_allpairs64_*`, `sim/puf_allpairs64`,
+`obj_dir_64`).
+
+### 9.1 Thông số biến thể 64
+
+- Image đo: `Puf_AllPairs64_Characterization_Top`, giao thức **3.0**,
+  `REF_CYCLES = 255`, clock 100 MHz.
+- Pool: `C(64,2) = 2016` cặp không thứ tự duy nhất `(a,b), 0 <= a < b < 64`;
+  vẫn **chọn 264** vị trí cho FE BCH `t=8`.
+- Bộ sinh pair xác định (deterministic): `pair_index` 11 bit → `(a,b)`, giống
+  enumeration host (`canonical_pairs(64)`), kiểm tra đồng nhất host/RTL.
+- Bật lần lượt từng cặp: `settle → count → stop → CDC` (stop-then-capture);
+  không đồng thời bật toàn bộ 64 RO.
+
+### 9.2 Giao thức 3.0 (chỉ biến thể 64)
+
+- `CMD_INFO` trả **8 byte** so với 6 byte của 2.0:
+  `50 55 46 03 40 E0 07 07` = `PUF` + `version 0x03` + `num_ro=0x40` + `pair_count
+  2016` (LE `E0 07`) + `capabilities 0x07`.
+- Record margin 16 byte `<HBBIII>` như 2.0 nhưng đóng gói pair **6 bit**:
+  `byte2 = {2'b0, pair_a[5:0]}`, `byte3 = {pair_b[5], RESERVED, tie, winner,
+  pair_b[4:0]}` (bit7 = `pair_b[5]`, bit6 = `tie`, bit5 = `winner`).
+- `telemetry_mem` rộng 77 bit, response 2016 bit, RAW 252 byte, index 11 bit.
+
+### 9.3 Nhận dạng và chống lẫn
+
+- Host `probe_image()` tự đọc `CMD_INFO`: protocol `0x02` ⇒ pool 32/496;
+  `0x03` ⇒ đọc `num_ro`/`pair_count` từ payload. `--num-ro {32,64}` nếu cấp phải
+  khớp thiết bị, nếu lệch **từ chối**.
+- Report campaign ghi `num_ro`, `pair_count` và `protocol` (2.0/3.0).
+  `puf_mapping_train.py` đọc `ro_count` từ report đầu và **từ chối trộn PUF32 +
+  PUF64** trong cùng một train/holdout.
+
+### 9.4 Entropy — trần đổi, kết luận vẫn giữ
+
+Với 64 RO, trần ~ `log2(64!) ≈ 296,0 bit` **vượt mục tiêu 128 bit** nhưng chỉ là
+**count upper bound**; 264 vẫn là độ dài từ mã FE, **không phải entropy per
+device**. Per-device entropy có điều kiện sau helper công khai chưa được chứng
+minh (một board). Manifest khi `ro_count=64` ghi limitation dạng vượt trần và
+vẫn không set `puf_freeze_eligible = true`.
+
+### 9.5 Cổng và tiến độ
+
+- Code + sim: 4/4 sim PASS (32 scheduler, 64 scheduler 2016 cặp, 32 UART 2.0,
+  64 UART 3.0); host/tests 38/38.
+- Chờ lab: build PUF64 sạch (256 LUT, 100 MHz timing), export physical lock
+  fingerprint `ro_physical_fingerprint_allpairs64_zynq7020.tsv`, ≥ 2 clean builds,
+  pilot 3 power-cycle, train/holdout session-split, chọn 264, FE/e2e —
+  **freeze `mapping_tag` chỉ sau khi CẢ reliability LẪN entropy/order-structure
+  có kết luận trên dữ liệu thật.**

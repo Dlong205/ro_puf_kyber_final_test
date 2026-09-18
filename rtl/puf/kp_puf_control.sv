@@ -31,7 +31,8 @@ module kp_puf_control #(
     } state_t;
 
     state_t state, next_state;
-    logic [8:0] bit_cnt;
+    localparam int BIT_CNT_W = (BIT_COUNT <= 1) ? 1 : $clog2(BIT_COUNT);
+    logic [BIT_CNT_W-1:0] bit_cnt;
     logic [15:0] ref_cycle_cnt;
     localparam int RESET_CNT_W = (RESET_CYCLES <= 1) ? 1 : $clog2(RESET_CYCLES);
     localparam int SETTLE_CNT_W = (SETTLE_CYCLES <= 1) ? 1 : $clog2(SETTLE_CYCLES);

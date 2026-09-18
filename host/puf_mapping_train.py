@@ -12,6 +12,7 @@ manifest contains only the fixed pair schedule and reproducibility metadata.
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import sys
 
@@ -22,11 +23,15 @@ DEFAULT_SELECT_COUNT = 264
 UNSPECIFIED = {"", "UNSPECIFIED", "unknown", "UNKNOWN"}
 
 
-def canonical_pairs():
-    return [(a, b) for a in range(RO_COUNT) for b in range(a + 1, RO_COUNT)]
+def canonical_pairs(ro_count=RO_COUNT):
+    return [(a, b) for a in range(ro_count) for b in range(a + 1, ro_count)]
 
 
 EXPECTED_PAIRS = canonical_pairs()
+
+
+def pair_count_of(ro_count):
+    return ro_count * (ro_count - 1) // 2
 
 
 def canonical_json(value):
@@ -45,19 +50,29 @@ def sha256_file(path):
     return digest.hexdigest()
 
 
-def load_campaign(path):
+def load_campaign(path, expected_ro=None):
     path = Path(path).resolve()
     try:
         report = json.loads(path.read_text())
     except (OSError, json.JSONDecodeError) as error:
         raise ValueError(f"cannot read campaign {path}: {error}") from error
 
-    if report.get("ro_count") != RO_COUNT or report.get("pair_count") != PAIR_COUNT:
-        raise ValueError(f"{path}: expected a {RO_COUNT}-RO/{PAIR_COUNT}-pair report")
+    ro_count = int(report.get("ro_count", RO_COUNT))
+    pair_count = int(report.get("pair_count", pair_count_of(ro_count)))
+    if ro_count < 4:
+        raise ValueError(f"{path}: invalid NUM_RO {ro_count}")
+    if pair_count != pair_count_of(ro_count):
+        raise ValueError(f"{path}: pair_count {pair_count} contradicts NUM_RO {ro_count}")
+    if expected_ro is not None and ro_count != expected_ro:
+        raise ValueError(
+            f"{path}: mixed pool sizes: expected {expected_ro}-RO report, got "
+            f"{ro_count}-RO ({ro_count}/{pair_count} pairs)"
+        )
+    pairs = canonical_pairs(ro_count)
     entries = report.get("per_pair")
-    if not isinstance(entries, list) or len(entries) != PAIR_COUNT:
-        raise ValueError(f"{path}: per_pair must contain {PAIR_COUNT} entries")
-    for index, expected_pair in enumerate(EXPECTED_PAIRS):
+    if not isinstance(entries, list) or len(entries) != pair_count:
+        raise ValueError(f"{path}: per_pair must contain {pair_count} entries")
+    for index, expected_pair in enumerate(pairs):
         entry = entries[index]
         if entry.get("index") != index or tuple(entry.get("pair", ())) != expected_pair:
             raise ValueError(f"{path}: non-canonical pair entry at index {index}")
@@ -92,6 +107,8 @@ def load_campaign(path):
         "boot_index": boot_index,
         "bitstream_sha256": bitstream_hash,
         "sample_count": int(report.get("sample_count", 0)),
+        "ro_count": ro_count,
+        "pair_count": pair_count,
         "entries": entries,
         "assessment": report.get("assessment"),
     }
@@ -101,6 +118,9 @@ def validate_campaign_sets(training, holdout, session_split=False):
     if not training:
         raise ValueError("at least one training campaign is required")
     all_campaigns = training + holdout
+    pool_sizes = {campaign["ro_count"] for campaign in all_campaigns}
+    if len(pool_sizes) != 1:
+        raise ValueError("training and holdout must not mix PUF32 and PUF64 reports")
     hashes = {campaign["bitstream_sha256"] for campaign in all_campaigns}
     if len(hashes) != 1:
         raise ValueError("all campaigns must use the same characterization bitstream")
@@ -147,10 +167,13 @@ def validate_campaign_sets(training, holdout, session_split=False):
     return train_boards, holdout_boards, set(), hashes.pop()
 
 
-def aggregate_training(training):
+def aggregate_training(training, ro_count=None):
+    if ro_count is None:
+        ro_count = training[0]["ro_count"]
+    pairs = canonical_pairs(ro_count)
     board_ids = sorted({campaign["board_id"] for campaign in training})
     aggregated = []
-    for index, pair in enumerate(EXPECTED_PAIRS):
+    for index, pair in enumerate(pairs):
         entries = [campaign["entries"][index] for campaign in training]
         board_winners = []
         for board_id in board_ids:
@@ -176,14 +199,14 @@ def aggregate_training(training):
 
 
 def select_pairs(entries, count, margin_threshold, max_minority_rate,
-                 max_ro_degree):
+                 max_ro_degree, ro_count=RO_COUNT):
     candidates = [
         entry for entry in entries
         if entry["margin_p01_min"] >= margin_threshold
         and entry["minority_rate_max"] <= max_minority_rate
         and entry["tie_count_total"] == 0
     ]
-    degree = [0] * RO_COUNT
+    degree = [0] * ro_count
     selected = []
     remaining = candidates[:]
     while remaining and len(selected) < count:
@@ -243,6 +266,8 @@ def build_manifest(training, holdout, version, select_count=DEFAULT_SELECT_COUNT
                    min_training_sessions=15, min_holdout_sessions=8):
     train_boards, holdout_boards, session_overlap, bitstream_hash = \
         validate_campaign_sets(training, holdout, session_split)
+    ro_count = training[0]["ro_count"]
+    pair_count = training[0]["pair_count"]
     train_sessions = {
         (campaign["board_id"], campaign["boot_index"])
         for campaign in training
@@ -251,10 +276,10 @@ def build_manifest(training, holdout, version, select_count=DEFAULT_SELECT_COUNT
         (campaign["board_id"], campaign["boot_index"])
         for campaign in holdout
     }
-    aggregated = aggregate_training(training)
+    aggregated = aggregate_training(training, ro_count=ro_count)
     selected, degree, candidate_count = select_pairs(
         aggregated, select_count, margin_threshold,
-        max_minority_rate, max_ro_degree
+        max_minority_rate, max_ro_degree, ro_count=ro_count
     )
     holdout_failures = validate_holdout(
         selected, holdout, margin_threshold, max_minority_rate
@@ -309,6 +334,21 @@ def build_manifest(training, holdout, version, select_count=DEFAULT_SELECT_COUNT
     else:
         criteria["min_training_boards"] = min_training_boards
         criteria["min_holdout_boards"] = min_holdout_boards
+    ceiling = math.log2(math.factorial(ro_count))
+    entropy_limitation = (
+        f"All responses compare the same {ro_count} RO frequencies: ordering entropy "
+        f"ceiling log2({ro_count}!) = {round(ceiling, 1)} bit, below the 128-bit "
+        f"ML-KEM-512 target before bias/selection loss; 264 is the FE codeword "
+        f"length, not an entropy claim."
+    )
+    if ceiling >= 128.0:
+        entropy_limitation = (
+            f"All responses compare the same {ro_count} RO frequencies: ordering "
+            f"entropy ceiling log2({ro_count}!) = {round(ceiling, 1)} bit exceeds "
+            f"the 128-bit target as a count upper bound only; per-device entropy, "
+            f"bias-compensation and helper-data loss still need a device ensemble "
+            f"analysis; 264 is the FE codeword length, not an entropy claim."
+        )
     payload = {
         "schema": "ro-puf-pair-mapping-v1",
         "version": version,
@@ -320,8 +360,8 @@ def build_manifest(training, holdout, version, select_count=DEFAULT_SELECT_COUNT
         "reliability_qualified": reliability_qualified,
         # Reliability qualification alone never authorizes a PUF freeze.
         "puf_freeze_eligible": False,
-        "ro_count": RO_COUNT,
-        "pair_count": PAIR_COUNT,
+        "ro_count": ro_count,
+        "pair_count": pair_count,
         "selected_count": len(selected),
         "pairs": [entry["pair"] for entry in selected],
         "source_pair_indices": [entry["index"] for entry in selected],
@@ -352,7 +392,7 @@ def build_manifest(training, holdout, version, select_count=DEFAULT_SELECT_COUNT
         },
         "limitations": [
             "Pair selection improves reliability; it does not create 264 independent entropy bits.",
-            "All responses compare the same 32 RO frequencies: ordering entropy ceiling log2(32!) = 117.7 bit, below the 128-bit ML-KEM-512 target before bias/selection loss; 264 is the FE codeword length, not an entropy claim.",
+            entropy_limitation,
             "Conditional entropy given public helper data and the frozen mapping requires a separate device-ensemble and helper analysis.",
             "Correlation screening requires per-sample response sequences and remains open.",
             "Helper/KCV binding and integrated PUF-to-BCH validation remain separate gates.",
@@ -410,14 +450,14 @@ def main():
         help="fail instead of writing a provisional reliability manifest"
     )
     args = parser.parse_args()
-    if not 1 <= args.select_count <= PAIR_COUNT:
-        parser.error("--select-count must be between 1 and 496")
+    if not 1 <= args.select_count:
+        parser.error("--select-count must be at least 1")
     if args.margin_threshold < 0:
         parser.error("--margin-threshold must be non-negative")
     if not 0 <= args.max_minority_rate <= 50:
         parser.error("--max-minority-rate must be between 0 and 50")
-    if not 1 <= args.max_ro_degree <= 31:
-        parser.error("--max-ro-degree must be between 1 and 31")
+    if not 1 <= args.max_ro_degree <= 63:
+        parser.error("--max-ro-degree must be between 1 and 63")
     if args.min_training_boards < 1 or args.min_holdout_boards < 1:
         parser.error("minimum board counts must be positive")
     if args.min_training_sessions < 1 or args.min_holdout_sessions < 1:
@@ -426,7 +466,20 @@ def main():
         parser.error("--session-split overrides board gates; use --min-training-sessions/--min-holdout-sessions")
     try:
         training = [load_campaign(path) for path in args.training]
-        holdout = [load_campaign(path) for path in args.holdout]
+        holdout = [load_campaign(path, expected_ro=training[0]["ro_count"])
+                   for path in args.holdout]
+        ro_count = training[0]["ro_count"]
+        pair_count = training[0]["pair_count"]
+        if args.select_count > pair_count:
+            raise ValueError(
+                f"--select-count {args.select_count} exceeds pool size "
+                f"C({ro_count},2) = {pair_count}"
+            )
+        if args.max_ro_degree > ro_count - 1:
+            raise ValueError(
+                f"--max-ro-degree {args.max_ro_degree} must not exceed NUM_RO-1 "
+                f"= {ro_count - 1} for this pool"
+            )
         manifest, audit = build_manifest(
             training, holdout, args.version, args.select_count,
             args.margin_threshold, args.max_minority_rate,

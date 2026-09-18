@@ -1,10 +1,16 @@
 `timescale 1ns / 1ps
 
-// Diagnostic UART endpoint for the 32-RO/C(32,2) candidate pool.  Protocol
-// 2.0 is intentionally distinct from the legacy 264-position image so a host
-// cannot silently interpret pair metadata as an 8-bit LFSR challenge.
+// Diagnostic UART endpoint for the all-pairs candidate pool, parameterized by
+// NUM_RO.  Each variant self-reports its identity over CMD_INFO so a host can
+// never confuse pools:
+//   NUM_RO=32, PAIR_COUNT=496 -> protocol 2.0, 6-byte INFO, 75-bit records
+//   NUM_RO=64, PAIR_COUNT=2016 -> protocol 3.0, 8-byte INFO, 77-bit records
+// Protocol 3.0 is intentionally distinct from 2.0 so a host cannot silently
+// interpret PUF64 records (6-bit pair fields) as 5-bit PUF32 pair metadata.
 module puf_allpairs_uart #(
     parameter integer CLKS_PER_BIT = 434,
+    parameter integer NUM_RO = 32,
+    parameter integer PAIR_COUNT = 496,
     parameter integer RESPONSE_BITS = 496
 )(
     input  wire                     clk,
@@ -16,19 +22,25 @@ module puf_allpairs_uart #(
     input  wire                     puf_done,
     input  wire [RESPONSE_BITS-1:0] puf_response,
     input  wire                     telemetry_valid,
-    input  wire [8:0]               telemetry_index,
-    input  wire [4:0]               telemetry_pair_a,
-    input  wire [4:0]               telemetry_pair_b,
+    input  wire [IDX_W-1:0]         telemetry_index,
+    input  wire [RO_BITS-1:0]       telemetry_pair_a,
+    input  wire [RO_BITS-1:0]       telemetry_pair_b,
     input  wire [31:0]              telemetry_count0,
     input  wire [31:0]              telemetry_count1,
     input  wire                     telemetry_winner
 );
+    localparam integer RO_BITS = (NUM_RO <= 1) ? 1 : $clog2(NUM_RO);
+    localparam integer IDX_W = (PAIR_COUNT <= 1) ? 1 : $clog2(PAIR_COUNT);
     localparam integer RAW_BYTES = (RESPONSE_BITS + 7) / 8;
     localparam [7:0] CMD_INFO = 8'h00;
     localparam [7:0] CMD_RAW = 8'h70;
     localparam [7:0] CMD_MARGIN = 8'h71;
     localparam [7:0] STATUS_SUCCESS = 8'hAA;
     localparam [7:0] STATUS_FAIL = 8'hFF;
+
+    // INFO payload length: 6 bytes (protocol 2.0, NUM_RO=32) or 8 bytes
+    // (protocol 3.0, NUM_RO=64).
+    localparam integer INFO_BYTES = (NUM_RO == 32) ? 6 : 8;
 
     localparam [2:0] S_IDLE = 3'd0;
     localparam [2:0] S_WAIT_PUF = 3'd1;
@@ -51,31 +63,32 @@ module puf_allpairs_uart #(
     reg margin_request;
     reg margin_status_pending;
     reg margin_tx_active;
-    reg [8:0] telemetry_capture_count;
-    reg [8:0] margin_tx_index;
+    reg [IDX_W-1:0] telemetry_capture_count;
+    reg [IDX_W-1:0] margin_tx_index;
     reg [3:0] margin_tx_byte_index;
     reg [23:0] wait_cycles;
 
-    // 75-bit record: pair_a, pair_b, count0, count1, winner.  Vivado maps the
-    // 496 records into block RAM so instrumentation switching stays compact.
-    (* ram_style = "block" *) reg [74:0] telemetry_mem [0:RESPONSE_BITS-1];
-    reg [74:0] telemetry_read_data;
+    // One record per pair: pair_a, pair_b, count0, count1, winner.  Vivado
+    // maps the records into block RAM so instrumentation switching stays
+    // compact.  Width is 75 bits at NUM_RO=32 and 77 bits at NUM_RO=64.
+    (* ram_style = "block" *) reg [(2*RO_BITS)+64:0] telemetry_mem [0:PAIR_COUNT-1];
+    reg [(2*RO_BITS)+64:0] telemetry_read_data;
 
-    wire [4:0] current_pair_a = telemetry_read_data[4:0];
-    wire [4:0] current_pair_b = telemetry_read_data[9:5];
-    wire [31:0] current_count0 = telemetry_read_data[41:10];
-    wire [31:0] current_count1 = telemetry_read_data[73:42];
-    wire current_winner = telemetry_read_data[74];
+    wire [RO_BITS-1:0] current_pair_a = telemetry_read_data[RO_BITS-1:0];
+    wire [RO_BITS-1:0] current_pair_b = telemetry_read_data[2*RO_BITS-1:RO_BITS];
+    wire [31:0] current_count0 = telemetry_read_data[2*RO_BITS+31:2*RO_BITS];
+    wire [31:0] current_count1 = telemetry_read_data[2*RO_BITS+63:2*RO_BITS+32];
+    wire current_winner = telemetry_read_data[2*RO_BITS+64];
     wire [31:0] current_margin = (current_count0 >= current_count1) ?
                                  current_count0 - current_count1 :
                                  current_count1 - current_count0;
     wire current_tie = current_count0 == current_count1;
     wire telemetry_capture_accept = margin_request && telemetry_valid &&
-                                    telemetry_capture_count < RESPONSE_BITS &&
+                                    telemetry_capture_count < PAIR_COUNT &&
                                     telemetry_index == telemetry_capture_count;
-    wire telemetry_frame_complete = telemetry_capture_count == RESPONSE_BITS ||
+    wire telemetry_frame_complete = telemetry_capture_count == PAIR_COUNT ||
                                     (telemetry_capture_accept &&
-                                     telemetry_capture_count == RESPONSE_BITS - 1);
+                                     telemetry_capture_count == PAIR_COUNT - 1);
 
     always @(posedge clk) begin
         if (telemetry_capture_accept)
@@ -130,12 +143,22 @@ module puf_allpairs_uart #(
                         puf_start <= 1'b1;
                         state <= S_WAIT_PUF;
                     end else if (rx_dv && rx_byte == CMD_INFO) begin
-                        // "PUF", protocol 2.0, capabilities raw+margin+allpairs.
-                        tx_shift <= {
-                            {(RESPONSE_BITS-48){1'b0}},
-                            8'h07, 8'h00, 8'h02, 8'h46, 8'h55, 8'h50
-                        };
-                        tx_remaining <= 9'd6;
+                        if (NUM_RO == 32) begin
+                            // "PUF", protocol 2.0, capabilities raw+margin+allpairs.
+                            tx_shift <= {
+                                {(RESPONSE_BITS-48){1'b0}},
+                                8'h07, 8'h00, 8'h02, 8'h46, 8'h55, 8'h50
+                            };
+                        end else begin
+                            // "PUF", protocol 3.0, num_ro, pair_count (LE),
+                            // capabilities raw+margin+allpairs.
+                            tx_shift <= {
+                                {(RESPONSE_BITS-64){1'b0}},
+                                8'h07, 8'(PAIR_COUNT >> 8), 8'(PAIR_COUNT),
+                                8'(NUM_RO), 8'h03, 8'h46, 8'h55, 8'h50
+                            };
+                        end
+                        tx_remaining <= INFO_BYTES;
                         state <= S_TX_LOAD;
                     end else if (rx_dv) begin
                         tx_shift <= {{(RESPONSE_BITS-8){1'b0}}, 8'h3F};
@@ -197,7 +220,7 @@ module puf_allpairs_uart #(
                         end else if (margin_tx_active) begin
                             if (margin_tx_byte_index == 4'd15) begin
                                 margin_tx_byte_index <= '0;
-                                if (margin_tx_index == RESPONSE_BITS - 1) begin
+                                if (margin_tx_index == PAIR_COUNT - 1) begin
                                     margin_tx_active <= 1'b0;
                                     state <= S_IDLE;
                                 end else begin
@@ -220,13 +243,17 @@ module puf_allpairs_uart #(
 
                 S_MARGIN_LOAD: begin
                     // 16-byte LE record:
-                    // index[15:0], pair_a, {reserved,tie,winner,pair_b[4:0]},
+                    // index[15:0], pair_a (with RESERVED top bits), flags byte
+                    // {pair_b_msb, RESERVED, tie, winner, pair_b[4:0]},
                     // count0, count1, abs(count0-count1).
                     case (margin_tx_byte_index)
                         4'd0:  tx_byte <= margin_tx_index[7:0];
-                        4'd1:  tx_byte <= {7'd0, margin_tx_index[8]};
-                        4'd2:  tx_byte <= {3'd0, current_pair_a};
-                        4'd3:  tx_byte <= {1'b0, current_tie, current_winner, current_pair_b};
+                        4'd1:  tx_byte <= {{(16 - IDX_W){1'b0}}, margin_tx_index[IDX_W-1:8]};
+                        4'd2:  tx_byte <= {{(8 - RO_BITS){1'b0}}, current_pair_a};
+                        4'd3:  tx_byte <=
+                            {{(RO_BITS - 5){current_pair_b[RO_BITS-1]}},
+                             {(8 - RO_BITS - 2){1'b0}},
+                             current_tie, current_winner, current_pair_b[4:0]};
                         4'd4:  tx_byte <= current_count0[7:0];
                         4'd5:  tx_byte <= current_count0[15:8];
                         4'd6:  tx_byte <= current_count0[23:16];
@@ -251,8 +278,12 @@ module puf_allpairs_uart #(
 
 `ifndef SYNTHESIS
     initial begin
-        if (RESPONSE_BITS != 496)
-            $error("all-pairs UART protocol requires exactly 496 records");
+        if (NUM_RO < 4 || (NUM_RO % 2) != 0)
+            $error("all-pairs UART requires an even NUM_RO >= 4");
+        if (PAIR_COUNT != NUM_RO * (NUM_RO - 1) / 2)
+            $error("all-pairs UART PAIR_COUNT must equal C(NUM_RO,2)");
+        if (RESPONSE_BITS != PAIR_COUNT)
+            $error("all-pairs UART RESPONSE_BITS must equal PAIR_COUNT");
         if ((RESPONSE_BITS % 8) != 0)
             $error("all-pairs RAW response must be byte aligned");
     end

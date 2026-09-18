@@ -1,13 +1,16 @@
 `timescale 1ns / 1ps
 
-// Characterization-only 32-RO all-pairs engine.
+// Characterization-only all-pairs engine, parameterized by NUM_RO.
 //
 // The release kp_puf_top deliberately remains unchanged.  This diagnostic
-// engine enumerates every unordered pair (a,b), 0 <= a < b < 32, exactly once
-// so a host can select a reliability-aware 264-position mapping from a pool of
-// C(32,2)=496 candidates.  Both mux inputs see all 32 ROs, giving each RO the
-// same logical fanout in this image.
+// engine enumerates every unordered pair (a,b), 0 <= a < b < NUM_RO, exactly
+// once so a host can select a reliability-aware 264-position mapping from a
+// pool of C(NUM_RO,2) candidates.  Both mux inputs see all NUM_RO ROs, giving
+// each RO the same logical fanout in this image.  NUM_RO=32 reproduces the
+// established 128-LUT placement map byte for byte; NUM_RO=64 provides the
+// larger 2016-candidate pool used by the PUF64 qualification phase.
 module kp_puf_allpairs_top #(
+    parameter int NUM_RO = 32,
     parameter int PAIR_COUNT = 496,
     parameter int REF_CYCLES = 255,
     parameter int RESET_CYCLES = 8,
@@ -21,26 +24,28 @@ module kp_puf_allpairs_top #(
     output logic                  done,
     output logic [PAIR_COUNT-1:0] response,
     output logic                  telemetry_valid,
-    output logic [8:0]            telemetry_index,
-    output logic [4:0]            telemetry_pair_a,
-    output logic [4:0]            telemetry_pair_b,
+    output logic [IDX_W-1:0]      telemetry_index,
+    output logic [RO_BITS-1:0]    telemetry_pair_a,
+    output logic [RO_BITS-1:0]    telemetry_pair_b,
     output logic [31:0]           telemetry_count0,
     output logic [31:0]           telemetry_count1,
     output logic                  telemetry_winner
 );
+    localparam int RO_BITS = (NUM_RO <= 1) ? 1 : $clog2(NUM_RO);
+    localparam int IDX_W = (PAIR_COUNT <= 1) ? 1 : $clog2(PAIR_COUNT);
 
     logic count_en, sr_en, ro_en, cnt_rst;
     logic unused_lfsr_dv, unused_ref_en, unused_lfsr_en;
-    logic [4:0] pair_a, pair_b;
-    logic [15:0] ro_out0, ro_out1;
-    logic [31:0] ro_all;
+    logic [RO_BITS-1:0] pair_a, pair_b;
+    logic [NUM_RO/2-1:0] ro_out0, ro_out1;
+    logic [NUM_RO-1:0] ro_all;
     logic mux0_out, mux1_out;
     logic [31:0] cnt0, cnt1;
     logic winner;
     (* ASYNC_REG = "TRUE" *) logic winner_meta, winner_sync;
     logic [31:0] cnt0_quiet_q1, cnt0_quiet_q2;
     logic [31:0] cnt1_quiet_q1, cnt1_quiet_q2;
-    logic [8:0] telemetry_next_index;
+    logic [IDX_W-1:0] telemetry_next_index;
     wire puf_rst_n = rst_n & ~zeroize;
 
     kp_puf_control #(
@@ -57,17 +62,17 @@ module kp_puf_allpairs_top #(
     );
 
     // Lexicographic unordered-pair schedule:
-    // (0,1)..(0,31),(1,2)..(1,31),...,(30,31).
+    // (0,1)..(0,NUM_RO-1),(1,2)..(1,NUM_RO-1),...,(NUM_RO-2,NUM_RO-1).
     // Pair changes occur only in S_CAPTURE, while every RO is disabled.
     always_ff @(posedge clk or negedge puf_rst_n) begin
         if (!puf_rst_n) begin
-            pair_a <= 5'd0;
-            pair_b <= 5'd1;
+            pair_a <= '0;
+            pair_b <= 'd1;
         end else if (start) begin
-            pair_a <= 5'd0;
-            pair_b <= 5'd1;
+            pair_a <= '0;
+            pair_b <= 'd1;
         end else if (sr_en && telemetry_next_index != PAIR_COUNT - 1) begin
-            if (pair_b == 5'd31) begin
+            if (pair_b == NUM_RO - 1) begin
                 pair_a <= pair_a + 1'b1;
                 pair_b <= pair_a + 2'd2;
             end else begin
@@ -78,15 +83,16 @@ module kp_puf_allpairs_top #(
 
     genvar i;
     generate
-        // Preserve the release hierarchy names so the existing 128-LUT
-        // placement map can be audited against this diagnostic image.
-        for (i = 0; i < 16; i++) begin : ring0
+        // Preserve the release hierarchy names so the physical placement map
+        // (128 LUTs at NUM_RO=32, 256 LUTs at NUM_RO=64) is auditable against
+        // this diagnostic image.
+        for (i = 0; i < NUM_RO / 2; i++) begin : ring0
             kp_ro_cell #(.FREQ_OFFSET(i * 3 + 1)) ro0 (
                 .clk(clk), .rst_n(puf_rst_n), .en(ro_en),
                 .cfg(pair_a[3:0]), .o(ro_out0[i])
             );
         end
-        for (i = 0; i < 16; i++) begin : ring1
+        for (i = 0; i < NUM_RO / 2; i++) begin : ring1
             kp_ro_cell #(.FREQ_OFFSET(i * 3 + 17)) ro1 (
                 .clk(clk), .rst_n(puf_rst_n), .en(ro_en),
                 .cfg(pair_b[3:0]), .o(ro_out1[i])
@@ -166,11 +172,17 @@ module kp_puf_allpairs_top #(
     );
 
 `ifndef SYNTHESIS
-    logic [4:0] pair_a_prev, pair_b_prev;
+    initial begin
+        if (NUM_RO < 4 || (NUM_RO % 2) != 0)
+            $error("all-pairs NUM_RO must be even and at least 4");
+        if (PAIR_COUNT != NUM_RO * (NUM_RO - 1) / 2)
+            $error("all-pairs PAIR_COUNT must equal C(NUM_RO,2)");
+    end
+    logic [RO_BITS-1:0] pair_a_prev, pair_b_prev;
     always_ff @(posedge clk or negedge puf_rst_n) begin
         if (!puf_rst_n) begin
             pair_a_prev <= '0;
-            pair_b_prev <= 5'd1;
+            pair_b_prev <= 'd1;
         end else begin
             if (ro_en && (pair_a != pair_a_prev || pair_b != pair_b_prev))
                 $error("all-pairs selector changed while ROs were enabled");
