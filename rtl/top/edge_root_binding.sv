@@ -34,7 +34,10 @@ module edge_root_binding (
     input  wire [223:0] kcv_ref,
     output wire         busy,
     output reg          done,
-    output reg          kcv_pass
+    output reg          kcv_pass,
+    // Computed digest, independent of the comparison.  Enrollment uses this
+    // to emit the KCV into the helper record; reconstruct ignores it.
+    output reg  [223:0] kcv_out
 );
     localparam [2:0] ST_IDLE    = 3'd0;
     localparam [2:0] ST_ABSORB  = 3'd1;
@@ -111,6 +114,7 @@ module edge_root_binding (
             state      <= ST_IDLE;
             done       <= 1'b0;
             kcv_pass   <= 1'b0;
+            kcv_out    <= 224'd0;
             kcv_acc    <= 224'd0;
             word_index <= 6'd0;
             key_latch  <= 192'd0;
@@ -120,6 +124,7 @@ module edge_root_binding (
             state      <= ST_IDLE;
             done       <= 1'b0;
             kcv_pass   <= 1'b0;
+            kcv_out    <= 224'd0;
             kcv_acc    <= 224'd0;
             word_index <= 6'd0;
             key_latch  <= 192'd0;
@@ -132,6 +137,7 @@ module edge_root_binding (
                 ST_IDLE: begin
                     kcv_pass <= 1'b0;
                     if (start) begin
+                        kcv_out    <= 224'd0;
                         key_latch  <= root_key;
                         ctx_latch  <= kcv_ctx;
                         ref_latch  <= kcv_ref;
@@ -159,11 +165,10 @@ module edge_root_binding (
                         kcv_acc[word_index*32 +: 32] <= sponge_word;
                         word_index <= word_index + 6'd1;
                         if (word_index == KCV_WORDS - 6'd1) begin
-                            // Constant-time compare: full 224-bit XOR of the
-                            // accumulated words against the reference.  The
-                            // accumulated value excludes the last word, so
-                            // fold it in explicitly.
+                            // Full 224-bit XOR against the latched
+                            // reference; see kcv_diff below.
                             kcv_pass <= ~|kcv_diff;
+                            kcv_out  <= kcv_final;
                             state <= ST_DONE;
                         end
                     end
@@ -179,17 +184,15 @@ module edge_root_binding (
         end
     end
 
-    // On the final squeeze word, kcv_acc still holds words 0..5 (192 bits) and
-    // sponge_word is word 6.  Fold every accumulated word into a 32-bit XOR
-    // chain that only reduces to zero when the full 224-bit digest matches.
-    wire [31:0] kcv_diff = (sponge_word ^
-                            ref_latch[223:192]) |
-                           ((kcv_acc[31:0]   ^ ref_latch[31:0])   |
-                            (kcv_acc[63:32]  ^ ref_latch[63:32])  |
-                            (kcv_acc[95:64]  ^ ref_latch[95:64])  |
-                            (kcv_acc[127:96] ^ ref_latch[127:96]) |
-                            (kcv_acc[159:128]^ ref_latch[159:128]));
-    wire [223:0] kcv_final = {kcv_acc[191:0], sponge_word};
+    // Full 224-bit constant-time compare.  On the final squeeze word,
+    // kcv_acc holds words 0..5 and sponge_word is word 6.  Assemble the
+    // computed digest in reference layout (word 0 at [31:0], word 6 at
+    // [223:192]) and XOR it against the latched reference in a single
+    // reduction.  Every one of the 224 bits participates: an earlier revision
+    // folded only six words and let reference corruption in kcv_acc[191:160]
+    // pass the gate (security review finding).
+    wire [223:0] kcv_final = {sponge_word, kcv_acc[191:0]};
+    wire [223:0] kcv_diff = kcv_final ^ ref_latch;
 
     assign busy = (state != ST_IDLE) && (state != ST_DONE);
 

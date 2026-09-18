@@ -25,6 +25,7 @@ module tb_edge_root_binding;
     reg [55:0]  kcv_ctx = CTX_A;
     reg [223:0] kcv_exp  = KAT_KCV_A;
     wire busy, done, kcv_pass;
+    wire [223:0] kcv_out;
     integer cycles, pass_cycles;
 
     always #5 clk = ~clk;
@@ -32,7 +33,8 @@ module tb_edge_root_binding;
     edge_root_binding dut (
         .clk(clk), .rst_n(rst_n), .zeroize(zeroize), .start(start),
         .root_key(key), .kcv_ctx(kcv_ctx), .kcv_ref(kcv_exp),
-        .busy(busy), .done(done), .kcv_pass(kcv_pass)
+        .busy(busy), .done(done), .kcv_pass(kcv_pass),
+        .kcv_out(kcv_out)
     );
 
     task automatic run_check(input [223:0] reference,
@@ -53,38 +55,48 @@ module tb_edge_root_binding;
         end
     endtask
 
+    integer bit_index;
+
     initial begin
         repeat (3) @(posedge clk);
         rst_n = 1'b1;
         @(negedge clk);
 
-        // 1. Correct key + correct reference must pass.
+        // 1. Correct key + correct reference must pass, and the published
+        //    kcv_out must equal the host golden digest (word 0 at [31:0]).
         run_check(KAT_KCV_A, "A", 1);
         pass_cycles = cycles;
+        if (kcv_out !== KAT_KCV_A)
+            $fatal(1, "kcv_out=%056x expected golden=%056x",
+                   kcv_out, KAT_KCV_A);
         @(negedge clk);
 
         // 2. Wrong root key must fail (simulates a different enrollment).
         key = {32'hdeadbeef, 32'hcafebabe, 32'h0badf00d,
                32'h12345678, 32'h9abcdef0, 32'h55aa55aa};
         run_check(KAT_KCV_A, "wrongroot", 0);
+        if (kcv_out === KAT_KCV_A)
+            $fatal(1, "wrong root produced the golden digest");
+        key = KEY_A;
 
         // 3. Right key but wrong context (version/mapping mismatch) fails.
-        key = KEY_A; kcv_ctx = {8'h01, 8'h00, 8'h00, 8'h01,
+        kcv_ctx = {8'h01, 8'h00, 8'h00, 8'h01,
                             8'h01, 8'h01, 8'h02};
         run_check(KAT_KCV_A, "wrongctx", 0);
-
-        // 4. Single-byte KCV reference corruption at first/middle/last byte.
         kcv_ctx = CTX_A;
-        run_check(KAT_KCV_A ^ 224'h000000000000000000000000000000000000000000000000000000ff, "kcv0", 0);
-        run_check(KAT_KCV_A ^ 224'h00000000000000000000000000000000000000000000000000ff0000, "kcv-mid", 0);
-        run_check(KAT_KCV_A ^ 224'hff000000000000000000000000000000000000000000000000000000, "kcv-last", 0);
 
-        // 5. Failure latency must equal pass latency (constant time).
+        // 4. EVERY single-bit corruption of the reference must be rejected,
+        //    including word 5 (bits [191:160]) which the old folded compare
+        //    skipped.  Gate: no bit of the KCV may be changed and accepted.
+        for (bit_index = 0; bit_index < 224; bit_index = bit_index + 1)
+            run_check(KAT_KCV_A ^ (224'h1 << bit_index),
+                      "bitflip", 0);
         if (cycles != pass_cycles)
             $fatal(1, "fail latency %0d != pass latency %0d",
                    cycles, pass_cycles);
+        $display("KCV_BIT_SWEEP_REJECTED bits=224 word5=included");
 
-        // 6. Zeroize mid-computation must scrub and re-arm.
+        // 5. Zeroize mid-computation must scrub and re-arm.
         @(negedge clk); start = 1'b1; kcv_exp = KAT_KCV_A;
         @(negedge clk); start = 1'b0;
         repeat (20) @(posedge clk);
@@ -100,7 +112,7 @@ module tb_edge_root_binding;
     end
 
     initial begin
-        repeat (20000) @(posedge clk);
+        repeat (60000) @(posedge clk);
         $fatal(1, "timeout");
     end
 endmodule
