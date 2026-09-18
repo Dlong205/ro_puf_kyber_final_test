@@ -43,17 +43,17 @@ puts $fh "        .UART_TXD(UART_TXD), .LED(LED));"
 puts $fh "endmodule"
 close $fh
 add_files -norecurse [list $wrapper]
-foreach {env stem} {
+foreach {flag stem} {
     PUF64_BENCH_PLACEMENT puf64_bench_placement
     PUF64_BENCH_LOCKPINS puf64_bench_lockpins
     PUF64_BENCH_ROUTE puf64_bench_route
 } {
     set path [file join $root_dir constraints ${stem}_n${num_ro}.xdc]
-    if {[info exists ::env($env)] && $::env($env) eq "1" && [file exists $path]} {
+    if {[info exists ::env($flag)] && $::env($flag) eq "1" && [file exists $path]} {
         add_files -fileset constrs_1 -norecurse [list $path]
-        puts "PUF64_BENCH_${env}=applied"
+        puts "PUF64_BENCH_${flag}=applied"
     } else {
-        puts "PUF64_BENCH_${env}=none"
+        puts "PUF64_BENCH_${flag}=none"
     }
 }
 set_property top puf64_bench_top [get_filesets sources_1]

@@ -52,20 +52,27 @@ if {$use_lock && [file exists $lock_xdc]} {
     puts "PUF_ALLPAIRS64_LOCK_STATUS=not-exported (baseline build path)"
 }
 
-foreach {env file} {
+foreach {flag file} {
     PUF_ALLPAIRS64_RIPPLE_PLACEMENT puf_allpairs64_ripple_placement.xdc
     PUF_ALLPAIRS64_RIPPLE_LOCKPINS puf_allpairs64_ripple_lockpins.xdc
     PUF_ALLPAIRS64_RIPPLE_ROUTE puf_allpairs64_ripple_route.xdc
 } {
     set path [file join $root_dir constraints $file]
-    if {[info exists ::env($env)] && $::env($env) eq "1" && [file exists $path]} {
+    if {[info exists ::env($flag)] && $::env($flag) eq "1" && [file exists $path]} {
         lappend allpairs64_constraints $path
-        puts "PUF_ALLPAIRS64_${env}=applied"
+        puts "PUF_ALLPAIRS64_${flag}=applied"
     } else {
-        puts "PUF_ALLPAIRS64_${env}=none"
+        puts "PUF_ALLPAIRS64_${flag}=none"
     }
 }
 add_files -fileset constrs_1 -norecurse $allpairs64_constraints
+foreach f [get_files -quiet -of_objects [get_filesets constrs_1]] {
+    if {[string match "puf_allpairs64_ripple_*" [file tail $f]] ||
+        [string match "ro_physical_lock_allpairs64*" [file tail $f]]} {
+        set_property USED_IN_SYNTHESIS false $f
+        set_property USED_IN_IMPLEMENTATION true $f
+    }
+}
 
 set_property top Puf_AllPairs64_Characterization_Top [get_filesets sources_1]
 set_property top_auto_set false [get_filesets sources_1]
