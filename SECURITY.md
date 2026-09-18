@@ -42,6 +42,16 @@ Helper data RO-PUF là dữ liệu công khai nhưng gắn với board/lần enr
 commit các file như `helper.bin`, `hardware_helper.bin` hoặc bản helper dùng khi
 bring-up.
 
+Phase 1 đã thêm ràng buộc same-root: helper được gửi trong record có version +
+CRC (kiểm tra toàn vẹn truyền, **không** xác thực), và Edge CPU-free chỉ chạy
+KDF/ML-KEM khi KCV SHAKE256 khớp. KCV là **public verifier**, không phải MAC;
+nó không chống attacker có thể thay cả helper lẫn KCV, và nếu entropy root thấp
+thì có thể hỗ trợ offline guessing. Đường SoC hiện **chưa** có KCV gate trong
+phần cứng; firmware chỉ validate format. Fail-closed đã được test offline
+(xem `docs/PUF_ROOT_BINDING_DESIGN.md`, mục 0 và 10). Điều này chưa chứng minh
+same-root trên bitstream/board mới, chưa chống rollback generation (không có NVM
+monotonic) và không thay đổi các kết luận entropy bên dưới.
+
 Miền RO của full-SoC hiện đã được khóa và kiểm tra bằng fingerprint vật lý
 (136 endpoint, 128 route) qua hai build sạch. Đây chỉ là kiểm soát tái lập
 implementation. Campaign PUF-only 10.000 mẫu trên một board có HD tối đa 1,

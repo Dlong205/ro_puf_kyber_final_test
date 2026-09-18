@@ -58,6 +58,7 @@ bitstream sau sửa đã PASS INFO, ENROLL, SESSION đầy đủ và stress 100/
 | Tool chọn mapping RO | **DONE** | Tách training/holdout, kiểm board/bitstream và manifest có hash; 19/19 host test PASS |
 | Mapping RO release | **CHƯA CHỐT** | Một-board dataset chỉ đạt provisional; cần tối thiểu 3 training + 2 holdout board |
 | Freeze RO-PUF | **NO-GO** | Thiếu mapping train/holdout nhiều board, same-root full-SoC, cold/warm boot, PVT và aging |
+| Same-root binding Phase 1 | **OFFLINE REGRESSION PASS sau review**; chưa synth bitstream/board, chưa ASIC top riêng |
 | ASIC front-end P0/P2 | **ĐANG TRIỂN KHAI** | Top/reset/filelist/elaboration PASS; accelerator zeroize đã thêm, còn PDK/memory/CPU-bus/DFT/security findings |
 | Full ASIC backend/sign-off | **CHƯA BẮT ĐẦU** | Cần PDK/library, macro RO, memory mapping, SDC/CDC/DFT và crypto RTL freeze |
 | Public/production release | **NO-GO** | License, security review và qualification PUF chưa đóng |

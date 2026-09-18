@@ -1,8 +1,36 @@
-# Thiết kế ràng buộc root RO-PUF — KCV và helper record (bản 0.1)
+# Thiết kế ràng buộc root RO-PUF — KCV và helper record (bản 0.4)
 
-Trạng thái: **bản thiết kế Phase 1**, chưa freeze interface. Cùng đọc với
-`docs/PUF_QUALIFICATION_PLAN.md`, `docs/PUF_MAPPING_WORKFLOW.md` và
-`docs/EDGE_CONTROL_CONTRACT.md`.
+Trạng thái: **Phase 1 offline regression PASS sau khi sửa toàn bộ lỗi security
+review.** CHƯA hoàn tất: chưa synth bitstream mới, chưa đo mạch, chưa tích hợp
+top ASIC riêng. Cùng đọc với `docs/PUF_QUALIFICATION_PLAN.md`,
+`docs/PUF_MAPPING_WORKFLOW.md` và `docs/EDGE_CONTROL_CONTRACT.md`.
+
+## 0. Trạng thái triển khai (bản 0.4 — đã sửa review)
+
+Một nguồn chân lý duy nhất: `scripts/helper_record_spec.py` sinh ra
+`rtl/top/helper_record_spec.vh` (RTL) và `firmware/helper_record_spec.h`
+(firmware). Không có layout/constant thứ hai.
+
+| Thành phần | Trạng thái sau review | Bằng chứng |
+|---|---|---|
+| KCV so đủ 224 bit + `kcv_out` đúng thứ tự | **ĐÃ SỬA** | `edge_root_binding.sv`; sweep 224 bit + golden `kcv_out` trong `tb_edge_root_binding.sv` |
+| Enroll context từ header phát record | **ĐÃ SỬA** | transport `core_enroll_ctx`; loopback ENROLL→SESSION `tb_edge_enroll_loopback.sv` |
+| CRC tuần tự (không cone 592 bước) | **ĐÃ SỬA** | `hrec_crc16_step` RX/TX; không còn `hrec_crc16` trong `rtl/` |
+| SoC same-root KCV gate phần cứng | **ĐÃ THÊM** | `edge_root_binding` trong `Kyber_System_Top`; firmware chờ `kcv_pass`; `sim/system` wrong-KCV bị chặn |
+| Tách firmware operational/diag | **ĐÃ SỬA** | `firmware.hex` + `firmware_diag.hex`; sim nạp diag |
+| Test e2e FE thật + KCV thật | **ĐÃ THÊM** | `tb_edge_phase1_e2e.sv` (noise 0-8/>8, codeword-delta) |
+| Record 76 byte + CRC + field binding | Đã có từ trước | `helper_record.sv`, `tb_helper_record.sv` |
+| BCH popcount telemetry | Đã có từ trước | `FE_CHARACTERIZATION` 8880 check |
+
+Giới hạn còn lại (không được che):
+
+- Chưa synth/P&R bitstream mới trên FPGA; chưa đo mạch (Zynq 100 MHz, Arty OOC).
+- Top ASIC riêng cho chuỗi PUF/FE→KCV→KDF→ML-KEM **chưa tạo**; baseline
+  `Kyber_System_Asic_Top` chỉ tie-off port KCV (không có engine).
+- Chưa có NVM monotonic counter → không chống rollback generation.
+- Mapping vẫn `mapping_len=0/tag=0` = **mapping-unbound**, chỉ chấp nhận trong
+  simulation/diagnostic; operational/release phải fail-closed khi còn unbound.
+
 
 ## 1. Vấn đề và threat model
 

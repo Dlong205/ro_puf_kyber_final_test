@@ -12,7 +12,7 @@ Bằng chứng cập nhật đến **2026-09-17**.
 | Candidate pool 496 cặp | PASS diagnostic 100 mẫu; đủ ứng viên N=264, chưa chốt mapping |
 | Tool chọn mapping train/holdout | PASS 19/19 host metrics test; một-board preview bị giữ ở provisional |
 | Mapping reliability-qualified | CHƯA CÓ; cần tối thiểu 3 board training + 2 board holdout độc lập |
-| Số lỗi BCH thực sửa/same-root | CHƯA CÓ telemetry trên image tích hợp |
+| Số lỗi BCH thực sửa/same-root | Telemetry `corr_bit_count` (FE thật 8880 check) + KCV gate **offline regression PASS sau review**; **CHƯA ĐO** trên image tích hợp/board |
 | Warm/cold boot, PVT, aging và nhiều board | CHƯA CHẠY |
 | Entropy/uniqueness/helper leakage | CHƯA ĐỦ DỮ LIỆU |
 | Freeze PUF | NO-GO |

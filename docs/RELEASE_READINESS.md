@@ -23,6 +23,7 @@ nội dung triển khai FPGA với public/production release. Trạng thái cậ
 | Chia sẻ nội bộ source + RC1 trong repo private | **GO**, kèm các giới hạn trong `NOTICE.md` và `SECURITY.md` |
 | Chốt crypto RTL freeze cuối | **CHƯA**; v4 accelerator scrub, full manifest gate, Vivado và đúng-image board PASS; còn review độc lập |
 | Chốt PUF là golden/production | **NO-GO**, thiếu same-root/PVT/nhiều board/entropy |
+| Same-root binding Phase 1 | **OFFLINE REGRESSION PASS sau review**; chưa đổi kết luận NO-GO: cần synth bitstream mới + board, và ASIC top riêng |
 | Bắt đầu khảo sát ASIC frontend | **GO có điều kiện**, dùng portability gate |
 | Full ASIC backend/sign-off | **CHƯA**, thiếu PDK/macro/memory/SDC/DFT và các freeze đầu vào |
 | Public release | **BỊ CHẶN** bởi quyền phân phối/top-level license |

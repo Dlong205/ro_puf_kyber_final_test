@@ -98,6 +98,7 @@ SESSION và stress 100/100 trên board. Xem
 | Edge trên Zynq-7020 | **FULL BOARD PASS 100 MHz**: 20.974 LUT, WNS +0,562 ns, WHS +0,045 ns; INFO/ENROLL/SESSION và stress 100/100 PASS |
 | Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
 | Qualification RO-PUF | **TOOL MAPPING PASS, CHƯA FREEZE**: 496 cặp/100 frame trên Zynq, đủ pool N=264; workflow train/holdout đã test nhưng một-board data chỉ provisional; còn thiếu tối thiểu 3+2 board, same-root, PVT và power-cycle |
+| Same-root binding (Phase 1) | **OFFLINE REGRESSION PASS sau review** (KCV 224 bit, enroll ctx, CRC tuần tự, SoC KCV gate, e2e FE thật); **CHƯA** synth bitstream mới/board, chưa ASIC top riêng |
 | ASIC front-end | **ĐANG TRIỂN KHAI**: top/reset/filelist/manifest và structural lint đã có; chưa có PDK/backend |
 | Phát hành nội bộ | Có thể chia sẻ RC trong repo private kèm giới hạn đã ghi |
 | Public/production release | **NO-GO** do license, PUF qualification và security review |
