@@ -29,6 +29,28 @@ train/holdout theo **power-cycle rời nhau** (mỗi lần bật nguồn là m�
 và `mapping_tag` giữ `0` cho đến khi mapping vượt holdout và được freeze cho
 demo Zynq. Cổng 3+2 board giữ nguyên cho các tuyên bố đa thiết bị.
 
+### P2.5 — Cổng cấu trúc/entropy (bắt buộc trước freeze mapping)
+
+496 cặp chỉ so cùng **32 tần số RO**, nên chúng không cho 496 bit độc lập:
+một thiết bị ổn định sinh gần đúng một thứ tự toàn phần của 32 RO, trần
+`log2(32!) ≈ 117,7 bit` — **dưới 128 bit** của ML-KEM-512 trước cả bias và
+selection. `puf_allpairs_characterize.py` giờ chèn `assess_order_structure`
+vào mọi report (tỷ lệ cycle/bắc cầu trên 4960 bộ ba, phi-correlation mẫu,
+bias minority, trần entropy). Manifest mapping chỉ đặt
+`entropy_screened = true` khi **mọi campaign** train+holdout mang block
+`assessment`; freeze chỉ đóng khi **cả reliability (holdout BER) lẫn entropy**
+đều có kết luận. 264 = **độ dài FE, không phải lượng entropy**; ghi trung thực
+trong báo cáo. Hướng nếu cần trần ≥ 128: tăng số RO (≥ ~35 nếu chỉ dựa thứ
+tự), challenge đổi đường dao động thật, kết hợp nhóm RO độc lập — không chỉ
+thêm cặp từ cùng 32 RO.
+
+### Bằng chứng lock vật lý
+
+Bằng chứng **chính** là fingerprint (LOC/BEL/LOCK_PINS/FIXED_ROUTE) so từng
+byte với golden `constraints/ro_physical_fingerprint_allpairs_zynq7020.tsv`;
+hash DCP/bitstream chỉ là truy vết build (DCP chứa metadata dễ đổi) — xem
+`scripts/check_ro_lock_allpairs_repro.sh`.
+
 Tài liệu vận hành: [`RO_PUF_QUALIFICATION_PROTOCOL_2026-09-18.md`](RO_PUF_QUALIFICATION_PROTOCOL_2026-09-18.md).
 
 ## Kết luận hiện tại

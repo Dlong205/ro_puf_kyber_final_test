@@ -1,5 +1,11 @@
 # Export a complete physical lock for the RO paths of the isolated
 # all-pairs characterization image from an accepted routed checkpoint.
+# Primary physical evidence is the exported fingerprint file (LOC/BEL,
+# LOCK_PINS per endpoint and FIXED_ROUTE per net) and the fingerprint of any
+# later build compared byte-for-byte against it.  The DCP/anchor hash below is
+# only a build-traceability guard preventing a *different* implementation from
+# silently rewriting the baseline; DCPs can carry volatile metadata and are not
+# treated as physical evidence.
 # This includes all 128 RO LUTs, the measurement-mux/counter leaf cells they
 # load, their LUT pin mappings, and all 128 routed loop nets.
 #

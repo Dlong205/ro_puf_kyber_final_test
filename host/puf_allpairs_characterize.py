@@ -46,6 +46,123 @@ def percentile_nearest_rank(values, percentile):
     return ordered[rank - 1]
 
 
+def assess_order_structure(measurements, max_phi_pairs=1000):
+    """Screen the structural entropy ceiling of the 496-response pool.
+
+    All 496 responses compare the same 32 ring frequencies, so a stable device
+    produces essentially one total ordering of the 32 ROs.  The maximum number
+    of such orderings is 32! which bounds the entropy that any 264-pair mapping
+    can extract.  This routine measures, from the per-frame winner bits:
+
+    - transitivity/cycle rate: the fraction of triples (a<b<c) that violate the
+      ordering assumption of a consistent tournament.  Zero cycle rate per frame
+      means the frame is exactly one total ordering of the ROs (32! states);
+    - correlation between pair responses over samples (phi coefficient on a
+      deterministic sample of pair combinations).  Constant responses inside one
+      power-on show as zero-variance series (in-window variation is not entropy);
+    - the honest entropy ceiling log2(32!), plus a cross-device note.
+
+    This is a screening metric, not a full entropy estimator: conditional entropy
+    given public helper data and the frozen mapping still requires a separate
+    analysis.
+    """
+    sample_count = len(measurements)
+    triples = [(a, b, c) for a in range(RO_COUNT)
+               for b in range(a + 1, RO_COUNT)
+               for c in range(b + 1, RO_COUNT)]
+    triple_count = len(triples)
+    cycle_violations = []
+    winner_frame = []
+    for frame in measurements:
+        # winner == 0 means count0 > count1, i.e. the first RO in the pair is
+        # faster.  faster_matrix[i][j] = 1 if RO i is faster than RO j.
+        faster = [[0] * RO_COUNT for _ in range(RO_COUNT)]
+        for a, b, winner, tie, count0, count1, margin in frame:
+            faster[a][b] = 0 if winner else 1
+            faster[b][a] = 1 if winner else 0
+        winner_frame.append(faster)
+        violations = 0
+        for a, b, c in triples:
+            ab, bc, ac = faster[a][b], faster[b][c], faster[a][c]
+            # Transitivity only constrains ab==bc: ab=bc=1 requires ac=1,
+            # ab=bc=0 requires ac=0.  ab != bc leaves ac unconstrained.
+            if ab == 1 and bc == 1 and ac != 1:
+                violations += 1
+            elif ab == 0 and bc == 0 and ac != 0:
+                violations += 1
+        cycle_violations.append(violations)
+    cycle_rate_mean = 100.0 * sum(cycle_violations) / sample_count / triple_count
+
+    phi_samples = []
+    phi_undefined = 0
+    all_combos = [
+        (i, j) for i in range(PAIR_COUNT)
+        for j in range(i + 1, PAIR_COUNT)
+    ]
+    combo_step = max(1, len(all_combos) // max_phi_pairs)
+    pair_combos = all_combos[::combo_step]
+    if pair_combos:
+        for i, j in pair_combos:
+            series_i = [frame[i][2] for frame in measurements]
+            series_j = [frame[j][2] for frame in measurements]
+            n11 = sum(x == 1 and y == 1 for x, y in zip(series_i, series_j))
+            n00 = sum(x == 0 and y == 0 for x, y in zip(series_i, series_j))
+            n10 = sum(x == 1 and y == 0 for x, y in zip(series_i, series_j))
+            n01 = sum(x == 0 and y == 1 for x, y in zip(series_i, series_j))
+            row = n11 + n10
+            col = n11 + n01
+            denom = math.sqrt(row * (sample_count - row) * col * (sample_count - col))
+            if denom == 0:
+                phi_undefined += 1
+                continue
+            phi = (n11 * n00 - n10 * n01) / denom
+            phi_samples.append(abs(phi))
+    phi_mean = (sum(phi_samples) / len(phi_samples)) if phi_samples else None
+    phi_abs_list = sorted(phi_samples)
+    phi_p95 = (phi_abs_list[int(0.95 * len(phi_abs_list))]
+               if phi_abs_list else None)
+    ceiling_bits = math.log2(math.factorial(RO_COUNT))
+    max_minority = 0.0
+    for index in range(PAIR_COUNT):
+        ones = sum(frame[index][2] for frame in measurements)
+        minority = min(ones, sample_count - ones)
+        rate = 100.0 * minority / sample_count
+        max_minority = max(max_minority, rate)
+    return {
+        "metric": "order-structure screening (not a full entropy estimator)",
+        "sample_count": sample_count,
+        "ro_count": RO_COUNT,
+        "pair_count": PAIR_COUNT,
+        "order_cycle_rate_percent": {
+            "mean": round(cycle_rate_mean, 4),
+            "max_single_sample": round(100.0 * max(cycle_violations) / triple_count, 4),
+            "zero_cycle_sample_rate_percent": round(
+                100.0 * sum(v == 0 for v in cycle_violations) / sample_count, 4),
+        },
+        "pairwise_phi_abs": {
+            "pair_combos_sampled": len(pair_combos),
+            "with_defined_phi": len(phi_samples),
+            "undefined_constant_pairs": phi_undefined,
+            "mean": round(phi_mean, 4) if phi_mean is not None else None,
+            "p95": round(phi_p95, 4) if phi_p95 is not None else None,
+        },
+        "bias_strongest_minority_percent": round(max_minority, 4),
+        "entropy_ceiling_bits": round(ceiling_bits, 3),
+        "entropy_ceiling_explains_states": "32!",
+        "above_128bit_target": ceiling_bits >= 128.0,
+        "interpretation": (
+            "Fixed-frequency ROs place every response near a total ordering of "
+            "the 32 oscillators; 264 selected comparisons do not create 264 "
+            "independent entropy bits. log2(32!) ~= 117.7 bit is below the "
+            "128-bit ML-KEM-512 target, before any bias or selection loss. "
+            "Constant in-window responses are expected and mean zero in-window "
+            "variation, not real entropy. Conditional entropy given public "
+            "helper/mapping needs a separate device-ensemble and helper "
+            "analysis. Correlation screening is NOT complete from one device."
+        ),
+    }
+
+
 def read_margin(port):
     port.write(bytes([CMD_MARGIN]))
     status = read_exact(port, 1)[0]
@@ -243,6 +360,7 @@ def analyze(measurements, thresholds, max_minority_rate,
         "per_pair": per_pair,
         "threshold_sweep": sweeps,
         "selection_preview": preview,
+        "assessment": assess_order_structure(measurements),
         "security": {
             "contains_raw_response_values": False,
             "contains_device_fingerprinting_metadata": True,
@@ -389,6 +507,17 @@ def main():
             preview["selected_count"], preview["requested_count"],
             min(preview["ro_degree"]), max(preview["ro_degree"]),
             "YES" if preview["complete"] else "NO",
+        )
+    )
+    assessment = result["assessment"]
+    print(
+        "order_cycle_rate_mean=%.3f%% zero_cycle_sample=%s%% "
+        "entropy_ceiling=%.2f bits (32!) above_128=%s"
+        % (
+            assessment["order_cycle_rate_percent"]["mean"],
+            assessment["order_cycle_rate_percent"]["zero_cycle_sample_rate_percent"],
+            assessment["entropy_ceiling_bits"],
+            "YES" if assessment["above_128bit_target"] else "NO",
         )
     )
     print(f"Private report written to {report}")

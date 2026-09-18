@@ -184,6 +184,26 @@ class MappingTrainingTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             PUF.build_manifest(training, holdout, "bad")
 
+    def test_entropy_screening_from_campaign_assessments(self):
+        training = self.make_sessions("ZYNQ-A01", [1, 2, 3])
+        holdout = self.make_sessions("ZYNQ-A01", [4, 5, 6])
+        for campaign in training + holdout:
+            campaign["assessment"] = {
+                "order_cycle_rate_percent": {"mean": 0.5},
+                "entropy_ceiling_bits": 117.66,
+            }
+        manifest, _ = PUF.build_manifest(
+            training, holdout, "map-entropy",
+            session_split=True, min_training_sessions=1, min_holdout_sessions=1,
+        )
+        evidence = manifest["evidence"]
+        self.assertTrue(evidence["entropy_screened"])
+        self.assertTrue(evidence["order_structure_screened"])
+        self.assertEqual(evidence["order_cycle_rate_mean_max_percent"], 0.5)
+        self.assertAlmostEqual(evidence["entropy_ceiling_bits"], 117.66)
+        self.assertIn("117.7", manifest["limitations"][1])
+        self.assertIn("128-bit ML-KEM-512", manifest["limitations"][1])
+
 
 if __name__ == "__main__":
     unittest.main()

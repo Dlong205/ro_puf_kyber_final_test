@@ -125,6 +125,61 @@ class AllPairsMetricsTest(unittest.TestCase):
             with mock.patch.object(sys, "argv", self.cli_args()):
                 PUF.main()
 
+    def test_analyze_attaches_order_assessment(self):
+        result = analyze(
+            [make_frame(0), make_frame(1)], thresholds=[4], max_minority_rate=1.0,
+        )
+        assessment = result["assessment"]
+        self.assertIn("order_cycle_rate_percent", assessment)
+        self.assertIn("entropy_ceiling_bits", assessment)
+        self.assertAlmostEqual(assessment["entropy_ceiling_bits"], 117.66, delta=0.01)
+        self.assertFalse(assessment["above_128bit_target"])
+
+    def test_consistent_ordering_has_zero_cycles(self):
+        # rank[i] = i => higher index is faster.  winner bit = 1 whenever the
+        # second RO of the pair is faster, giving one coherent total order.
+        frames = []
+        for _ in range(5):
+            frame = []
+            for index, (a, b) in enumerate(EXPECTED_PAIRS):
+                winner = 1  # b faster (b > a)
+                count0 = 1000 + index
+                count1 = count0 + 100 + index % 31 + (1 if winner else 0)
+                frame.append((a, b, winner, 0, count0, count1, abs(count0 - count1)))
+            frames.append(frame)
+        assessment = PUF.assess_order_structure(frames)
+        self.assertEqual(
+            assessment["order_cycle_rate_percent"]["mean"], 0.0
+        )
+        self.assertEqual(
+            assessment["order_cycle_rate_percent"]["zero_cycle_sample_rate_percent"],
+            100.0,
+        )
+
+    def test_cyclic_ordering_is_detected(self):
+        # Build a tournament with one directed 3-cycle (0>1>2>0) on an
+        # otherwise ordered pair field, then emit the canonical pair records.
+        faster = [[0] * PUF.RO_COUNT for _ in range(PUF.RO_COUNT)]
+        for a in range(PUF.RO_COUNT):
+            for b in range(PUF.RO_COUNT):
+                if a != b:
+                    faster[a][b] = 1 if a > b else 0
+        faster[0][1] = 1  # 0 > 1
+        faster[1][2] = 1  # 1 > 2 (2 > 0 already true) => 0>1>2>0 cycle
+        faster[1][0] = 0
+        frame = []
+        for index, (a, b) in enumerate(EXPECTED_PAIRS):
+            winner = 0 if faster[a][b] else 1
+            count0 = 1000 + index
+            count1 = count0 + 100 + (1 if winner else 0)
+            frame.append((a, b, winner, 0, count0, count1, abs(count0 - count1)))
+        assessment = PUF.assess_order_structure([frame])
+        self.assertGreater(assessment["order_cycle_rate_percent"]["mean"], 0.0)
+        self.assertLess(
+            assessment["order_cycle_rate_percent"]["zero_cycle_sample_rate_percent"],
+            100.0,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

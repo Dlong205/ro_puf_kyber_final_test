@@ -93,6 +93,7 @@ def load_campaign(path):
         "bitstream_sha256": bitstream_hash,
         "sample_count": int(report.get("sample_count", 0)),
         "entries": entries,
+        "assessment": report.get("assessment"),
     }
 
 
@@ -279,6 +280,23 @@ def build_manifest(training, holdout, version, select_count=DEFAULT_SELECT_COUNT
         not holdout_failures,
     ))
     split_policy = "session" if session_split else "board"
+    assessments = [
+        campaign["assessment"] for campaign in training + holdout
+        if campaign["assessment"] is not None
+    ]
+    order_screened = len(assessments) == len(training) + len(holdout)
+    order_cycle_max = None
+    entropy_ceiling = None
+    if assessments:
+        order_cycle_max = max(
+            float(a.get("order_cycle_rate_percent", {}).get("mean", 0.0))
+            for a in assessments
+        )
+        entropy_ceiling = float(assessments[0]["entropy_ceiling_bits"])
+    entropy_screened = (
+        order_screened and order_cycle_max is not None
+        and entropy_ceiling is not None
+    )
     criteria = {
         "margin_p01_min": margin_threshold,
         "minority_rate_percent_max": max_minority_rate,
@@ -323,9 +341,19 @@ def build_manifest(training, holdout, version, select_count=DEFAULT_SELECT_COUNT
             "eligible_training_pair_count": candidate_count,
             "holdout_failure_campaign_count": len(holdout_failures),
             "correlation_screened": False,
+            "order_structure_screened": order_screened,
+            "order_cycle_rate_mean_max_percent": (
+                round(order_cycle_max, 4) if order_cycle_max is not None else None
+            ),
+            "entropy_ceiling_bits": (
+                round(entropy_ceiling, 3) if entropy_ceiling is not None else None
+            ),
+            "entropy_screened": entropy_screened,
         },
         "limitations": [
             "Pair selection improves reliability; it does not create 264 independent entropy bits.",
+            "All responses compare the same 32 RO frequencies: ordering entropy ceiling log2(32!) = 117.7 bit, below the 128-bit ML-KEM-512 target before bias/selection loss; 264 is the FE codeword length, not an entropy claim.",
+            "Conditional entropy given public helper data and the frozen mapping requires a separate device-ensemble and helper analysis.",
             "Correlation screening requires per-sample response sequences and remains open.",
             "Helper/KCV binding and integrated PUF-to-BCH validation remain separate gates.",
         ],

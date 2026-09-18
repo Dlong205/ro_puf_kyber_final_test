@@ -72,6 +72,47 @@ Vì schedule allpairs là cặp duy nhất nên không còn bài toán challenge
 `mapping_tag`/version khác 0 sau khi mapping vượt holdout và được freeze cho
 demo Zynq (`zymq7020_mapping_v1`, kèm hash manifest → `helper_record_spec`).
 
+## 4bis. P2.5 — Đánh giá cấu trúc/entropy, cổng song song với holdout
+
+496 response không phải 496 bit độc lập: mọi cặp chỉ so cùng 32 tần số RO, nên
+một thiết bị ổn định sinh gần đúng **một thứ tự toàn phần của 32 RO**. Trần
+entropy của bất kỳ mapping nào lấy từ pool này là `log2(32!) ≈ 117,7 bit`;
+264 bit của FE là **độ dài từ mã, không phải entropy** — vẫn dưới mục tiêu
+128 bit của ML-KEM-512 trước cả tổn thất do bias/selection. KDF không tạo ra
+entropy thêm.
+
+Trước khi freeze `mapping_tag`, mọi campaign thu được phải đi kèm đánh giá
+cấu trúc (`assess_order_structure`, nhúng trong `puf_allpairs_characterize.py`):
+
+1. **Ma trận tương quan**: phép đo phi trên mẫu cặp response (winner bit) qua
+   các frame; nhận diện cặp liên kết chặt (gần 1) và trục ổn định cấu trúc.
+2. **Tính bắc cầu/cycle**: trên mỗi frame, tỷ lệ 3-cycle trên
+   `C(32,3) = 4960` bộ ba; frame 0-cycle ⇒ đúng một thứ tự toàn phần
+   (mô hình 32! state) ⇒ số bit độc lập thực tế ≤ `log2(32!)`.
+3. **Bias từng challenge**: tỷ lệ minority (gần 50% = kém phân biệt) và gate
+   chọn hiện tại (minority_rate ≤ 1%) siết chặt bias này.
+4. **Chọn theo nhiều chiều**: không chỉ margin — cân nhắc reliability, tính
+   cân bằng RO và tương quan khi chọn 264 từ train.
+5. **Entropy có điều kiện**: ước lượng entropy còn lại sau khi helper data và
+   mapping là công khai — cần phân tích riêng với tập thiết bị và mô hình
+   helper; đánh giá phase này chỉ là **sàng lọc cấu trúc**, không phải bộ ước
+   lượng entropy hoàn chỉnh.
+
+Hướng mở rộng nếu cần đạt trần ≥ 128 bit:
+
+- **Trung thực trong báo cáo** (ngắn hạn): giữ 32 RO nhưng công bố rõ
+  `264 = FE length`, trần ≈ 117,7 bit, tính chất device này dựa trên thứ tự
+  toàn phần;
+- tăng số RO (≥ ~35 nếu chỉ dựa thứ tự);
+- dùng challenge thay đổi đường dao động thực sự thay vì thêm cặp so sánh
+  cùng 32 RO;
+- kết hợp các nhóm RO độc lập.
+
+**Freeze `mapping_tag` chỉ sau khi CẢ reliability (holdout BER) LẪN entropy
+đều có kết luận**: manifest chỉ set `entropy_screened = true` khi mọi campaign
+train+holdout mang block `assessment`; nếu chưa đủ, manifest ghi rõ phần còn
+thiếu thay vì tự nhận đạt.
+
 ## 5. Quy mô đo tối thiểu và phân bổ
 
 Sizing phụ thuộc tài nguyên thời gian trên lab; khung bắt buộc:
@@ -101,6 +142,9 @@ Từ holdout (sau khi mapping cố định):
 
 Cổng demo Zynq: 100% vector holdout có `errors <= 8`; tỷ lệ sai vượt khả năng
 BCH bằng 0 trong tập thử mục tiêu; biên 9 lỗi được test và đo false-reject.
+Bổ sung: cổng freeze chỉ đóng khi **holdout BER đạt VÀ entropy đã sàng lọc**
+(mọi campaign có `assessment`; manifest `entropy_screened = true`) — xem
+section 4bis.
 
 ## 7. Storage và quyền
 
@@ -117,8 +161,11 @@ BCH bằng 0 trong tập thử mục tiêu; biên 9 lỗi được test và đo 
 1. Bitstream lock + fingerprint + reproducibility (2 build sạch).
 2. Train/holdout split (số session/ngày, disjoint power-cycle).
 3. Margin/BER/errors-per-vector trên holdout; đối chiếu BCH `t=8`.
-4. Manifest mapping + `mapping_tag` + ghi chú "**chưa đánh giá inter-device
+4. Kết quả P2.5: tỷ lệ cycle/bắc cầu, phi-correlation, bias, trần
+   `log2(32!) ≈ 117,7 bit`; khẳng định rõ **264 = FE length không phải entropy
+   và entropy có điều kiện sau helper công khai cần phân tích riêng**.
+5. Manifest mapping + `mapping_tag` + ghi chú "**chưa đánh giá inter-device
    uniqueness và generalization thiết bị khác vì chỉ dùng một Zynq**".
-5. End-to-end board: `RO-PUF → FE → KCV → KDF → ML-KEM-512` trên từng trường
+6. End-to-end board: `RO-PUF → FE → KCV → KDF → ML-KEM-512` trên từng trường
    hợp (enroll→reconstruct cùng board, power-cycle rồi reconstruct, helper sai
    board/bị sửa, reset giữa chừng, noise >8) và thống kê nhiều phiên.
