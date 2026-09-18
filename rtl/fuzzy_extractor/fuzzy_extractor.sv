@@ -70,6 +70,11 @@ module fuzzy_extractor #(
         end
     endfunction
 
+    // 9-bit population count of the applied error vector.  Kept as a net so
+    // the result can be saturated to 8 bits without a bit-select on a
+    // function-call result (which Vivado 2020.1 does not parse).
+    wire [8:0] err_popcount = popcount(err_reg);
+
     // ---- encoder / decoder wireups ----
     logic [BITS-1:0] enc_data_in;
     logic            enc_start;
@@ -223,8 +228,8 @@ module fuzzy_extractor #(
                     corrected <= r_reg ^ err_reg;
                     key_reg   <= dec_key;
                     key_out   <= dec_key;
-                    corr_bit_count_reg <= (popcount(err_reg) > 9'd255)
-                                          ? 8'hff : popcount(err_reg)[7:0];
+                    corr_bit_count_reg <= (err_popcount > 9'd255)
+                                          ? 8'hff : err_popcount[7:0];
                     word_cnt  <= '0;
                     cap       <= 1'b0;
                     cw_reg    <= '0;
