@@ -35,6 +35,7 @@ hardware_helper.bin
 # belong in the public repository.
 reports/puf_characterization/private_*.json
 reports/puf_allpairs_characterization/private_*.json
+reports/puf_allpairs64_characterization/private_*.json
 reports/puf_mapping/private_*.json
 **/__pycache__/
 *.py[cod]

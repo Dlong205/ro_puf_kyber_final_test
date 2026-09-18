@@ -14,6 +14,7 @@ sim:
 		-DKP_RO_BEHAVIORAL \
 		../../rtl/puf/kp_ro_cell.sv \
 		../../rtl/puf/kp_ro_cell_model.sv \
+		../../rtl/puf/kp_ro_prescaler.sv \
 		../../rtl/puf/kp_puf_cells.sv \
 		../../rtl/puf/kp_puf_control.sv \
 		../../rtl/puf/kp_puf_allpairs_top.sv \

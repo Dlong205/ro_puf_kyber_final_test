@@ -14,7 +14,8 @@ module kp_puf_allpairs_top #(
     parameter int PAIR_COUNT = 496,
     parameter int REF_CYCLES = 255,
     parameter int RESET_CYCLES = 8,
-    parameter int SETTLE_CYCLES = 2
+    parameter int SETTLE_CYCLES = 4,
+    parameter int USE_PRESCALER = 1
 )(
     input  logic                  clk,
     input  logic                  rst_n,
@@ -37,16 +38,19 @@ module kp_puf_allpairs_top #(
     logic count_en, sr_en, ro_en, cnt_rst;
     logic unused_lfsr_dv, unused_ref_en, unused_lfsr_en;
     logic [RO_BITS-1:0] pair_a, pair_b;
-    logic [NUM_RO/2-1:0] ro_out0, ro_out1;
-    logic [NUM_RO-1:0] ro_all;
-    logic mux0_out, mux1_out;
+    logic [NUM_RO-1:0] ro_out;
+    logic [NUM_RO-1:0] pre_clk;
+    logic [31:0] cnt_all [0:NUM_RO-1];
     logic [31:0] cnt0, cnt1;
     logic winner;
     (* ASYNC_REG = "TRUE" *) logic winner_meta, winner_sync;
-    logic [31:0] cnt0_quiet_q1, cnt0_quiet_q2;
-    logic [31:0] cnt1_quiet_q1, cnt1_quiet_q2;
+    logic [31:0] cnt0_quiet_q1, cnt0_quiet_q2, cnt0_quiet_q3;
+    logic [31:0] cnt1_quiet_q1, cnt1_quiet_q2, cnt1_quiet_q3;
     logic [IDX_W-1:0] telemetry_next_index;
     wire puf_rst_n = rst_n & ~zeroize;
+    wire presc_rst_n = puf_rst_n & ~cnt_rst;
+    wire cnt_stable = (cnt0_quiet_q2 == cnt0_quiet_q3) &&
+                      (cnt1_quiet_q2 == cnt1_quiet_q3);
 
     kp_puf_control #(
         .BIT_COUNT(PAIR_COUNT),
@@ -87,31 +91,50 @@ module kp_puf_allpairs_top #(
         // (128 LUTs at NUM_RO=32, 256 LUTs at NUM_RO=64) is auditable against
         // this diagnostic image.
         for (i = 0; i < NUM_RO / 2; i++) begin : ring0
+            wire ro_en_i = ro_en && ((pair_a == i) || (pair_b == i));
             kp_ro_cell #(.FREQ_OFFSET(i * 3 + 1)) ro0 (
-                .clk(clk), .rst_n(puf_rst_n), .en(ro_en),
-                .cfg(pair_a[3:0]), .o(ro_out0[i])
+                .clk(clk), .rst_n(puf_rst_n), .en(ro_en_i),
+                .cfg(4'd0), .o(ro_out[i])
+            );
+            if (USE_PRESCALER) begin : presc
+                (* DONT_TOUCH = "true" *) kp_ro_prescaler presc_i (
+                    .clk(ro_out[i]), .rst_n(presc_rst_n), .q(pre_clk[i])
+                );
+            end else begin : no_presc
+                assign pre_clk[i] = ro_out[i];
+            end
+            kp_counter_puf #(.SIZE(32)) counter_i (
+                .clk(pre_clk[i]), .en(count_en), .rst_n(puf_rst_n),
+                .cnt_rst(cnt_rst), .q(cnt_all[i])
             );
         end
         for (i = 0; i < NUM_RO / 2; i++) begin : ring1
+            localparam int RO_INDEX = NUM_RO / 2 + i;
+            wire ro_en_i = ro_en && ((pair_a == RO_INDEX) || (pair_b == RO_INDEX));
             kp_ro_cell #(.FREQ_OFFSET(i * 3 + 17)) ro1 (
-                .clk(clk), .rst_n(puf_rst_n), .en(ro_en),
-                .cfg(pair_b[3:0]), .o(ro_out1[i])
+                .clk(clk), .rst_n(puf_rst_n), .en(ro_en_i),
+                .cfg(4'd0), .o(ro_out[RO_INDEX])
+            );
+            if (USE_PRESCALER) begin : presc
+                (* DONT_TOUCH = "true" *) kp_ro_prescaler presc_i (
+                    .clk(ro_out[RO_INDEX]), .rst_n(presc_rst_n),
+                    .q(pre_clk[RO_INDEX])
+                );
+            end else begin : no_presc
+                assign pre_clk[RO_INDEX] = ro_out[RO_INDEX];
+            end
+            kp_counter_puf #(.SIZE(32)) counter_i (
+                .clk(pre_clk[RO_INDEX]), .en(count_en), .rst_n(puf_rst_n),
+                .cnt_rst(cnt_rst), .q(cnt_all[RO_INDEX])
             );
         end
     endgenerate
 
-    assign ro_all = {ro_out1, ro_out0};
-    assign mux0_out = ro_all[pair_a];
-    assign mux1_out = ro_all[pair_b];
+    always_comb begin
+        cnt0 = cnt_all[pair_a];
+        cnt1 = cnt_all[pair_b];
+    end
 
-    kp_counter_puf #(.SIZE(32)) counter0 (
-        .clk(mux0_out), .en(count_en), .rst_n(puf_rst_n),
-        .cnt_rst(cnt_rst), .q(cnt0)
-    );
-    kp_counter_puf #(.SIZE(32)) counter1 (
-        .clk(mux1_out), .en(count_en), .rst_n(puf_rst_n),
-        .cnt_rst(cnt_rst), .q(cnt1)
-    );
     kp_comparator comp_inst (
         .count0(cnt0), .count1(cnt1), .winner(winner)
     );
@@ -124,15 +147,19 @@ module kp_puf_allpairs_top #(
             winner_sync <= 1'b0;
             cnt0_quiet_q1 <= '0;
             cnt0_quiet_q2 <= '0;
+            cnt0_quiet_q3 <= '0;
             cnt1_quiet_q1 <= '0;
             cnt1_quiet_q2 <= '0;
+            cnt1_quiet_q3 <= '0;
         end else begin
             winner_meta <= winner;
             winner_sync <= winner_meta;
             cnt0_quiet_q1 <= cnt0;
             cnt0_quiet_q2 <= cnt0_quiet_q1;
+            cnt0_quiet_q3 <= cnt0_quiet_q2;
             cnt1_quiet_q1 <= cnt1;
             cnt1_quiet_q2 <= cnt1_quiet_q1;
+            cnt1_quiet_q3 <= cnt1_quiet_q2;
         end
     end
 
@@ -154,13 +181,15 @@ module kp_puf_allpairs_top #(
             if (start)
                 telemetry_next_index <= '0;
             if (sr_en) begin
-                telemetry_valid      <= 1'b1;
-                telemetry_index      <= telemetry_next_index;
-                telemetry_pair_a     <= pair_a;
-                telemetry_pair_b     <= pair_b;
-                telemetry_count0     <= cnt0_quiet_q2;
-                telemetry_count1     <= cnt1_quiet_q2;
-                telemetry_winner     <= (cnt0_quiet_q2 > cnt1_quiet_q2) ? 1'b0 : 1'b1;
+                if (cnt_stable) begin
+                    telemetry_valid      <= 1'b1;
+                    telemetry_index      <= telemetry_next_index;
+                    telemetry_pair_a     <= pair_a;
+                    telemetry_pair_b     <= pair_b;
+                    telemetry_count0     <= cnt0_quiet_q2;
+                    telemetry_count1     <= cnt1_quiet_q2;
+                    telemetry_winner     <= (cnt0_quiet_q2 > cnt1_quiet_q2) ? 1'b0 : 1'b1;
+                end
                 telemetry_next_index <= telemetry_next_index + 1'b1;
             end
         end

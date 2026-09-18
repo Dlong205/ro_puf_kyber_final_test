@@ -39,7 +39,7 @@ module Puf_AllPairs64_Characterization_Top #(
     // the physical placement audit filter (*u_puf*ring*LUT6*) still applies;
     // NUM_RO=64 yields 256 RO LUTs.
     kp_puf_allpairs_top #(
-        .NUM_RO(NUM_RO), .PAIR_COUNT(PAIR_COUNT)
+        .NUM_RO(NUM_RO), .PAIR_COUNT(PAIR_COUNT), .REF_CYCLES(511)
     ) u_puf (
         .clk(clk), .rst_n(por_done), .zeroize(1'b0), .start(puf_start),
         .busy(puf_busy), .done(puf_done), .response(puf_response),

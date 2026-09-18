@@ -27,7 +27,7 @@ module tb_kp_puf_allpairs64;
 
     kp_puf_allpairs_top #(
         .NUM_RO(NUM_RO), .PAIR_COUNT(PAIR_COUNT),
-        .REF_CYCLES(128), .RESET_CYCLES(8), .SETTLE_CYCLES(2)
+        .REF_CYCLES(128), .RESET_CYCLES(8), .SETTLE_CYCLES(4)
     ) dut (
         .clk(clk), .rst_n(rst_n), .zeroize(zeroize), .start(start),
         .busy(busy), .done(done), .response(response),

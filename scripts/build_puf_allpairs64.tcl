@@ -21,7 +21,7 @@ set build_datetime [clock format [clock seconds] -gmt true -format "%Y-%m-%d %H:
 puts "PUF_ALLPAIRS64_BUILD_COMMIT=$commit_hash"
 puts "PUF_ALLPAIRS64_BUILD_DATETIME=$build_datetime"
 set lock_in_cs [expr {[file exists $lock_xdc] &&
-    [llength [get_files -quiet -of_objects [get_filesets constrs_1]]] > 0}]
+    [llength [get_files -quiet $lock_xdc]] > 0}]
 puts "PUF_ALLPAIRS64_LOCK_IN_PROJECT=$lock_in_cs"
 reset_run synth_1
 launch_runs synth_1 -jobs 1
@@ -65,15 +65,17 @@ report_drc -file [file join $report_dir post_route_drc.rpt]
 report_methodology -file [file join $report_dir post_route_methodology.rpt]
 
 set fingerprint_report [file join $report_dir ro_physical_fingerprint.tsv]
-set inventory [ro_collect_physical_inventory]
-ro_write_physical_fingerprint $fingerprint_report $inventory
+set inventory [ro_collect_ro_only_inventory 256]
+ro_write_ro_only_fingerprint $fingerprint_report $inventory
 set fingerprint_state OK
-if {[file exists $golden_fingerprint]} {
+if {$lock_in_cs && [file exists $golden_fingerprint]} {
     if {[catch {ro_compare_physical_fingerprints \
             $golden_fingerprint $fingerprint_report} compare_error]} {
         set fingerprint_state MISMATCH
         puts "PUF_ALLPAIRS64_FINGERPRINT_ERROR=$compare_error"
     }
+} elseif {[file exists $golden_fingerprint]} {
+    set fingerprint_state BASELINE-NO-LOCK
 } else {
     set fingerprint_state NO-GOLDEN
 }
@@ -97,7 +99,9 @@ puts $metadata_channel "fingerprint_status\t$fingerprint_state"
 puts $metadata_channel "part\txc7z020clg400-2"
 puts $metadata_channel "top\tPuf_AllPairs64_Characterization_Top"
 puts $metadata_channel "protocol\t3.0"
-puts $metadata_channel "ref_cycles\t255"
+puts $metadata_channel "ref_cycles\t511"
+puts $metadata_channel "clock_mhz\t50"
+puts $metadata_channel "prescaler\t1"
 close $metadata_channel
 if {$fingerprint_state eq "MISMATCH"} {
     error "All-pairs64 build broke the accepted RO physical fingerprint"

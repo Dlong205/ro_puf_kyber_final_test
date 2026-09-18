@@ -15,6 +15,7 @@ set sources [list \
     [file join $root_dir rtl top puf_allpairs_uart.sv] \
     [file join $root_dir rtl puf kp_ro_cell.sv] \
     [file join $root_dir rtl puf kp_ro_cell_xilinx.sv] \
+    [file join $root_dir rtl puf kp_ro_prescaler.sv] \
     [file join $root_dir rtl puf kp_puf_cells.sv] \
     [file join $root_dir rtl puf kp_puf_control.sv] \
     [file join $root_dir rtl puf kp_puf_allpairs_top.sv] \

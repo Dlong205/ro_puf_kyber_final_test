@@ -518,6 +518,12 @@ def main():
         "--fingerprint-file", default=None,
         help="path to the locked-image RO physical fingerprint .tsv whose SHA-256 is recorded"
     )
+    parser.add_argument(
+        "--golden-manifest", default=None,
+        help="path to the golden implementation JSON; the candidate bitstream "
+             "SHA-256 must match it, otherwise the campaign is refused "
+             "(golden-bitstream-bound, no hard physical lock)"
+    )
     parser.add_argument("--thresholds", default="0,1,2,4,8,16,32")
     parser.add_argument("--max-minority-rate", type=float, default=1.0)
     parser.add_argument("--selection-threshold", type=int, default=4)
@@ -548,6 +554,25 @@ def main():
         if not fingerprint_path.is_file():
             parser.error("--fingerprint-file must name an existing file")
         fingerprint_hash = sha256_file(fingerprint_path)
+
+    golden_manifest = None
+    golden_manifest_sha256 = "UNKNOWN"
+    if args.golden_manifest:
+        golden_path = Path(args.golden_manifest).resolve()
+        if not golden_path.is_file():
+            parser.error("--golden-manifest must name an existing file")
+        try:
+            golden_manifest = json.loads(golden_path.read_text())
+        except (OSError, json.JSONDecodeError) as error:
+            parser.error(f"cannot read --golden-manifest: {error}")
+        golden_manifest_sha256 = sha256_file(golden_path)
+        expected_bitstream = golden_manifest.get("bitstream_sha256")
+        actual_bitstream = sha256_file(bitstream)
+        if expected_bitstream != actual_bitstream:
+            parser.error(
+                "bitstream is not the golden implementation: expected "
+                f"{expected_bitstream}, got {actual_bitstream}"
+            )
 
     ro_count = args.num_ro or RO_COUNT
     pair_count = ro_count * (ro_count - 1) // 2
@@ -580,9 +605,22 @@ def main():
         "protocol": protocol_label(ro_count),
         "num_ro": ro_count,
         "pair_count": pair_count,
-        "ref_cycles": 255,
-        "clock_mhz": 100,
+        "ref_cycles": 511 if ro_count == 64 else 255,
+        "clock_mhz": 50,
+        "prescaler": 1 if ro_count == 64 else 0,
         "local_bitstream_sha256": sha256_file(bitstream),
+        "golden_implementation_id": golden_manifest_sha256,
+        "golden_bitstream_sha256": (
+            golden_manifest.get("bitstream_sha256") if golden_manifest else None
+        ),
+        "golden_route_fingerprint_sha256": (
+            golden_manifest.get("route_fingerprint_sha256")
+            if golden_manifest else None
+        ),
+        "hard_physical_lock": (
+            golden_manifest.get("hard_physical_lock", False)
+            if golden_manifest else False
+        ),
         "build_commit": args.build_commit or git_commit_hash(),
         "build_datetime": "2026-09-18",
         "placement_fingerprint_sha256": fingerprint_hash,

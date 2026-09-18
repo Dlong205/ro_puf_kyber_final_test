@@ -22,7 +22,7 @@ module tb_kp_puf_allpairs;
     always #5 clk = ~clk;
 
     kp_puf_allpairs_top #(
-        .REF_CYCLES(8), .RESET_CYCLES(8), .SETTLE_CYCLES(2)
+        .REF_CYCLES(8), .RESET_CYCLES(8), .SETTLE_CYCLES(4)
     ) dut (
         .clk(clk), .rst_n(rst_n), .zeroize(zeroize), .start(start),
         .busy(busy), .done(done), .response(response),

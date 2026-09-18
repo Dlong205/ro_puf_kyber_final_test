@@ -77,36 +77,50 @@ open_checkpoint $checkpoint
 if {[get_property PART [current_design]] ne "xc7z020clg400-2"} {
     error "Unexpected checkpoint part: [get_property PART [current_design]]"
 }
-set inventory [ro_collect_physical_inventory]
+set inventory [ro_collect_ro_only_inventory 256]
+set ro_luts [dict get $inventory ro_luts]
 set ro_nets [dict get $inventory ro_nets]
-set endpoint_cells [dict get $inventory endpoint_cells]
+set tap_cells [dict get $inventory tap_cells]
 
 file mkdir [file dirname $output_xdc]
 set channel [open $output_xdc w]
-puts $channel "## Complete RO physical lock for the all-pairs64 characterization image."
+puts $channel "## RO-loop physical lock for the all-pairs64 characterization image."
 puts $channel "## Source DCP SHA-256: $checkpoint_sha256"
 puts $channel "## Vivado 2020.1 build 2902540; part xc7z020clg400-2."
-puts $channel "## BEL is applied before LOC. Every connected leaf cell is fixed before routes."
+puts $channel "## BEL is applied before LOC, and LOC before LOCK_PINS. Only the"
+puts $channel "## 256 RO LUTs, the 64 prescaler FFs and the prescaler placement are"
+puts $channel "## locked here; routes are verified fail-closed from the canonical"
+puts $channel "## route fingerprint instead of FIXED_ROUTE on loop nets."
 
-foreach cell $endpoint_cells {
+foreach cell $ro_luts {
     set bel [get_property BEL $cell]
     set loc [get_property LOC $cell]
     set pin_map [ro_lock_input_pin_map $cell]
     if {$bel eq "" || $loc eq "" || [llength $pin_map] == 0} {
         close $channel
-        error "Incomplete endpoint constraint for $cell"
+        error "Incomplete RO constraint for $cell"
     }
     set cell_target [format \
         {[get_cells -hierarchical -filter {NAME == "%s"}]} $cell]
     puts $channel [format {set_property BEL %s %s} $bel $cell_target]
     puts $channel [format {set_property LOC %s %s} $loc $cell_target]
-    # The board XDC already locks every RO LUT's six logical inputs to
-    # A6..A1.  Emit LOCK_PINS only for the leaf endpoints that are outside the
-    # RO-cell wildcard so Vivado does not report duplicate-property warnings.
-    if {![string match "*u_puf*ring*LUT6*" $cell]} {
-        puts $channel [format \
-            {set_property LOCK_PINS %s %s} [list $pin_map] $cell_target]
+    puts $channel [format \
+        {set_property LOCK_PINS %s %s} [list $pin_map] $cell_target]
+    puts $channel [format \
+        {set_property DONT_TOUCH true %s} $cell_target]
+}
+
+foreach cell $tap_cells {
+    set bel [get_property BEL $cell]
+    set loc [get_property LOC $cell]
+    if {$bel eq "" || $loc eq ""} {
+        close $channel
+        error "Incomplete tap-sink constraint for $cell"
     }
+    set cell_target [format \
+        {[get_cells -hierarchical -filter {NAME == "%s"}]} $cell]
+    puts $channel [format {set_property BEL %s %s} $bel $cell_target]
+    puts $channel [format {set_property LOC %s %s} $loc $cell_target]
     puts $channel [format \
         {set_property DONT_TOUCH true %s} $cell_target]
 }
@@ -117,17 +131,11 @@ foreach net $ro_nets {
         close $channel
         error "Cannot export empty route for $net"
     }
-    puts $channel [format \
-        {set_property FIXED_ROUTE %s [get_nets -hierarchical -filter {NAME == "%s"}]} \
-        [list $route] $net]
-    puts $channel [format \
-        {set_property IS_ROUTE_FIXED true [get_nets -hierarchical -filter {NAME == "%s"}]} \
-        $net]
 }
 close $channel
 
-ro_write_physical_fingerprint $output_fingerprint $inventory
-puts "PUF_ALLPAIRS64_LOCK_ENDPOINT_CELL_COUNT=[llength $endpoint_cells]"
+ro_write_ro_only_fingerprint $output_fingerprint $inventory
+puts "PUF_ALLPAIRS64_LOCK_RO_CELL_COUNT=[llength $ro_luts]"
 puts "PUF_ALLPAIRS64_LOCK_NET_COUNT=[llength $ro_nets]"
 puts "PUF_ALLPAIRS64_LOCK_XDC=$output_xdc"
 puts "PUF_ALLPAIRS64_LOCK_FINGERPRINT=$output_fingerprint"

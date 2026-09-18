@@ -17,6 +17,7 @@ set sources [list \
     [file join $root_dir rtl top puf_allpairs_uart.sv] \
     [file join $root_dir rtl puf kp_ro_cell.sv] \
     [file join $root_dir rtl puf kp_ro_cell_xilinx.sv] \
+    [file join $root_dir rtl puf kp_ro_prescaler.sv] \
     [file join $root_dir rtl puf kp_puf_cells.sv] \
     [file join $root_dir rtl puf kp_puf_control.sv] \
     [file join $root_dir rtl puf kp_puf_allpairs_top.sv] \
@@ -28,7 +29,7 @@ foreach source $sources {
 }
 add_files -norecurse $sources
 set allpairs64_constraints [list \
-    [file join $root_dir constraints kp_zynq_7020.xdc]]
+    [file join $root_dir constraints kp_zynq_7020_puf64.xdc]]
 set placement_xdc [file join $root_dir constraints ro_placement_puf64_zynq7020.xdc]
 if {[file exists $placement_xdc]} {
     # Explicit 64-RO placement map produced in the lab after the first
@@ -38,7 +39,12 @@ if {[file exists $placement_xdc]} {
     puts "PUF_ALLPAIRS64_PLACEMENT=not-exported (baseline build path)"
 }
 set lock_xdc [file join $root_dir constraints ro_physical_lock_allpairs64_zynq7020.xdc]
-if {[file exists $lock_xdc]} {
+set use_lock 1
+if {[info exists ::env(PUF_ALLPAIRS64_USE_LOCK)] &&
+    $::env(PUF_ALLPAIRS64_USE_LOCK) eq "0"} {
+    set use_lock 0
+}
+if {$use_lock && [file exists $lock_xdc]} {
     lappend allpairs64_constraints $lock_xdc
 } else {
     puts "PUF_ALLPAIRS64_LOCK_STATUS=not-exported (baseline build path)"

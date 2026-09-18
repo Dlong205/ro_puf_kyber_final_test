@@ -32,7 +32,7 @@ module Puf_AllPairs_Characterization_Top #(
 
     // The instance/generate names intentionally match the release hierarchy
     // so the established 128-LUT LOC/BEL map remains auditable.
-    kp_puf_allpairs_top u_puf (
+    kp_puf_allpairs_top #(.USE_PRESCALER(0)) u_puf (
         .clk(clk), .rst_n(por_done), .zeroize(1'b0), .start(puf_start),
         .busy(puf_busy), .done(puf_done), .response(puf_response),
         .telemetry_valid(telemetry_valid),

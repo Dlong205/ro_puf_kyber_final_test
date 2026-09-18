@@ -83,11 +83,11 @@ proc ro_lock_input_pin_map {cell} {
     return [lsort -dictionary $mappings]
 }
 
-proc ro_collect_physical_inventory {} {
+proc ro_collect_physical_inventory {{expected_ro_luts 128}} {
     set ro_luts [lsort -dictionary [get_cells -quiet -hierarchical \
         -filter {NAME =~ "*u_puf*ring*LUT6*"}]]
-    if {[llength $ro_luts] != 128} {
-        error "Expected 128 physical RO LUTs, found [llength $ro_luts]"
+    if {[llength $ro_luts] != $expected_ro_luts} {
+        error "Expected $expected_ro_luts physical RO LUTs, found [llength $ro_luts]"
     }
 
     set net_set [dict create]
@@ -95,8 +95,8 @@ proc ro_collect_physical_inventory {} {
         dict set net_set [ro_find_route_net $cell] 1
     }
     set ro_nets [lsort -dictionary [dict keys $net_set]]
-    if {[llength $ro_nets] != 128} {
-        error "Expected 128 unique physical RO nets, found [llength $ro_nets]"
+    if {[llength $ro_nets] != $expected_ro_luts} {
+        error "Expected $expected_ro_luts unique physical RO nets, found [llength $ro_nets]"
     }
 
     set endpoint_set [dict create]
@@ -142,6 +142,78 @@ proc ro_write_physical_fingerprint {path inventory} {
         puts $channel "CELL\t$canonical_cell\t$ref_name\t$init\t$loc\t$bel\t$pin_map"
     }
 
+    foreach net $ro_nets {
+        set segments [get_nets -quiet -segments $net]
+        set pins [lsort -dictionary [get_pins -quiet -leaf -of_objects $segments]]
+        set route [ro_normalize_space [get_property ROUTE $net]]
+        if {$route eq ""} {
+            close $channel
+            error "RO net is not routed: $net"
+        }
+        set canonical_net [ro_canonical_object_name $net]
+        set canonical_pins {}
+        foreach pin $pins {
+            lappend canonical_pins [ro_canonical_object_name $pin]
+        }
+        puts $channel "NET\t$canonical_net\t[join $canonical_pins ,]\t$route"
+    }
+    close $channel
+}
+
+proc ro_collect_ro_only_inventory {{expected_ro_luts 128}} {
+    set ro_luts [lsort -dictionary [get_cells -quiet -hierarchical \
+        -filter {NAME =~ "*u_puf*ring*LUT6_*"}]]
+    if {[llength $ro_luts] != $expected_ro_luts} {
+        error "Expected $expected_ro_luts physical RO LUTs, found [llength $ro_luts]"
+    }
+    set net_set [dict create]
+    foreach cell $ro_luts {
+        dict set net_set [ro_find_route_net $cell] 1
+    }
+    set ro_nets [lsort -dictionary [dict keys $net_set]]
+    if {[llength $ro_nets] != $expected_ro_luts} {
+        error "Expected $expected_ro_luts unique RO nets, found [llength $ro_nets]"
+    }
+    set tap_set [dict create]
+    foreach net $ro_nets {
+        set segments [get_nets -quiet -segments $net]
+        set leaf_pins [get_pins -quiet -leaf -of_objects $segments]
+        foreach cell [get_cells -quiet -of_objects $leaf_pins] {
+            if {![string match "*u_puf*ring*LUT6_*" $cell]} {
+                dict set tap_set $cell 1
+            }
+        }
+    }
+    set tap_cells [lsort -dictionary [dict keys $tap_set]]
+    return [dict create ro_luts $ro_luts ro_nets $ro_nets tap_cells $tap_cells]
+}
+
+proc ro_write_ro_only_fingerprint {path inventory} {
+    set channel [open $path w]
+    set ro_luts [dict get $inventory ro_luts]
+    set ro_nets [dict get $inventory ro_nets]
+    set tap_cells {}
+    if {[dict exists $inventory tap_cells]} {
+        set tap_cells [dict get $inventory tap_cells]
+    }
+    puts $channel "RO_PHYSICAL_FINGERPRINT_V2"
+    puts $channel "SUMMARY\tro_luts=[llength $ro_luts]\tro_nets=[llength $ro_nets]\tendpoint_cells=[llength $tap_cells]"
+    foreach cell [concat $ro_luts $tap_cells] {
+        set ref_name [get_property REF_NAME $cell]
+        set init [get_property INIT $cell]
+        set loc [get_property LOC $cell]
+        set bel [get_property BEL $cell]
+        if {$ref_name eq "" || $init eq "" || $loc eq "" || $bel eq ""} {
+            close $channel
+            error "RO cell inventory is incomplete: $cell"
+        }
+        set pin_map ""
+        if {[string match "LUT*" $ref_name]} {
+            set pin_map [join [ro_actual_input_pin_map $cell] ,]
+        }
+        set canonical_cell [ro_canonical_object_name $cell]
+        puts $channel "CELL\t$canonical_cell\t$ref_name\t$init\t$loc\t$bel\t$pin_map"
+    }
     foreach net $ro_nets {
         set segments [get_nets -quiet -segments $net]
         set pins [lsort -dictionary [get_pins -quiet -leaf -of_objects $segments]]
