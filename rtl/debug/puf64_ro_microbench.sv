@@ -46,25 +46,10 @@ module puf64_ro_microbench #(
     );
 
     wire presc_q;
-    (* DONT_TOUCH = "true" *) FDCE presc_fdce (
-        .Q(presc_q), .C(ro_tap), .CE(1'b1), .CLR(async_clear), .D(~presc_q)
+    wire [WIDTH-1:0] ripple_q;
+    kp_ripple_counter #(.WIDTH(WIDTH)) ripple (
+        .clk(ro_tap), .clear(async_clear), .q(ripple_q), .presc_q(presc_q)
     );
-
-    // Local ripple counter: stage k is clocked only by stage k-1 (or the
-    // prescaler for stage 0), so no clock net has more than one load.
-    (* keep = "true" *) wire [WIDTH-1:0] ripple_q;
-    (* keep = "true" *) wire [WIDTH:0] ripple_clk;
-    assign ripple_clk[0] = presc_q;
-    genvar k;
-    generate
-        for (k = 0; k < WIDTH; k = k + 1) begin : stage
-            (* DONT_TOUCH = "true" *) FDCE ff (
-                .Q(ripple_q[k]), .C(ripple_clk[k]),
-                .CE(1'b1), .CLR(async_clear), .D(~ripple_q[k])
-            );
-            assign ripple_clk[k+1] = ripple_q[k];
-        end
-    endgenerate
 
     reg [WIDTH-1:0] cap_s1, cap_s2, cap_s3;
     always_ff @(posedge clk or negedge rst_n) begin

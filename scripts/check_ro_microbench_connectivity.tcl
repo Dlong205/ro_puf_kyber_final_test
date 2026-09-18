@@ -2,9 +2,9 @@
 # Fails the build when the RO -> prescaler -> counter clock path is not a
 # single, non-constant, fully routed connection in the real netlist.
 proc check_ro_microbench_connectivity {stage} {
-    set presc [get_cells -quiet -hierarchical -filter {REF_NAME == "FDCE" && DONT_TOUCH == 1}]
+    set presc [get_cells -quiet -hierarchical -filter {NAME =~ "*presc_fdce" && DONT_TOUCH == 1}]
     if {[llength $presc] != 1} {
-        error "MICROBENCH $stage: expected exactly 1 DONT_TOUCH FDCE prescaler, found [llength $presc]"
+        error "MICROBENCH $stage: expected exactly 1 DONT_TOUCH prescaler FDCE, found [llength $presc]"
     }
     set presc [lindex $presc 0]
 

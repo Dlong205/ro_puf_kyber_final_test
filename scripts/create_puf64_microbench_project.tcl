@@ -13,6 +13,7 @@ set_property simulator_language Mixed [current_project]
 set sources [list \
     [file join $root_dir rtl top Puf64_Ro_Microbench_Zynq_Top.sv] \
     [file join $root_dir rtl debug puf64_ro_microbench.sv] \
+    [file join $root_dir rtl debug kp_ripple_counter.sv] \
     [file join $root_dir rtl puf kp_ro_cell.sv] \
     [file join $root_dir rtl puf kp_ro_cell_xilinx.sv] \
     [file join $root_dir rtl puf uart_rx.v] \
