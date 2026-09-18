@@ -1,7 +1,10 @@
 import importlib.util
 from pathlib import Path
 import struct
+import sys
+import tempfile
 import unittest
+from unittest import mock
 
 MODULE_PATH = Path(__file__).parents[1] / "puf_allpairs_characterize.py"
 SPEC = importlib.util.spec_from_file_location("puf_allpairs_characterize", MODULE_PATH)
@@ -87,6 +90,40 @@ class AllPairsMetricsTest(unittest.TestCase):
         )
         self.assertEqual(result["threshold_sweep"][0]["accepted_pair_count"], 496)
         self.assertEqual(result["threshold_sweep"][1]["accepted_pair_count"], 495)
+
+    def cli_args(self, *extra):
+        with tempfile.NamedTemporaryFile() as bitstream:
+            base = [
+                "puf_allpairs_characterize.py",
+                "--port", "/dev/fake",
+                "--count", "1",
+                "--bitstream", bitstream.name,
+                "--report", "/tmp/report.json",
+                "--board-id", "ZYNQ-A01",
+                "--boot-index", "3",
+                "--condition-id", "room-coldboot-003",
+                "--fingerprint-file", "/tmp/no-such-fingerprint.tsv",
+            ]
+            return base + list(extra)
+
+    def test_missing_boot_index_is_rejected(self):
+        argv = self.cli_args()
+        argv.remove("--boot-index")
+        argv.remove("3")
+        with self.assertRaises(SystemExit):
+            with mock.patch.object(sys, "argv", argv):
+                PUF.main()
+
+    def test_zero_boot_index_is_rejected(self):
+        argv = ["0" if arg == "3" else arg for arg in self.cli_args()]
+        with self.assertRaises(SystemExit):
+            with mock.patch.object(sys, "argv", argv):
+                PUF.main()
+
+    def test_missing_fingerprint_file_is_rejected(self):
+        with self.assertRaises(SystemExit):
+            with mock.patch.object(sys, "argv", self.cli_args()):
+                PUF.main()
 
 
 if __name__ == "__main__":

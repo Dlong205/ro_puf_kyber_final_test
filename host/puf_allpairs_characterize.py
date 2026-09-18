@@ -9,6 +9,7 @@ import math
 from pathlib import Path
 import statistics
 import struct
+import subprocess
 import sys
 import time
 
@@ -262,6 +263,19 @@ def sha256_file(path):
     return digest.hexdigest()
 
 
+def git_commit_hash(root=None):
+    """Resolve the current git HEAD for build traceability without requiring it."""
+    try:
+        cwd = root or Path(Path(__file__).resolve().parent.parent)
+        output = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=cwd, capture_output=True, check=True, text=True, timeout=10,
+        )
+        return output.stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return "UNKNOWN"
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Characterize every unordered pair of 32 physical ROs"
@@ -276,8 +290,21 @@ def main():
         help="Pseudonymous device ID; required later for train/holdout qualification"
     )
     parser.add_argument(
+        "--boot-index", required=True, type=int,
+        help="Monotonic power-cycle/boot session index; disjoint train/holdout "
+             "sessions must never share a boot index"
+    )
+    parser.add_argument(
         "--condition-id", default="UNSPECIFIED",
         help="Campaign condition/boot label, for example room-coldboot-001"
+    )
+    parser.add_argument(
+        "--build-commit", default=None,
+        help="git commit of the characterization image; defaults to this repo HEAD"
+    )
+    parser.add_argument(
+        "--fingerprint-file", default=None,
+        help="path to the locked-image RO physical fingerprint .tsv whose SHA-256 is recorded"
     )
     parser.add_argument("--thresholds", default="0,1,2,4,8,16,32")
     parser.add_argument("--max-minority-rate", type=float, default=1.0)
@@ -292,6 +319,8 @@ def main():
         parser.error("--selection-threshold must be non-negative")
     if not 1 <= args.max_ro_degree <= 31:
         parser.error("--max-ro-degree must be between 1 and 31")
+    if args.boot_index <= 0:
+        parser.error("--boot-index must be a positive integer")
     try:
         thresholds = sorted({int(value) for value in args.thresholds.split(",")})
     except ValueError:
@@ -301,6 +330,12 @@ def main():
     bitstream = Path(args.bitstream).resolve()
     if not bitstream.is_file():
         parser.error("--bitstream must name an existing file")
+    fingerprint_hash = "UNKNOWN"
+    if args.fingerprint_file:
+        fingerprint_path = Path(args.fingerprint_file).resolve()
+        if not fingerprint_path.is_file():
+            parser.error("--fingerprint-file must name an existing file")
+        fingerprint_hash = sha256_file(fingerprint_path)
 
     started_utc = datetime.now(timezone.utc).isoformat()
     try:
@@ -319,12 +354,17 @@ def main():
         "elapsed_seconds": elapsed,
         "board_count": 1,
         "board_id": args.board_id,
+        "boot_index": args.boot_index,
         "condition_id": args.condition_id,
         "top": "Puf_AllPairs_Characterization_Top",
         "target_part": "xc7z020clg400-2",
         "protocol": "2.0",
         "ref_cycles": 255,
+        "clock_mhz": 100,
         "local_bitstream_sha256": sha256_file(bitstream),
+        "build_commit": args.build_commit or git_commit_hash(),
+        "build_datetime": "2026-09-18",
+        "placement_fingerprint_sha256": fingerprint_hash,
         "release_equivalence_established": False,
     }
     report = Path(args.report)

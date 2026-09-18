@@ -75,6 +75,12 @@ def load_campaign(path):
     campaign = report.get("campaign", {})
     board_id = str(campaign.get("board_id", "UNSPECIFIED"))
     condition_id = str(campaign.get("condition_id", "UNSPECIFIED"))
+    boot_index = campaign.get("boot_index")
+    if boot_index is not None:
+        try:
+            boot_index = int(boot_index)
+        except (TypeError, ValueError) as error:
+            raise ValueError(f"{path}: non-integer boot_index") from error
     bitstream_hash = str(campaign.get("local_bitstream_sha256", ""))
     if len(bitstream_hash) != 64:
         raise ValueError(f"{path}: missing/invalid local_bitstream_sha256")
@@ -83,13 +89,14 @@ def load_campaign(path):
         "report_sha256": sha256_file(path),
         "board_id": board_id,
         "condition_id": condition_id,
+        "boot_index": boot_index,
         "bitstream_sha256": bitstream_hash,
         "sample_count": int(report.get("sample_count", 0)),
         "entries": entries,
     }
 
 
-def validate_campaign_sets(training, holdout):
+def validate_campaign_sets(training, holdout, session_split=False):
     if not training:
         raise ValueError("at least one training campaign is required")
     all_campaigns = training + holdout
@@ -101,13 +108,42 @@ def validate_campaign_sets(training, holdout):
         raise ValueError("a campaign file cannot appear in both training and holdout")
     train_boards = {campaign["board_id"] for campaign in training}
     holdout_boards = {campaign["board_id"] for campaign in holdout}
+    train_sessions = {
+        (campaign["board_id"], campaign["boot_index"])
+        for campaign in training
+    }
+    holdout_sessions = {
+        (campaign["board_id"], campaign["boot_index"])
+        for campaign in holdout
+    }
+    if session_split:
+        # Same board is acceptable, but an independent power-cycle is the
+        # atomic measurement unit: no (board, boot_index) session may be
+        # shared between training and holdout, and every session must be
+        # explicitly numbered.
+        for campaign in all_campaigns:
+            if campaign["boot_index"] is None or campaign["boot_index"] <= 0:
+                raise ValueError(
+                    f"{campaign['path']}: session-split requires a positive boot_index"
+                )
+            if str(campaign["board_id"]) in UNSPECIFIED:
+                raise ValueError(
+                    f"{campaign['path']}: session-split requires an identified board_id"
+                )
+        session_overlap = train_sessions & holdout_sessions
+        if session_overlap:
+            raise ValueError(
+                "training and holdout must use disjoint power-cycle sessions: "
+                + ", ".join(sorted(f"{b}:{s}" for b, s in session_overlap))
+            )
+        return train_boards, holdout_boards, session_overlap, hashes.pop()
     overlap = train_boards & holdout_boards
     if overlap:
         raise ValueError(
             "training and holdout board IDs must be disjoint: "
             + ", ".join(sorted(overlap))
         )
-    return train_boards, holdout_boards, hashes.pop()
+    return train_boards, holdout_boards, set(), hashes.pop()
 
 
 def aggregate_training(training):
@@ -202,10 +238,18 @@ def validate_holdout(selected, holdout, margin_threshold, max_minority_rate):
 def build_manifest(training, holdout, version, select_count=DEFAULT_SELECT_COUNT,
                    margin_threshold=4, max_minority_rate=1.0,
                    max_ro_degree=17, min_training_boards=3,
-                   min_holdout_boards=2):
-    train_boards, holdout_boards, bitstream_hash = validate_campaign_sets(
-        training, holdout
-    )
+                   min_holdout_boards=2, session_split=False,
+                   min_training_sessions=15, min_holdout_sessions=8):
+    train_boards, holdout_boards, session_overlap, bitstream_hash = \
+        validate_campaign_sets(training, holdout, session_split)
+    train_sessions = {
+        (campaign["board_id"], campaign["boot_index"])
+        for campaign in training
+    }
+    holdout_sessions = {
+        (campaign["board_id"], campaign["boot_index"])
+        for campaign in holdout
+    }
     aggregated = aggregate_training(training)
     selected, degree, candidate_count = select_pairs(
         aggregated, select_count, margin_threshold,
@@ -217,16 +261,40 @@ def build_manifest(training, holdout, version, select_count=DEFAULT_SELECT_COUNT
     identified = not any(
         value in UNSPECIFIED for value in train_boards | holdout_boards
     )
+    if session_split:
+        split_ok = all((
+            len(train_sessions) >= min_training_sessions,
+            len(holdout_sessions) >= min_holdout_sessions,
+            not session_overlap,
+        ))
+    else:
+        split_ok = all((
+            len(train_boards) >= min_training_boards,
+            len(holdout_boards) >= min_holdout_boards,
+        ))
     reliability_qualified = all((
         len(selected) == select_count,
-        len(train_boards) >= min_training_boards,
-        len(holdout_boards) >= min_holdout_boards,
+        split_ok,
         identified,
         not holdout_failures,
     ))
+    split_policy = "session" if session_split else "board"
+    criteria = {
+        "margin_p01_min": margin_threshold,
+        "minority_rate_percent_max": max_minority_rate,
+        "tie_count": 0,
+        "max_ro_degree": max_ro_degree,
+    }
+    if session_split:
+        criteria["min_training_sessions"] = min_training_sessions
+        criteria["min_holdout_sessions"] = min_holdout_sessions
+    else:
+        criteria["min_training_boards"] = min_training_boards
+        criteria["min_holdout_boards"] = min_holdout_boards
     payload = {
         "schema": "ro-puf-pair-mapping-v1",
         "version": version,
+        "split_policy": split_policy,
         "status": (
             "reliability-qualified-candidate"
             if reliability_qualified else "provisional"
@@ -240,19 +308,14 @@ def build_manifest(training, holdout, version, select_count=DEFAULT_SELECT_COUNT
         "pairs": [entry["pair"] for entry in selected],
         "source_pair_indices": [entry["index"] for entry in selected],
         "ro_degree": degree,
-        "criteria": {
-            "margin_p01_min": margin_threshold,
-            "minority_rate_percent_max": max_minority_rate,
-            "tie_count": 0,
-            "max_ro_degree": max_ro_degree,
-            "min_training_boards": min_training_boards,
-            "min_holdout_boards": min_holdout_boards,
-        },
+        "criteria": criteria,
         "evidence": {
             "training_campaign_count": len(training),
             "training_board_count": len(train_boards),
+            "training_session_count": len(train_sessions),
             "holdout_campaign_count": len(holdout),
             "holdout_board_count": len(holdout_boards),
+            "holdout_session_count": len(holdout_sessions),
             "characterization_bitstream_sha256": bitstream_hash,
             "input_report_sha256": sorted(
                 campaign["report_sha256"] for campaign in training + holdout
@@ -267,10 +330,23 @@ def build_manifest(training, holdout, version, select_count=DEFAULT_SELECT_COUNT
             "Helper/KCV binding and integrated PUF-to-BCH validation remain separate gates.",
         ],
     }
+    if session_split:
+        payload["limitations"].append(
+            "Single-device session split: holdout covers power-cycle/day "
+            "variation on the same board only; inter-device generality, "
+            "uniqueness and bit-alias across devices are NOT established."
+        )
     payload["manifest_sha256"] = sha256_bytes(canonical_json(payload))
     private_audit = {
         "training_board_ids": sorted(train_boards),
         "holdout_board_ids": sorted(holdout_boards),
+        "identifier_campaigns": sorted(
+            f"{b}:{s}" for b, s in train_sessions | holdout_sessions
+        ),
+        "shared_sessions": sorted(
+            f"{b}:{s}" for b, s in session_overlap
+        ),
+        "split_policy": split_policy,
         "identified_campaigns": identified,
         "holdout_failures": holdout_failures,
         "selected_training_metrics": selected,
@@ -291,8 +367,16 @@ def main():
     parser.add_argument("--margin-threshold", type=float, default=4.0)
     parser.add_argument("--max-minority-rate", type=float, default=1.0)
     parser.add_argument("--max-ro-degree", type=int, default=17)
+    parser.add_argument(
+        "--session-split", action="store_true",
+        help="Allow the same board_id in both training and holdout as long as "
+             "every campaign carries a unique (board_id, boot_index) session; "
+             "a positive integer boot_index is then required."
+    )
     parser.add_argument("--min-training-boards", type=int, default=3)
     parser.add_argument("--min-holdout-boards", type=int, default=2)
+    parser.add_argument("--min-training-sessions", type=int, default=15)
+    parser.add_argument("--min-holdout-sessions", type=int, default=8)
     parser.add_argument(
         "--require-reliability-qualified", action="store_true",
         help="fail instead of writing a provisional reliability manifest"
@@ -308,6 +392,10 @@ def main():
         parser.error("--max-ro-degree must be between 1 and 31")
     if args.min_training_boards < 1 or args.min_holdout_boards < 1:
         parser.error("minimum board counts must be positive")
+    if args.min_training_sessions < 1 or args.min_holdout_sessions < 1:
+        parser.error("minimum session counts must be positive")
+    if args.session_split and (args.min_training_boards > 1 or args.min_holdout_boards > 1):
+        parser.error("--session-split overrides board gates; use --min-training-sessions/--min-holdout-sessions")
     try:
         training = [load_campaign(path) for path in args.training]
         holdout = [load_campaign(path) for path in args.holdout]
@@ -315,7 +403,8 @@ def main():
             training, holdout, args.version, args.select_count,
             args.margin_threshold, args.max_minority_rate,
             args.max_ro_degree, args.min_training_boards,
-            args.min_holdout_boards,
+            args.min_holdout_boards, args.session_split,
+            args.min_training_sessions, args.min_holdout_sessions,
         )
     except ValueError as error:
         print(f"ERROR: {error}", file=sys.stderr)
@@ -332,8 +421,11 @@ def main():
         private_output.write_text(json.dumps(audit, indent=2, sort_keys=True) + "\n")
     print(
         f"mapping={manifest['selected_count']}/{args.select_count} "
+        f"split_policy={manifest['split_policy']} "
         f"training_boards={manifest['evidence']['training_board_count']} "
+        f"training_sessions={manifest['evidence']['training_session_count']} "
         f"holdout_boards={manifest['evidence']['holdout_board_count']} "
+        f"holdout_sessions={manifest['evidence']['holdout_session_count']} "
         f"status={manifest['status']} hash={manifest['manifest_sha256']}"
     )
     return 0

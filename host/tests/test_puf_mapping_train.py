@@ -12,7 +12,7 @@ SPEC.loader.exec_module(PUF)
 
 
 def campaign(board_id, condition_id="room", weak_indices=None,
-             bitstream_hash="a" * 64, winner_offset=0):
+             bitstream_hash="a" * 64, winner_offset=0, boot_index=None):
     weak_indices = set(weak_indices or [])
     entries = []
     for index, pair in enumerate(PUF.EXPECTED_PAIRS):
@@ -26,16 +26,19 @@ def campaign(board_id, condition_id="room", weak_indices=None,
             "margin": {"p01": 2 if weak else 64 + index % 31,
                        "p05": 3 if weak else 72 + index % 31},
         })
+    metadata = {
+        "board_id": board_id,
+        "condition_id": condition_id,
+        "local_bitstream_sha256": bitstream_hash,
+    }
+    if boot_index is not None:
+        metadata["boot_index"] = boot_index
     return {
         "ro_count": PUF.RO_COUNT,
         "pair_count": PUF.PAIR_COUNT,
         "sample_count": 100,
         "per_pair": entries,
-        "campaign": {
-            "board_id": board_id,
-            "condition_id": condition_id,
-            "local_bitstream_sha256": bitstream_hash,
-        },
+        "campaign": metadata,
     }
 
 
@@ -119,6 +122,67 @@ class MappingTrainingTest(unittest.TestCase):
         changed, _ = PUF.build_manifest(training, [], "v2")
         self.assertEqual(first["manifest_sha256"], second["manifest_sha256"])
         self.assertNotEqual(first["manifest_sha256"], changed["manifest_sha256"])
+
+    def make_sessions(self, board, boot_indexes, winner_offset=0):
+        return [
+            loaded(campaign(board, condition_id=f"boot-{boot}",
+                            winner_offset=winner_offset, boot_index=boot),
+                   f"{board}-boot-{boot}.json")
+            for boot in boot_indexes
+        ]
+
+    def test_session_split_single_board_qualifies(self):
+        training = self.make_sessions("ZYNQ-A01", range(1, 18))
+        holdout = self.make_sessions("ZYNQ-A01", range(18, 27), winner_offset=1)
+        manifest, audit = PUF.build_manifest(
+            training, holdout, "zq-map-v1",
+            session_split=True, min_training_sessions=15,
+            min_holdout_sessions=8,
+        )
+        self.assertEqual(manifest["split_policy"], "session")
+        self.assertTrue(manifest["reliability_qualified"])
+        self.assertEqual(manifest["status"], "reliability-qualified-candidate")
+        self.assertEqual(manifest["evidence"]["training_board_count"], 1)
+        self.assertEqual(manifest["evidence"]["training_session_count"], 17)
+        self.assertEqual(manifest["evidence"]["holdout_session_count"], 9)
+        self.assertEqual(audit["shared_sessions"], [])
+        self.assertIn("Single-device session split", manifest["limitations"][-1])
+
+    def test_session_split_rejects_shared_boot_index(self):
+        training = self.make_sessions("ZYNQ-A01", [1, 2, 3])
+        holdout = self.make_sessions("ZYNQ-A01", [3, 4, 5])
+        with self.assertRaises(ValueError):
+            PUF.build_manifest(
+                training, holdout, "bad",
+                session_split=True, min_training_sessions=1,
+                min_holdout_sessions=1,
+            )
+
+    def test_session_split_requires_numbered_sessions(self):
+        training = self.make_sessions("ZYNQ-A01", [1, 2, 3])
+        unnamed = loaded(campaign("ZYNQ-A01", boot_index=None), "unnamed")
+        with self.assertRaises(ValueError):
+            PUF.build_manifest(
+                training, [unnamed], "bad",
+                session_split=True, min_training_sessions=1,
+                min_holdout_sessions=1,
+            )
+
+    def test_session_split_requires_identified_board(self):
+        training = self.make_sessions("UNSPECIFIED", [1, 2, 3])
+        holdout = self.make_sessions("UNSPECIFIED", [4, 5])
+        with self.assertRaises(ValueError):
+            PUF.build_manifest(
+                training, holdout, "bad",
+                session_split=True, min_training_sessions=1,
+                min_holdout_sessions=1,
+            )
+
+    def test_board_split_still_rejects_same_board_even_numbered(self):
+        training = self.make_sessions("ZYNQ-A01", [1, 2, 3])
+        holdout = self.make_sessions("ZYNQ-A01", [4, 5])
+        with self.assertRaises(ValueError):
+            PUF.build_manifest(training, holdout, "bad")
 
 
 if __name__ == "__main__":

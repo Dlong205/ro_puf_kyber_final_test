@@ -17,6 +17,20 @@ Bằng chứng cập nhật đến **2026-09-17**.
 | Entropy/uniqueness/helper leakage | CHƯA ĐỦ DỮ LIỆU |
 | Freeze PUF | NO-GO |
 
+## Cập nhật 2026-09-18 — giai đoạn single-Zynq session-split
+
+Quyết định của giai đoạn này: chỉ dùng **một Zynq-7020** (`ZYNQ-A01`) làm
+target demo; hai Arty-35T **hoãn** sang validation mở rộng. Chia
+train/holdout theo **power-cycle rời nhau** (mỗi lần bật nguồn là một
+`boot_index`), không dùng frame cùng một lần bật nguồn cho cả hai tập.
+`puf_mapping_train.py` có chế độ `--session-split` đã kiểm tra tách biệt
+`(board_id, boot_index)` và manifest ghi `split_policy`; mapping là
+**Zynq provisional**, không tuyên bố generalization/uniqueness giữa thiết bị,
+và `mapping_tag` giữ `0` cho đến khi mapping vượt holdout và được freeze cho
+demo Zynq. Cổng 3+2 board giữ nguyên cho các tuyên bố đa thiết bị.
+
+Tài liệu vận hành: [`RO_PUF_QUALIFICATION_PROTOCOL_2026-09-18.md`](RO_PUF_QUALIFICATION_PROTOCOL_2026-09-18.md).
+
 ## Kết luận hiện tại
 
 Board regression 10.000/10.000 xác nhận các giao dịch báo thành công trong

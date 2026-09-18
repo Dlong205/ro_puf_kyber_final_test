@@ -10,7 +10,7 @@ SOC_REPRO_BIT := build/soc_repro/$(SOC_REPRO_RUN)/kyber_ro_puf_$(SOC_REPRO_RUN).
 # Verilator builds can exhaust RAM on the reference development host.
 .NOTPARALLEL:
 
-.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-margin-characterize puf-allpairs-sim puf-allpairs-project puf-allpairs-bitstream puf-allpairs-program puf-allpairs-characterize puf-mapping-train arty-puf-characterization-project arty-puf-characterization-bitstream arty-puf-characterization-program arty-puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem edge-uart edge-uart-mlkem edge-root-binding edge-asic-top kyber kyber-invalid axi axi-secure kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-filelist-check asic-manifest-check asic-frontend-check asic-backend-readiness asic-elaboration asic-portability crypto-freeze-check verification-inputs-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
+.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-margin-characterize puf-allpairs-sim puf-allpairs-project puf-allpairs-bitstream puf-allpairs-program puf-allpairs-characterize puf-allpairs-lock-export puf-allpairs-lock-check puf-mapping-train arty-puf-characterization-project arty-puf-characterization-bitstream arty-puf-characterization-program arty-puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem edge-uart edge-uart-mlkem edge-root-binding edge-asic-top kyber kyber-invalid axi axi-secure kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-filelist-check asic-manifest-check asic-frontend-check asic-backend-readiness asic-elaboration asic-portability crypto-freeze-check verification-inputs-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
 
 PUF_PORT ?= /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
 ARTY_PUF_PORT ?= $(firstword $(wildcard /dev/serial/by-id/usb-Digilent_Digilent_USB_Device_*-if01-port0))
@@ -19,10 +19,16 @@ PUF_MARGIN_REPORT ?= reports/puf_characterization/private_margin_latest.json
 PUF_ALLPAIRS_REPORT ?= reports/puf_allpairs_characterization/private_allpairs_latest.json
 PUF_BOARD_ID ?= UNSPECIFIED
 PUF_CONDITION_ID ?= UNSPECIFIED
+PUF_BOOT_INDEX ?=
+PUF_BUILD_COMMIT ?=
+PUF_LOCK_FINGERPRINT ?= constraints/ro_physical_fingerprint_allpairs_zynq7020.tsv
 PUF_MAPPING_TRAINING ?=
 PUF_MAPPING_HOLDOUT ?=
 PUF_MAPPING_VERSION ?= provisional-v0
 PUF_MAPPING_MANIFEST ?= reports/puf_mapping/provisional_mapping.json
+PUF_MAPPING_SESSION_SPLIT ?= 0
+PUF_MAPPING_MIN_TRAIN_SESSIONS ?= 15
+PUF_MAPPING_MIN_HOLDOUT_SESSIONS ?= 8
 PUF_CHAR_BIT := build/puf_characterization/puf_characterization_zynq7020.runs/impl_1/Puf_Characterization_Top.bit
 PUF_ALLPAIRS_XPR := build/puf_allpairs_characterization/puf_allpairs_zynq7020.xpr
 PUF_ALLPAIRS_BIT := build/puf_allpairs_characterization/puf_allpairs_zynq7020.runs/impl_1/Puf_AllPairs_Characterization_Top.bit
@@ -80,14 +86,26 @@ puf-allpairs-bitstream:
 puf-allpairs-program:
 	$(VIVADO) -mode batch -nolog -nojournal -source scripts/program_puf_allpairs.tcl
 
+# Export the full RO physical lock (FIXED_ROUTE/LOCK_PINS/DONT_TOUCH) from the
+# accepted all-pairs routed checkpoint.  First run bootstraps the baseline
+# anchor; later runs refuse a changed DCP until the anchor is meaningfully reset.
+puf-allpairs-lock-export:
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/export_ro_physical_lock_allpairs.tcl
+
+# Reproducibility gate: builds must reproduce the accepted RO fingerprint,
+# locked routing and anchored DCP/bitstream identity.
+puf-allpairs-lock-check:
+	./scripts/check_ro_lock_allpairs_repro.sh
+
 puf-allpairs-characterize:
-	python3 -u host/puf_allpairs_characterize.py --port "$(PUF_PORT)" --count $(PUF_SAMPLES) --bitstream "$(PUF_ALLPAIRS_BIT)" --report "$(PUF_ALLPAIRS_REPORT)" --board-id "$(PUF_BOARD_ID)" --condition-id "$(PUF_CONDITION_ID)"
+	@test -n "$(PUF_BOOT_INDEX)" || { echo "Set PUF_BOOT_INDEX to the power-cycle/session number of this campaign" >&2; exit 2; }
+	python3 -u host/puf_allpairs_characterize.py --port "$(PUF_PORT)" --count $(PUF_SAMPLES) --bitstream "$(PUF_ALLPAIRS_BIT)" --report "$(PUF_ALLPAIRS_REPORT)" --board-id "$(PUF_BOARD_ID)" --boot-index $(PUF_BOOT_INDEX) --condition-id "$(PUF_CONDITION_ID)" --fingerprint-file "$(PUF_LOCK_FINGERPRINT)" $(if $(PUF_BUILD_COMMIT),--build-commit $(PUF_BUILD_COMMIT),)
 
 # Explicit training and holdout file lists are mandatory. This target writes a
 # provisional manifest unless the default 3-training/2-holdout board gates pass.
 puf-mapping-train:
 	@test -n "$(PUF_MAPPING_TRAINING)" || { echo "Set PUF_MAPPING_TRAINING to private campaign JSON files" >&2; exit 2; }
-	python3 -u host/puf_mapping_train.py --training $(PUF_MAPPING_TRAINING) --holdout $(PUF_MAPPING_HOLDOUT) --version "$(PUF_MAPPING_VERSION)" --manifest "$(PUF_MAPPING_MANIFEST)"
+	python3 -u host/puf_mapping_train.py --training $(PUF_MAPPING_TRAINING) --holdout $(PUF_MAPPING_HOLDOUT) --version "$(PUF_MAPPING_VERSION)" --manifest "$(PUF_MAPPING_MANIFEST)" $(if $(filter 1,y$(PUF_MAPPING_SESSION_SPLIT)),--session-split --min-training-sessions $(PUF_MAPPING_MIN_TRAIN_SESSIONS) --min-holdout-sessions $(PUF_MAPPING_MIN_HOLDOUT_SESSIONS),)
 
 arty-puf-characterization-project:
 	$(VIVADO) -mode batch -nolog -nojournal -source scripts/create_arty_puf_characterization_project.tcl

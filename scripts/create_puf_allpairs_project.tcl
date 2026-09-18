@@ -25,9 +25,19 @@ foreach source $sources {
     if {![file exists $source]} { error "Missing all-pairs source: $source" }
 }
 add_files -norecurse $sources
-add_files -fileset constrs_1 -norecurse [list \
+set allpairs_constraints [list \
     [file join $root_dir constraints kp_zynq_7020.xdc] \
     [file join $root_dir constraints ro_placement_rc1_zynq7020.xdc]]
+set lock_xdc [file join $root_dir constraints ro_physical_lock_allpairs_zynq7020.xdc]
+if {[file exists $lock_xdc]} {
+    # Full physical lock (FIXED_ROUTE/LOCK_PINS/DONT_TOUCH) exported from the
+    # accepted routed baseline.  Include it only after export exists so a lock
+    # is never planted pointing at an unapproved implementation.
+    lappend allpairs_constraints $lock_xdc
+} else {
+    puts "PUF_ALLPAIRS_LOCK_STATUS=not-exported (baseline build path)"
+}
+add_files -fileset constrs_1 -norecurse $allpairs_constraints
 
 set_property top Puf_AllPairs_Characterization_Top [get_filesets sources_1]
 set_property top_auto_set false [get_filesets sources_1]
