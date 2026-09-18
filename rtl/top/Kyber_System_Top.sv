@@ -69,6 +69,13 @@ module Kyber_System_Top(
     // SoC-FE helper data connections
     wire [263:0] helper_soc_to_fe; // From UART to FE
     wire [263:0] helper_fe_to_soc; // From FE to UART
+    // KCV same-root control/status (engine taps fe_key directly).
+    wire        kcv_start;
+    wire [223:0] kcv_ref;
+    wire [55:0]  kcv_ctx;
+    wire        kcv_done;
+    wire        kcv_pass;
+    wire [223:0] kcv_out;
     
     // The accepted FPGA research image keeps internal key observability for
     // legacy diagnostics. UART release firmware still withholds the secret.
@@ -96,7 +103,13 @@ module Kyber_System_Top(
         .kdf_done(kdf_done),
         .helper_out(helper_soc_to_fe),
         .helper_in(helper_fe_to_soc),
-        .kdf_seed(kyber_seed)
+        .kdf_seed(kyber_seed),
+        .kcv_start(kcv_start),
+        .kcv_ref(kcv_ref),
+        .kcv_ctx(kcv_ctx),
+        .kcv_done(kcv_done),
+        .kcv_pass(kcv_pass),
+        .kcv_out(kcv_out)
     );
 
     // ==========================================
@@ -144,6 +157,23 @@ module Kyber_System_Top(
         .key_in(fe_key),
         .done(kdf_done),
         .seed_out(kyber_seed)
+    );
+
+    // Same-root KCV engine.  Taps the FE key in place; the key never reaches
+    // the CPU or MMIO.  Firmware supplies the public reference/context and
+    // reads back done/pass (verify) or the public digest (enroll).
+    edge_root_binding u_kcv (
+        .clk(clk),
+        .rst_n(rst_n),
+        .zeroize(secure_zeroize),
+        .start(kcv_start),
+        .root_key(fe_key),
+        .kcv_ctx(kcv_ctx),
+        .kcv_ref(kcv_ref),
+        .busy(),
+        .done(kcv_done),
+        .kcv_pass(kcv_pass),
+        .kcv_out(kcv_out)
     );
 
     // The full Kyber-512 Server/Client loopback is instantiated inside

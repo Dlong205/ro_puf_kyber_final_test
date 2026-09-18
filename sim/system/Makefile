@@ -12,7 +12,7 @@ FLAGS = --cc --exe --timing --top-module $(TOP) --Mdir obj_dir \
         -Wno-UNSIGNED -Wno-EOFNEWLINE -Wno-WIDTHTRUNC -Wno-WIDTHEXPAND \
         -Wno-MODDUP -Wno-TIMESCALEMOD -Wno-BLKANDNBLK -Wno-IMPLICIT \
         -Wno-IMPLICITSTATIC -Wno-CASEOVERLAP -Wno-CASEX -Wno-fatal \
-        -DKP_RO_BEHAVIORAL
+        -DKP_RO_BEHAVIORAL -DSIM_FIRMWARE_DIAG
 
 COMMON_SRCS = ../../rtl/common/generic_blk_mem_wrapper.sv \
               ../../rtl/common/generic_c_shift_ram_wrapper.sv \
@@ -90,6 +90,7 @@ SOC_SRCS = ../../rtl/soc/picorv32.v \
            ../../rtl/soc/soc_peripherals.sv \
            ../../rtl/soc/riscv_soc.sv \
            ../../rtl/top/kdf_keccak.sv \
+           ../../rtl/top/edge_root_binding.sv \
            ../../rtl/top/Kyber_System_Top.sv
 
 ALL_SRCS = $(COMMON_SRCS) $(HASH_SRCS) $(KYBER_SRCS) $(FE_SRCS) $(PUF_SRCS) $(SOC_SRCS)
@@ -103,8 +104,8 @@ obj_dir/$(SIM_EXE): $(ALL_SRCS) system_uart_main.cpp $(FE_STAMP)
 	$(VERILATOR) $(FLAGS) $(ALL_SRCS) system_uart_main.cpp
 	$(MAKE) -C obj_dir -f V$(TOP).mk V$(TOP)
 
-sim: obj_dir/$(SIM_EXE) ../../firmware/firmware.hex
-	@echo "=== Running firmware/UART RO-PUF -> FE -> KDF -> Kyber-512 ==="
+sim: obj_dir/$(SIM_EXE) ../../firmware/firmware_diag.hex
+	@echo "=== Running firmware/UART RO-PUF -> FE -> KCV -> KDF -> Kyber-512 ==="
 	@cd ../../firmware && ../sim/system/obj_dir/$(SIM_EXE)
 
 clean:

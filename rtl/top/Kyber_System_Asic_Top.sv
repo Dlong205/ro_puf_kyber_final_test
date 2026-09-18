@@ -74,7 +74,16 @@ module Kyber_System_Asic_Top #(
         .kdf_done(kdf_done),
         .helper_out(helper_soc_to_fe),
         .helper_in(helper_fe_to_soc),
-        .kdf_seed(kyber_seed)
+        .kdf_seed(kyber_seed),
+        // The same-root KCV engine is intentionally absent from this baseline
+        // ASIC top (a dedicated edge-ASIC top is introduced separately).  Tie
+        // the new shared-module ports off so the baseline still elaborates.
+        .kcv_start(),
+        .kcv_ref(),
+        .kcv_ctx(),
+        .kcv_done(1'b0),
+        .kcv_pass(1'b0),
+        .kcv_out(224'd0)
     );
 
     kp_puf_top u_puf (

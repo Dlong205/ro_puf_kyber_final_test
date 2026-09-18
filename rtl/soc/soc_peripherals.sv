@@ -32,7 +32,17 @@ module soc_peripherals #(
     input [511:0] kdf_seed,
 
     output [263:0] helper_out_data, // Helper data from UART to FE
-    input  [263:0] helper_in_data   // Helper data from FE to UART
+    input  [263:0] helper_in_data,  // Helper data from FE to UART
+
+    // KCV same-root engine control/status.  The SHAKE256 engine lives in the
+    // top level and taps the FE key directly (never exposed to the CPU); these
+    // ports only carry the public reference/context and the result.
+    output reg        kcv_start,
+    output reg [223:0] kcv_ref,
+    output reg [55:0]  kcv_ctx,
+    input             kcv_done,
+    input             kcv_pass,
+    input  [223:0]    kcv_out
 );
 
     // Memory-mapped address decoder. Declare these before all logic that
@@ -44,6 +54,13 @@ module soc_peripherals #(
     wire [3:0] helper_idx = (mem_addr - 32'h10000010) >> 2;
     wire sel_kdf       = (mem_addr >= 32'h10000040 && mem_addr <= 32'h1000007C);
     wire [3:0] kdf_idx = (mem_addr - 32'h10000040) >> 2;
+    // KCV: 7-word public reference/out (0x100000A0..B8), 56-bit context split
+    // into low/high words (0x100000BC / 0x100000C0), start/status 0x100000C4.
+    wire sel_kcv_ref   = (mem_addr >= 32'h100000A0 && mem_addr <= 32'h100000B8);
+    wire [2:0] kcv_ref_idx = (mem_addr - 32'h100000A0) >> 2;
+    wire sel_kcv_ctx_lo = (mem_addr == 32'h100000BC);
+    wire sel_kcv_ctx_hi = (mem_addr == 32'h100000C0);
+    wire sel_kcv_ctrl  = (mem_addr == 32'h100000C4);
 
     // ==========================================
     // UART Instantiation
@@ -123,6 +140,14 @@ module soc_peripherals #(
     assign helper_in_words[7] = helper_in_data[255:224];
     assign helper_in_words[8] = {24'd0, helper_in_data[263:256]};
 
+    // KCV public reference (word 0 at [31:0]) and 56-bit context.
+    reg [31:0] kcv_ref_reg [0:6];
+    reg [55:0] kcv_ctx_reg;
+    assign kcv_ref = {kcv_ref_reg[6], kcv_ref_reg[5], kcv_ref_reg[4],
+                      kcv_ref_reg[3], kcv_ref_reg[2], kcv_ref_reg[1],
+                      kcv_ref_reg[0]};
+    assign kcv_ctx = kcv_ctx_reg;
+
     // ==========================================
     // Sticky Done Latches
     // Hardware done signals are 1-cycle pulses.
@@ -134,6 +159,8 @@ module soc_peripherals #(
     reg fe_success_sticky;
     reg kdf_done_sticky;
     reg secure_zeroize_done_sticky;
+    reg kcv_done_sticky;
+    reg kcv_pass_sticky;
 
     always @(posedge clk) begin
         if (!rstn) begin
@@ -142,6 +169,8 @@ module soc_peripherals #(
             fe_success_sticky <= 0;
             kdf_done_sticky   <= 0;
             secure_zeroize_done_sticky <= 0;
+            kcv_done_sticky   <= 0;
+            kcv_pass_sticky   <= 0;
         end else begin
             // Latch on hardware pulse
             if (puf_done)   puf_done_sticky   <= 1;
@@ -150,6 +179,8 @@ module soc_peripherals #(
             if (kdf_done)   kdf_done_sticky   <= 1;
             if (secure_zeroize_done)
                 secure_zeroize_done_sticky <= 1;
+            if (kcv_done)   kcv_done_sticky   <= 1;
+            if (kcv_done && kcv_pass) kcv_pass_sticky <= 1;
 
             // Clear ALL latches when CPU writes to SYS_CTRL (starting a new operation)
             if (mem_valid && !mem_ready && (|mem_wstrb) && sel_sys_ctrl) begin
@@ -158,6 +189,8 @@ module soc_peripherals #(
                 fe_success_sticky <= 0;
                 kdf_done_sticky   <= 0;
                 secure_zeroize_done_sticky <= 0;
+                kcv_done_sticky   <= 0;
+                kcv_pass_sticky   <= 0;
             end
         end
     end
@@ -173,7 +206,10 @@ module soc_peripherals #(
             kdf_start <= 0;
             secure_zeroize <= 0;
             fe_mode <= 0;
+            kcv_start <= 0;
             for (int i=0; i<9; i++) helper_reg[i] <= 0;
+            for (int i=0; i<7; i++) kcv_ref_reg[i] <= 0;
+            kcv_ctx_reg <= 56'd0;
         end else begin
             mem_ready <= 0;
             tx_dv <= 0;
@@ -181,6 +217,7 @@ module soc_peripherals #(
             fe_start <= 0;
             kdf_start <= 0;
             secure_zeroize <= 0;
+            kcv_start <= 0;
 
             if (mem_valid && !mem_ready) begin
                 mem_ready <= 1;
@@ -198,6 +235,14 @@ module soc_peripherals #(
                         secure_zeroize <= mem_wdata[4];
                     end else if (sel_helper) begin
                         helper_reg[helper_idx] <= mem_wdata;
+                    end else if (sel_kcv_ref) begin
+                        kcv_ref_reg[kcv_ref_idx] <= mem_wdata;
+                    end else if (sel_kcv_ctx_lo) begin
+                        kcv_ctx_reg[31:0] <= mem_wdata;
+                    end else if (sel_kcv_ctx_hi) begin
+                        kcv_ctx_reg[55:32] <= mem_wdata[23:0];
+                    end else if (sel_kcv_ctrl) begin
+                        kcv_start <= mem_wdata[0];
                     end
                 end 
                 // --- READ ---
@@ -213,6 +258,11 @@ module soc_peripherals #(
                                      fe_done_sticky, puf_done_sticky};
                     end else if (sel_helper) begin
                         mem_rdata <= helper_in_words[helper_idx];
+                    end else if (sel_kcv_ref) begin
+                        // Enroll path reads the public KCV digest back here.
+                        mem_rdata <= kcv_out[kcv_ref_idx*32 +: 32];
+                    end else if (sel_kcv_ctrl) begin
+                        mem_rdata <= {30'd0, kcv_pass_sticky, kcv_done_sticky};
                     end else if (sel_kdf) begin
                         case(kdf_idx)
                             4'd0: mem_rdata <= kdf_seed[31:0];

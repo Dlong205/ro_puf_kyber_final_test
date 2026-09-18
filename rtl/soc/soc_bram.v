@@ -1,6 +1,12 @@
 module soc_bram #(
     parameter MEM_WORDS = 4096, // 16KB
+`ifdef SIM_FIRMWARE_DIAG
+    // Full-system simulation uses the bring-up image that permits
+    // enrollment; the operational board image keeps firmware.hex.
+    parameter INIT_FILE = "firmware_diag.hex"
+`else
     parameter INIT_FILE = "firmware.hex"
+`endif
 ) (
     input clk,
     input rstn,

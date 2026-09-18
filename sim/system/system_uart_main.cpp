@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "../../firmware/helper_record_spec.h"
+
 namespace {
 constexpr int kClksPerBit = 434; // 50 MHz / 115200 baud, rounded.
 constexpr uint64_t kMaxCycles = 3000000;
@@ -71,18 +73,17 @@ void expect_byte(VKyber_System_Top& dut, uint8_t expected, const char* label) {
     }
 }
 
+void send_record(VKyber_System_Top& dut,
+                 const std::array<uint8_t, HREC_BYTES>& rec) {
+    for (uint8_t byte : rec)
+        uart_send(dut, byte);
+}
+
 void reconstruct(VKyber_System_Top& dut,
-                 const std::array<uint8_t, 33>& helper) {
+                 const std::array<uint8_t, HREC_BYTES>& rec) {
     uart_send(dut, 0x02);
     expect_byte(dut, 'X', "reconstruct ready");
-
-    for (int word = 0; word < 8; ++word) {
-        for (int byte = 0; byte < 4; ++byte)
-            uart_send(dut, helper[word * 4 + byte]);
-        expect_byte(dut, static_cast<uint8_t>('0' + word), "helper-word ack");
-    }
-    uart_send(dut, helper[32]);
-    expect_byte(dut, '8', "last helper-byte ack");
+    send_record(dut, rec);
 
     const std::string expected_progress = "ABCDEFG";
     std::string progress;
@@ -95,6 +96,33 @@ void reconstruct(VKyber_System_Top& dut,
 
     expect_byte(dut, 0xaa, "reconstruct status");
     expect_byte(dut, 0x00, "release result flags");
+}
+
+void reconstruct_rejected(VKyber_System_Top& dut,
+                          const std::array<uint8_t, HREC_BYTES>& rec) {
+    uart_send(dut, 0x02);
+    expect_byte(dut, 'X', "reconstruct ready");
+    send_record(dut, rec);
+    expect_byte(dut, 0xff, "record reject status");
+    expect_byte(dut, 0x0a, "record reject code");
+}
+
+// CRC-16/CCITT-FALSE over the record body, matching the firmware/host spec.
+uint16_t crc16_ccitt_false(const uint8_t* data, uint32_t len) {
+    uint16_t crc = 0xFFFF;
+    for (uint32_t i = 0; i < len; ++i) {
+        crc ^= static_cast<uint16_t>(data[i]) << 8;
+        for (int bit = 0; bit < 8; ++bit)
+            crc = (crc & 0x8000u) ? static_cast<uint16_t>((crc << 1) ^ 0x1021u)
+                                  : static_cast<uint16_t>(crc << 1);
+    }
+    return crc;
+}
+
+void fix_crc(std::array<uint8_t, HREC_BYTES>& rec) {
+    uint16_t crc = crc16_ccitt_false(rec.data(), HREC_OFF_CRC);
+    rec[HREC_OFF_CRC] = static_cast<uint8_t>(crc & 0xFF);
+    rec[HREC_OFF_CRC + 1] = static_cast<uint8_t>((crc >> 8) & 0xFF);
 }
 } // namespace
 
@@ -114,18 +142,41 @@ int main(int argc, char** argv) {
         std::printf("[SYSTEM] Firmware banner received\n");
 
         uart_send(dut, 0x00);
-        const std::array<uint8_t, 5> info{{'K', 'P', 1, 3, 0x06}};
+        const std::array<uint8_t, 5> info{{'K', 'P', 1, 4, 0x0e}};
         for (uint8_t byte : info) expect_byte(dut, byte, "firmware info");
         std::printf("[SYSTEM] Release protocol/capabilities passed\n");
 
         uart_send(dut, 0x01);
         expect_byte(dut, 0xaa, "enroll status");
-        std::array<uint8_t, 33> helper{};
-        for (auto& byte : helper) byte = uart_recv(dut);
-        std::printf("[SYSTEM] PUF enrollment/helper transfer passed\n");
+        std::array<uint8_t, HREC_BYTES> record{};
+        for (auto& byte : record) byte = uart_recv(dut);
+        std::printf("[SYSTEM] PUF enrollment/helper-record transfer passed\n");
 
-        reconstruct(dut, helper);
-        reconstruct(dut, helper);
+        // A malformed record must be rejected before PUF/FE/KDF/Kyber.
+        std::array<uint8_t, HREC_BYTES> corrupted = record;
+        corrupted[HREC_OFF_HELPER] ^= 0x01;
+        reconstruct_rejected(dut, corrupted);
+        std::printf("[SYSTEM] Corrupted helper record rejected fail-closed\n");
+
+        // A CRC-valid record with a corrupted KCV must be rejected by the
+        // same-root gate before the KDF/ML-KEM start.
+        std::array<uint8_t, HREC_BYTES> wrong_kcv = record;
+        wrong_kcv[HREC_OFF_KCV] ^= 0x01;
+        fix_crc(wrong_kcv);
+        uart_send(dut, 0x02);
+        expect_byte(dut, 'X', "reconstruct ready");
+        send_record(dut, wrong_kcv);
+        // The KCV gate runs after the FE reconstruct, so the failure is
+        // reported after the PUF/FE progress markers.
+        expect_byte(dut, 'A', "wrong-kcv progress A");
+        expect_byte(dut, 'B', "wrong-kcv progress B");
+        expect_byte(dut, 'C', "wrong-kcv progress C");
+        expect_byte(dut, 0xff, "wrong-kcv reject status");
+        expect_byte(dut, 0x0d, "wrong-kcv reject code");
+        std::printf("[SYSTEM] Wrong-root KCV rejected fail-closed\n");
+
+        reconstruct(dut, record);
+        reconstruct(dut, record);
 
         std::printf("[SYSTEM] Release mode withheld shared secrets and zeroized crypto accelerators\n");
         std::printf("*** FULL UART/PUF/FE/KDF/KYBER-512 PASS (%llu cycles) ***\n",

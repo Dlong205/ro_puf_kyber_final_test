@@ -27,7 +27,17 @@ module riscv_soc #(
     output [263:0] helper_out,
     input  [263:0] helper_in,
     
-    input  [511:0] kdf_seed
+    input  [511:0] kdf_seed,
+
+    // KCV same-root control/status.  The SHAKE256 engine is instantiated in
+    // the top level and taps the FE key directly; these only carry the public
+    // reference/context and the result.
+    output        kcv_start,
+    output [223:0] kcv_ref,
+    output [55:0]  kcv_ctx,
+    input         kcv_done,
+    input         kcv_pass,
+    input  [223:0] kcv_out
 );
 
     // PicoRV32 Native Memory Interface
@@ -131,7 +141,13 @@ module riscv_soc #(
         .secure_zeroize_done (kyber_zeroize_done),
         .kdf_seed    (kdf_seed),
         .helper_out_data (helper_out),
-        .helper_in_data  (helper_in)
+        .helper_in_data  (helper_in),
+        .kcv_start   (kcv_start),
+        .kcv_ref     (kcv_ref),
+        .kcv_ctx     (kcv_ctx),
+        .kcv_done    (kcv_done),
+        .kcv_pass    (kcv_pass),
+        .kcv_out     (kcv_out)
     );
 
     // ==========================================

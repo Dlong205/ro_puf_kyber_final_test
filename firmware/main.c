@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "helper_record_spec.h"
 
 #define REG(addr) (*((volatile uint32_t*)(addr)))
 
@@ -8,6 +9,10 @@
 #define HELPER_WORD(idx) REG(0x10000010 + (idx)*4)
 
 #define KDF_SEED(idx)     REG(0x10000040 + (idx)*4)
+#define KCV_REF(idx)      REG(0x100000A0 + (idx)*4)
+#define KCV_CTX_LO        REG(0x100000BC)
+#define KCV_CTX_HI        REG(0x100000C0)
+#define KCV_CTRL          REG(0x100000C4)
 #define KYBER_SEED_D(idx) REG(0x10000100 + (idx)*4)
 #define KYBER_SEED_Z(idx) REG(0x10000120 + (idx)*4)
 #define KYBER_CTRL        REG(0x10000140)
@@ -21,7 +26,13 @@
 #endif
 
 #define PROTOCOL_MAJOR 1
-#define PROTOCOL_MINOR 3
+#define PROTOCOL_MINOR 4
+
+// Compile-time lifecycle: operational/release images must reject CMD_ENROLL;
+// only manufacturing/diagnostic bring-up images set EDGE_ALLOW_ENROLL=1.
+#ifndef EDGE_ALLOW_ENROLL
+#define EDGE_ALLOW_ENROLL 0
+#endif
 
 #define CMD_INFO   0x00
 #define CMD_ENROLL 0x01
@@ -34,6 +45,7 @@
 #define CAP_KEY_EXPORT     (1u << 0)
 #define CAP_SESSION_DIVERSIFICATION (1u << 1)
 #define CAP_ACCELERATOR_ZEROIZE (1u << 2)
+#define CAP_HELPER_RECORD  (1u << 3)
 
 #define ERR_UART_TIMEOUT  0x01
 #define ERR_PUF_TIMEOUT   0x02
@@ -44,12 +56,36 @@
 #define ERR_KYBER_TIMEOUT 0x07
 #define ERR_KEY_MISMATCH  0x08
 #define ERR_ZEROIZE_TIMEOUT 0x09
+#define ERR_HELPER_RECORD 0x0A
+#define ERR_ENROLL_FORBIDDEN 0x0B
+#define ERR_KCV_TIMEOUT  0x0C
+#define ERR_KCV_MISMATCH 0x0D
+
+// Provisioned immutable binding for this platform image.  Must match the
+// values the host serialized into the record and the Edge RTL parameters.
+#define EXPECTED_PROFILE  0x01
+#define EXPECTED_FE_PARAM 0x01
+#define EXPECTED_MAPPING_LEN 0x00
+#define EXPECTED_MAPPING_TAG 0x0000
 
 #define SYS_ST_PUF_DONE       (1u << 0)
 #define SYS_ST_FE_DONE        (1u << 1)
 #define SYS_ST_FE_SUCCESS     (1u << 2)
 #define SYS_ST_KDF_DONE       (1u << 3)
 #define SYS_ST_ZEROIZE_DONE   (1u << 4)
+
+#define KCV_ST_DONE   (1u << 0)
+#define KCV_ST_PASS   (1u << 1)
+
+// Enrollment context: {generation, mapping_tag, fe_param, profile, proto,
+// record_version}, matching the record header the firmware emits and the Edge
+// RTL transport parameters.  Single source is scripts/helper_record_spec.py.
+#define ENROLL_CTX ((((uint64_t)0x01u) << 48) | \
+                    (((uint64_t)EXPECTED_MAPPING_TAG) << 32) | \
+                    (((uint64_t)EXPECTED_FE_PARAM) << 24) | \
+                    (((uint64_t)EXPECTED_PROFILE) << 16) | \
+                    (((uint64_t)HREC_PROTOCOL_VERSION) << 8) | \
+                    ((uint64_t)HREC_RECORD_VERSION))
 
 #define KYBER_ST_DONE         (1u << 2)
 #define KYBER_ST_BUSY         (1u << 3)
@@ -62,6 +98,7 @@
 #define KYBER_MAX_ATTEMPTS 1u
 
 static uint32_t session_counter;
+static uint8_t record_buf[HREC_BYTES];
 
 static void uart_putchar(uint8_t c) {
     while (UART_STATUS & 1u); // Wait while TX is active.
@@ -93,6 +130,53 @@ static int wait_sys_status(uint32_t mask) {
             return 1;
     }
     return 0;
+}
+
+static void kcv_write_ctx(uint64_t ctx) {
+    KCV_CTX_LO = (uint32_t)(ctx & 0xFFFFFFFFu);
+    KCV_CTX_HI = (uint32_t)((ctx >> 32) & 0xFFFFFFu);
+}
+
+static void kcv_write_ref(const uint8_t *ref28) {
+    for (int w = 0; w < 7; w++)
+        KCV_REF(w) = (uint32_t)ref28[w * 4] |
+                     ((uint32_t)ref28[w * 4 + 1] << 8) |
+                     ((uint32_t)ref28[w * 4 + 2] << 16) |
+                     ((uint32_t)ref28[w * 4 + 3] << 24);
+}
+
+#if EDGE_ALLOW_ENROLL
+static void kcv_read_out(uint8_t *out28) {
+    for (int w = 0; w < 7; w++) {
+        uint32_t word = KCV_REF(w);
+        out28[w * 4]     = (uint8_t)(word & 0xFF);
+        out28[w * 4 + 1] = (uint8_t)((word >> 8) & 0xFF);
+        out28[w * 4 + 2] = (uint8_t)((word >> 16) & 0xFF);
+        out28[w * 4 + 3] = (uint8_t)((word >> 24) & 0xFF);
+    }
+}
+#endif
+
+static int kcv_wait(uint32_t *pass) {
+    for (uint32_t timeout = 0; timeout < HW_TIMEOUT; timeout++) {
+        uint32_t status = KCV_CTRL;
+        if (status & KCV_ST_DONE) {
+            *pass = (status & KCV_ST_PASS) != 0;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static uint64_t kcv_ctx_from_record(void) {
+    uint16_t tag = (uint16_t)record_buf[HREC_OFF_MAPPING_TAG] |
+                   ((uint16_t)record_buf[HREC_OFF_MAPPING_TAG + 1] << 8);
+    return (((uint64_t)record_buf[HREC_OFF_GENERATION]) << 48) |
+           (((uint64_t)tag) << 32) |
+           (((uint64_t)record_buf[HREC_OFF_FE_PARAM]) << 24) |
+           (((uint64_t)record_buf[HREC_OFF_PROFILE]) << 16) |
+           (((uint64_t)record_buf[HREC_OFF_PROTOCOL_VERSION]) << 8) |
+           ((uint64_t)record_buf[HREC_OFF_RECORD_VERSION]);
 }
 
 static int wait_kyber_done(void) {
@@ -144,9 +228,79 @@ static void send_failure(uint8_t code, int clear_sensitive) {
     uart_putchar(code);
 }
 
+// ---- helper-record mirror (single spec: scripts/helper_record_spec.py) ----
+// Early rejection only; the CPU-free Edge RTL remains the security
+// enforcement boundary.  Field order and error precedence match the RTL
+// helper_record_parse module exactly.
+
+static uint16_t crc16_ccitt_false_buf(const uint8_t *data, uint32_t len) {
+    uint16_t crc = 0xFFFF;
+    for (uint32_t i = 0; i < len; i++) {
+        crc ^= (uint16_t)data[i] << 8;
+        for (int bit = 0; bit < 8; bit++)
+            crc = (crc & 0x8000u) ? (uint16_t)((crc << 1) ^ 0x1021u)
+                                  : (uint16_t)(crc << 1);
+    }
+    return crc;
+}
+
+static uint16_t rd16_le(const uint8_t *p) {
+    return (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
+}
+
+static uint32_t rd32_le(const uint8_t *p) {
+    return (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
+           ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+}
+
+static uint8_t validate_record(const uint8_t *rec) {
+    if (rd32_le(rec + HREC_OFF_MAGIC) != HREC_MAGIC)
+        return HREC_ERR_MAGIC;
+    if (rec[HREC_OFF_RECORD_VERSION] != HREC_RECORD_VERSION)
+        return HREC_ERR_RECORD_VERSION;
+    if (rec[HREC_OFF_PROTOCOL_VERSION] != HREC_PROTOCOL_VERSION)
+        return HREC_ERR_PROTOCOL_VERSION;
+    if (rec[HREC_OFF_PROFILE] != EXPECTED_PROFILE)
+        return HREC_ERR_PROFILE;
+    if (rec[HREC_OFF_FE_PARAM] != EXPECTED_FE_PARAM)
+        return HREC_ERR_FE_PARAM;
+    if (rec[HREC_OFF_RESERVED] != 0)
+        return HREC_ERR_RESERVED;
+    if (rec[HREC_OFF_MAPPING_LEN] != EXPECTED_MAPPING_LEN ||
+        rd16_le(rec + HREC_OFF_MAPPING_TAG) != EXPECTED_MAPPING_TAG)
+        return HREC_ERR_MAPPING;
+    if (rd16_le(rec + HREC_OFF_CRC) !=
+        crc16_ccitt_false_buf(rec, HREC_OFF_CRC))
+        return HREC_ERR_CRC;
+    return HREC_OK;
+}
+
+static int receive_record(void) {
+    uart_putchar('X');
+    for (uint32_t i = 0; i < HREC_BYTES; i++) {
+        if (!uart_getchar_timeout(&record_buf[i])) {
+            send_failure(ERR_UART_TIMEOUT, 0);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static void load_helper_from_record(void) {
+    for (int w = 0; w < 8; w++) {
+        uint32_t word = 0;
+        for (int b = 0; b < 4; b++)
+            word |= ((uint32_t)record_buf[HREC_OFF_HELPER + w * 4 + b])
+                    << (8 * b);
+        HELPER_WORD(w) = word;
+    }
+    HELPER_WORD(8) = record_buf[HREC_OFF_HELPER + 32];
+}
+
 static void process_info(void) {
     uint8_t capabilities = CAP_SESSION_DIVERSIFICATION |
-                           CAP_ACCELERATOR_ZEROIZE;
+                           CAP_ACCELERATOR_ZEROIZE |
+                           CAP_HELPER_RECORD;
 #if !RELEASE_BUILD
     capabilities |= CAP_KEY_EXPORT;
 #endif
@@ -158,6 +312,11 @@ static void process_info(void) {
 }
 
 static void process_enroll(void) {
+#if !EDGE_ALLOW_ENROLL
+    // Operational/release lifecycle: manufacturing enrollment is forbidden.
+    send_failure(ERR_ENROLL_FORBIDDEN, 0);
+    return;
+#else
     SYS_CTRL = SYS_ST_PUF_DONE;
     if (!wait_sys_status(SYS_ST_PUF_DONE)) {
         send_failure(ERR_PUF_TIMEOUT, 1);
@@ -170,6 +329,21 @@ static void process_enroll(void) {
         return;
     }
 
+    // Same-root KCV: compute the public digest from the freshly generated FE
+    // key while it is still live (the key never reaches the CPU; the hardware
+    // engine taps it in place and only exposes the public KCV digest).
+    uint8_t rec[HREC_BYTES];
+    for (uint32_t i = 0; i < HREC_BYTES; i++)
+        rec[i] = 0;
+    kcv_write_ctx(ENROLL_CTX);
+    KCV_CTRL = 0x01;
+    uint32_t kcv_pass_ignored = 0;
+    if (!kcv_wait(&kcv_pass_ignored)) {
+        send_failure(ERR_KCV_TIMEOUT, 1);
+        return;
+    }
+    kcv_read_out(&rec[HREC_OFF_KCV]);
+
     // helper_out is public and intentionally survives this request. Erase
     // the raw PUF response and reconstructed key before returning it.
     if (!secure_zeroize()) {
@@ -177,44 +351,44 @@ static void process_enroll(void) {
         return;
     }
 
-    uart_putchar(STATUS_SUCCESS);
+    // Emit a versioned record: header + helper + real KCV + CRC.
+    rec[HREC_OFF_MAGIC + 0] = (uint8_t)(HREC_MAGIC & 0xFF);
+    rec[HREC_OFF_MAGIC + 1] = (uint8_t)((HREC_MAGIC >> 8) & 0xFF);
+    rec[HREC_OFF_MAGIC + 2] = (uint8_t)((HREC_MAGIC >> 16) & 0xFF);
+    rec[HREC_OFF_MAGIC + 3] = (uint8_t)((HREC_MAGIC >> 24) & 0xFF);
+    rec[HREC_OFF_RECORD_VERSION] = HREC_RECORD_VERSION;
+    rec[HREC_OFF_PROTOCOL_VERSION] = HREC_PROTOCOL_VERSION;
+    rec[HREC_OFF_PROFILE] = EXPECTED_PROFILE;
+    rec[HREC_OFF_FE_PARAM] = EXPECTED_FE_PARAM;
+    rec[HREC_OFF_MAPPING_LEN] = EXPECTED_MAPPING_LEN;
+    rec[HREC_OFF_MAPPING_TAG] = (uint8_t)(EXPECTED_MAPPING_TAG & 0xFF);
+    rec[HREC_OFF_MAPPING_TAG + 1] = (uint8_t)((EXPECTED_MAPPING_TAG >> 8) & 0xFF);
+    rec[HREC_OFF_GENERATION] = 0x01;
     for (int w = 0; w < 8; w++) {
         uint32_t word = HELPER_WORD(w);
-        uart_putchar((word >>  0) & 0xFF);
-        uart_putchar((word >>  8) & 0xFF);
-        uart_putchar((word >> 16) & 0xFF);
-        uart_putchar((word >> 24) & 0xFF);
+        for (int b = 0; b < 4; b++)
+            rec[HREC_OFF_HELPER + w * 4 + b] = (uint8_t)((word >> (8 * b)) & 0xFF);
     }
-    uart_putchar(HELPER_WORD(8) & 0xFF);
-}
+    rec[HREC_OFF_HELPER + 32] = (uint8_t)(HELPER_WORD(8) & 0xFF);
+    uint16_t crc = crc16_ccitt_false_buf(rec, HREC_OFF_CRC);
+    rec[HREC_OFF_CRC] = (uint8_t)(crc & 0xFF);
+    rec[HREC_OFF_CRC + 1] = (uint8_t)((crc >> 8) & 0xFF);
 
-static int receive_helper(void) {
-    uint8_t byte;
-    uart_putchar('X');
-    for (int w = 0; w < 8; w++) {
-        uint32_t word = 0;
-        for (int b = 0; b < 4; b++) {
-            if (!uart_getchar_timeout(&byte)) {
-                send_failure(ERR_UART_TIMEOUT, 0);
-                return 0;
-            }
-            word |= ((uint32_t)byte) << (8 * b);
-        }
-        HELPER_WORD(w) = word;
-        uart_putchar('0' + w);
-    }
-    if (!uart_getchar_timeout(&byte)) {
-        send_failure(ERR_UART_TIMEOUT, 0);
-        return 0;
-    }
-    HELPER_WORD(8) = byte;
-    uart_putchar('8');
-    return 1;
+    uart_putchar(STATUS_SUCCESS);
+    for (uint32_t i = 0; i < HREC_BYTES; i++)
+        uart_putchar(rec[i]);
+#endif
 }
 
 static void process_recon(void) {
-    if (!receive_helper())
+    if (!receive_record())
         return;
+    if (validate_record(record_buf) != HREC_OK) {
+        // Fail-closed: reject before PUF/FE/KDF/Kyber and scrub the buffer.
+        send_failure(ERR_HELPER_RECORD, 1);
+        return;
+    }
+    load_helper_from_record();
 
     uart_putchar('A');
     SYS_CTRL = SYS_ST_PUF_DONE;
@@ -232,6 +406,22 @@ static void process_recon(void) {
     uart_putchar('C');
     if (!(SYS_CTRL & SYS_ST_FE_SUCCESS)) {
         send_failure(ERR_FE_DECODE, 1);
+        return;
+    }
+
+    // Same-root KCV verification: only a recovered root whose KCV matches the
+    // record's public reference may reach the KDF/ML-KEM.  Fail-closed: on a
+    // mismatch no KDF/Kyber start and the accelerators are zeroized.
+    kcv_write_ref(&record_buf[HREC_OFF_KCV]);
+    kcv_write_ctx(kcv_ctx_from_record());
+    KCV_CTRL = 0x01;
+    uint32_t kcv_pass_result = 0;
+    if (!kcv_wait(&kcv_pass_result)) {
+        send_failure(ERR_KCV_TIMEOUT, 1);
+        return;
+    }
+    if (!kcv_pass_result) {
+        send_failure(ERR_KCV_MISMATCH, 1);
         return;
     }
 

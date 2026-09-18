@@ -89,6 +89,8 @@ namespace eval fpga_split {
                 rtl/top/edge_control_plane.sv
                 rtl/top/edge_mlkem_core.sv
                 rtl/top/edge_puf_mlkem_core.sv
+                rtl/top/edge_root_binding.sv
+                rtl/top/helper_record.sv
             }]}
             kdf {set rel [concat $common $keccak {rtl/top/kdf_keccak.sv}]}
             seedctl {set rel [concat \
@@ -110,7 +112,8 @@ namespace eval fpga_split {
         return [list [file join $root rtl common] \
             [file join $root rtl hash_core] \
             [file join $root rtl kyber ref] \
-            [file join $root rtl fuzzy_extractor]]
+            [file join $root rtl fuzzy_extractor] \
+            [file join $root rtl top]]
     }
 
     proc inputs {block} {
@@ -119,6 +122,9 @@ namespace eval fpga_split {
         switch -- $block {
             client - server - edgecore - edgefull - kdf - seedctl {
                 lappend result [file join $root rtl hash_core keccak_pkg.vh]
+                if {$block eq "edgefull"} {
+                    lappend result [file join $root rtl top helper_record_spec.vh]
+                }
             }
             fe {
                 # Hash every BCH header, including transitive include/function
