@@ -8,6 +8,7 @@
 //   N: 0 1 2 3 4 -> q: 0 0 1 1 2
 // Each Q clocks only the next stage, so every clock net has fanout 1 and no
 // RO/prescaler net is promoted to a global clock buffer.
+(* KEEP_HIERARCHY = "yes" *)
 module kp_ripple_counter #(
     parameter integer WIDTH = 16
 )(

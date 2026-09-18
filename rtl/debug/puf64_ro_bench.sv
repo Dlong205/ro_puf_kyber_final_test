@@ -49,20 +49,20 @@ module puf64_ro_bench #(
 
     wire puf_rst_n = rst_n & ~zeroize;
 
-    (* keep = "true" *) wire [NUM_RO-1:0] ro_out;
     (* keep = "true" *) wire [WIDTH-1:0] ripple_q [0:NUM_RO-1];
     (* keep = "true" *) wire [NUM_RO-1:0] ro_en_i;
 
     genvar i;
     generate
         for (i = 0; i < NUM_RO; i = i + 1) begin : ro
+            (* keep = "true" *) wire ro_tap_i;
             assign ro_en_i[i] = ro_en_r && ((pair_a == i) || (pair_b == i));
             kp_ro_cell #(.FREQ_OFFSET(i * 3 + 1)) ro_cell (
                 .clk(clk), .rst_n(puf_rst_n), .en(ro_en_i[i]),
-                .cfg(4'd0), .o(ro_out[i])
+                .cfg(4'd0), .o(ro_tap_i)
             );
             kp_ripple_counter #(.WIDTH(WIDTH)) counter (
-                .clk(ro_out[i]), .clear(clear_r),
+                .clk(ro_tap_i), .clear(clear_r),
                 .q(ripple_q[i]), .presc_q()
             );
         end

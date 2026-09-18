@@ -27,12 +27,27 @@ proc check_ro_bench_connectivity {stage num_ro} {
     set bufgs [get_cells -quiet -hierarchical -filter {REF_NAME =~ "BUFG*"}]
     puts "BENCH ${stage}_BUFG_COUNT=[llength $bufgs]"
 
-    foreach p $presc {
-        set cpin [get_pins -quiet -of_objects $p -filter {REF_PIN_NAME == "C"}]
-        set cnet [get_nets -quiet -of_objects $cpin]
+    set counters [get_cells -quiet -hierarchical -filter {REF_NAME =~ "kp_ripple_counter*"}]
+    if {[llength $counters] != $num_ro} {
+        error "BENCH $stage: expected $num_ro ripple counters, found [llength $counters]"
+    }
+    foreach ctr $counters {
+        set clkpin [get_pins -quiet -of_objects $ctr -filter {REF_PIN_NAME == "clk"}]
+        set cnet [get_nets -quiet -of_objects $clkpin]
+        if {[llength $cnet] != 1} {
+            error "BENCH $stage: counter clk net not found on $ctr"
+        }
+        set cnet [lindex $cnet 0]
         set drivers [get_pins -quiet -of_objects $cnet -filter {DIRECTION == OUT}]
-        if {[llength $drivers] != 1} {
-            error "BENCH $stage: prescaler clock must have exactly 1 driver: $cnet"
+        if {[llength $drivers] < 1} {
+            error "BENCH $stage: counter clk has no driver: $cnet"
+        }
+        foreach dp $drivers {
+            set dc [get_cells -quiet -of_objects $dp]
+            set dr [get_property REF_NAME $dc]
+            if {$dr eq "GND" || $dr eq "VCC" || $dr eq "TIEOFF"} {
+                error "BENCH $stage: counter clk driven by constant $dr: $cnet"
+            }
         }
     }
     if {$stage eq "route"} {

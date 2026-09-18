@@ -97,9 +97,9 @@ module Puf64_Ro_Bench_Zynq_Top #(
     wire tx_active, tx_done;
     wire ep_tx_valid;
     wire [7:0] ep_tx_data;
-    wire ep_tx_ready = ~tx_active;
     reg tx_dv;
     reg [7:0] tx_byte;
+    wire ep_tx_ready = ~tx_active & ~tx_dv;
     uart_tx #(.CLKS_PER_BIT(UART_CLKS_PER_BIT)) u_tx (
         .i_Clock(clk_sys), .i_Rst(~por_done),
         .i_Tx_DV(tx_dv), .i_Tx_Byte(tx_byte),

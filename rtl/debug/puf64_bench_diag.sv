@@ -31,6 +31,7 @@ module puf64_bench_diag #(
     input  wire [31:0]        telemetry_count1
 );
     localparam integer BITMAP_BYTES = (NUM_RO + 7) / 8;
+    localparam integer BITMAP_BITS = BITMAP_BYTES * 8;
 
     localparam [7:0] CMD_INFO = 8'h00;
     localparam [7:0] CMD_RUN = 8'h01;
@@ -60,6 +61,8 @@ module puf64_bench_diag #(
 
     assign tx_valid = (tx_index < tx_len);
     assign tx_data = tx_buf[tx_index];
+    wire [BITMAP_BITS-1:0] ro_valid_padded =
+        {{(BITMAP_BITS - NUM_RO){1'b0}}, ro_valid};
 
     integer b;
     always @(posedge clk) begin
@@ -178,7 +181,7 @@ module puf64_bench_diag #(
                             tx_buf[2] <= {7'b0, run_done};
                             tx_buf[3] <= run_error;
                             for (b = 0; b < BITMAP_BYTES; b = b + 1)
-                                tx_buf[4+b] <= ro_valid[b*8 +: 8];
+                                tx_buf[4+b] <= ro_valid_padded[b*8 +: 8];
                             tx_len <= (4 + BITMAP_BYTES);
                             tx_index <= 7'd0;
                         end
