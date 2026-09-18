@@ -160,9 +160,9 @@ proc ro_write_physical_fingerprint {path inventory} {
     close $channel
 }
 
-proc ro_collect_ro_only_inventory {{expected_ro_luts 128}} {
+proc ro_collect_ro_only_inventory {{expected_ro_luts 128} {pattern "*u_puf*ring*LUT6_*"}} {
     set ro_luts [lsort -dictionary [get_cells -quiet -hierarchical \
-        -filter {NAME =~ "*u_puf*ring*LUT6_*"}]]
+        -filter "NAME =~ \"$pattern\""]]
     if {[llength $ro_luts] != $expected_ro_luts} {
         error "Expected $expected_ro_luts physical RO LUTs, found [llength $ro_luts]"
     }

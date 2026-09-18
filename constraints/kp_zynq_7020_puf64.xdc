@@ -26,11 +26,11 @@ set_property -dict {PACKAGE_PIN K16 IOSTANDARD LVCMOS33} [get_ports {LED[0]}]
 set_property -dict {PACKAGE_PIN J16 IOSTANDARD LVCMOS33} [get_ports {LED[1]}]
 
 ## Combinatorial-loop constraints for all 64 ring oscillators.
-set_property ALLOW_COMBINATORIAL_LOOPS true [get_nets -quiet -hierarchical -filter {NAME =~ "*u_puf*ring*/t*"}]
-set_false_path -through [get_nets -quiet -hierarchical -filter {NAME =~ "*u_puf*ring*/t*"}]
+set_property ALLOW_COMBINATORIAL_LOOPS true [get_nets -quiet -hierarchical -filter {NAME =~ "*u_puf*ro_cell*/t*"}]
+set_false_path -through [get_nets -quiet -hierarchical -filter {NAME =~ "*u_puf*ro_cell*/t*"}]
 
 ## Keep the physical oscillator cells.
-set_property DONT_TOUCH true [get_cells -quiet -hierarchical -filter {NAME =~ "*u_puf*ring*LUT6_*"}]
+set_property DONT_TOUCH true [get_cells -quiet -hierarchical -filter {NAME =~ "*u_puf*ro_cell*/u_backend/LUT6_*"}]
 
 ## The intentional RO feedback loops require a scoped LUTLP-1 waiver.
 set_property SEVERITY {Warning} [get_drc_checks LUTLP-1]

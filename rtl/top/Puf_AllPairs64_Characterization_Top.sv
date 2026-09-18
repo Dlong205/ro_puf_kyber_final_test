@@ -70,17 +70,20 @@ module Puf_AllPairs64_Characterization_Top #(
     wire puf_start, puf_busy, puf_done, tx_active;
     wire [PAIR_COUNT-1:0] puf_response;
     wire telemetry_valid;
+    wire telemetry_stable, telemetry_timeout;
     wire [10:0] telemetry_index;
     wire [5:0] telemetry_pair_a, telemetry_pair_b;
     wire [31:0] telemetry_count0, telemetry_count1;
     wire telemetry_winner;
 
-    kp_puf_allpairs_top #(
-        .NUM_RO(NUM_RO), .PAIR_COUNT(PAIR_COUNT), .REF_CYCLES(REF_CYCLES)
+    puf64_ro_bench #(
+        .NUM_RO(NUM_RO), .WIDTH(16), .REF_CYCLES(REF_CYCLES)
     ) u_puf (
         .clk(clk_sys), .rst_n(por_done), .zeroize(1'b0), .start(puf_start),
         .busy(puf_busy), .done(puf_done), .response(puf_response),
         .telemetry_valid(telemetry_valid),
+        .telemetry_stable(telemetry_stable),
+        .telemetry_timeout(telemetry_timeout),
         .telemetry_index(telemetry_index),
         .telemetry_pair_a(telemetry_pair_a),
         .telemetry_pair_b(telemetry_pair_b),
@@ -116,4 +119,5 @@ module Puf_AllPairs64_Characterization_Top #(
     assign LED[0] = tx_active;
     assign LED[1] = puf_busy;
     wire unused_sw = &SW;
+    wire unused_tel = telemetry_stable ^ telemetry_timeout;
 endmodule

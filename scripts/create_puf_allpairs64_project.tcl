@@ -21,6 +21,8 @@ set sources [list \
     [file join $root_dir rtl puf kp_puf_cells.sv] \
     [file join $root_dir rtl puf kp_puf_control.sv] \
     [file join $root_dir rtl puf kp_puf_allpairs_top.sv] \
+    [file join $root_dir rtl debug puf64_ro_bench.sv] \
+    [file join $root_dir rtl debug kp_ripple_counter.sv] \
     [file join $root_dir rtl puf uart_rx.v] \
     [file join $root_dir rtl puf uart_tx.v]]
 
@@ -48,6 +50,20 @@ if {$use_lock && [file exists $lock_xdc]} {
     lappend allpairs64_constraints $lock_xdc
 } else {
     puts "PUF_ALLPAIRS64_LOCK_STATUS=not-exported (baseline build path)"
+}
+
+foreach {env file} {
+    PUF_ALLPAIRS64_RIPPLE_PLACEMENT puf_allpairs64_ripple_placement.xdc
+    PUF_ALLPAIRS64_RIPPLE_LOCKPINS puf_allpairs64_ripple_lockpins.xdc
+    PUF_ALLPAIRS64_RIPPLE_ROUTE puf_allpairs64_ripple_route.xdc
+} {
+    set path [file join $root_dir constraints $file]
+    if {[info exists ::env($env)] && $::env($env) eq "1" && [file exists $path]} {
+        lappend allpairs64_constraints $path
+        puts "PUF_ALLPAIRS64_${env}=applied"
+    } else {
+        puts "PUF_ALLPAIRS64_${env}=none"
+    }
 }
 add_files -fileset constrs_1 -norecurse $allpairs64_constraints
 

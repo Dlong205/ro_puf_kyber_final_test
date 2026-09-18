@@ -33,7 +33,7 @@ if {![string match "*Complete*" $synth_status]} {
 }
 
 open_run synth_1
-set ro_luts [get_cells -quiet -hierarchical -filter {NAME =~ "*u_puf*ring*LUT6*"}]
+set ro_luts [get_cells -quiet -hierarchical -filter {NAME =~ "*u_puf*ro_cell*/u_backend/LUT6_*"}]
 puts "PUF_ALLPAIRS64_SYNTH_RO_LUT_COUNT=[llength $ro_luts]"
 if {[llength $ro_luts] != 256} { error "Expected 256 RO LUTs for 64 ROs" }
 if {[file exists $placement_map]} {
@@ -52,7 +52,7 @@ if {![string match "*Complete*" $impl_status]} {
 }
 
 open_run impl_1
-set placed_ro_luts [get_cells -quiet -hierarchical -filter {NAME =~ "*u_puf*ring*LUT6*"}]
+set placed_ro_luts [get_cells -quiet -hierarchical -filter {NAME =~ "*u_puf*ro_cell*/u_backend/LUT6_*"}]
 puts "PUF_ALLPAIRS64_ROUTE_RO_LUT_COUNT=[llength $placed_ro_luts]"
 if {[llength $placed_ro_luts] != 256} { error "64-RO placement map incomplete" }
 if {[file exists $placement_map]} {
@@ -65,19 +65,18 @@ report_drc -file [file join $report_dir post_route_drc.rpt]
 report_methodology -file [file join $report_dir post_route_methodology.rpt]
 
 set fingerprint_report [file join $report_dir ro_physical_fingerprint.tsv]
-set inventory [ro_collect_ro_only_inventory 256]
-ro_write_ro_only_fingerprint $fingerprint_report $inventory
-set fingerprint_state OK
-if {$lock_in_cs && [file exists $golden_fingerprint]} {
-    if {[catch {ro_compare_physical_fingerprints \
-            $golden_fingerprint $fingerprint_report} compare_error]} {
-        set fingerprint_state MISMATCH
-        puts "PUF_ALLPAIRS64_FINGERPRINT_ERROR=$compare_error"
+set fingerprint_state BASELINE-NO-LOCK
+if {$lock_in_cs} {
+    set inventory [ro_collect_ro_only_inventory 256 "*u_puf*ro_cell*/u_backend/LUT6_*"]
+    ro_write_ro_only_fingerprint $fingerprint_report $inventory
+    set fingerprint_state OK
+    if {[file exists $golden_fingerprint]} {
+        if {[catch {ro_compare_physical_fingerprints \
+                $golden_fingerprint $fingerprint_report} compare_error]} {
+            set fingerprint_state MISMATCH
+            puts "PUF_ALLPAIRS64_FINGERPRINT_ERROR=$compare_error"
+        }
     }
-} elseif {[file exists $golden_fingerprint]} {
-    set fingerprint_state BASELINE-NO-LOCK
-} else {
-    set fingerprint_state NO-GOLDEN
 }
 puts "PUF_ALLPAIRS64_FINGERPRINT_STATUS=$fingerprint_state"
 close_design
