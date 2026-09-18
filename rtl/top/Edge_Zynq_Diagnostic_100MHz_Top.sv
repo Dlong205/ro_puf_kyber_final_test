@@ -6,7 +6,12 @@
 // core.  The Xilinx clock primitive is intentionally confined to this FPGA
 // shell and is not part of the ASIC file list.
 module Edge_Zynq_Diagnostic_100MHz_Top #(
-    parameter integer UART_CLKS_PER_BIT = 868
+    parameter integer UART_CLKS_PER_BIT = 868,
+    // USB-UART hosts cannot guarantee a sub-millisecond first-byte latency
+    // after the transport emits the 'H' marker.  Keep the record-idle window
+    // generous for this laboratory shell only; the portable transport keeps
+    // its tighter RX_TIMEOUT default for the ASIC/sim harnesses.
+    parameter integer RX_TIMEOUT_BITS = 1024
 ) (
     input  wire       CLK50MHZ,
     input  wire [1:0] SW,
@@ -107,6 +112,7 @@ module Edge_Zynq_Diagnostic_100MHz_Top #(
 
     edge_uart_transport #(
         .CLKS_PER_BIT(UART_CLKS_PER_BIT),
+        .RX_TIMEOUT(RX_TIMEOUT_BITS * UART_CLKS_PER_BIT),
         // Diagnostic bring-up lifecycle allows enrollment; a release
         // operational build must override this to 1'b0.
         .ALLOW_ENROLL(1'b1)
