@@ -174,3 +174,50 @@ review; không tự ký xác nhận bằng chính các lần chạy của tác g
 Ngay cả khi các gate trên PASS, public/production release vẫn bị chặn bởi
 license, review mật mã/bảo mật độc lập, qualification PUF nhiều board/PVT và
 các hạng mục ASIC PDK/memory/DFT/sign-off.
+
+## Nhật ký traceability re-lock 2026-09-18
+
+Ngày **2026-09-18**, `make -j1 crypto-freeze-gate` chạy lại trên nhánh hiện tại
+(`codex/fpga-v2-split`) và **PASS (exit 0)** sau khi tái sinh **2** manifest
+stale. Việc tái khóa manifest là kỹ thuật, **không tự chứng minh** nội dung
+thay đổi RTL là đúng; phần này lưu lại diff/reason để truy vết.
+
+### `rtl/kyber/ref/Kyber_Server.v` — commit `5974709`
+
+Commit `5974709` ("Close full Edge timing at 100 MHz on Arty-35T", 2026-09-12)
+thay đổi `Kyber_Server.v` (**34 dòng, phi chức năng**) để đóng timing 100 MHz
+trên Arty-35T bằng cách localize điều khiển rẽ fanout cao, không đổi FSM/trạng
+thái dữ liệu:
+
+1. `squeeze_init_early`: trước đây decode từ `next_state` (cone phụ thuộc toàn
+   bộ FSM gồm FIFO-full/NTT feedback — đường path 100 MHz tệ nhất vào hàng trăm
+   clock-enable `block_reg`). Mới gom thành 4 arc cục bộ rõ ràng:
+   `enter_capture_14` (state `S13`, không stall, `keccak_ctr` 0/6),
+   `enter_capture_21` (state `S20` + `keccak_ready`),
+   `enter_capture_2b` (state `S2a` + `keccak_ready`),
+   `enter_capture_2e` (state `S13`, không stall, `keccak_ctr==3`, no `ofifo_ena`).
+2. Reset `state11_delay_ctr`: bỏ điều kiện `next_state == S11` (state `S0a` chỉ
+   có một lối ra), giảm cone.
+3. `keccak_init_pulse`: trước `state==S10 && next_state==S11`; mới là
+   `state==S10 && pad_ctr==5'h0` — decode cục bộ thay vì kế thừa toàn bộ
+   `next_state` cone.
+
+Bằng chứng tương đương chức năng: cùng commit chứa artifact closure 100 MHz
+(`experiments/fpga_100mhz/`, `reports/fpga_100mhz_arty35t_2026-09-12/`);
+toàn bộ KAT functional (ML-KEM-512 ACVP KeyGen/Encaps/Decaps, rejection
+equals—timing, legacy Kyber, codec) và chuỗi e2e Edge (same-root Phase 1) chạy
+trên chính RTL này. Trước re-lock, hash manifest freeze khớp Kyber cũ:
+`27b97bb1…` → file hiện tại `530c37a0…`; tài liệu này đóng vai trò truy vết
+cho quyết định tái khóa tại `4e33a83`.
+
+### `manifests/verification_inputs_candidate.sha256` — re-lock 2026-09-18
+
+9 file lệch hash so với manifest: 5 file đổi ở các commit same-root Phase 1 đã
+mer ge (sim harness/system UART), 4 file là source của checkpoint ASIC top
+(`Makefile`, `asic/filelists/system_asic.f`, `check_asic_frontend.sh`,
+`check_asic_portability.sh`). Set file không đổi (chỉ lệch hash) nên tái sinh
+manifest = khóa lại inputs hiện có, không thêm/bớt input gate.
+
+Cả hai manifest "candidate" được tái sinh từ list canonical của chính script
+check và any lỗi mạng lưới các cổng con đều PASS trong cùng một lần chạy gate.
+Checkpoint đạt được là **frontend/portability**, không phải ASIC freeze.
