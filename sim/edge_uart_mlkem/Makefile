@@ -37,6 +37,7 @@ CONTROL := ../../rtl/top/kdf_keccak_compact.sv \
            ../../rtl/top/edge_kem_scrub_controller.sv \
            ../../rtl/top/edge_control_plane.sv \
            ../../rtl/top/edge_mlkem_core.sv \
+           ../../rtl/top/helper_record.sv \
            ../../rtl/top/edge_uart_transport.sv \
            ../../rtl/puf/uart_rx.v ../../rtl/puf/uart_tx.v
 RTL := $(COMMON) $(HASH) $(KYBER) $(CONTROL)
@@ -44,6 +45,7 @@ RTL := $(COMMON) $(HASH) $(KYBER) $(CONTROL)
 $(EXE): $(RTL) tb_edge_uart_mlkem.sv
 	$(VERILATOR) --binary --timing -j 1 --Mdir $(MDIR) --top-module $(TOP) \
 		-I../../rtl/common -I../../rtl/hash_core -I../../rtl/kyber/ref \
+		-I../../rtl/top -I.. \
 		-Wno-fatal -Wno-WIDTH -Wno-UNUSEDPARAM -Wno-UNUSEDSIGNAL \
 		-Wno-CASEINCOMPLETE -Wno-MULTIDRIVEN -Wno-UNSIGNED \
 		-Wno-EOFNEWLINE -Wno-WIDTHTRUNC -Wno-WIDTHEXPAND \

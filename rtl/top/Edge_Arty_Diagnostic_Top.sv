@@ -42,13 +42,22 @@ module Edge_Arty_Diagnostic_Top #(
     wire secret_valid;
     wire [255:0] shared_secret;
     wire tx_active;
+    wire [223:0] core_kcv_ref;
+    wire [55:0]  core_kcv_ctx;
+    wire [55:0]  core_enroll_ctx;
+    wire         core_kcv_enable;
+    wire [223:0] core_fe_kcv;
     wire zeroize = core_zeroize || SW[0];
 
     edge_puf_mlkem_core u_core (
         .clk(CLK100MHZ), .rst_n(por_done), .zeroize(zeroize),
         .start(core_start), .enroll(core_enroll), .puf_seed(8'h42),
         .helper_in(helper_in), .helper_out(helper_out),
-        .fe_success(fe_success), .stream_in_valid(stream_in_valid),
+        .fe_success(fe_success),
+        .kcv_enable(core_kcv_enable), .kcv_ref(core_kcv_ref),
+        .kcv_ctx(core_kcv_ctx), .enroll_ctx(core_enroll_ctx),
+        .kcv_pass(), .fe_kcv(core_fe_kcv),
+        .stream_in_valid(stream_in_valid),
         .peer_ready_c(peer_ready_c), .peer_req_pk(peer_req_pk),
         .stream_in_data(stream_in_data), .ready_pk(ready_pk), .req_c(req_c),
         .stream_out_valid(stream_out_valid),
@@ -57,11 +66,18 @@ module Edge_Arty_Diagnostic_Top #(
         .secret_valid(secret_valid), .shared_secret(shared_secret)
     );
 
-    edge_uart_transport #(.CLKS_PER_BIT(UART_CLKS_PER_BIT)) u_transport (
+    edge_uart_transport #(
+        .CLKS_PER_BIT(UART_CLKS_PER_BIT),
+        // Diagnostic bring-up lifecycle allows enrollment; a release
+        // operational build must override this to 1'b0.
+        .ALLOW_ENROLL(1'b1)
+    ) u_transport (
         .clk(CLK100MHZ), .rst_n(por_done), .uart_rx_i(UART_RXD),
         .uart_tx_o(UART_TXD), .tx_active(tx_active), .core_start(core_start),
         .core_zeroize(core_zeroize), .core_enroll(core_enroll),
         .helper_in(helper_in), .helper_out(helper_out),
+        .core_fe_kcv(core_fe_kcv), .core_kcv_enable(core_kcv_enable),
+        .core_kcv_ref(core_kcv_ref), .core_kcv_ctx(core_kcv_ctx), .core_enroll_ctx(core_enroll_ctx),
         .fe_success(fe_success), .core_done(done), .core_busy(busy),
         .ready_pk(ready_pk), .req_c(req_c),
         .stream_out_valid(stream_out_valid),

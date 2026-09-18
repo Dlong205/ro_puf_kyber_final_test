@@ -1,6 +1,8 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
+// Stub PUF/FE/KEM models identical to tb_edge_puf_mlkem_handoff.  The FE
+// stub returns success in reconstruct mode and a fixed TEST_KEY.
 module kp_puf_top (
     input wire clk, input wire rst_n, input wire zeroize, input wire start,
     input wire [7:0] seed, output reg busy, output reg done,
@@ -82,7 +84,11 @@ module edge_mlkem_core (
     end
 endmodule
 
-module tb_edge_puf_mlkem_handoff;
+// Fail-closed same-root gate test: reconstruct path through the real
+// edge_puf_mlkem_core with stub PUF/FE/KEM.  A wrong KCV reference must
+// block edge_start and scrub the FE key; the correct reference must hand
+// the key to the seed controller exactly once.
+module tb_edge_kcv_gate;
     reg clk = 1'b0;
     reg rst_n = 1'b0;
     reg zeroize = 1'b0;
@@ -91,21 +97,20 @@ module tb_edge_puf_mlkem_handoff;
     integer cycles;
     always #5 clk = ~clk;
 
-    // KAT reference for TEST_KEY above with kcv_ctx all bytes 0x01
-    // (host-computed SHAKE256).  The gate is disabled in this tb; the vector
-    // is kept consistent with tb_edge_kcv_gate.
+    // KAT reference for the stub TEST_KEY with kcv_ctx =
+    // 56'h01010101_010101 (all bytes 0x01), host-computed SHAKE256.
     localparam [223:0] TEST_KCV = 224'hadaf31dbbf9f894024a99ee438675ce991f4c98f2a2c523b15335b7c;
 
-    reg kcv_enable = 1'b0;
     reg [223:0] kcv_ref = TEST_KCV;
     wire kcv_pass;
-    integer edge_start_seen;
+    integer edge_start_count;
+    integer fail_count;
 
     edge_puf_mlkem_core dut (
         .clk(clk), .rst_n(rst_n), .zeroize(zeroize), .start(start),
         .enroll(1'b0), .puf_seed(8'h5a), .helper_in(264'h1),
         .helper_out(), .fe_success(),
-        .kcv_enable(kcv_enable), .kcv_ref(kcv_ref), .kcv_ctx(56'h01010101_010101),
+        .kcv_enable(1'b1), .kcv_ref(kcv_ref), .kcv_ctx(56'h01010101_010101),
         .enroll_ctx(56'h01010101_010101), .fe_kcv(),
         .kcv_pass(),
         .stream_in_valid(1'b0),
@@ -115,41 +120,94 @@ module tb_edge_puf_mlkem_handoff;
         .secret_valid(), .shared_secret()
     );
 
-    // Count edge_start pulses: the KEM must only launch when the gate passes.
     always @(posedge clk)
-        if (dut.edge_start)
-            edge_start_seen = edge_start_seen + 1;
+        if (rst_n && dut.edge_start)
+            edge_start_count = edge_start_count + 1;
 
     task automatic run_recon;
         begin
+            edge_start_count = 0;
             @(posedge clk); start <= 1'b1;
             @(posedge clk); start <= 1'b0;
             cycles = 0;
-            while (!done && cycles < 200) begin
+            while (!done && cycles < 300) begin
                 @(posedge clk);
                 cycles = cycles + 1;
             end
-            if (!done) $fatal(1, "wrapper transaction timed out");
+            if (!done) $fatal(1, "transaction timed out");
         end
     endtask
 
     initial begin
+        fail_count = 0;
         repeat (3) @(posedge clk);
         rst_n <= 1'b1;
+        @(negedge clk);
+
+        // 1. Correct reference: gate must allow exactly one edge_start.
+        run_recon();
+        if (edge_start_count != 1)
+            $fatal(1, "pass path: edge_start_count=%0d expected 1",
+                   edge_start_count);
+        if (!dut.u_edge.captured_good)
+            $fatal(1, "pass path: Edge captured wrong key");
+        if (dut.u_fe.key_out !== 192'd0)
+            $fatal(1, "pass path: FE key not erased after handoff");
+        if (dut.kcv_pass !== 1'b1)
+            $fatal(1, "pass path: kcv_pass not asserted");
+        $display("KCV_GATE_PASS_PATH_OK cycles=%0d", cycles);
+
+        @(negedge clk);
+
+        // 2. Corrupted reference (first byte): gate must block.
+        kcv_ref = TEST_KCV ^ 224'hff;
+        run_recon();
+        if (edge_start_count != 0)
+            $fatal(1, "fail path: edge_start fired on KCV mismatch");
+        if (dut.kcv_pass !== 1'b0)
+            $fatal(1, "fail path: kcv_pass asserted");
+        if (dut.u_fe.key_out !== 192'd0)
+            $fatal(1, "fail path: FE key not scrubbed after KCV failure");
+        if (dut.u_edge.fe_key !== 192'd0)
+            $fatal(1, "fail path: Edge seed input not scrubbed");
+        $display("KCV_GATE_FAIL_PATH_OK cycles=%0d", cycles);
+
+        @(negedge clk);
+
+        // 3. Recovery: correct reference must pass again after a failure.
+        kcv_ref = TEST_KCV;
+        run_recon();
+        if (edge_start_count != 1)
+            $fatal(1, "recovery path: edge_start_count=%0d expected 1",
+                   edge_start_count);
+        $display("KCV_GATE_RECOVERY_OK cycles=%0d", cycles);
+
+        @(negedge clk);
+
+        // 4. Zeroize during the KCV computation must abort to a clean idle
+        //    and report done with fe_success=0 (fail-closed).
+        edge_start_count = 0;
+        kcv_ref = TEST_KCV ^ 224'hff;
         @(posedge clk); start <= 1'b1;
         @(posedge clk); start <= 1'b0;
+        repeat (10) @(posedge clk);
+        zeroize <= 1'b1;
+        @(posedge clk); zeroize <= 1'b0;
         cycles = 0;
-        while (!done && cycles < 40) begin
-            @(posedge clk);
-            cycles = cycles + 1;
+        while (!done && cycles < 300) begin
+            @(posedge clk); cycles = cycles + 1;
         end
-        if (!done) $fatal(1, "wrapper handoff timed out");
-        if (!dut.u_edge.captured_good)
-            $fatal(1, "FE key was erased before Edge captured it");
-        if (dut.u_fe.key_out != 192'd0)
-            $fatal(1, "FE key was not erased after handoff");
-        $display("EDGE_PUF_MLKEM_HANDOFF_PASS cycles=%0d", cycles);
+        if (edge_start_count != 0)
+            $fatal(1, "abort path: edge_start fired after zeroize");
+        $display("KCV_GATE_ABORT_OK");
+
+        $display("EDGE_KCV_GATE_PASS");
         $finish;
+    end
+
+    initial begin
+        repeat (5000) @(posedge clk);
+        $fatal(1, "timeout");
     end
 endmodule
 

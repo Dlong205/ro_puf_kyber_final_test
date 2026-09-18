@@ -3,6 +3,8 @@
 
 module tb_edge_uart_mlkem;
     localparam integer CLKS = 4;
+    `include "helper_record_spec.vh"
+    `include "helper_record_kat.vh"
     localparam [191:0] FE_KEY = {
         32'h17161514, 32'h13121110, 32'h0f0e0d0c,
         32'h0b0a0908, 32'h07060504, 32'h03020100
@@ -67,7 +69,9 @@ module tb_edge_uart_mlkem;
         .clk(clk), .rst_n(rst_n), .uart_rx_i(uart_rx),
         .uart_tx_o(uart_tx), .tx_active(), .core_start(core_start),
         .core_zeroize(core_zeroize), .core_enroll(core_enroll),
-        .helper_in(helper_in), .helper_out(264'd0), .fe_success(1'b1),
+        .helper_in(helper_in), .helper_out(264'd0), .core_fe_kcv(224'd0),
+        .core_kcv_enable(), .core_kcv_ref(), .core_kcv_ctx(),
+        .fe_success(1'b1),
         .core_done(edge_done), .core_busy(edge_busy),
         .ready_pk(ready_pk), .req_c(req_c),
         .stream_out_valid(stream_out_valid),
@@ -151,8 +155,8 @@ module tb_edge_uart_mlkem;
 
         send_uart(8'h02);
         expect_uart(8'h48);
-        for (index = 0; index < 33; index = index + 1)
-            send_uart(8'h00);
+        for (index = 0; index < HREC_BYTES; index = index + 1)
+            send_uart(HREC_KAT_RAW[8*index +: 8]);
         send_uart(8'h78); send_uart(8'h56);
         send_uart(8'h34); send_uart(8'h12);
 

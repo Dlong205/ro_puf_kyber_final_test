@@ -3,10 +3,29 @@
 
 // UART bring-up transport for the CPU-free Edge role.  The 32-bit tag is a
 // diagnostic equality check, not a cryptographic confirmation protocol.
+//
+// Phase 1: the public helper is carried inside a 76-byte versioned record
+// (scripts/helper_record_spec.py is the single source of truth).  The record
+// is parsed and enforced here, before the core runs BCH/KDF/ML-KEM, so a
+// wrong magic/version/profile/FE parameter/mapping/reserved byte/CRC or a
+// truncated/extra/timed-out stream can never launch the PUF, FE, KDF or
+// ML-KEM.  RTL remains the final security enforcement; the firmware mirror
+// only rejects earlier on the SoC path.
 module edge_uart_transport #(
     parameter integer CLKS_PER_BIT = 868,
     parameter integer PK_WORDS = 200,
-    parameter integer CT_WORDS = 192
+    parameter integer CT_WORDS = 192,
+    parameter integer RX_TIMEOUT = CLKS_PER_BIT * 24,
+    parameter [7:0]   HREC_PROFILE = 8'h01,
+    parameter [7:0]   HREC_FE_PARAM = 8'h01,
+    parameter [7:0]   HREC_MAPPING_LEN = 8'h00,
+    parameter [15:0]  HREC_MAPPING_TAG = 16'h0000,
+    parameter [7:0]   HREC_GENERATION = 8'h01,
+    // Legacy 33-byte helper is a diagnostic-only escape hatch, OFF by default
+    // so release builds cannot silently accept a bare helper.
+    parameter bit     LEGACY_HELPER_ENABLE = 1'b0,
+    // Enrollment is only permitted in provisioning/manufacturing lifecycle.
+    parameter bit     ALLOW_ENROLL = 1'b1
 ) (
     input  wire         clk,
     input  wire         rst_n,
@@ -19,6 +38,20 @@ module edge_uart_transport #(
     output reg          core_enroll,
     output reg  [263:0] helper_in,
     input  wire [263:0] helper_out,
+    input  wire [223:0] core_fe_kcv,
+    output reg          core_kcv_enable,
+    output reg  [223:0] core_kcv_ref,
+    output reg  [55:0]  core_kcv_ctx,
+    // Enrollment context assembled from the exact header parameters the
+    // emitted record carries (same source as build_enroll_record).  The core
+    // must never reuse a context latched from a previous SESSION: at ENROLL
+    // time core_kcv_ctx is still zero, which used to bind the published KCV
+    // to the wrong context (security review finding).
+    output wire [55:0]  core_enroll_ctx,
+    // Diagnostic record telemetry (characterization builds only).
+    output reg  [3:0]   record_status,
+    output reg          record_fail,
+    output reg          zeroize_done,
     input  wire         fe_success,
     input  wire         core_done,
     input  wire         core_busy,
@@ -35,11 +68,17 @@ module edge_uart_transport #(
     input  wire         secret_valid,
     input  wire [255:0] shared_secret
 );
+    `include "helper_record_spec.vh"
+
     localparam [7:0] CMD_INFO    = 8'h00;
     localparam [7:0] CMD_ENROLL  = 8'h01;
     localparam [7:0] CMD_SESSION = 8'h02;
     localparam [7:0] STATUS_OK   = 8'haa;
     localparam [7:0] STATUS_FAIL = 8'hff;
+
+    // Transport-level failure codes (record validation uses HREC_ERR_*).
+    localparam [7:0] FAIL_TIMEOUT = 8'hf0;
+    localparam [7:0] FAIL_TRAILING = 8'hf1;
 
     localparam [4:0] S_IDLE         = 5'd0;
     localparam [4:0] S_INFO         = 5'd1;
@@ -59,6 +98,9 @@ module edge_uart_transport #(
     localparam [4:0] S_RESULT_SEND  = 5'd15;
     localparam [4:0] S_ZEROIZE      = 5'd16;
     localparam [4:0] S_FAIL_SEND    = 5'd17;
+    localparam [4:0] S_NONCE_RX     = 5'd19;
+    localparam [4:0] S_RECORD_RX    = 5'd20;
+    localparam [4:0] S_POST_RECORD  = 5'd21;
 
     wire       rx_dv;
     wire [7:0] rx_byte;
@@ -77,6 +119,48 @@ module edge_uart_transport #(
     reg [31:0] result_tag;
     reg        ct_buffer_ready;
     reg [31:0] ct_buffer [0:CT_WORDS-1];
+
+    reg  [8*HREC_BYTES-1:0] record_raw;
+    reg  [7:0] fail_code;
+    reg  [31:0] rx_idle_count;
+    // Sequential CRC state: advanced one byte per received/sent UART byte.
+    reg  [15:0] rx_crc;
+    reg         crc_lo_ok;
+    reg  [15:0] tx_crc;
+
+    wire [3:0]   rec_status;
+    wire [263:0] rec_helper;
+    wire [223:0] rec_kcv;
+    wire [55:0]  rec_ctx;
+    wire [7:0]   rec_generation;
+
+    // On the final record byte the parser must see the byte that is being
+    // written this same cycle, otherwise a zero-cycle-dead nonce byte sent
+    // back-to-back by the host would be lost.  Bytes 0..74 already live in
+    // record_raw; substitute the incoming byte for slot 75.
+    wire [8*HREC_BYTES-1:0] record_eval =
+        (state == S_RECORD_RX && item_count == HREC_BYTES - 1)
+        ? {rx_byte, record_raw[8*(HREC_BYTES-1)-1:0]}
+        : record_raw;
+
+    // crc_lo_ok is latched at byte 74; the high byte is compared against the
+    // current rx_byte (byte 75, the last record byte).  Both are only sampled
+    // by the parser on that final cycle.
+    wire crc_ok_calc = crc_lo_ok && (rx_byte == rx_crc[15:8]);
+
+    helper_record_parse u_parse (
+        .raw(record_eval),
+        .expected_profile(HREC_PROFILE),
+        .expected_fe_param(HREC_FE_PARAM),
+        .expected_mapping_len(HREC_MAPPING_LEN),
+        .expected_mapping_tag(HREC_MAPPING_TAG),
+        .crc_ok(crc_ok_calc),
+        .status(rec_status),
+        .helper(rec_helper),
+        .kcv_ref(rec_kcv),
+        .kcv_ctx(rec_ctx),
+        .generation(rec_generation)
+    );
 
     // Kyber_Server samples ready_c before entering its continuous ciphertext
     // receive state.  UART is far too slow to supply that stream on demand,
@@ -114,11 +198,50 @@ module edge_uart_transport #(
                 3'd0: info_byte = 8'h45; // E
                 3'd1: info_byte = 8'h41; // A
                 3'd2: info_byte = 8'h01;
-                3'd3: info_byte = 8'h00;
-                default: info_byte = 8'h07; // enroll, session, diagnostic tag
+                3'd3: info_byte = 8'h01; // protocol minor: helper-record v1
+                // bit2 accelerator zeroize, bit3 versioned helper record.
+                default: info_byte = 8'h0f;
             endcase
         end
     endfunction
+
+    // Enrollment record byte at index idx (0..73), assembled from the
+    // provisioned header, the FE helper and the freshly computed KCV.  A byte
+    // mux only: the CRC is appended sequentially during transmission so no
+    // 592-stage combinational CRC cone is ever synthesized (security review
+    // finding).
+    function automatic [7:0] enroll_byte_fn;
+        input [9:0] idx;
+        begin
+            if (idx >= HREC_OFF_HELPER && idx < HREC_OFF_HELPER + HREC_HELPER_BYTES)
+                enroll_byte_fn = helper_out[8*(idx-HREC_OFF_HELPER) +: 8];
+            else if (idx >= HREC_OFF_KCV && idx < HREC_OFF_KCV + HREC_KCV_BYTES)
+                enroll_byte_fn = core_fe_kcv[8*(idx-HREC_OFF_KCV) +: 8];
+            else case (idx)
+                HREC_OFF_RECORD_VERSION:   enroll_byte_fn = HREC_RECORD_VERSION;
+                HREC_OFF_PROTOCOL_VERSION: enroll_byte_fn = HREC_PROTOCOL_VERSION;
+                HREC_OFF_PROFILE:          enroll_byte_fn = HREC_PROFILE;
+                HREC_OFF_FE_PARAM:         enroll_byte_fn = HREC_FE_PARAM;
+                HREC_OFF_MAPPING_LEN:      enroll_byte_fn = HREC_MAPPING_LEN;
+                HREC_OFF_MAPPING_TAG:      enroll_byte_fn = HREC_MAPPING_TAG[7:0];
+                HREC_OFF_MAPPING_TAG + 1:  enroll_byte_fn = HREC_MAPPING_TAG[15:8];
+                HREC_OFF_GENERATION:       enroll_byte_fn = HREC_GENERATION;
+                HREC_OFF_RESERVED:         enroll_byte_fn = 8'h00;
+                10'd0: enroll_byte_fn = HREC_MAGIC[7:0];
+                10'd1: enroll_byte_fn = HREC_MAGIC[15:8];
+                10'd2: enroll_byte_fn = HREC_MAGIC[23:16];
+                10'd3: enroll_byte_fn = HREC_MAGIC[31:24];
+                default: enroll_byte_fn = 8'h00;
+            endcase
+        end
+    endfunction
+
+    assign core_enroll_ctx = {HREC_GENERATION, HREC_MAPPING_TAG,
+                              HREC_FE_PARAM, HREC_PROFILE,
+                              HREC_PROTOCOL_VERSION, HREC_RECORD_VERSION};
+
+    // Legacy 33-byte path (diagnostic only) drives helper_in directly.
+    wire legacy_mode = LEGACY_HELPER_ENABLE;
 
     // Keep transport state reset synchronous. Several outputs feed the
     // accelerator RAM/FIFO control path; an asynchronous reset here is
@@ -130,6 +253,9 @@ module edge_uart_transport #(
             core_zeroize    <= 1'b0;
             core_enroll     <= 1'b0;
             helper_in       <= 264'd0;
+            core_kcv_enable <= 1'b0;
+            core_kcv_ref    <= 224'd0;
+            core_kcv_ctx    <= 56'd0;
             peer_req_pk     <= 1'b0;
             stream_in_valid <= 1'b0;
             stream_in_data  <= 32'd0;
@@ -143,6 +269,15 @@ module edge_uart_transport #(
             nonce           <= 32'd0;
             result_tag      <= 32'd0;
             ct_buffer_ready <= 1'b0;
+            record_raw      <= {(8*HREC_BYTES){1'b0}};
+            fail_code       <= 8'h00;
+            rx_idle_count   <= 32'd0;
+            record_status   <= 4'd0;
+            record_fail     <= 1'b0;
+            zeroize_done    <= 1'b0;
+            rx_crc          <= 16'hFFFF;
+            crc_lo_ok       <= 1'b0;
+            tx_crc          <= 16'hFFFF;
         end else begin
             core_start      <= 1'b0;
             core_zeroize    <= 1'b0;
@@ -150,6 +285,7 @@ module edge_uart_transport #(
             stream_in_valid <= 1'b0;
             tx_dv           <= 1'b0;
             tx_done_d       <= tx_done;
+            zeroize_done    <= 1'b0;
             if (tx_done_pulse)
                 tx_inflight <= 1'b0;
 
@@ -157,16 +293,32 @@ module edge_uart_transport #(
                 S_IDLE: begin
                     item_count <= 10'd0;
                     byte_count <= 2'd0;
+                    rx_idle_count <= 32'd0;
                     if (rx_dv && rx_byte == CMD_INFO) begin
                         state <= S_INFO;
-                    end else if (rx_dv && rx_byte == CMD_ENROLL && !core_busy) begin
+                    end else if (rx_dv && rx_byte == CMD_ENROLL &&
+                                 !core_busy && ALLOW_ENROLL) begin
                         core_enroll <= 1'b1;
                         core_start <= 1'b1;
+                        // Never let a previous SESSION's record context or
+                        // reference leak into the enrollment transaction.
+                        core_kcv_enable <= 1'b0;
+                        core_kcv_ref <= 224'd0;
+                        core_kcv_ctx <= 56'd0;
+                        record_status <= 4'd0;
+                        record_fail <= 1'b0;
                         state <= S_ENROLL_WAIT;
-                    end else if (rx_dv && rx_byte == CMD_SESSION && !core_busy) begin
+                    end else if (rx_dv && rx_byte == CMD_SESSION &&
+                                 !core_busy) begin
                         core_enroll <= 1'b0;
+                        record_status <= 4'd0;
+                        record_fail <= 1'b0;
+                        // Release build always enforces the KCV gate; the
+                        // legacy diagnostic path bypasses the record parser.
+                        core_kcv_enable <= legacy_mode ? 1'b0 : 1'b1;
                         state <= S_HELPER_MARK;
                     end else if (rx_dv) begin
+                        fail_code <= 8'h01; // unsupported command
                         state <= S_FAIL_SEND;
                     end
                 end
@@ -188,27 +340,43 @@ module edge_uart_transport #(
                 S_ENROLL_WAIT: begin
                     if (core_done) begin
                         item_count <= 10'd0;
+                        tx_crc <= 16'hFFFF;
                         state <= fe_success ? S_ENROLL_SEND : S_FAIL_SEND;
+                        if (!fe_success)
+                            fail_code <= 8'h02; // enrollment FE failure
                     end
                 end
 
-                // STATUS_OK followed by the 33-byte public helper, LSB first.
+                // STATUS_OK followed by the 76-byte versioned helper record.
+                // CRC is advanced one byte per transmitted payload byte; the
+                // two trailing CRC bytes are tx_crc[7:0] and tx_crc[15:8].
                 S_ENROLL_SEND: begin
                     if (!tx_inflight) begin
-                        tx_byte <= item_count == 0 ? STATUS_OK :
-                                   helper_out[8*(item_count-1) +: 8];
+                        if (item_count == 0)
+                            tx_byte <= STATUS_OK;
+                        else if (item_count <= HREC_OFF_CRC)
+                            tx_byte <= enroll_byte_fn(item_count - 1);
+                        else if (item_count == HREC_OFF_CRC + 1)
+                            tx_byte <= tx_crc[7:0];
+                        else
+                            tx_byte <= tx_crc[15:8];
                         tx_dv <= 1'b1;
                         tx_inflight <= 1'b1;
+                        if (item_count >= 1 && item_count <= HREC_OFF_CRC)
+                            tx_crc <= hrec_crc16_step(tx_crc,
+                                    enroll_byte_fn(item_count - 1));
                     end
                     if (tx_done_pulse) begin
-                        if (item_count == 10'd33)
+                        if (item_count == HREC_BYTES)
                             state <= S_IDLE;
                         else
                             item_count <= item_count + 1'b1;
                     end
                 end
 
-                // 'H' requests 33 helper bytes followed by a 4-byte nonce.
+                // 'H' requests a 76-byte helper record followed by a 4-byte
+                // nonce.  The record is buffered and validated before the
+                // core may start.
                 S_HELPER_MARK: begin
                     if (!tx_inflight) begin
                         tx_byte <= 8'h48;
@@ -217,7 +385,88 @@ module edge_uart_transport #(
                     end
                     if (tx_done_pulse) begin
                         item_count <= 10'd0;
-                        state <= S_CONTEXT_RX;
+                        record_raw <= {(8*HREC_BYTES){1'b0}};
+                        rx_idle_count <= 32'd0;
+                        rx_crc <= 16'hFFFF;
+                        crc_lo_ok <= 1'b0;
+                        if (legacy_mode)
+                            state <= S_CONTEXT_RX;
+                        else
+                            state <= S_RECORD_RX;
+                    end
+                end
+
+                S_RECORD_RX: begin
+                    if (rx_dv) begin
+                        rx_idle_count <= 32'd0;
+                        if (item_count == HREC_BYTES - 1) begin
+                            // rec_status reflects record_eval (this byte) and
+                            // crc_ok_calc folds the byte-74 latched CRC low
+                            // with the byte-75 high half.
+                            record_status <= rec_status;
+                            if (rec_status != HREC_OK) begin
+                                fail_code <= {4'h0, rec_status};
+                                record_fail <= 1'b1;
+                                item_count <= 10'd0;
+                                state <= S_FAIL_SEND;
+                            end else begin
+                                helper_in <= rec_helper;
+                                core_kcv_ref <= rec_kcv;
+                                core_kcv_ctx <= rec_ctx;
+                                nonce <= 32'd0;
+                                item_count <= 10'd0;
+                                state <= S_NONCE_RX;
+                            end
+                        end else begin
+                            record_raw[8*item_count +: 8] <= rx_byte;
+                            if (item_count < HREC_OFF_CRC)
+                                rx_crc <= hrec_crc16_step(rx_crc, rx_byte);
+                            else if (item_count == HREC_OFF_CRC)
+                                crc_lo_ok <= (rx_byte == rx_crc[7:0]);
+                            item_count <= item_count + 1'b1;
+                        end
+                    end else if (rx_idle_count >= RX_TIMEOUT) begin
+                        fail_code <= FAIL_TIMEOUT;
+                        item_count <= 10'd0;
+                        state <= S_FAIL_SEND;
+                    end else begin
+                        rx_idle_count <= rx_idle_count + 1'b1;
+                    end
+                end
+
+                // Four nonce bytes, then launch the core with the validated
+                // record.  A trailing byte after the nonce aborts fail-closed.
+                S_NONCE_RX: begin
+                    if (rx_dv) begin
+                        rx_idle_count <= 32'd0;
+                        nonce[8*item_count +: 8] <= rx_byte;
+                        if (item_count == 10'd3) begin
+                            state <= S_POST_RECORD;
+                        end else begin
+                            item_count <= item_count + 1'b1;
+                        end
+                    end else if (rx_idle_count >= RX_TIMEOUT) begin
+                        fail_code <= FAIL_TIMEOUT;
+                        item_count <= 10'd0;
+                        state <= S_FAIL_SEND;
+                    end else begin
+                        rx_idle_count <= rx_idle_count + 1'b1;
+                    end
+                end
+
+                // Wait until the line is idle for a full byte time before
+                // launching the core.  A byte arriving in this window is a
+                // framing error (extra/trailing byte) and aborts fail-closed.
+                S_POST_RECORD: begin
+                    if (rx_dv) begin
+                        fail_code <= FAIL_TRAILING;
+                        item_count <= 10'd0;
+                        state <= S_FAIL_SEND;
+                    end else if (rx_idle_count >= CLKS_PER_BIT * 11) begin
+                        core_start <= 1'b1;
+                        state <= S_WAIT_PK;
+                    end else begin
+                        rx_idle_count <= rx_idle_count + 1'b1;
                     end
                 end
 
@@ -241,6 +490,8 @@ module edge_uart_transport #(
                         item_count <= 10'd0;
                         state <= S_PK_MARK;
                     end else if (core_done) begin
+                        fail_code <= 8'h03; // reconstruction failed
+                        item_count <= 10'd0;
                         state <= S_FAIL_SEND;
                     end
                 end
@@ -368,23 +619,35 @@ module edge_uart_transport #(
 
                 S_ZEROIZE: begin
                     core_zeroize <= 1'b1;
+                    zeroize_done <= 1'b1;
                     helper_in <= 264'd0;
+                    core_kcv_enable <= 1'b0;
+                    core_kcv_ref <= 224'd0;
+                    core_kcv_ctx <= 56'd0;
                     nonce <= 32'd0;
                     result_tag <= 32'd0;
                     stream_in_data <= 32'd0;
                     word_shift <= 32'd0;
                     ct_buffer_ready <= 1'b0;
+                    record_raw <= {(8*HREC_BYTES){1'b0}};
+                    rx_idle_count <= 32'd0;
                     state <= S_IDLE;
                 end
 
+                // STATUS_FAIL plus a failure code byte (record validation
+                // code, transport timeout, or command error).
                 S_FAIL_SEND: begin
                     if (!tx_inflight) begin
-                        tx_byte <= STATUS_FAIL;
+                        tx_byte <= item_count == 0 ? STATUS_FAIL : fail_code;
                         tx_dv <= 1'b1;
                         tx_inflight <= 1'b1;
                     end
-                    if (tx_done_pulse)
-                        state <= S_ZEROIZE;
+                    if (tx_done_pulse) begin
+                        if (item_count == 10'd1)
+                            state <= S_ZEROIZE;
+                        else
+                            item_count <= item_count + 1'b1;
+                    end
                 end
 
                 default: state <= S_ZEROIZE;

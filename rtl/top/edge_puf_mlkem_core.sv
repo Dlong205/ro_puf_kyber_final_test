@@ -17,6 +17,20 @@ module edge_puf_mlkem_core (
     output wire [263:0] helper_out,
     output wire         fe_success,
 
+    // Same-root binding (docs/PUF_ROOT_BINDING_DESIGN.md).  The reference is
+    // a public KCV verifier provisioned with the enrollment; disabling the
+    // gate is only allowed in diagnostic builds that never become artifacts.
+    input  wire         kcv_enable,
+    input  wire [223:0] kcv_ref,
+    input  wire [55:0]  kcv_ctx,
+    input  wire [55:0]  enroll_ctx,
+    output wire         kcv_pass,
+    output reg  [223:0] fe_kcv,
+    // Diagnostic telemetry (characterization builds only; release protocols
+    // must not expose these as a byte-position oracle).
+    output wire [7:0]   bch_corr_bits,
+    output reg          kcv_fail,
+
     input  wire         stream_in_valid,
     input  wire         peer_ready_c,
     input  wire         peer_req_pk,
@@ -38,10 +52,12 @@ module edge_puf_mlkem_core (
     localparam [3:0] ST_PUF_WAIT   = 4'd2;
     localparam [3:0] ST_FE_START   = 4'd3;
     localparam [3:0] ST_FE_WAIT    = 4'd4;
-    localparam [3:0] ST_EDGE_START = 4'd5;
-    localparam [3:0] ST_EDGE_WAIT  = 4'd6;
-    localparam [3:0] ST_FE_ERASE   = 4'd7;
-    localparam [3:0] ST_DONE       = 4'd8;
+    localparam [3:0] ST_KCV_CHECK  = 4'd5;
+    localparam [3:0] ST_EDGE_START = 4'd6;
+    localparam [3:0] ST_EDGE_WAIT  = 4'd7;
+    localparam [3:0] ST_FE_ERASE   = 4'd8;
+    localparam [3:0] ST_DONE       = 4'd9;
+    localparam [3:0] ST_KCV_GEN    = 4'd10;
 
     reg [3:0] state;
     reg start_seen;
@@ -65,16 +81,36 @@ module edge_puf_mlkem_core (
     // FE captures the PUF response on ST_FE_START. Erase the PUF one cycle
     // later.  Keep the FE key through ST_EDGE_START: edge_seed_controller and
     // its KDF capture the key on that state's closing edge.  ST_EDGE_WAIT is
-    // therefore the earliest safe FE erase point.
+    // therefore the earliest safe FE erase point.  The KCV check keeps the
+    // FE key until the comparison completes; ST_EDGE_START (pass) or
+    // ST_FE_ERASE (fail) is the erase point in both paths.
     wire puf_zeroize = zeroize || state == ST_FE_WAIT ||
-                       state == ST_EDGE_START || state == ST_EDGE_WAIT ||
-                       state == ST_FE_ERASE || state == ST_DONE;
+                        state == ST_KCV_CHECK || state == ST_KCV_GEN ||
+                        state == ST_EDGE_START ||
+                        state == ST_EDGE_WAIT || state == ST_FE_ERASE ||
+                        state == ST_DONE;
     wire fe_zeroize = zeroize || state == ST_EDGE_WAIT ||
-                      state == ST_FE_ERASE;
+                      state == ST_FE_ERASE || state == ST_DONE;
 
     assign busy = (state != ST_IDLE) && (state != ST_DONE);
     assign done = state == ST_DONE;
     assign fe_success = result_success;
+    assign kcv_pass = kcv_match_reg;
+
+    edge_root_binding u_kcv (
+        .clk(clk), .rst_n(rst_n), .zeroize(zeroize),
+        .start((state == ST_KCV_CHECK || state == ST_KCV_GEN) && !kcv_done),
+        .root_key(fe_key),
+        .kcv_ctx(state == ST_KCV_GEN ? enroll_ctx : kcv_ctx),
+        .kcv_ref(kcv_ref),
+        .busy(), .done(kcv_done), .kcv_pass(kcv_match),
+        .kcv_out(kcv_digest)
+    );
+
+    reg  kcv_match_reg;
+    wire kcv_done;
+    wire kcv_match;
+    wire [223:0] kcv_digest;
 
     kp_puf_top u_puf (
         .clk(clk), .rst_n(rst_n), .zeroize(puf_zeroize),
@@ -89,7 +125,8 @@ module edge_puf_mlkem_core (
         .start(fe_start), .mode(!mode_enroll),
         .response_in(puf_response), .helper_in(helper_in),
         .helper_out(helper_out), .key_out(fe_key), .busy(fe_busy),
-        .done(fe_done), .success(fe_result)
+        .done(fe_done), .success(fe_result),
+        .corr_bit_count(bch_corr_bits)
     );
 
     edge_mlkem_core u_edge (
@@ -110,11 +147,17 @@ module edge_puf_mlkem_core (
             start_seen     <= 1'b0;
             mode_enroll    <= 1'b0;
             result_success <= 1'b0;
+            kcv_match_reg  <= 1'b0;
+            fe_kcv         <= 224'd0;
+            kcv_fail       <= 1'b0;
         end else if (zeroize) begin
             state          <= ST_IDLE;
             start_seen     <= 1'b1;
             mode_enroll    <= 1'b0;
             result_success <= 1'b0;
+            kcv_match_reg  <= 1'b0;
+            fe_kcv         <= 224'd0;
+            kcv_fail       <= 1'b0;
         end else begin
             if (!start)
                 start_seen <= 1'b0;
@@ -125,6 +168,8 @@ module edge_puf_mlkem_core (
                 ST_IDLE: begin
                     result_success <= 1'b0;
                     if (start_accept) begin
+                        kcv_match_reg <= 1'b0;
+                        kcv_fail <= 1'b0;
                         mode_enroll <= enroll;
                         state <= ST_PUF_START;
                     end
@@ -135,12 +180,37 @@ module edge_puf_mlkem_core (
                 ST_FE_WAIT: begin
                     if (fe_done) begin
                         result_success <= fe_result;
-                        if (!mode_enroll && fe_result)
+                        if (mode_enroll && fe_result)
+                            state <= ST_KCV_GEN;
+                        else if (!mode_enroll && fe_result && kcv_enable)
+                            state <= ST_KCV_CHECK;
+                        else if (!mode_enroll && fe_result)
                             state <= ST_EDGE_START;
                         else
                             state <= ST_FE_ERASE;
                     end
                 end
+                // Enrollment runs the same SHAKE256 KCV core over the freshly
+                // generated FE key to publish the public KCV verifier in the
+                // helper record.  No comparison is needed on this path.
+                ST_KCV_GEN:
+                    if (kcv_done) begin
+                        fe_kcv <= kcv_digest;
+                        state <= ST_DONE;
+                    end
+                // The KCV verifier latches the FE key on its start cycle and
+                // holds it internally until done, so ST_KCV_CHECK may erase
+                // the FE copy one cycle after entry.  Wait for the verifier
+                // to finish before branching on its result.  The gate
+                // decision is registered here because the verifier drops
+                // kcv_pass on its return to IDLE while edge_start is still
+                // asserted.
+                ST_KCV_CHECK:
+                    if (kcv_done) begin
+                        kcv_match_reg <= kcv_match;
+                        kcv_fail <= ~kcv_match;
+                        state <= kcv_match ? ST_EDGE_START : ST_FE_ERASE;
+                    end
                 ST_EDGE_START: state <= ST_EDGE_WAIT;
                 ST_EDGE_WAIT: if (edge_done) state <= ST_DONE;
                 ST_FE_ERASE: state <= ST_DONE;
@@ -156,6 +226,8 @@ module edge_puf_mlkem_core (
             $error("Edge launched without successful reconstruction");
         if (!zeroize && state == ST_EDGE_WAIT && !fe_zeroize)
             $error("FE key was not erased after Edge handoff");
+        if (!zeroize && edge_start && kcv_enable && !kcv_match_reg)
+            $error("KCV gate bypassed: edge_start without kcv_match");
     end
 `endif
 endmodule

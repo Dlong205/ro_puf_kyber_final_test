@@ -1,8 +1,15 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
+// Transport tests for the Phase-1 versioned helper record.  Enrollment must
+// emit a full 76-byte record; reconstruction must accept exactly 76 record
+// bytes, validate them before starting the core, and reject malformed records
+// without producing a core start pulse.
 module tb_edge_uart_transport;
     localparam integer CLKS = 4;
+    `include "helper_record_spec.vh"
+    `include "helper_record_kat.vh"
+
     reg clk = 1'b0;
     always #5 clk = ~clk;
     reg rst_n = 1'b0;
@@ -11,7 +18,11 @@ module tb_edge_uart_transport;
 
     wire core_start, core_zeroize, core_enroll;
     wire [263:0] helper_in;
-    reg [263:0] helper_out = 264'd0;
+    reg  [263:0] helper_out = HREC_KAT_HELPER;
+    reg  [223:0] core_fe_kcv = HREC_KAT_KCV;
+    wire core_kcv_enable;
+    wire [223:0] core_kcv_ref;
+    wire [55:0]  core_kcv_ctx;
     reg fe_success = 1'b0;
     reg core_done = 1'b0;
     reg core_busy = 1'b0;
@@ -29,6 +40,7 @@ module tb_edge_uart_transport;
     integer pk_index = 0;
     integer ct_index = 0;
     integer delay_count = 0;
+    integer start_count = 0;
 
     edge_uart_transport #(
         .CLKS_PER_BIT(CLKS), .PK_WORDS(2), .CT_WORDS(2)
@@ -37,6 +49,8 @@ module tb_edge_uart_transport;
         .uart_tx_o(uart_tx), .tx_active(), .core_start(core_start),
         .core_zeroize(core_zeroize), .core_enroll(core_enroll),
         .helper_in(helper_in), .helper_out(helper_out),
+        .core_fe_kcv(core_fe_kcv), .core_kcv_enable(core_kcv_enable),
+        .core_kcv_ref(core_kcv_ref), .core_kcv_ctx(core_kcv_ctx),
         .fe_success(fe_success), .core_done(core_done),
         .core_busy(core_busy), .ready_pk(ready_pk), .req_c(req_c),
         .stream_out_valid(stream_out_valid),
@@ -45,6 +59,10 @@ module tb_edge_uart_transport;
         .stream_in_data(stream_in_data), .secret_valid(secret_valid),
         .shared_secret(shared_secret)
     );
+
+    always @(posedge clk)
+        if (core_start && !core_enroll)
+            start_count = start_count + 1;
 
     always @(posedge clk) begin
         core_done <= 1'b0;
@@ -61,16 +79,16 @@ module tb_edge_uart_transport;
             core_busy <= 1'b1;
             delay_count <= 2;
             if (core_enroll) begin
-                helper_out <= {33{8'h00}};
                 fe_success <= 1'b1;
             end else begin
-                if (helper_in != {
-                    8'h20,8'h1f,8'h1e,8'h1d,8'h1c,8'h1b,8'h1a,8'h19,
-                    8'h18,8'h17,8'h16,8'h15,8'h14,8'h13,8'h12,8'h11,
-                    8'h10,8'h0f,8'h0e,8'h0d,8'h0c,8'h0b,8'h0a,8'h09,
-                    8'h08,8'h07,8'h06,8'h05,8'h04,8'h03,8'h02,8'h01,8'h00
-                })
-                    $fatal(1, "helper context changed byte order");
+                if (helper_in != HREC_KAT_HELPER)
+                    $fatal(1, "parsed helper differs from record");
+                if (core_kcv_ref != HREC_KAT_KCV)
+                    $fatal(1, "parsed kcv differs from record");
+                if (core_kcv_ctx != HREC_KAT_CTX)
+                    $fatal(1, "parsed ctx differs from record");
+                if (!core_kcv_enable)
+                    $fatal(1, "record path did not enable the KCV gate");
                 ready_pk <= 1'b0;
                 pk_index <= 0;
                 ct_index <= 0;
@@ -79,12 +97,6 @@ module tb_edge_uart_transport;
             delay_count <= delay_count - 1;
             if (delay_count == 1) begin
                 if (core_enroll) begin
-                    helper_out <= {
-                        8'h20,8'h1f,8'h1e,8'h1d,8'h1c,8'h1b,8'h1a,8'h19,
-                        8'h18,8'h17,8'h16,8'h15,8'h14,8'h13,8'h12,8'h11,
-                        8'h10,8'h0f,8'h0e,8'h0d,8'h0c,8'h0b,8'h0a,8'h09,
-                        8'h08,8'h07,8'h06,8'h05,8'h04,8'h03,8'h02,8'h01,8'h00
-                    };
                     core_done <= 1'b1;
                     core_busy <= 1'b0;
                 end else begin
@@ -95,12 +107,9 @@ module tb_edge_uart_transport;
             stream_out_data <= pk_index == 0 ? 32'h03020100 : 32'h07060504;
             stream_out_valid <= 1'b1;
             pk_index <= pk_index + 1;
-            if (pk_index == 1) begin
+            if (pk_index == 1)
                 ready_pk <= 1'b0;
-            end
         end else if (!req_c && peer_ready_c) begin
-            // Match Kyber_Server: enter the receive state only after the
-            // peer says the complete ciphertext stream is available.
             req_c <= 1'b1;
         end else if (stream_in_valid) begin
             if (!req_c)
@@ -156,24 +165,39 @@ module tb_edge_uart_transport;
     endtask
 
     integer index;
+    reg [7:0] ignored;
     reg [31:0] expected_tag;
+    reg [8*HREC_BYTES-1:0] sent_record;
     initial begin
         repeat (5) @(posedge clk);
         rst_n = 1'b1;
 
         send_uart(8'h00);
         expect_uart(8'h45); expect_uart(8'h41); expect_uart(8'h01);
-        expect_uart(8'h00); expect_uart(8'h07);
+        expect_uart(8'h01); expect_uart(8'h0f);
 
+        // Enrollment must return a full 76-byte record.
         send_uart(8'h01);
         expect_uart(8'haa);
-        for (index = 0; index < 33; index = index + 1)
-            expect_uart(index[7:0]);
+        for (index = 0; index < HREC_BYTES; index = index + 1) begin
+            recv_uart(sent_record[8*index +: 8]);
+        end
+        if (sent_record[8*0 +: 32] !== HREC_MAGIC)
+            $fatal(1, "enroll record magic wrong");
+        if (sent_record[8*HREC_OFF_PROFILE +: 8] !== HREC_KAT_PROFILE)
+            $fatal(1, "enroll record profile wrong");
+        if (sent_record[8*HREC_OFF_HELPER +: 264] !== HREC_KAT_HELPER)
+            $fatal(1, "enroll record helper wrong");
+        if (sent_record[8*HREC_OFF_KCV +: 224] !== HREC_KAT_KCV)
+            $fatal(1, "enroll record kcv wrong");
+        if (sent_record[8*HREC_OFF_CRC +: 16] !== hrec_crc16(sent_record))
+            $fatal(1, "enroll record crc wrong");
 
+        // Session: 76 record bytes + 4-byte nonce.
         send_uart(8'h02);
         expect_uart(8'h48);
-        for (index = 0; index < 33; index = index + 1)
-            send_uart(index[7:0]);
+        for (index = 0; index < HREC_BYTES; index = index + 1)
+            send_uart(HREC_KAT_RAW[8*index +: 8]);
         send_uart(8'h78); send_uart(8'h56); send_uart(8'h34); send_uart(8'h12);
         expect_uart(8'h50);
         for (index = 0; index < 8; index = index + 1)
@@ -196,7 +220,9 @@ module tb_edge_uart_transport;
         repeat (5) @(posedge clk);
         if (!core_zeroize && dut.state != 0)
             $fatal(1, "transport did not return idle after zeroize");
-        $display("EDGE_UART_TRANSPORT_PASS tag=%08x", expected_tag);
+        if (start_count != 1)
+            $fatal(1, "expected one core start, got %0d", start_count);
+        $display("EDGE_UART_RECORD_TRANSPORT_PASS tag=%08x", expected_tag);
         $finish;
     end
 endmodule
