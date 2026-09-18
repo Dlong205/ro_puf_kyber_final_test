@@ -1,0 +1,5 @@
+## B4 LOCK_PINS export from the accepted implementation (RO LUTs only).
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} [get_cells -hierarchical -filter {NAME == "u_bench/ro0/u_backend/LUT6_INV0"}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} [get_cells -hierarchical -filter {NAME == "u_bench/ro0/u_backend/LUT6_INV1"}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} [get_cells -hierarchical -filter {NAME == "u_bench/ro0/u_backend/LUT6_INV2"}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} [get_cells -hierarchical -filter {NAME == "u_bench/ro0/u_backend/LUT6_NAND0"}]

@@ -1,0 +1,11 @@
+## B2 placement export (LOC/BEL only) from the accepted B1 implementation.
+set_property BEL SLICEL.A6LUT [get_cells -hierarchical -filter {NAME == "u_bench/ro0/u_backend/LUT6_INV0"}]
+set_property LOC SLICE_X106Y85 [get_cells -hierarchical -filter {NAME == "u_bench/ro0/u_backend/LUT6_INV0"}]
+set_property BEL SLICEL.A6LUT [get_cells -hierarchical -filter {NAME == "u_bench/ro0/u_backend/LUT6_INV1"}]
+set_property LOC SLICE_X107Y85 [get_cells -hierarchical -filter {NAME == "u_bench/ro0/u_backend/LUT6_INV1"}]
+set_property BEL SLICEL.B6LUT [get_cells -hierarchical -filter {NAME == "u_bench/ro0/u_backend/LUT6_INV2"}]
+set_property LOC SLICE_X107Y85 [get_cells -hierarchical -filter {NAME == "u_bench/ro0/u_backend/LUT6_INV2"}]
+set_property BEL SLICEL.B6LUT [get_cells -hierarchical -filter {NAME == "u_bench/ro0/u_backend/LUT6_NAND0"}]
+set_property LOC SLICE_X106Y85 [get_cells -hierarchical -filter {NAME == "u_bench/ro0/u_backend/LUT6_NAND0"}]
+set_property BEL SLICEM.AFF [get_cells -hierarchical -filter {NAME == "u_bench/presc_fdce"}]
+set_property LOC SLICE_X102Y85 [get_cells -hierarchical -filter {NAME == "u_bench/presc_fdce"}]
