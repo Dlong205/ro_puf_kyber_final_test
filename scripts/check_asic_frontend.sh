@@ -4,10 +4,14 @@ set -euo pipefail
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 verilator_bin="${VERILATOR:-verilator}"
 build_dir="${ASIC_FRONTEND_BUILD_DIR:-$root_dir/build/asic_frontend}"
-lint_dir="$build_dir/verilator"
-log_file="$lint_dir/verilator.log"
-summary_file="$lint_dir/warning_summary.txt"
-dependency_file="$lint_dir/obj_dir/VKyber_System_Asic_Top__verFiles.dat"
+lint_root="$build_dir/verilator"
+# Both boundaries elaborate from the same canonical locked filelist: the legacy
+# SoC loopback and the CPU-free same-root bound PUF/FE/KCV/KDF/ML-KEM chain.
+# Sources and include sets are shared; only --top-module differs.
+tops=(
+  Kyber_System_Asic_Top
+  Edge_Puf_Mlkem_Asic_Top
+)
 
 "$root_dir/scripts/check_asic_filelists.sh"
 command -v "$verilator_bin" >/dev/null 2>&1 || {
@@ -20,7 +24,6 @@ command -v "$verilator_bin" >/dev/null 2>&1 || {
 # canonical synthesis filelist continues to name the original RTL sources.
 make -C "$root_dir/sim/fuzzy_extractor" -j1 rtl_tcq0/.stamp >/dev/null
 fe_dir="$root_dir/sim/fuzzy_extractor/rtl_tcq0"
-mkdir -p "$lint_dir"
 
 # The Verilator-specific TCQ=0 copy must not silently change any include file.
 while IFS= read -r header_path || [[ -n "$header_path" ]]; do
@@ -43,86 +46,99 @@ for index in "${!sources[@]}"; do
   fi
 done
 
+check_asic_frontend() {
+  local top_module="$1"
+  local lint_dir="$lint_root/$top_module"
+  local log_file="$lint_dir/verilator.log"
+  local summary_file="$lint_dir/warning_summary.txt"
+  local dependency_file="$lint_dir/obj_dir/V${top_module}__verFiles.dat"
+  mkdir -p "$lint_dir"
+
 set +e
-"$verilator_bin" --cc --no-skip-identical --timing \
-  --top-module Kyber_System_Asic_Top \
-  --Mdir "$lint_dir/obj_dir" -DKP_TARGET_ASIC \
-  -I"$root_dir/rtl/kyber/ref" \
-  -I"$root_dir/rtl/common" \
-  -I"$root_dir/rtl/hash_core" \
-  -I"$fe_dir" \
-  -I"$root_dir/rtl/puf" \
-  -Wall -Wno-fatal "${sources[@]}" >"$log_file" 2>&1
-verilator_status=$?
-set -e
+    "$verilator_bin" --cc --no-skip-identical --timing \
+      --top-module "$top_module" \
+      --Mdir "$lint_dir/obj_dir" -DKP_TARGET_ASIC \
+      -I"$root_dir/rtl/kyber/ref" \
+      -I"$root_dir/rtl/common" \
+      -I"$root_dir/rtl/hash_core" \
+      -I"$fe_dir" \
+      -I"$root_dir/rtl/puf" \
+      -Wall -Wno-fatal "${sources[@]}" >"$log_file" 2>&1
+    verilator_status=$?
+    set -e
 
-{
-  echo "tool=$($verilator_bin --version)"
-  echo "top=Kyber_System_Asic_Top"
-  echo "define=KP_TARGET_ASIC"
-  echo "source_filelist=asic/filelists/system_asic.f"
-  rg '^%Warning-[A-Z0-9_]+' "$log_file" |
-    sed -E 's/^%Warning-([A-Z0-9_]+).*/\1/' |
-    sort | uniq -c | sort -nr || true
-} > "$summary_file"
+    {
+      echo "tool=$($verilator_bin --version)"
+      echo "top=$top_module"
+      echo "define=KP_TARGET_ASIC"
+      echo "source_filelist=asic/filelists/system_asic.f"
+      rg '^%Warning-[A-Z0-9_]+' "$log_file" |
+        sed -E 's/^%Warning-([A-Z0-9_]+).*/\1/' |
+        sort | uniq -c | sort -nr || true
+    } > "$summary_file"
 
-if [[ $verilator_status -ne 0 ]]; then
-  rg -n '^%Error' "$log_file" >&2 || true
-  echo "ERROR: ASIC top elaboration failed; see $log_file" >&2
-  exit "$verilator_status"
-fi
+    if [[ $verilator_status -ne 0 ]]; then
+      rg -n '^%Error' "$log_file" >&2 || true
+      echo "ERROR: ASIC top elaboration failed: $top_module; see $log_file" >&2
+      exit "$verilator_status"
+    fi
 
-test -s "$dependency_file" || {
-  echo "ERROR: Verilator did not emit a dependency record: $dependency_file" >&2
-  exit 1
-}
+    test -s "$dependency_file" || {
+      echo "ERROR: Verilator did not emit a dependency record: $dependency_file" >&2
+      exit 1
+    }
 
-# Verilator can auto-load a module by filename from -I. Compare its dependency
-# record with the explicit compile list so such a hidden source cannot make the
-# canonical filelist appear complete.
-if ! diff -u \
-    <(printf '%s\n' "${sources[@]}" | LC_ALL=C sort -u) \
-    <(awk -F'"' '$1 ~ /^S[[:space:]]/ {print $(NF-1)}' "$dependency_file" |
-      awk -v prefix="$root_dir/" 'index($0, prefix) == 1 && $0 ~ /[.]s?v$/' |
-      LC_ALL=C sort -u); then
-  echo "ERROR: implicit or missing RTL translation unit in Verilator dependency closure" >&2
-  exit 1
-fi
+    # Verilator can auto-load a module by filename from -I. Compare its
+    # dependency record with the explicit compile list so such a hidden source
+    # cannot make the canonical filelist appear complete.
+    if ! diff -u \
+        <(printf '%s\n' "${sources[@]}" | LC_ALL=C sort -u) \
+        <(awk -F'"' '$1 ~ /^S[[:space:]]/ {print $(NF-1)}' "$dependency_file" |
+          awk -v prefix="$root_dir/" 'index($0, prefix) == 1 && $0 ~ /[.]s?v$/' |
+          LC_ALL=C sort -u); then
+      echo "ERROR: implicit or missing RTL translation unit in Verilator dependency closure" >&2
+      exit 1
+    fi
 
-mapfile -t expected_headers < <(awk 'NF && $1 !~ /^#/ {print}' \
-  "$root_dir/asic/filelists/include_files.txt")
-for index in "${!expected_headers[@]}"; do
-  if [[ "${expected_headers[$index]}" == rtl/fuzzy_extractor/* ]]; then
-    expected_headers[$index]="$fe_dir/${expected_headers[$index]##*/}"
-  else
-    expected_headers[$index]="$root_dir/${expected_headers[$index]}"
-  fi
+    mapfile -t expected_headers < <(awk 'NF && $1 !~ /^#/ {print}' \
+      "$root_dir/asic/filelists/include_files.txt")
+    for index in "${!expected_headers[@]}"; do
+      if [[ "${expected_headers[$index]}" == rtl/fuzzy_extractor/* ]]; then
+        expected_headers[$index]="$fe_dir/${expected_headers[$index]##*/}"
+      else
+        expected_headers[$index]="$root_dir/${expected_headers[$index]}"
+      fi
+    done
+    if ! diff -u \
+        <(printf '%s\n' "${expected_headers[@]}" | LC_ALL=C sort -u) \
+        <(awk -F'"' '$1 ~ /^S[[:space:]]/ {print $(NF-1)}' "$dependency_file" |
+          awk -v prefix="$root_dir/" 'index($0, prefix) == 1 && $0 ~ /[.]s?vh$/' |
+          LC_ALL=C sort -u); then
+      echo "ERROR: implicit or missing RTL header in Verilator dependency closure" >&2
+      exit 1
+    fi
+
+    if rg -n '^%Warning-(MULTIDRIVEN|IMPLICIT|LATCH|UNOPTFLAT)' "$log_file"; then
+      echo "ERROR: unwaived structural lint finding; see $log_file" >&2
+      exit 1
+    fi
+
+    unexpected_undriven="$(rg '^%Warning-UNDRIVEN' "$log_file" |
+      rg -v 'rtl/asic/kp_asic_ro_macro_blackbox[.]sv' || true)"
+    if [[ -n "$unexpected_undriven" ]]; then
+      echo "$unexpected_undriven" >&2
+      echo "ERROR: undriven signal outside the intentional RO macro black-box" >&2
+      exit 1
+    fi
+  }
+
+for top in "${tops[@]}"; do
+  check_asic_frontend "$top"
 done
-if ! diff -u \
-    <(printf '%s\n' "${expected_headers[@]}" | LC_ALL=C sort -u) \
-    <(awk -F'"' '$1 ~ /^S[[:space:]]/ {print $(NF-1)}' "$dependency_file" |
-      awk -v prefix="$root_dir/" 'index($0, prefix) == 1 && $0 ~ /[.]s?vh$/' |
-      LC_ALL=C sort -u); then
-  echo "ERROR: implicit or missing RTL header in Verilator dependency closure" >&2
-  exit 1
-fi
 
-if rg -n '^%Warning-(MULTIDRIVEN|IMPLICIT|LATCH|UNOPTFLAT)' "$log_file"; then
-  echo "ERROR: unwaived structural lint finding; see $log_file" >&2
-  exit 1
-fi
-
-unexpected_undriven="$(rg '^%Warning-UNDRIVEN' "$log_file" |
-  rg -v 'rtl/asic/kp_asic_ro_macro_blackbox[.]sv' || true)"
-if [[ -n "$unexpected_undriven" ]]; then
-  echo "$unexpected_undriven" >&2
-  echo "ERROR: undriven signal outside the intentional RO macro black-box" >&2
-  exit 1
-fi
-
-warning_count="$(rg -c '^%Warning' "$log_file" || true)"
-echo "PASS: Kyber_System_Asic_Top elaborates from the canonical filelist"
+warning_total="$(rg -I '^%Warning' "$lint_root"/*/verilator.log 2>/dev/null | wc -l || true)"
+echo "PASS: all ASIC boundary tops elaborate from the canonical filelist"
 echo "PASS: Verilator used no implicit RTL source/header outside the locked lists"
 echo "PASS: no MULTIDRIVEN, IMPLICIT, LATCH or UNOPTFLAT finding"
-echo "INFO: $warning_count non-gating lint warnings remain; see $summary_file"
+echo "INFO: $warning_total non-gating lint warnings remain; see per-top verilator.log"
 echo "INFO: the intentional RO macro black-box remains undriven until PDK integration"

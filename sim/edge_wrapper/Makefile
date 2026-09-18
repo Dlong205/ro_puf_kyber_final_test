@@ -1,4 +1,4 @@
-.PHONY: all kcv gate record phase1 loopback e2e clean
+.PHONY: all kcv gate record phase1 loopback e2e asic-top clean
 
 all:
 	verilator --binary --timing -j 1 --Mdir obj_dir \
@@ -134,6 +134,32 @@ e2e: ../fuzzy_extractor/rtl_tcq0/.stamp
 		tb_edge_phase1_e2e.sv
 	./obj_dir_e2e/Vtb_edge_phase1_e2e
 
+asic-top:
+	verilator --binary --timing -j 1 --Mdir obj_dir_asic_top \
+		--top-module tb_edge_asic_top -Wall -Wno-fatal \
+		-Wno-DECLFILENAME -Wno-TIMESCALEMOD -Wno-UNUSEDSIGNAL \
+		-Wno-PINCONNECTEMPTY -Wno-PROCASSINIT -Wno-SYNCASYNCNET \
+		-Wno-UNDRIVEN -Wno-UNUSEDPARAM \
+		-I../../rtl/common -I../../rtl/hash_core -I../../rtl/kyber/ref \
+		-I../../rtl/top -I../../rtl/asic \
+		../../rtl/common/generic_blk_mem_wrapper.sv \
+		../../rtl/common/generic_c_shift_ram_wrapper.sv \
+		../../rtl/common/generic_dist_mem_wrapper.sv \
+		../../rtl/common/generic_bram.sv ../../rtl/common/generic_mult.sv \
+		../../rtl/common/generic_fifo.sv \
+		../../rtl/hash_core/ALGORITHM.v ../../rtl/hash_core/THETA1.v \
+		../../rtl/hash_core/THETA2_RHO_PI.v ../../rtl/hash_core/CHI1.v \
+		../../rtl/hash_core/CHI2.v ../../rtl/hash_core/Chi_3_Iota.v \
+		../../rtl/hash_core/IOTA.v ../../rtl/hash_core/RC.v \
+		../../rtl/hash_core/ADDER.v \
+		../../rtl/kyber/ref/sha3_shake_core.v \
+		../../rtl/asic/reset_sync_n.sv \
+		../../rtl/top/edge_root_binding.sv \
+		../../rtl/top/edge_puf_mlkem_core.sv \
+		../../rtl/top/Edge_Puf_Mlkem_Asic_Top.sv \
+		tb_edge_asic_top.sv
+	./obj_dir_asic_top/Vtb_edge_asic_top
+
 clean:
 	rm -rf obj_dir obj_dir_kcv obj_dir_gate obj_dir_record obj_dir_phase1 \
-		obj_dir_loopback obj_dir_e2e
+		obj_dir_loopback obj_dir_e2e obj_dir_asic_top

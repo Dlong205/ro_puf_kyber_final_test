@@ -125,6 +125,7 @@ soc_sources=(
   "$root_dir/rtl/soc/soc_peripherals.sv"
   "$root_dir/rtl/soc/riscv_soc.sv"
   "$root_dir/rtl/top/kdf_keccak.sv"
+  "$root_dir/rtl/top/edge_root_binding.sv"
   "$root_dir/rtl/top/Kyber_System_Top.sv"
 )
 
