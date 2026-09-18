@@ -34,6 +34,7 @@ public:
         dut.telemetry_count0 = 0;
         dut.telemetry_count1 = 0;
         dut.telemetry_winner = 0;
+        dut.mmcm_locked = 1;
         clear_response();
         tick(8);
         dut.rst_n = 1;

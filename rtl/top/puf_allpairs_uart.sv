@@ -11,7 +11,11 @@ module puf_allpairs_uart #(
     parameter integer CLKS_PER_BIT = 434,
     parameter integer NUM_RO = 32,
     parameter integer PAIR_COUNT = 496,
-    parameter integer RESPONSE_BITS = 496
+    parameter integer RESPONSE_BITS = 496,
+    parameter integer INPUT_CLOCK_HZ = 50000000,
+    parameter integer SYSTEM_CLOCK_HZ = 50000000,
+    parameter integer REF_CYCLES_INFO = 255,
+    parameter integer MEASUREMENT_WINDOW_NS = 0
 )(
     input  wire                     clk,
     input  wire                     rst_n,
@@ -27,7 +31,8 @@ module puf_allpairs_uart #(
     input  wire [RO_BITS-1:0]       telemetry_pair_b,
     input  wire [31:0]              telemetry_count0,
     input  wire [31:0]              telemetry_count1,
-    input  wire                     telemetry_winner
+    input  wire                     telemetry_winner,
+    input  wire                     mmcm_locked
 );
     localparam integer RO_BITS = (NUM_RO <= 1) ? 1 : $clog2(NUM_RO);
     localparam integer IDX_W = (PAIR_COUNT <= 1) ? 1 : $clog2(PAIR_COUNT);
@@ -38,9 +43,10 @@ module puf_allpairs_uart #(
     localparam [7:0] STATUS_SUCCESS = 8'hAA;
     localparam [7:0] STATUS_FAIL = 8'hFF;
 
-    // INFO payload length: 6 bytes (protocol 2.0, NUM_RO=32) or 8 bytes
-    // (protocol 3.0, NUM_RO=64).
-    localparam integer INFO_BYTES = (NUM_RO == 32) ? 6 : 8;
+    // INFO payload length: 6 bytes (protocol 2.0, NUM_RO=32) or 21 bytes
+    // (protocol 3.0, NUM_RO=64) carrying num_ro, pair_count, clock/MMCM and
+    // measurement-window identity.
+    localparam integer INFO_BYTES = (NUM_RO == 32) ? 6 : 21;
 
     localparam [2:0] S_IDLE = 3'd0;
     localparam [2:0] S_WAIT_PUF = 3'd1;
@@ -150,10 +156,21 @@ module puf_allpairs_uart #(
                                 8'h07, 8'h00, 8'h02, 8'h46, 8'h55, 8'h50
                             };
                         end else begin
-                            // "PUF", protocol 3.0, num_ro, pair_count (LE),
-                            // capabilities raw+margin+allpairs.
                             tx_shift <= {
-                                {(RESPONSE_BITS-64){1'b0}},
+                                {(RESPONSE_BITS-168){1'b0}},
+                                8'(MEASUREMENT_WINDOW_NS >> 8),
+                                8'(MEASUREMENT_WINDOW_NS),
+                                8'(mmcm_locked),
+                                8'(REF_CYCLES_INFO >> 8),
+                                8'(REF_CYCLES_INFO),
+                                8'(SYSTEM_CLOCK_HZ >> 24),
+                                8'(SYSTEM_CLOCK_HZ >> 16),
+                                8'(SYSTEM_CLOCK_HZ >> 8),
+                                8'(SYSTEM_CLOCK_HZ),
+                                8'(INPUT_CLOCK_HZ >> 24),
+                                8'(INPUT_CLOCK_HZ >> 16),
+                                8'(INPUT_CLOCK_HZ >> 8),
+                                8'(INPUT_CLOCK_HZ),
                                 8'h07, 8'(PAIR_COUNT >> 8), 8'(PAIR_COUNT),
                                 8'(NUM_RO), 8'h03, 8'h46, 8'h55, 8'h50
                             };

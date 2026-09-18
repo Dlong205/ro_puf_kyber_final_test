@@ -55,7 +55,8 @@ module Puf_AllPairs_Characterization_Top #(
         .telemetry_pair_b(telemetry_pair_b),
         .telemetry_count0(telemetry_count0),
         .telemetry_count1(telemetry_count1),
-        .telemetry_winner(telemetry_winner)
+        .telemetry_winner(telemetry_winner),
+        .mmcm_locked(1'b1)
     );
 
     assign LED[0] = tx_active;

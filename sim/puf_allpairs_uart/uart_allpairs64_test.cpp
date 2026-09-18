@@ -37,6 +37,7 @@ public:
         dut.telemetry_count0 = 0;
         dut.telemetry_count1 = 0;
         dut.telemetry_winner = 0;
+        dut.mmcm_locked = 1;
         clear_response();
         tick(8);
         dut.rst_n = 1;
@@ -89,8 +90,12 @@ public:
     void info() {
         const auto old_starts = starts;
         send(0x00);
-        // "PUF", protocol 3.0, NUM_RO=64, PAIR_COUNT=2016 (LE), caps.
-        expect({0x50, 0x55, 0x46, 0x03, 0x40, 0xE0, 0x07, 0x07}, "INFO");
+        // "PUF", protocol 3.0, NUM_RO=64, PAIR_COUNT=2016 (LE), caps,
+        // input=50 MHz, system=100 MHz, ref_cycles=1023, locked, window=10230 ns.
+        expect({0x50, 0x55, 0x46, 0x03, 0x40, 0xE0, 0x07, 0x07,
+                0x80, 0xF0, 0xFA, 0x02,
+                0x00, 0xE1, 0xF5, 0x05,
+                0xFF, 0x03, 0x01, 0xF6, 0x27}, "INFO");
         require(starts == old_starts, "INFO started the PUF");
     }
 

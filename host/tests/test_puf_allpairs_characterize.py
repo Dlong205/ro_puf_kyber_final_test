@@ -228,14 +228,21 @@ class AllPairsMetricsTest(unittest.TestCase):
     def test_expected_info_bytes_match_rtl(self):
         self.assertEqual(PUF.expected_info_bytes(32, 496),
                          b"PUF\x02\x00\x07")
-        self.assertEqual(PUF.expected_info_bytes(64, 2016),
-                         bytes([0x50, 0x55, 0x46, 0x03, 64, 0xE0, 0x07, 0x07]))
+        expected64 = bytes([0x50, 0x55, 0x46, 0x03, 64, 0xE0, 0x07, 0x07,
+                            0x80, 0xF0, 0xFA, 0x02,
+                            0x00, 0xE1, 0xF5, 0x05,
+                            0xFF, 0x03, 0x01, 0xF6, 0x27])
+        self.assertEqual(PUF.expected_info_bytes(64, 2016), expected64)
+        self.assertEqual(len(expected64), 21)
 
     def test_probe_image_detects_both_variants(self):
         legacy = FakePort(b"PUF\x02\x00\x07")
         self.assertEqual(PUF.probe_image(legacy)[:2], (32, 496))
-        puf64 = FakePort(b"PUF\x03\x40\xE0\x07\x07")
-        self.assertEqual(PUF.probe_image(puf64)[:2], (64, 2016))
+        puf64 = FakePort(PUF.expected_info_bytes(64, 2016))
+        detected = PUF.probe_image(puf64)
+        self.assertEqual(detected[:2], (64, 2016))
+        self.assertEqual(detected[3]["system_clock_hz"], 100000000)
+        self.assertEqual(detected[3]["mmcm_locked"], 1)
         bad = FakePort(b"PUF\xFF\x00")
         with self.assertRaises(RuntimeError):
             PUF.probe_image(bad)

@@ -44,8 +44,17 @@ def expected_info_bytes(ro_count, pair_count):
     if ro_count == 32:
         return b"PUF\x02\x00\x07"
     if ro_count == 64:
-        return bytes([0x50, 0x55, 0x46, 0x03, ro_count,
-                      pair_count & 0xFF, (pair_count >> 8) & 0xFF, 0x07])
+        # Protocol 3.0 extended INFO: pool identity, input/system clocks,
+        # ref_cycles, MMCM lock and measurement window (all little-endian).
+        return bytes([
+            0x50, 0x55, 0x46, 0x03, ro_count,
+            pair_count & 0xFF, (pair_count >> 8) & 0xFF, 0x07,
+            0x80, 0xF0, 0xFA, 0x02,   # input_clock_hz = 50_000_000
+            0x00, 0xE1, 0xF5, 0x05,   # system_clock_hz = 100_000_000
+            0xFF, 0x03,               # ref_cycles = 1023
+            0x01,                     # mmcm_locked
+            0xF6, 0x27,               # measurement_window_ns = 10230
+        ])
     raise ValueError(f"unsupported NUM_RO={ro_count}")
 
 
@@ -69,7 +78,7 @@ def read_exact(port, length):
 
 
 def probe_image(port):
-    """Detect the on-board pool from CMD_INFO without trusting the CLI."""
+    """Detect the on-board pool and clock identity from CMD_INFO."""
     port.write(bytes([CMD_INFO]))
     header = read_exact(port, 4)
     if header[:3] != ICON_MAGIC:
@@ -77,23 +86,31 @@ def probe_image(port):
             f"wrong image: expected 'PUF' magic, got {header[:3]!r}"
         )
     proto = header[3]
+    info = {}
     if proto == 0x02:
         tail = read_exact(port, 2)
         ro_count, pair_count, capabilities = 32, 496, tail[1]
         if tail[0] != 0x00:
             raise RuntimeError("PUF32 INFO reserved byte is non-zero")
     elif proto == 0x03:
-        payload = read_exact(port, 4)
+        payload = read_exact(port, 17)
         ro_count = payload[0]
         pair_count = payload[1] | (payload[2] << 8)
         capabilities = payload[3]
+        info = {
+            "input_clock_hz": int.from_bytes(payload[4:8], "little"),
+            "system_clock_hz": int.from_bytes(payload[8:12], "little"),
+            "ref_cycles": payload[12] | (payload[13] << 8),
+            "mmcm_locked": payload[14],
+            "measurement_window_ns": payload[15] | (payload[16] << 8),
+        }
     else:
         raise RuntimeError(f"unknown all-pairs protocol version {proto:#04x}")
     if ro_count not in (32, 64):
         raise RuntimeError(f"unsupported NUM_RO={ro_count}")
     if pair_count != ro_count * (ro_count - 1) // 2:
         raise RuntimeError("device INFO self-report contradicts C(NUM_RO,2)")
-    return ro_count, pair_count, capabilities
+    return ro_count, pair_count, capabilities, info
 
 
 def percentile_nearest_rank(values, percentile):
@@ -282,7 +299,7 @@ def collect(port_name, count, timeout, ro_count):
     with serial.Serial(port_name, 115200, timeout=timeout) as port:
         time.sleep(0.1)
         port.reset_input_buffer()
-        detected_ro, detected_pairs, capabilities = probe_image(port)
+        detected_ro, detected_pairs, capabilities, device_info = probe_image(port)
         if detected_ro != ro_count:
             raise RuntimeError(
                 f"NUM_RO mismatch: --num-ro says {ro_count}, device reports "
@@ -290,11 +307,24 @@ def collect(port_name, count, timeout, ro_count):
             )
         if detected_pairs != pair_count:
             raise RuntimeError("device self-report contradicts --num-ro pool size")
+        if ro_count == 64:
+            if device_info.get("mmcm_locked") != 1:
+                raise RuntimeError("MMCM is not locked; refusing to characterize")
+            if device_info.get("system_clock_hz") != 100000000:
+                raise RuntimeError(
+                    "system clock is not the golden 100 MHz: "
+                    f"{device_info.get('system_clock_hz')}"
+                )
+            if device_info.get("input_clock_hz") != 50000000:
+                raise RuntimeError(
+                    "input clock is not the expected 50 MHz: "
+                    f"{device_info.get('input_clock_hz')}"
+                )
         for index in range(count):
             measurements.append(read_margin(port, ro_count, pair_count))
             if (index + 1) % 10 == 0 or index + 1 == count:
                 print(f"[{index + 1}/{count}] all-pairs frames collected", flush=True)
-    return measurements, time.perf_counter() - started
+    return measurements, time.perf_counter() - started, device_info
 
 
 def summary_stats(values):
@@ -582,7 +612,9 @@ def main():
     )
     started_utc = datetime.now(timezone.utc).isoformat()
     try:
-        measurements, elapsed = collect(args.port, args.count, args.timeout, ro_count)
+        measurements, elapsed, device_info = collect(
+            args.port, args.count, args.timeout, ro_count
+        )
         result = analyze(
             measurements, thresholds, args.max_minority_rate,
             selection_threshold=args.selection_threshold,
@@ -605,8 +637,11 @@ def main():
         "protocol": protocol_label(ro_count),
         "num_ro": ro_count,
         "pair_count": pair_count,
-        "ref_cycles": 511 if ro_count == 64 else 255,
-        "clock_mhz": 50,
+        "ref_cycles": device_info.get("ref_cycles") or (511 if ro_count == 64 else 255),
+        "clock_mhz": (device_info.get("system_clock_hz") or 0) // 1000000,
+        "input_clock_mhz": (device_info.get("input_clock_hz") or 0) // 1000000,
+        "mmcm_locked": device_info.get("mmcm_locked"),
+        "measurement_window_ns": device_info.get("measurement_window_ns"),
         "prescaler": 1 if ro_count == 64 else 0,
         "local_bitstream_sha256": sha256_file(bitstream),
         "golden_implementation_id": golden_manifest_sha256,

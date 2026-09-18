@@ -19,6 +19,8 @@ sim64:
 	$(VERILATOR) --cc --exe --build -j 1 --threads 1 \
 		--top-module $(TOP) --Mdir obj_dir_64 -GCLKS_PER_BIT=16 \
 		-GNUM_RO=64 -GPAIR_COUNT=2016 -GRESPONSE_BITS=2016 \
+		-GINPUT_CLOCK_HZ=50000000 -GSYSTEM_CLOCK_HZ=100000000 \
+		-GREF_CYCLES_INFO=1023 -GMEASUREMENT_WINDOW_NS=10230 \
 		-Wno-fatal -Wno-WIDTH -Wno-TIMESCALEMOD \
 		-CFLAGS "-std=c++17 -O2 -DTEST_CLKS_PER_BIT=16" \
 		../../rtl/top/puf_allpairs_uart.sv \
