@@ -10,6 +10,7 @@ module puf64_ro_bench #(
     parameter integer REF_CYCLES = 1023,
     parameter integer CLEAR_CYCLES = 8,
     parameter integer SETTLE_CYCLES = 8,
+    parameter integer CAPTURE_TIMEOUT = 1024,
     parameter integer PAIR_COUNT = (NUM_RO * (NUM_RO - 1)) / 2,
     parameter integer RO_BITS = (NUM_RO <= 1) ? 1 : $clog2(NUM_RO),
     parameter integer IDX_W = (PAIR_COUNT <= 1) ? 1 : $clog2(PAIR_COUNT)
@@ -22,6 +23,8 @@ module puf64_ro_bench #(
     output logic                  done,
     output logic [PAIR_COUNT-1:0] response,
     output logic                  telemetry_valid,
+    output logic                  telemetry_stable,
+    output logic                  telemetry_timeout,
     output logic [IDX_W-1:0]      telemetry_index,
     output logic [RO_BITS-1:0]    telemetry_pair_a,
     output logic [RO_BITS-1:0]    telemetry_pair_b,
@@ -42,6 +45,7 @@ module puf64_ro_bench #(
     logic [RO_BITS-1:0] pair_a, pair_b;
     logic [IDX_W-1:0] pair_index;
     logic done_r;
+    logic [15:0] cnt_timeout;
 
     wire puf_rst_n = rst_n & ~zeroize;
 
@@ -95,12 +99,15 @@ module puf64_ro_bench #(
             pair_index <= '0;
             done_r <= 1'b0;
             telemetry_valid <= 1'b0;
+            telemetry_stable <= 1'b0;
+            telemetry_timeout <= 1'b0;
             telemetry_index <= '0;
             telemetry_pair_a <= '0;
             telemetry_pair_b <= '0;
             telemetry_count0 <= '0;
             telemetry_count1 <= '0;
             telemetry_winner <= 1'b0;
+            cnt_timeout <= '0;
             resp_shift <= '0;
         end else begin
             done_r <= 1'b0;
@@ -115,6 +122,7 @@ module puf64_ro_bench #(
                         cnt_settle <= '0;
                         clear_r <= 1'b1;
                         ro_en_r <= 1'b0;
+                        cnt_timeout <= '0;
                         resp_shift <= '0;
                         state_r <= S_CLEAR;
                     end
@@ -142,8 +150,11 @@ module puf64_ro_bench #(
                 S_CAPTURE: begin
                     if (cnt_settle != SETTLE_CYCLES - 1) begin
                         cnt_settle <= cnt_settle + 1'b1;
-                    end else if (a_s2 == a_s3 && b_s2 == b_s3) begin
+                    end else if ((a_s2 == a_s3 && b_s2 == b_s3) ||
+                                 cnt_timeout == CAPTURE_TIMEOUT - 1) begin
                         telemetry_valid <= 1'b1;
+                        telemetry_stable <= (a_s2 == a_s3 && b_s2 == b_s3);
+                        telemetry_timeout <= !(a_s2 == a_s3 && b_s2 == b_s3);
                         telemetry_index <= pair_index;
                         telemetry_pair_a <= pair_a;
                         telemetry_pair_b <= pair_b;
@@ -165,8 +176,11 @@ module puf64_ro_bench #(
                             end
                             clear_r <= 1'b1;
                             cnt_window <= '0;
+                            cnt_timeout <= '0;
                             state_r <= S_CLEAR;
                         end
+                    end else begin
+                        cnt_timeout <= cnt_timeout + 1'b1;
                     end
                 end
                 default: state_r <= S_IDLE;
