@@ -3,10 +3,12 @@
 set script_dir [file dirname [file normalize [info script]]]
 set root_dir [file normalize [file join $script_dir ..]]
 set checkpoint [file join $root_dir build puf64_bench \
-    puf64_bench_zynq7020.runs impl_1 Puf64_Ro_Bench_Zynq_Top_routed.dcp]
-set out_place [file join $root_dir constraints puf64_bench_placement.xdc]
-set out_pins [file join $root_dir constraints puf64_bench_lockpins.xdc]
-set out_route [file join $root_dir constraints puf64_bench_route.xdc]
+    puf64_bench_zynq7020.runs impl_1 puf64_bench_top_routed.dcp]
+set num_ro 4
+if {[llength $argv] > 1} { set num_ro [lindex $argv 1] }
+set out_place [file join $root_dir constraints puf64_bench_placement_n${num_ro}.xdc]
+set out_pins [file join $root_dir constraints puf64_bench_lockpins_n${num_ro}.xdc]
+set out_route [file join $root_dir constraints puf64_bench_route_n${num_ro}.xdc]
 if {[llength $argv] > 0} { set checkpoint [file normalize [lindex $argv 0]] }
 if {![file exists $checkpoint]} { error "bench routed checkpoint missing: $checkpoint" }
 source [file join $script_dir ro_physical_common.tcl]

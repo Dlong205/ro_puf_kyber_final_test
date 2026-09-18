@@ -160,7 +160,7 @@ puf64-bench-program:
 	$(VIVADO) -mode batch -nolog -nojournal -source scripts/program_puf64_bench.tcl
 
 puf64-bench-placement-export:
-	$(VIVADO) -mode batch -nolog -nojournal -source scripts/export_puf64_bench_placement.tcl
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/export_puf64_bench_placement.tcl -tclargs build/puf64_bench/puf64_bench_zynq7020.runs/impl_1/puf64_bench_top_routed.dcp $(PUF64_BENCH_NUM_RO)
 
 puf64-bench-diag:
 	python3 -u host/puf64_bench_diag.py --port "$(PUF_PORT)" --num-ro $(PUF64_BENCH_NUM_RO)

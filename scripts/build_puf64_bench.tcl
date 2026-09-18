@@ -52,9 +52,9 @@ report_drc -file [file join $report_dir post_route_drc.rpt]
 close_design
 
 set bitstream [file join $root_dir build puf64_bench \
-    puf64_bench_zynq7020.runs impl_1 Puf64_Ro_Bench_Zynq_Top.bit]
+    puf64_bench_zynq7020.runs impl_1 puf64_bench_top.bit]
 set routed_dcp [file join $root_dir build puf64_bench \
-    puf64_bench_zynq7020.runs impl_1 Puf64_Ro_Bench_Zynq_Top_routed.dcp]
+    puf64_bench_zynq7020.runs impl_1 puf64_bench_top_routed.dcp]
 set metadata_channel [open [file join $report_dir build_metadata.tsv] w]
 puts $metadata_channel "commit\t[exec git -C $root_dir rev-parse HEAD]"
 puts $metadata_channel "num_ro\t$num_ro"

@@ -2,7 +2,7 @@
 set script_dir [file dirname [file normalize [info script]]]
 set root_dir [file normalize [file join $script_dir ..]]
 set bit_file [file join $root_dir build puf64_bench \
-    puf64_bench_zynq7020.runs impl_1 Puf64_Ro_Bench_Zynq_Top.bit]
+    puf64_bench_zynq7020.runs impl_1 puf64_bench_top.bit]
 if {![file isfile $bit_file]} { error "Bench bitstream not found: $bit_file" }
 open_hw_manager
 connect_hw_server

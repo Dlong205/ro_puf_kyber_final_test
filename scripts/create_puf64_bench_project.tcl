@@ -27,12 +27,28 @@ foreach source $sources {
 add_files -norecurse $sources
 add_files -fileset constrs_1 -norecurse [list \
     [file join $root_dir constraints puf64_bench_zynq7020.xdc]]
-foreach {env file} {
-    PUF64_BENCH_PLACEMENT puf64_bench_placement.xdc
-    PUF64_BENCH_LOCKPINS puf64_bench_lockpins.xdc
-    PUF64_BENCH_ROUTE puf64_bench_route.xdc
+
+set wrapper [file join $build_dir puf64_bench_top.sv]
+set fh [open $wrapper w]
+puts $fh "module puf64_bench_top ("
+puts $fh "    input  wire       CLK50MHZ,"
+puts $fh "    input  wire [1:0] SW,"
+puts $fh "    input  wire       UART_RXD,"
+puts $fh "    output wire       UART_TXD,"
+puts $fh "    output wire [1:0] LED"
+puts $fh ");"
+puts $fh "    Puf64_Ro_Bench_Zynq_Top #(.NUM_RO($num_ro)) u_core ("
+puts $fh "        .CLK50MHZ(CLK50MHZ), .SW(SW), .UART_RXD(UART_RXD),"
+puts $fh "        .UART_TXD(UART_TXD), .LED(LED));"
+puts $fh "endmodule"
+close $fh
+add_files -norecurse [list $wrapper]
+foreach {env stem} {
+    PUF64_BENCH_PLACEMENT puf64_bench_placement
+    PUF64_BENCH_LOCKPINS puf64_bench_lockpins
+    PUF64_BENCH_ROUTE puf64_bench_route
 } {
-    set path [file join $root_dir constraints $file]
+    set path [file join $root_dir constraints ${stem}_n${num_ro}.xdc]
     if {[info exists ::env($env)] && $::env($env) eq "1" && [file exists $path]} {
         add_files -fileset constrs_1 -norecurse [list $path]
         puts "PUF64_BENCH_${env}=applied"
@@ -40,9 +56,8 @@ foreach {env file} {
         puts "PUF64_BENCH_${env}=none"
     }
 }
-set_property top Puf64_Ro_Bench_Zynq_Top [get_filesets sources_1]
+set_property top puf64_bench_top [get_filesets sources_1]
 set_property top_auto_set false [get_filesets sources_1]
-set_property generic "NUM_RO=$num_ro" [get_filesets sources_1]
 update_compile_order -fileset sources_1
 puts "PUF64_BENCH_PROJECT=[file join $build_dir ${project_name}.xpr] num_ro=$num_ro"
 close_project
