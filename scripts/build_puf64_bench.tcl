@@ -31,6 +31,20 @@ puts "PUF64_BENCH_IMPL_STATUS=$impl_status"
 if {![string match "*Complete*" $impl_status]} { error "Bench implementation failed" }
 open_run impl_1
 check_ro_bench_connectivity "route" $num_ro
+set fp_cells [concat \
+    [get_cells -quiet -hierarchical -filter {NAME =~ "*u_bench*ro_cell*/u_backend/LUT6_*"}] \
+    [get_cells -quiet -hierarchical -filter {NAME =~ "*presc_fdce" && REF_NAME == "FDCE"}] \
+    [get_cells -quiet -hierarchical -filter {REF_NAME == "FDCE" && NAME =~ "*stage*ff*"}]]
+set fp_ch [open [file join $report_dir ro_bench_fingerprint.tsv] w]
+foreach cell [lsort -dictionary $fp_cells] {
+    puts $fp_ch "CELL\t$cell\t[get_property LOC $cell]\t[get_property BEL $cell]"
+}
+foreach p [lsort -dictionary [get_cells -quiet -hierarchical -filter {NAME =~ "*presc_fdce" && REF_NAME == "FDCE"}]] {
+    set cpin [get_pins -quiet -of_objects $p -filter {REF_PIN_NAME == "C"}]
+    set net [lindex [get_nets -quiet -of_objects $cpin] 0]
+    puts $fp_ch "TAP\t$net\t[get_property ROUTE $net]"
+}
+close $fp_ch
 report_utilization -file [file join $report_dir post_route_utilization.rpt]
 report_timing_summary -file [file join $report_dir post_route_timing.rpt]
 report_route_status -file [file join $report_dir post_route_status.rpt]

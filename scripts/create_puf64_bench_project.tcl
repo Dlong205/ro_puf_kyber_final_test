@@ -27,6 +27,19 @@ foreach source $sources {
 add_files -norecurse $sources
 add_files -fileset constrs_1 -norecurse [list \
     [file join $root_dir constraints puf64_bench_zynq7020.xdc]]
+foreach {env file} {
+    PUF64_BENCH_PLACEMENT puf64_bench_placement.xdc
+    PUF64_BENCH_LOCKPINS puf64_bench_lockpins.xdc
+    PUF64_BENCH_ROUTE puf64_bench_route.xdc
+} {
+    set path [file join $root_dir constraints $file]
+    if {[info exists ::env($env)] && $::env($env) eq "1" && [file exists $path]} {
+        add_files -fileset constrs_1 -norecurse [list $path]
+        puts "PUF64_BENCH_${env}=applied"
+    } else {
+        puts "PUF64_BENCH_${env}=none"
+    }
+}
 set_property top Puf64_Ro_Bench_Zynq_Top [get_filesets sources_1]
 set_property top_auto_set false [get_filesets sources_1]
 set_property generic "NUM_RO=$num_ro" [get_filesets sources_1]
