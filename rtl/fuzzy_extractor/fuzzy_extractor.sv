@@ -20,7 +20,12 @@ module fuzzy_extractor #(
     output logic [DATA_BITS-1:0]  key_out,         // extracted key
     output logic                  busy,
     output logic                  done,
-    output logic                  success          // decode: corrected word is a valid codeword
+    output logic                  success,         // decode: corrected word is a valid codeword
+    // Diagnostic telemetry: population count of the error vector actually
+    // applied to the received word.  This is the number of bit positions the
+    // decoder corrected, not the internal BCH `err_count` estimate, and is
+    // only meaningful together with `success`.
+    output logic [7:0]            corr_bit_count
 );
 
     localparam int DATA_WORDS = DATA_BITS / BITS;
@@ -53,6 +58,17 @@ module fuzzy_extractor #(
     logic [DATA_BITS-1:0]  dec_key;
     logic                  done_reg;
     logic                  success_reg;
+    logic [7:0]            corr_bit_count_reg;
+
+    function automatic [8:0] popcount;
+        input [N-1:0] value;
+        integer index;
+        begin
+            popcount = 9'd0;
+            for (index = 0; index < N; index = index + 1)
+                popcount = popcount + {8'd0, value[index]};
+        end
+    endfunction
 
     // ---- encoder / decoder wireups ----
     logic [BITS-1:0] enc_data_in;
@@ -132,6 +148,7 @@ module fuzzy_extractor #(
             success_reg <= 1'b0;
             helper_out  <= '0;
             key_out     <= '0;
+            corr_bit_count_reg <= 8'd0;
         end else if (zeroize) begin
             state       <= S_IDLE;
             word_cnt    <= '0;
@@ -146,6 +163,7 @@ module fuzzy_extractor #(
             done_reg    <= 1'b0;
             success_reg <= 1'b0;
             key_out     <= '0;
+            corr_bit_count_reg <= 8'd0;
             // helper_out is public fuzzy-extractor helper data. Preserve it
             // so enrollment can erase the PUF-derived key before UART sends
             // the helper record.
@@ -205,6 +223,8 @@ module fuzzy_extractor #(
                     corrected <= r_reg ^ err_reg;
                     key_reg   <= dec_key;
                     key_out   <= dec_key;
+                    corr_bit_count_reg <= (popcount(err_reg) > 9'd255)
+                                          ? 8'hff : popcount(err_reg)[7:0];
                     word_cnt  <= '0;
                     cap       <= 1'b0;
                     cw_reg    <= '0;
@@ -304,6 +324,7 @@ module fuzzy_extractor #(
     assign busy    = (state != S_IDLE);
     assign done    = done_reg;
     assign success = success_reg;
+    assign corr_bit_count = corr_bit_count_reg;
 
     assign dec_word = r_reg ^ err_reg;
     assign dec_key  = dec_word[N-1 -: DATA_BITS];

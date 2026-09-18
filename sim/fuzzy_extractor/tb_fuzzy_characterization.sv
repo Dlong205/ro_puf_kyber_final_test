@@ -21,6 +21,7 @@ module tb_fuzzy_characterization;
     logic [N-1:0] helper_out;
     logic [K-1:0] key_out;
     logic busy, done, success;
+    logic [7:0] corr_bit_count;
 
     fuzzy_extractor dut (.*);
 
@@ -185,6 +186,8 @@ module tb_fuzzy_characterization;
                 run_op(1'b1, sample_response ^ error_mask, sample_helper);
                 check_root($sformatf("random weight=%0d sample=%0d", weight, sample_index),
                            sample_response[N-1 -: K]);
+                check($sformatf("applied correction popcount weight=%0d", weight),
+                      corr_bit_count == weight[7:0]);
             end
             $display("FE_CHARACTERIZATION_WEIGHT weight=%0d cases=%0d failures=%0d",
                      weight, SAMPLES_PER_WEIGHT, failures);
