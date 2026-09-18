@@ -4,7 +4,7 @@
 `0.2.0-rc2-dev` ngăn việc đóng gói nhánh sau route-lock dưới cùng tên với RC1
 đã tag; nó chưa phải artifact phần cứng mới. Tài liệu này phân biệt hoàn thành
 nội dung triển khai FPGA với public/production release. Trạng thái cập nhật đến
-**2026-09-08**.
+**2026-09-18**.
 
 ## Định danh trạng thái
 
@@ -23,7 +23,7 @@ nội dung triển khai FPGA với public/production release. Trạng thái cậ
 | Chia sẻ nội bộ source + RC1 trong repo private | **GO**, kèm các giới hạn trong `NOTICE.md` và `SECURITY.md` |
 | Chốt crypto RTL freeze cuối | **CHƯA**; v4 accelerator scrub, full manifest gate, Vivado và đúng-image board PASS; còn review độc lập |
 | Chốt PUF là golden/production | **NO-GO**, thiếu same-root/PVT/nhiều board/entropy |
-| Same-root binding Phase 1 | **OFFLINE REGRESSION PASS sau review**; chưa đổi kết luận NO-GO: cần synth bitstream mới + board, và ASIC top riêng |
+| Same-root binding Phase 1 | **FPGA 100 MHz + BOARD PASS, ASIC top riêng xong**; plateau 34.673 LUT/WNS +0,354 ns, board PASS KCV gate + fail-closed; `Edge_Puf_Mlkem_Asic_Top` elaborate + sim PASS trên canonical filelist. Kết luận chốt PUF golden/production vẫn NO-GO |
 | Bắt đầu khảo sát ASIC frontend | **GO có điều kiện**, dùng portability gate |
 | Full ASIC backend/sign-off | **CHƯA**, thiếu PDK/macro/memory/SDC/DFT và các freeze đầu vào |
 | Public release | **BỊ CHẶN** bởi quyền phân phối/top-level license |
