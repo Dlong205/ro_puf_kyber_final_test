@@ -21,6 +21,10 @@ sim/fuzzy_extractor/tb_fuzzy_extractor_main.cpp
 firmware/firmware.bin
 firmware/firmware.elf
 firmware/.mode_*
+# Diagnostic bring-up image (build artifact; used only by the full-system sim)
+firmware/firmware_diag.bin
+firmware/firmware_diag.elf
+firmware/firmware_diag.hex
 
 # Local board enrollment artifacts and caches
 helper.bin
