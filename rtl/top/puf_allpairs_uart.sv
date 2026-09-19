@@ -19,7 +19,7 @@ module puf_allpairs_uart #(
     parameter integer WIDTH = 16,
     parameter integer TOPOLOGY_ID = 16'hC0DE,
     parameter integer BUILD_ID = 16'h0001,
-    parameter integer IS_DIAGNOSTIC = 0
+    parameter integer IMAGE_MODE = 8'h01
 )(
     input  wire                     clk,
     input  wire                     rst_n,
@@ -163,7 +163,7 @@ module puf_allpairs_uart #(
                             tx_shift <= {
                                 {(RESPONSE_BITS-216){1'b0}},
                                 8'(BUILD_ID >> 8), 8'(BUILD_ID),
-                                8'({7'b0, IS_DIAGNOSTIC}),
+                                8'(IMAGE_MODE),
                                 8'(TOPOLOGY_ID >> 8), 8'(TOPOLOGY_ID),
                                 8'(WIDTH),
                                 8'(MEASUREMENT_WINDOW_NS >> 8),

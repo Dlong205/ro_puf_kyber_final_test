@@ -103,7 +103,7 @@ module Puf_AllPairs64_Characterization_Top #(
         .REF_CYCLES_INFO(REF_CYCLES),
         .MEASUREMENT_WINDOW_NS(MEASUREMENT_WINDOW_NS),
         .WIDTH(16), .TOPOLOGY_ID(16'hC0DE), .BUILD_ID(BUILD_ID),
-        .IS_DIAGNOSTIC(0)
+        .IMAGE_MODE(8'h01)
     ) u_uart (
         .clk(clk_sys), .rst_n(por_done),
         .uart_rx_i(UART_RXD), .uart_tx_o(UART_TXD), .tx_active(tx_active),

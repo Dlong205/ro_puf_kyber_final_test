@@ -56,7 +56,7 @@ def expected_info_bytes(ro_count, pair_count):
             0xF6, 0x27,               # measurement_window_ns = 10230
             0x10,                     # WIDTH = 16
             0xDE, 0xC0,               # topology_id = 0xC0DE
-            0x00,                     # flags (production, not diagnostic)
+            0x01,                     # IMAGE_MODE = PUF_CHARACTERIZATION
             0x01, 0x00,               # build_id = 0x0001
         ])
     raise ValueError(f"unsupported NUM_RO={ro_count}")
@@ -109,7 +109,7 @@ def probe_image(port):
             "measurement_window_ns": payload[15] | (payload[16] << 8),
             "width": payload[17],
             "topology_id": payload[18] | (payload[19] << 8),
-            "flags": payload[20],
+            "image_mode": payload[20],
             "build_id": payload[21] | (payload[22] << 8),
         }
     else:
@@ -327,6 +327,11 @@ def collect(port_name, count, timeout, ro_count):
                 raise RuntimeError(
                     "input clock is not the expected 50 MHz: "
                     f"{device_info.get('input_clock_hz')}"
+                )
+            if device_info.get("image_mode") != 0x01:
+                raise RuntimeError(
+                    "device is not a PUF characterization image: "
+                    f"image_mode={device_info.get('image_mode')}"
                 )
         for index in range(count):
             measurements.append(read_margin(port, ro_count, pair_count))
