@@ -208,12 +208,50 @@ class AllPairsMetricsTest(unittest.TestCase):
         for index, (a, b) in enumerate(canonical_pairs(64)):
             margin = 11 + (index % 7)
             flags = ((b >> 5) & 1) << 7 | (1 << 5) | (b & 0x1F)
-            payload.extend(struct.pack("<HBBIII", index, a, flags,
-                                       2000 + index, 2000 + index + margin, margin))
+            body = struct.pack("<HBBIII", index, a, flags,
+                               2000 + index, 2000 + index + margin, margin)
+            body += bytes([0x41, 0x00])
+            body += struct.pack("<H", PUF.crc16_ccitt_false(body))
+            payload.extend(body)
         records = read_margin(FakePort(payload), 64, 2016)
         self.assertEqual(len(records), 2016)
         self.assertEqual(records[0][:2], (0, 1))
         self.assertEqual(records[-1][:2], (62, 63))
+
+    def _payload64(self, bad_index=None, status_override=None, crc_ok=True,
+                   count0=2000, count1=2500):
+        payload = bytearray([0xAA])
+        for index, (a, b) in enumerate(canonical_pairs(64)):
+            margin = abs(count1 - count0)
+            flags = ((b >> 5) & 1) << 7 | (1 << 5) | (b & 0x1F)
+            c0 = 0 if (bad_index == index and count0 == 0) else count0
+            body = struct.pack("<HBBIII", index, a, flags, c0, count1,
+                               abs(count1 - c0))
+            status = 0x41
+            if bad_index == index and status_override is not None:
+                status = status_override
+            body += bytes([status, 0x00])
+            crc = PUF.crc16_ccitt_false(body)
+            if bad_index == index and not crc_ok:
+                crc ^= 0x0001
+            body += struct.pack("<H", crc)
+            payload.extend(body)
+        return payload
+
+    def test_puf64_status_and_crc_rejections(self):
+        read_margin(FakePort(self._payload64()), 64, 2016)
+        for label, kwargs in [
+            ("crc", {"crc_ok": False}),
+            ("unstable", {"status_override": 0x40}),
+            ("timeout", {"status_override": 0x43}),
+            ("overflow_a", {"status_override": 0x45}),
+            ("overflow_b", {"status_override": 0x49}),
+            ("mmcm", {"status_override": 0x01}),
+            ("reserved", {"status_override": 0xC1}),
+        ]:
+            with self.assertRaises(RuntimeError):
+                read_margin(FakePort(self._payload64(bad_index=7, **kwargs)),
+                            64, 2016)
 
     def test_puf64_wire_parser_rejects_reserved_pair_a_bits(self):
         payload = bytearray([0xAA])
@@ -232,9 +270,9 @@ class AllPairsMetricsTest(unittest.TestCase):
                             0x80, 0xF0, 0xFA, 0x02,
                             0x00, 0xE1, 0xF5, 0x05,
                             0xFF, 0x03, 0x01, 0xF6, 0x27,
-                            0x10, 0xDE, 0xC0, 0x01, 0x01, 0x00])
+                            0x10, 0xDE, 0xC0, 0x01, 0x02, 0x00, 0x03, 0x01, 0x14])
         self.assertEqual(PUF.expected_info_bytes(64, 2016), expected64)
-        self.assertEqual(len(expected64), 27)
+        self.assertEqual(len(expected64), 30)
 
     def test_probe_image_detects_both_variants(self):
         legacy = FakePort(b"PUF\x02\x00\x07")
@@ -246,7 +284,9 @@ class AllPairsMetricsTest(unittest.TestCase):
         self.assertEqual(detected[3]["mmcm_locked"], 1)
         self.assertEqual(detected[3]["width"], 16)
         self.assertEqual(detected[3]["topology_id"], 0xC0DE)
-        self.assertEqual(detected[3]["build_id"], 0x0001)
+        self.assertEqual(detected[3]["build_id"], 0x0002)
+        self.assertEqual(detected[3]["proto_minor"], 1)
+        self.assertEqual(detected[3]["record_bytes"], 20)
         bad = FakePort(b"PUF\xFF\x00")
         with self.assertRaises(RuntimeError):
             PUF.probe_image(bad)

@@ -104,3 +104,50 @@ uniqueness and min-entropy 256 are NOT proven, 264 is a FE vector length, and
 - `host/puf64_holdout_eval.py` — holdout evaluation, gate, mapping tag.
 - Make targets: `puf64-train-boot`, `puf64-holdout-boot`, `puf64-train-select`,
   `puf64-holdout-eval`.
+
+---
+
+## 14. Status-flag gate — BLOCKER on candidate build 1 (revoked)
+
+Read-only trace of candidate build 1 (`build_id=1`, bitstream `5eaebb00…`):
+
+- `rtl/debug/puf64_ro_bench.sv` S_CAPTURE (lines 150–157) asserts `telemetry_valid`
+  on both stable and timeout (`(stable) || cnt_timeout==CAPTURE_TIMEOUT-1`);
+  `telemetry_stable/timeout` are auxiliary outputs.
+- `rtl/top/Puf_AllPairs64_Characterization_Top.sv` connects only
+  `.telemetry_valid` to the production UART; `telemetry_stable/timeout` are
+  unused (`unused_tel`).
+- `rtl/top/puf_allpairs_uart.sv` captures on `telemetry_valid` only (line 96);
+  the 16-byte record carries no status flags.
+
+Therefore a record CAN be emitted with a plausible-looking count while
+unstable/timeout, and the host cannot detect it.  Hence candidate build 1 is
+**revoked** for train/holdout; the pilot reports remain as historical evidence
+only.  `count<60000` is a heuristic, not proof of stability.
+
+## 15. Protocol 3.1 (build_id=2) — direct status + CRC16
+
+- Bump protocol `3.0 -> 3.1`, `build_id 1 -> 2`; build 1 revoked for all future
+  campaigns.
+- Every pair emits exactly one terminal record, including on timeout.
+- Record = 20 bytes: `index u16 | pair_a | pair_flags | count0 u32 | count1 u32 |
+  margin u32 | status u8 | reserved(0) | crc_low | crc_high` (all LE).
+- Status bits: 0 stable, 1 timeout, 2 overflow_a, 3 overflow_b, 4 count_zero_a,
+  5 count_zero_b, 6 mmcm_locked_snapshot, 7 reserved(=0).
+- A record is valid only if stable=1, timeout=0, overflow_a/b=0,
+  count_zero_a/b=0, mmcm_locked=1, reserved=0, CRC valid.
+- CRC-16/CCITT-FALSE: poly 0x1021, init 0xFFFF, no reflect, xorout 0x0000,
+  covers bytes 0..17, stored low byte then high byte at 18/19.
+  Golden: body `00000001e8030000d0070000e80300004100` -> CRC `0xD1CB`
+  (full `…41 00 d1 cb`); status 0x02 body -> CRC `0x934E`.
+- UART still delivers exactly 2016 records; missing record is a secondary
+  detection, not the primary mechanism.
+- Overflow guard: ripple counter is WIDTH+1 stages; transmitted count is the low
+  WIDTH bits, the high stage is `overflow`; reset and captured with the count.
+- Topology count changes to 64 prescalers + 64*(WIDTH+1) ripple stages
+  (1088 for WIDTH=16); assertions/fingerprint/`topology_id` updated accordingly.
+- Candidate lifecycle: rerun F1/F2, F3 auto-place + smoke (all status valid,
+  CRC ok), F4 re-export/reapply lock + 2 clean fingerprint, F5 new manifest
+  (protocol 3.1, build 2, new SHAs), then a fresh 3-boot pilot before train 101.
+- Reporting: never write "host confirmed timeout/stable/wrap"; write
+  "RTL/record status enforce; host checks the status byte + CRC".

@@ -19,7 +19,9 @@ module puf_allpairs_uart #(
     parameter integer WIDTH = 16,
     parameter integer TOPOLOGY_ID = 16'hC0DE,
     parameter integer BUILD_ID = 16'h0001,
-    parameter integer IMAGE_MODE = 8'h01
+    parameter integer IMAGE_MODE = 8'h01,
+    parameter integer PROTO_MAJOR = 3,
+    parameter integer PROTO_MINOR = 1
 )(
     input  wire                     clk,
     input  wire                     rst_n,
@@ -36,6 +38,10 @@ module puf_allpairs_uart #(
     input  wire [31:0]              telemetry_count0,
     input  wire [31:0]              telemetry_count1,
     input  wire                     telemetry_winner,
+    input  wire                     telemetry_stable,
+    input  wire                     telemetry_timeout,
+    input  wire                     telemetry_overflow_a,
+    input  wire                     telemetry_overflow_b,
     input  wire                     mmcm_locked
 );
     localparam integer RO_BITS = (NUM_RO <= 1) ? 1 : $clog2(NUM_RO);
@@ -50,7 +56,8 @@ module puf_allpairs_uart #(
     // INFO payload length: 6 bytes (protocol 2.0, NUM_RO=32) or 21 bytes
     // (protocol 3.0, NUM_RO=64) carrying num_ro, pair_count, clock/MMCM and
     // measurement-window identity.
-    localparam integer INFO_BYTES = (NUM_RO == 32) ? 6 : 27;
+    localparam integer INFO_BYTES = (NUM_RO == 32) ? 6 : 30;
+    localparam integer RECORD_BYTES = (NUM_RO == 32) ? 16 : 20;
 
     localparam [2:0] S_IDLE = 3'd0;
     localparam [2:0] S_WAIT_PUF = 3'd1;
@@ -75,20 +82,21 @@ module puf_allpairs_uart #(
     reg margin_tx_active;
     reg [IDX_W-1:0] telemetry_capture_count;
     reg [IDX_W-1:0] margin_tx_index;
-    reg [3:0] margin_tx_byte_index;
+    reg [4:0] margin_tx_byte_index;
     reg [23:0] wait_cycles;
 
     // One record per pair: pair_a, pair_b, count0, count1, winner.  Vivado
     // maps the records into block RAM so instrumentation switching stays
     // compact.  Width is 75 bits at NUM_RO=32 and 77 bits at NUM_RO=64.
-    (* ram_style = "block" *) reg [(2*RO_BITS)+64:0] telemetry_mem [0:PAIR_COUNT-1];
-    reg [(2*RO_BITS)+64:0] telemetry_read_data;
+    (* ram_style = "block" *) reg [(2*RO_BITS)+72:0] telemetry_mem [0:PAIR_COUNT-1];
+    reg [(2*RO_BITS)+72:0] telemetry_read_data;
 
-    wire [RO_BITS-1:0] current_pair_a = telemetry_read_data[RO_BITS-1:0];
-    wire [RO_BITS-1:0] current_pair_b = telemetry_read_data[2*RO_BITS-1:RO_BITS];
-    wire [31:0] current_count0 = telemetry_read_data[2*RO_BITS+31:2*RO_BITS];
-    wire [31:0] current_count1 = telemetry_read_data[2*RO_BITS+63:2*RO_BITS+32];
-    wire current_winner = telemetry_read_data[2*RO_BITS+64];
+    wire [7:0] current_status = telemetry_read_data[7:0];
+    wire current_winner = telemetry_read_data[8];
+    wire [31:0] current_count1 = telemetry_read_data[40:9];
+    wire [31:0] current_count0 = telemetry_read_data[72:41];
+    wire [RO_BITS-1:0] current_pair_b = telemetry_read_data[72+RO_BITS:73];
+    wire [RO_BITS-1:0] current_pair_a = telemetry_read_data[72+2*RO_BITS:73+RO_BITS];
     wire [31:0] current_margin = (current_count0 >= current_count1) ?
                                  current_count0 - current_count1 :
                                  current_count1 - current_count0;
@@ -103,8 +111,12 @@ module puf_allpairs_uart #(
     always @(posedge clk) begin
         if (telemetry_capture_accept)
             telemetry_mem[telemetry_capture_count] <= {
-                telemetry_winner, telemetry_count1, telemetry_count0,
-                telemetry_pair_b, telemetry_pair_a
+                telemetry_pair_a, telemetry_pair_b,
+                telemetry_count0, telemetry_count1, telemetry_winner,
+                1'b0, mmcm_locked,
+                (telemetry_count1 == 32'd0), (telemetry_count0 == 32'd0),
+                telemetry_overflow_b, telemetry_overflow_a,
+                telemetry_timeout, telemetry_stable
             };
         if (state == S_MARGIN_PREFETCH)
             telemetry_read_data <= telemetry_mem[margin_tx_index];
@@ -119,6 +131,72 @@ module puf_allpairs_uart #(
         .i_Tx_Byte(tx_byte), .o_Tx_Active(tx_active),
         .o_Tx_Serial(uart_tx_o), .o_Tx_Done(tx_done)
     );
+
+    reg [15:0] crc_reg;
+    reg [7:0] next_margin_byte;
+
+    function automatic [15:0] crc16_step(input [15:0] crc, input [7:0] b);
+        integer i;
+        reg [15:0] c;
+        begin
+            c = crc ^ ({8'h00, b} << 8);
+            for (i = 0; i < 8; i = i + 1)
+                c = c[15] ? ((c << 1) ^ 16'h1021) : (c << 1);
+            crc16_step = c;
+        end
+    endfunction
+
+    always_comb begin
+        if (NUM_RO == 32) begin
+            case (margin_tx_byte_index)
+                5'd0:  next_margin_byte = margin_tx_index[7:0];
+                5'd1:  next_margin_byte = {{(16 - IDX_W){1'b0}}, margin_tx_index[IDX_W-1:8]};
+                5'd2:  next_margin_byte = {{(8 - RO_BITS){1'b0}}, current_pair_a};
+                5'd3:  next_margin_byte =
+                    {{(RO_BITS - 5){current_pair_b[RO_BITS-1]}},
+                     {(8 - RO_BITS - 2){1'b0}},
+                     current_tie, current_winner, current_pair_b[4:0]};
+                5'd4:  next_margin_byte = current_count0[7:0];
+                5'd5:  next_margin_byte = current_count0[15:8];
+                5'd6:  next_margin_byte = current_count0[23:16];
+                5'd7:  next_margin_byte = current_count0[31:24];
+                5'd8:  next_margin_byte = current_count1[7:0];
+                5'd9:  next_margin_byte = current_count1[15:8];
+                5'd10: next_margin_byte = current_count1[23:16];
+                5'd11: next_margin_byte = current_count1[31:24];
+                5'd12: next_margin_byte = current_margin[7:0];
+                5'd13: next_margin_byte = current_margin[15:8];
+                5'd14: next_margin_byte = current_margin[23:16];
+                default: next_margin_byte = current_margin[31:24];
+            endcase
+        end else begin
+            case (margin_tx_byte_index)
+                5'd0:  next_margin_byte = margin_tx_index[7:0];
+                5'd1:  next_margin_byte = {{(16 - IDX_W){1'b0}}, margin_tx_index[IDX_W-1:8]};
+                5'd2:  next_margin_byte = {{(8 - RO_BITS){1'b0}}, current_pair_a};
+                5'd3:  next_margin_byte =
+                    {{(RO_BITS - 5){current_pair_b[RO_BITS-1]}},
+                     {(8 - RO_BITS - 2){1'b0}},
+                     current_tie, current_winner, current_pair_b[4:0]};
+                5'd4:  next_margin_byte = current_count0[7:0];
+                5'd5:  next_margin_byte = current_count0[15:8];
+                5'd6:  next_margin_byte = current_count0[23:16];
+                5'd7:  next_margin_byte = current_count0[31:24];
+                5'd8:  next_margin_byte = current_count1[7:0];
+                5'd9:  next_margin_byte = current_count1[15:8];
+                5'd10: next_margin_byte = current_count1[23:16];
+                5'd11: next_margin_byte = current_count1[31:24];
+                5'd12: next_margin_byte = current_margin[7:0];
+                5'd13: next_margin_byte = current_margin[15:8];
+                5'd14: next_margin_byte = current_margin[23:16];
+                5'd15: next_margin_byte = current_margin[31:24];
+                5'd16: next_margin_byte = current_status;
+                5'd17: next_margin_byte = 8'h00;
+                5'd18: next_margin_byte = crc_reg[7:0];
+                default: next_margin_byte = crc_reg[15:8];
+            endcase
+        end
+    end
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -137,6 +215,7 @@ module puf_allpairs_uart #(
             margin_tx_index <= '0;
             margin_tx_byte_index <= '0;
             wait_cycles <= '0;
+            crc_reg <= 16'hFFFF;
         end else begin
             puf_start <= 1'b0;
             tx_dv <= 1'b0;
@@ -161,7 +240,8 @@ module puf_allpairs_uart #(
                             };
                         end else begin
                             tx_shift <= {
-                                {(RESPONSE_BITS-216){1'b0}},
+                                {(RESPONSE_BITS-240){1'b0}},
+                                8'(RECORD_BYTES), 8'(PROTO_MINOR), 8'(PROTO_MAJOR),
                                 8'(BUILD_ID >> 8), 8'(BUILD_ID),
                                 8'(IMAGE_MODE),
                                 8'(TOPOLOGY_ID >> 8), 8'(TOPOLOGY_ID),
@@ -243,7 +323,7 @@ module puf_allpairs_uart #(
                             margin_tx_byte_index <= '0;
                             state <= S_MARGIN_PREFETCH;
                         end else if (margin_tx_active) begin
-                            if (margin_tx_byte_index == 4'd15) begin
+                            if (margin_tx_byte_index == ((NUM_RO == 32) ? 5'd15 : 5'd19)) begin
                                 margin_tx_byte_index <= '0;
                                 if (margin_tx_index == PAIR_COUNT - 1) begin
                                     margin_tx_active <= 1'b0;
@@ -267,35 +347,16 @@ module puf_allpairs_uart #(
                 end
 
                 S_MARGIN_LOAD: begin
-                    // 16-byte LE record:
-                    // index[15:0], pair_a (with RESERVED top bits), flags byte
-                    // {pair_b_msb, RESERVED, tie, winner, pair_b[4:0]},
-                    // count0, count1, abs(count0-count1).
-                    case (margin_tx_byte_index)
-                        4'd0:  tx_byte <= margin_tx_index[7:0];
-                        4'd1:  tx_byte <= {{(16 - IDX_W){1'b0}}, margin_tx_index[IDX_W-1:8]};
-                        4'd2:  tx_byte <= {{(8 - RO_BITS){1'b0}}, current_pair_a};
-                        4'd3:  tx_byte <=
-                            {{(RO_BITS - 5){current_pair_b[RO_BITS-1]}},
-                             {(8 - RO_BITS - 2){1'b0}},
-                             current_tie, current_winner, current_pair_b[4:0]};
-                        4'd4:  tx_byte <= current_count0[7:0];
-                        4'd5:  tx_byte <= current_count0[15:8];
-                        4'd6:  tx_byte <= current_count0[23:16];
-                        4'd7:  tx_byte <= current_count0[31:24];
-                        4'd8:  tx_byte <= current_count1[7:0];
-                        4'd9:  tx_byte <= current_count1[15:8];
-                        4'd10: tx_byte <= current_count1[23:16];
-                        4'd11: tx_byte <= current_count1[31:24];
-                        4'd12: tx_byte <= current_margin[7:0];
-                        4'd13: tx_byte <= current_margin[15:8];
-                        4'd14: tx_byte <= current_margin[23:16];
-                        default: tx_byte <= current_margin[31:24];
-                    endcase
+                    tx_byte <= next_margin_byte;
+                    if (NUM_RO != 32 && margin_tx_byte_index <= 5'd17)
+                        crc_reg <= crc16_step(crc_reg, next_margin_byte);
                     state <= S_TX_PULSE;
                 end
 
-                S_MARGIN_PREFETCH: state <= S_MARGIN_LOAD;
+                S_MARGIN_PREFETCH: begin
+                    crc_reg <= 16'hFFFF;
+                    state <= S_MARGIN_LOAD;
+                end
                 default: state <= S_IDLE;
             endcase
         end

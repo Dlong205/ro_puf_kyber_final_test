@@ -31,7 +31,18 @@ RO_COUNT = 32
 PAIR_COUNT = 496
 RECORD_SIZE = 16
 RECORD_STRUCT = struct.Struct("<HBBIII")
+RECORD_SIZE_31 = 20
+RECORD_STRUCT_31 = struct.Struct("<HBBIIIBBH")
 ICON_MAGIC = b"PUF"
+
+
+def crc16_ccitt_false(data):
+    crc = 0xFFFF
+    for byte in data:
+        crc ^= byte << 8
+        for _ in range(8):
+            crc = ((crc << 1) ^ 0x1021) & 0xFFFF if (crc & 0x8000) else (crc << 1) & 0xFFFF
+    return crc
 
 
 def canonical_pairs(ro_count=None):
@@ -57,7 +68,8 @@ def expected_info_bytes(ro_count, pair_count):
             0x10,                     # WIDTH = 16
             0xDE, 0xC0,               # topology_id = 0xC0DE
             0x01,                     # IMAGE_MODE = PUF_CHARACTERIZATION
-            0x01, 0x00,               # build_id = 0x0001
+            0x02, 0x00,               # build_id = 0x0002
+            0x03, 0x01, 0x14,         # proto_major=3, proto_minor=1, record_bytes=20
         ])
     raise ValueError(f"unsupported NUM_RO={ro_count}")
 
@@ -98,7 +110,7 @@ def probe_image(port):
         if tail[0] != 0x00:
             raise RuntimeError("PUF32 INFO reserved byte is non-zero")
     elif proto == 0x03:
-        payload = read_exact(port, 23)
+        payload = read_exact(port, 26)
         ro_count = payload[0]
         pair_count = payload[1] | (payload[2] << 8)
         capabilities = payload[3]
@@ -112,7 +124,16 @@ def probe_image(port):
             "topology_id": payload[18] | (payload[19] << 8),
             "image_mode": payload[20],
             "build_id": payload[21] | (payload[22] << 8),
+            "proto_major": payload[23],
+            "proto_minor": payload[24],
+            "record_bytes": payload[25],
         }
+        if info["proto_major"] != 3 or info["proto_minor"] != 1:
+            raise RuntimeError(
+                f"unsupported protocol {info['proto_major']}.{info['proto_minor']}"
+            )
+        if info["record_bytes"] != (20 if ro_count == 64 else 16):
+            raise RuntimeError("record_bytes contradicts NUM_RO")
     else:
         raise RuntimeError(f"unknown all-pairs protocol version {proto:#04x}")
     info["protocol"] = proto_label
@@ -269,17 +290,41 @@ def decode_pair_fields(pair_a_raw, pair_flags, ro_count):
 
 def read_margin(port, ro_count, pair_count):
     expected_pairs = canonical_pairs(ro_count)
+    is_31 = ro_count == 64
+    size = RECORD_SIZE_31 if is_31 else RECORD_SIZE
+    unpacker = RECORD_STRUCT_31 if is_31 else RECORD_STRUCT
     port.write(bytes([CMD_MARGIN]))
     status = read_exact(port, 1)[0]
     if status != STATUS_SUCCESS:
         raise RuntimeError("all-pairs measurement returned non-success status")
-    payload = read_exact(port, pair_count * RECORD_SIZE)
+    payload = read_exact(port, pair_count * size)
     records = []
     for expected_index, expected_pair in enumerate(expected_pairs):
-        offset = expected_index * RECORD_SIZE
-        index, pair_a_raw, pair_flags, count0, count1, margin = (
-            RECORD_STRUCT.unpack_from(payload, offset)
-        )
+        offset = expected_index * size
+        if is_31:
+            (index, pair_a_raw, pair_flags, count0, count1, margin,
+             rec_status, reserved, rec_crc) = unpacker.unpack_from(payload, offset)
+            if crc16_ccitt_false(payload[offset:offset + 18]) != rec_crc:
+                raise RuntimeError(f"CRC mismatch at index {expected_index}")
+            if reserved != 0 or (rec_status & 0x80):
+                raise RuntimeError(f"reserved status/byte set at index {expected_index}")
+            stable = rec_status & 1
+            timeout = (rec_status >> 1) & 1
+            overflow_a = (rec_status >> 2) & 1
+            overflow_b = (rec_status >> 3) & 1
+            zero_a = (rec_status >> 4) & 1
+            zero_b = (rec_status >> 5) & 1
+            locked = (rec_status >> 6) & 1
+            if not stable or timeout or overflow_a or overflow_b or zero_a or zero_b or not locked:
+                raise RuntimeError(
+                    f"invalid record status {rec_status:#04x} at index {expected_index}"
+                )
+            if zero_a != int(count0 == 0) or zero_b != int(count1 == 0):
+                raise RuntimeError(f"status/count zero incoherent at index {expected_index}")
+        else:
+            (index, pair_a_raw, pair_flags, count0, count1, margin) = (
+                unpacker.unpack_from(payload, offset)
+            )
         pair_a, pair_b, winner, tie = decode_pair_fields(
             pair_a_raw, pair_flags, ro_count
         )

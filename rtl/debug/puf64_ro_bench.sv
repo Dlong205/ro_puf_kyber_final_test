@@ -25,6 +25,8 @@ module puf64_ro_bench #(
     output logic                  telemetry_valid,
     output logic                  telemetry_stable,
     output logic                  telemetry_timeout,
+    output logic                  telemetry_overflow_a,
+    output logic                  telemetry_overflow_b,
     output logic [IDX_W-1:0]      telemetry_index,
     output logic [RO_BITS-1:0]    telemetry_pair_a,
     output logic [RO_BITS-1:0]    telemetry_pair_b,
@@ -50,6 +52,7 @@ module puf64_ro_bench #(
     wire puf_rst_n = rst_n & ~zeroize;
 
     (* keep = "true" *) wire [WIDTH-1:0] ripple_q [0:NUM_RO-1];
+    wire [NUM_RO-1:0] ovf;
     (* keep = "true" *) wire [NUM_RO-1:0] ro_en_i;
 
     genvar i;
@@ -63,25 +66,32 @@ module puf64_ro_bench #(
             );
             kp_ripple_counter #(.WIDTH(WIDTH)) counter (
                 .clk(ro_tap_i), .clear(clear_r),
-                .q(ripple_q[i]), .presc_q()
+                .q(ripple_q[i]), .overflow(ovf[i]), .presc_q()
             );
         end
     endgenerate
 
     logic [WIDTH-1:0] cnt_a, cnt_b;
+    wire ovf_a = ovf[pair_a];
+    wire ovf_b = ovf[pair_b];
     always_comb begin
         cnt_a = ripple_q[pair_a];
         cnt_b = ripple_q[pair_b];
     end
 
     logic [WIDTH-1:0] a_s1, a_s2, a_s3, b_s1, b_s2, b_s3;
+    reg oa1, oa2, oa3, ob1, ob2, ob3;
     always_ff @(posedge clk or negedge puf_rst_n) begin
         if (!puf_rst_n) begin
             a_s1 <= '0; a_s2 <= '0; a_s3 <= '0;
             b_s1 <= '0; b_s2 <= '0; b_s3 <= '0;
+            oa1 <= 1'b0; oa2 <= 1'b0; oa3 <= 1'b0;
+            ob1 <= 1'b0; ob2 <= 1'b0; ob3 <= 1'b0;
         end else begin
             a_s1 <= cnt_a; a_s2 <= a_s1; a_s3 <= a_s2;
             b_s1 <= cnt_b; b_s2 <= b_s1; b_s3 <= b_s2;
+            oa1 <= ovf_a; oa2 <= oa1; oa3 <= oa2;
+            ob1 <= ovf_b; ob2 <= ob1; ob3 <= ob2;
         end
     end
 
@@ -101,6 +111,8 @@ module puf64_ro_bench #(
             telemetry_valid <= 1'b0;
             telemetry_stable <= 1'b0;
             telemetry_timeout <= 1'b0;
+            telemetry_overflow_a <= 1'b0;
+            telemetry_overflow_b <= 1'b0;
             telemetry_index <= '0;
             telemetry_pair_a <= '0;
             telemetry_pair_b <= '0;
@@ -155,6 +167,8 @@ module puf64_ro_bench #(
                         telemetry_valid <= 1'b1;
                         telemetry_stable <= (a_s2 == a_s3 && b_s2 == b_s3);
                         telemetry_timeout <= !(a_s2 == a_s3 && b_s2 == b_s3);
+                        telemetry_overflow_a <= oa2;
+                        telemetry_overflow_b <= ob2;
                         telemetry_index <= pair_index;
                         telemetry_pair_a <= pair_a;
                         telemetry_pair_b <= pair_b;

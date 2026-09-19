@@ -34,6 +34,10 @@ public:
         dut.telemetry_count0 = 0;
         dut.telemetry_count1 = 0;
         dut.telemetry_winner = 0;
+        dut.telemetry_stable = 1;
+        dut.telemetry_timeout = 0;
+        dut.telemetry_overflow_a = 0;
+        dut.telemetry_overflow_b = 0;
         dut.mmcm_locked = 1;
         clear_response();
         tick(8);

@@ -37,6 +37,10 @@ public:
         dut.telemetry_count0 = 0;
         dut.telemetry_count1 = 0;
         dut.telemetry_winner = 0;
+        dut.telemetry_stable = 1;
+        dut.telemetry_timeout = 0;
+        dut.telemetry_overflow_a = 0;
+        dut.telemetry_overflow_b = 0;
         dut.mmcm_locked = 1;
         clear_response();
         tick(8);
@@ -90,19 +94,31 @@ public:
     void info() {
         const auto old_starts = starts;
         send(0x00);
-        // "PUF", protocol 3.0, NUM_RO=64, PAIR_COUNT=2016 (LE), caps,
-        // input=50 MHz, system=100 MHz, ref_cycles=1023, locked, window=10230 ns.
+        // "PUF", protocol 3.1, build 2, NUM_RO=64, PAIR_COUNT=2016, clocks,
+        // ref_cycles=1023, width=16, topo=0xC0DE, image_mode=1, proto 3.1,
+        // record_bytes=20.
         expect({0x50, 0x55, 0x46, 0x03, 0x40, 0xE0, 0x07, 0x07,
                 0x80, 0xF0, 0xFA, 0x02,
                 0x00, 0xE1, 0xF5, 0x05,
                 0xFF, 0x03, 0x01, 0xF6, 0x27,
-                0x10, 0xDE, 0xC0, 0x01, 0x01, 0x00}, "INFO");
+                0x10, 0xDE, 0xC0, 0x01, 0x02, 0x00, 0x03, 0x01, 0x14}, "INFO");
         require(starts == old_starts, "INFO started the PUF");
     }
 
     static void append_u16(std::vector<uint8_t>& out, uint16_t value) {
         out.push_back(uint8_t(value));
         out.push_back(uint8_t(value >> 8));
+    }
+
+    static uint16_t crc16_ccitt(const std::vector<uint8_t>& data) {
+        uint16_t crc = 0xFFFF;
+        for (uint8_t byte : data) {
+            crc ^= uint16_t(byte) << 8;
+            for (int i = 0; i < 8; ++i)
+                crc = (crc & 0x8000) ? uint16_t((crc << 1) ^ 0x1021)
+                                     : uint16_t(crc << 1);
+        }
+        return crc;
     }
 
     static void append_u32(std::vector<uint8_t>& out, uint32_t value) {
@@ -127,19 +143,30 @@ public:
             dut.telemetry_count0 = count0;
             dut.telemetry_count1 = count1;
             dut.telemetry_winner = 1;
+            dut.telemetry_stable = 1;
+            dut.telemetry_timeout = 0;
+            dut.telemetry_overflow_a = 0;
+            dut.telemetry_overflow_b = 0;
             dut.telemetry_valid = 1;
             dut.puf_done = index == pair_count - 1;
             tick();
             dut.telemetry_valid = 0;
             dut.puf_done = 0;
 
-            append_u16(expected, index);
-            expected.push_back(uint8_t(a));
+            std::vector<uint8_t> body;
+            append_u16(body, index);
+            body.push_back(uint8_t(a));
             // flags byte: {pair_b[5], reserved(0), tie, winner, pair_b[4:0]}
-            expected.push_back(uint8_t(((b >> 5) & 1U) << 7 | (1U << 5) | (b & 0x1fU)));
-            append_u32(expected, count0);
-            append_u32(expected, count1);
-            append_u32(expected, margin);
+            body.push_back(uint8_t(((b >> 5) & 1U) << 7 | (1U << 5) | (b & 0x1fU)));
+            append_u32(body, count0);
+            append_u32(body, count1);
+            append_u32(body, margin);
+            body.push_back(0x41);  // status: stable=1, mmcm_locked=1
+            body.push_back(0x00);  // reserved
+            const uint16_t crc = crc16_ccitt(body);
+            body.push_back(uint8_t(crc));
+            body.push_back(uint8_t(crc >> 8));
+            expected.insert(expected.end(), body.begin(), body.end());
 
             if (b == num_ro - 1) {
                 ++a;

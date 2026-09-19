@@ -18,7 +18,7 @@ module Puf_AllPairs64_Characterization_Top #(
     localparam integer NUM_RO = 64;
     localparam integer PAIR_COUNT = NUM_RO * (NUM_RO - 1) / 2;
     localparam integer REF_CYCLES = 1023;
-    localparam integer BUILD_ID = 16'h0001;
+    localparam integer BUILD_ID = 16'h0002;
     localparam integer INPUT_CLOCK_HZ = 50000000;
     localparam integer SYSTEM_CLOCK_HZ = 100000000;
     localparam integer MEASUREMENT_WINDOW_NS = (REF_CYCLES * 1000) / (SYSTEM_CLOCK_HZ / 1000000);
@@ -72,6 +72,7 @@ module Puf_AllPairs64_Characterization_Top #(
     wire [PAIR_COUNT-1:0] puf_response;
     wire telemetry_valid;
     wire telemetry_stable, telemetry_timeout;
+    wire telemetry_overflow_a, telemetry_overflow_b;
     wire [10:0] telemetry_index;
     wire [5:0] telemetry_pair_a, telemetry_pair_b;
     wire [31:0] telemetry_count0, telemetry_count1;
@@ -85,6 +86,8 @@ module Puf_AllPairs64_Characterization_Top #(
         .telemetry_valid(telemetry_valid),
         .telemetry_stable(telemetry_stable),
         .telemetry_timeout(telemetry_timeout),
+        .telemetry_overflow_a(telemetry_overflow_a),
+        .telemetry_overflow_b(telemetry_overflow_b),
         .telemetry_index(telemetry_index),
         .telemetry_pair_a(telemetry_pair_a),
         .telemetry_pair_b(telemetry_pair_b),
@@ -103,7 +106,8 @@ module Puf_AllPairs64_Characterization_Top #(
         .REF_CYCLES_INFO(REF_CYCLES),
         .MEASUREMENT_WINDOW_NS(MEASUREMENT_WINDOW_NS),
         .WIDTH(16), .TOPOLOGY_ID(16'hC0DE), .BUILD_ID(BUILD_ID),
-        .IMAGE_MODE(8'h01)
+        .IMAGE_MODE(8'h01),
+        .PROTO_MAJOR(3), .PROTO_MINOR(1)
     ) u_uart (
         .clk(clk_sys), .rst_n(por_done),
         .uart_rx_i(UART_RXD), .uart_tx_o(UART_TXD), .tx_active(tx_active),
@@ -116,11 +120,14 @@ module Puf_AllPairs64_Characterization_Top #(
         .telemetry_count0(telemetry_count0),
         .telemetry_count1(telemetry_count1),
         .telemetry_winner(telemetry_winner),
+        .telemetry_stable(telemetry_stable),
+        .telemetry_timeout(telemetry_timeout),
+        .telemetry_overflow_a(telemetry_overflow_a),
+        .telemetry_overflow_b(telemetry_overflow_b),
         .mmcm_locked(mmcm_locked)
     );
 
     assign LED[0] = tx_active;
     assign LED[1] = puf_busy;
     wire unused_sw = &SW;
-    wire unused_tel = telemetry_stable ^ telemetry_timeout;
 endmodule
