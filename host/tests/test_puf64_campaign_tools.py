@@ -169,10 +169,11 @@ class CampaignValidationTest(unittest.TestCase):
     def test_train_and_holdout_loaders_ignore_pilot(self):
         import tempfile
         with tempfile.TemporaryDirectory() as tmp:
-            for name, camp in (("train_ZYNQ-A01_101", "train"),
-                               ("holdout_ZYNQ-A01_201", "holdout"),
-                               ("pilot_build2_ZYNQ-A01_1", "pilot_build2")):
-                sess = session(1)
+            for name, camp, boot in (("train_ZYNQ-A01_101", "train", 101),
+                                     ("holdout_ZYNQ-A01_201", "holdout", 201),
+                                     ("pilot_build2_ZYNQ-A01_1",
+                                      "pilot_build2", 1)):
+                sess = session(boot)
                 sess["manifest"]["campaign"] = camp
                 ds = Path(tmp) / f"{name}.dataset.json"
                 ds.write_text(json.dumps(sess["dataset"]))
@@ -180,12 +181,15 @@ class CampaignValidationTest(unittest.TestCase):
                 raw.write_text(json.dumps({"frames_winners_hex": ["00"]}))
                 manifest = dict(sess["manifest"])
                 manifest["dataset_path"] = str(ds)
+                manifest["build_id"] = GOLDEN["build_id"]
+                manifest["local_bitstream_sha256"] = GOLDEN["bitstream_sha256"]
                 (Path(tmp) / f"{name}.session.json").write_text(
                     json.dumps(manifest))
             train = SELECT.load_train_sessions(tmp)
             self.assertEqual([s["manifest"]["campaign"] for s in train], ["train"])
-            holdout = HOLD.load_holdout(tmp)
+            holdout, problems = HOLD.load_holdout(tmp, GOLDEN)
             self.assertEqual([s[0]["campaign"] for s in holdout], ["holdout"])
+            self.assertTrue(any("missing" in p for p in problems))
 
 
 class TrainSelectTest(unittest.TestCase):

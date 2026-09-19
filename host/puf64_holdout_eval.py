@@ -1,20 +1,30 @@
 #!/usr/bin/env python3
-"""PUF64 holdout evaluator and identity-bound mapping freeze.
+"""PUF64 holdout evaluator.
 
-Given a frozen train mapping + private train reference and holdout sessions,
-computes errors-per-vector statistics and applies the acceptance gate.  Only on
-PASS does it emit a nonzero mapping_tag bound to the golden identity.
+Given the frozen train mapping, the private train reference and 10 holdout
+sessions, computes errors-per-vector statistics plus selected-pair/RO drift
+metrics and applies the acceptance gate from the frozen protocol.
+
+Fail-closed: the mapping file, private reference and train-input aggregate must
+match the frozen holdout candidate (and the golden manifest mirror) or the
+evaluation refuses to run.  Never re-selects pairs, never lowers a threshold,
+never reuses holdout as train.  A nonzero mapping_tag is NOT created here:
+canonicalization is a separate post-review step.
 """
 
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import statistics
 import sys
 
 BCH_T = 8
 P95_GATE = 4
+HOLDOUT_FIRST = 201
+HOLDOUT_LAST = 210
+CANDIDATE_SCHEMA = "puf64-holdout-candidate-v1"
 
 
 def canonical_json(value):
@@ -25,60 +35,152 @@ def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def load_holdout(campaign_dir):
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as source:
+        for block in iter(lambda: source.read(1 << 20), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def canonical_pairs(ro_count):
+    return [(a, b) for a in range(ro_count) for b in range(a + 1, ro_count)]
+
+
+def load_holdout(campaign_dir, golden, first=HOLDOUT_FIRST,
+                 last=HOLDOUT_LAST):
+    """Load exactly the expected holdout boots; report every deviation."""
     sessions = []
-    for path in sorted(Path(campaign_dir).glob("holdout_*.session.json")):
+    problems = []
+    expected_names = set()
+    for boot in range(first, last + 1):
+        name = f"holdout_{golden['board_id']}_{boot}.session.json"
+        expected_names.add(name)
+        path = Path(campaign_dir) / name
+        if not path.is_file():
+            problems.append(f"boot {boot}: session missing")
+            continue
         manifest = json.loads(path.read_text())
         if manifest.get("status") != "VALID":
+            problems.append(f"boot {boot}: status {manifest.get('status')}")
             continue
-        dataset = json.loads(Path(manifest["dataset_path"]).read_text())
-        raw = json.loads(
-            Path(manifest["dataset_path"]).with_name(
-                Path(manifest["dataset_path"]).name.replace(".dataset.json", ".raw.json")
-            ).read_text()
-        )
-        sessions.append((manifest, dataset, raw))
-    return sessions
+        if manifest.get("campaign") != "holdout":
+            problems.append(f"boot {boot}: campaign mismatch")
+            continue
+        if manifest.get("build_id") != golden.get("build_id"):
+            problems.append(f"boot {boot}: build_id mismatch")
+            continue
+        if manifest.get("local_bitstream_sha256") != golden.get("bitstream_sha256"):
+            problems.append(f"boot {boot}: bitstream SHA mismatch")
+            continue
+        dataset = Path(manifest["dataset_path"])
+        raw = dataset.with_name(dataset.name.replace(".dataset.json", ".raw.json"))
+        if not dataset.is_file() or not raw.is_file():
+            problems.append(f"boot {boot}: dataset/raw missing")
+            continue
+        sessions.append((manifest, json.loads(dataset.read_text()),
+                         json.loads(raw.read_text())))
+    for path in sorted(Path(campaign_dir).glob("holdout_*.session.json")):
+        if path.name not in expected_names:
+            problems.append(f"unexpected holdout session {path.name}")
+    return sessions, problems
 
 
-def percentile(values, pct):
-    ordered = sorted(values)
-    if not ordered:
-        return 0
-    import math
-    rank = max(1, math.ceil(pct * len(ordered)))
-    return ordered[rank - 1]
+def verify_candidate_binding(mapping, reference, candidate, golden, mapping_path,
+                             reference_path):
+    """Return a list of fail-closed mismatch problems."""
+    problems = []
+    selection = mapping.get("selection_sha256")
+    if golden.get("holdout_candidate_selection_sha256") != selection:
+        problems.append("golden selection hash != mapping selection hash")
+    if golden.get("holdout_candidate_mapping_file_sha256") != \
+            sha256_file(mapping_path):
+        problems.append("golden mapping file SHA != mapping file")
+    if reference.get("selection_sha256") != selection:
+        problems.append("reference selection hash != mapping selection hash")
+    if candidate is not None:
+        if candidate.get("schema") != CANDIDATE_SCHEMA:
+            problems.append("candidate schema mismatch")
+        if candidate.get("status") != "TRAIN_SELECTED_NOT_HOLDOUT_QUALIFIED" or \
+                candidate.get("mapping_tag") != 0:
+            problems.append("candidate is not a frozen train candidate")
+        if candidate.get("selection_sha256") != selection:
+            problems.append("candidate selection hash mismatch")
+        if candidate.get("mapping_file_sha256") != sha256_file(mapping_path):
+            problems.append("candidate mapping file SHA mismatch")
+        if candidate.get("reference_file_sha256") != sha256_file(reference_path):
+            problems.append("candidate reference file SHA mismatch")
+        if candidate.get("train_input_aggregate_sha256") != \
+                mapping.get("train_input_sha256"):
+            problems.append("candidate train-input hash mismatch")
+        if candidate.get("ordered_pairs") != mapping.get("pairs"):
+            problems.append("candidate pair order mismatch")
+        if candidate.get("ro_degree") != mapping.get("ro_degree"):
+            problems.append("candidate degree vector mismatch")
+        for key in ("board_id", "protocol", "build_id", "topology_id",
+                    "record_bytes", "width", "ref_cycles", "num_ro",
+                    "pair_count", "bitstream_sha256"):
+            if candidate.get(key) != golden.get(key):
+                problems.append(f"candidate {key} != golden")
+    return problems
 
 
 def evaluate(mapping, reference, sessions, golden):
     indices = mapping["source_pair_indices"]
     ref_bits = [reference["reference_bit"][str(i)] for i in indices]
-    errors = []
+    pairs = canonical_pairs(golden["num_ro"])
+    ordered_pairs = mapping.get("pairs") or [pairs[i] for i in indices]
     frame_errors = []
     boot_majority_errors = []
     failing_frames = 0
     failing_boots = 0
     valid_sessions = 0
     per_session = []
+    pair_error_counts = [0] * len(indices)
+    selected_pair_metrics = []
+    ro_values = {ro: {} for ro in range(golden["num_ro"])}
+    for j, index in enumerate(indices):
+        a, b = ordered_pairs[j]
+        selected_pair_metrics.append({
+            "index": index, "pair": [a, b],
+            "tie_events": 0, "worst_minority_rate": 0.0,
+            "min_margin_p01": None,
+        })
     for manifest, dataset, raw in sessions:
         problems = []
-        for key, expected in (("build_id", golden["build_id"]),
-                              ("topology_id", golden["topology_id"]),
-                              ("image_mode_code", golden["image_mode_code"])):
-            if manifest["device_info"].get(key) != expected:
-                problems.append(f"{key} mismatch")
+        device = manifest.get("device_info", {})
+        tuple_keys = {
+            "protocol": "protocol", "build_id": "build_id",
+            "topology_id": "topology_id", "record_bytes": "record_bytes",
+            "width": "width", "ref_cycles": "ref_cycles",
+            "num_ro": "num_ro", "pair_count": "pair_count",
+            "system_clock_hz": "clock_system_hz",
+            "input_clock_hz": "clock_input_hz",
+            "image_mode_code": "image_mode_code",
+        }
+        for device_key, golden_key in tuple_keys.items():
+            expected = golden.get(golden_key)
+            if expected is not None and device.get(device_key) != expected:
+                problems.append(f"{device_key} mismatch")
+        if device.get("mmcm_locked") is not None and device.get("mmcm_locked") != 1:
+            problems.append("MMCM not locked")
         frames = raw["frames_winners_hex"]
-        if len(frames) != manifest["frames_requested"]:
+        if len(frames) != manifest.get("frames_requested"):
             problems.append("frame_count mismatch")
-        for index in indices:
-            entry = dataset["per_pair"][index]
-            if entry["count0"]["p50"] == 0 or entry["count1"]["p50"] == 0:
-                problems.append(f"pair {index} zero count")
-                break
+        if len(dataset.get("per_pair", [])) != golden["pair_count"]:
+            problems.append("dataset pair_count mismatch")
+        else:
+            for entry_index in indices:
+                entry = dataset["per_pair"][entry_index]
+                if entry["count0"]["p50"] == 0 or entry["count1"]["p50"] == 0:
+                    problems.append(f"pair {entry_index} zero count")
+                    break
         if problems:
-            errors.append({"boot": manifest["boot_index"], "problems": problems})
+            per_session.append({"boot": manifest["boot_index"],
+                                "valid": False, "problems": problems})
             continue
         valid_sessions += 1
+        first_frame_index = len(frame_errors)
         boot_bits = [[0] * len(indices) for _ in range(len(frames))]
         for f, hex_value in enumerate(frames):
             value = int(hex_value, 16)
@@ -88,6 +190,7 @@ def evaluate(mapping, reference, sessions, golden):
                 boot_bits[f][j] = bit
                 if bit != ref_bits[j]:
                     boot_frame_errors += 1
+                    pair_error_counts[j] += 1
             frame_errors.append(boot_frame_errors)
             if boot_frame_errors > BCH_T:
                 failing_frames += 1
@@ -95,17 +198,41 @@ def evaluate(mapping, reference, sessions, golden):
         for j in range(len(indices)):
             ones = sum(boot_bits[f][j] for f in range(len(frames)))
             majority.append(1 if ones * 2 > len(frames) else 0)
-        boot_errors = sum(1 for j in range(len(indices)) if majority[j] != ref_bits[j])
+        boot_errors = sum(1 for j in range(len(indices))
+                          if majority[j] != ref_bits[j])
         boot_majority_errors.append(boot_errors)
         if boot_errors > BCH_T:
             failing_boots += 1
+        session_frame_errors = frame_errors[first_frame_index:]
         per_session.append({
-            "boot": manifest["boot_index"], "frames": len(frames),
+            "boot": manifest["boot_index"], "valid": True,
+            "frames": len(frames),
             "boot_majority_errors": boot_errors,
-            "max_frame_errors": max(
-                (frame_errors[f] for f in range(len(frame_errors) - len(frames),
-                                               len(frame_errors))), default=0),
+            "max_frame_errors": max(session_frame_errors, default=0),
         })
+        boot = manifest["boot_index"]
+        for j, index in enumerate(indices):
+            entry = dataset["per_pair"][index]
+            metrics = selected_pair_metrics[j]
+            metrics["tie_events"] += int(entry["tie_count"])
+            metrics["worst_minority_rate"] = max(
+                metrics["worst_minority_rate"],
+                float(entry["minority_rate_percent"]))
+            margin_p01 = float(entry["margin"]["p01"])
+            metrics["min_margin_p01"] = margin_p01 if metrics["min_margin_p01"] \
+                is None else min(metrics["min_margin_p01"], margin_p01)
+            a, b = ordered_pairs[j]
+            ro_values[a].setdefault(boot, []).append(entry["count0"]["p50"])
+            ro_values[b].setdefault(boot, []).append(entry["count1"]["p50"])
+    per_ro_span = {}
+    for ro, boots in ro_values.items():
+        medians = [statistics.median(values) for values in boots.values()
+                   if values]
+        per_ro_span[str(ro)] = (max(medians) - min(medians)) if medians else None
+    total_frames = len(frame_errors)
+    pair_frequency = [
+        (count / total_frames) if total_frames else 0.0
+        for count in pair_error_counts]
     return {
         "valid_sessions": valid_sessions,
         "frame_errors": frame_errors,
@@ -113,20 +240,30 @@ def evaluate(mapping, reference, sessions, golden):
         "failing_frames": failing_frames,
         "failing_boots": failing_boots,
         "per_session": per_session,
-        "errors": errors,
+        "selected_pair_metrics": selected_pair_metrics,
+        "selected_pair_error_frequency": {
+            "max": max(pair_frequency, default=0.0),
+            "median": statistics.median(pair_frequency) if pair_frequency else 0.0,
+            "pairs_with_any_error": sum(1 for value in pair_frequency if value > 0),
+        },
+        "per_ro_count_p50_span": per_ro_span,
     }
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--mapping", required=True)
     parser.add_argument("--reference", required=True)
     parser.add_argument("--holdout-dir", required=True)
     parser.add_argument("--golden-manifest", required=True)
+    parser.add_argument("--holdout-candidate", default=None)
     parser.add_argument("--report-out", required=True)
     parser.add_argument("--frozen-out", default=None)
+    parser.add_argument("--post-review-freeze", action="store_true",
+                        help="only after explicit review: canonicalize the "
+                             "mapping and derive mapping_tag != 0")
     parser.add_argument("--min-boots", type=int, default=10)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     mapping = json.loads(Path(args.mapping).read_text())
     reference = json.loads(Path(args.reference).read_text())
@@ -140,10 +277,26 @@ def main():
     if mapping.get("mapping_tag") not in (0, None):
         print("BLOCKER: mapping_tag already set; holdout already consumed")
         return 2
+    candidate = None
+    if args.holdout_candidate:
+        candidate = json.loads(Path(args.holdout_candidate).read_text())
+    problems = verify_candidate_binding(
+        mapping, reference, candidate, golden, args.mapping, args.reference)
+    if problems:
+        print("BLOCKER: frozen candidate binding failed:")
+        for problem in problems:
+            print(f"  - {problem}")
+        return 2
 
-    sessions = load_holdout(args.holdout_dir)
-    if len(sessions) < args.min_boots:
-        print(f"BLOCKER: {len(sessions)} holdout sessions, need {args.min_boots}")
+    sessions, load_problems = load_holdout(args.holdout_dir, golden)
+    if load_problems:
+        print("BLOCKER: holdout session set is not clean:")
+        for problem in load_problems:
+            print(f"  - {problem}")
+        return 2
+    if len(sessions) != args.min_boots:
+        print(f"BLOCKER: {len(sessions)} holdout sessions, need "
+              f"{args.min_boots}")
         return 2
 
     result = evaluate(mapping, reference, sessions, golden)
@@ -154,9 +307,11 @@ def main():
     p99 = percentile(frame_errors, 0.99)
     max_err = max(frame_errors) if frame_errors else 0
     frr = result["failing_frames"] / total_frames if total_frames else 1.0
+    invalid_sessions = [session for session in result["per_session"]
+                        if not session.get("valid", True)]
     gate = {
         "holdout_boots_valid": result["valid_sessions"] >= args.min_boots,
-        "no_selected_pair_invalid": not result["errors"],
+        "no_selected_pair_invalid": not invalid_sessions,
         "no_frame_over_bch": result["failing_frames"] == 0,
         "no_boot_majority_over_bch": result["failing_boots"] == 0,
         "observed_frr_zero": frr == 0.0,
@@ -171,13 +326,18 @@ def main():
         "boots_majority_over_bch": result["failing_boots"],
         "observed_frr": frr,
         "per_session": result["per_session"],
-        "validation_errors": result["errors"],
+        "selected_pair_metrics": result["selected_pair_metrics"],
+        "selected_pair_error_frequency": result["selected_pair_error_frequency"],
+        "per_ro_count_p50_span": result["per_ro_count_p50_span"],
         "gate": gate, "passed": passed,
+        "mapping_tag": 0,
+        "note": "unqualified: canonicalization/mapping_tag is a separate "
+                "post-review step",
     }
     Path(args.report_out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.report_out).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
 
-    if passed and args.frozen_out:
+    if passed and args.frozen_out and args.post_review_freeze:
         identity = {
             "protocol": golden.get("protocol"),
             "image_mode": golden.get("image_mode"),
@@ -211,6 +371,14 @@ def main():
 
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0 if passed else 1
+
+
+def percentile(values, pct):
+    ordered = sorted(values)
+    if not ordered:
+        return 0
+    rank = max(1, math.ceil(pct * len(ordered)))
+    return ordered[rank - 1]
 
 
 if __name__ == "__main__":
