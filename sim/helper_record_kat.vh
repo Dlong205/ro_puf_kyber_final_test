@@ -4,14 +4,14 @@
 // No include guard: localparams are module scoped.
 
 localparam [607:0] HREC_KAT_RAW = {
-    32'ha58eb2c8,
-    32'h5bddc15a,
-    32'hf3424f24,
-    32'h1260dd30,
-    32'hf2ad7266,
-    32'h31b04b06,
-    32'h2adc62fe,
-    32'h549b201f,
+    32'h03297f04,
+    32'h2f0d4506,
+    32'hbb653395,
+    32'hcc078d6f,
+    32'h9aa415f2,
+    32'ha1c95357,
+    32'hf9b715da,
+    32'h894f201f,
     32'h1e1d1c1b,
     32'h1a191817,
     32'h16151413,
@@ -20,19 +20,19 @@ localparam [607:0] HREC_KAT_RAW = {
     32'h0a090807,
     32'h06050403,
     32'h02010000,
-    32'h01000000,
-    32'h01010101,
+    32'h01d50121,
+    32'h01010102,
     32'h55464b52
 };
 localparam [607:0] HREC_KAT_RAW_ALT = {
-    32'hfc3eb2c8,
-    32'h5bddc15a,
-    32'hf3424f24,
-    32'h1260dd30,
-    32'hf2ad7266,
-    32'h31b04b06,
-    32'h2adc62fe,
-    32'h549b201f,
+    32'h5a997f04,
+    32'h2f0d4506,
+    32'hbb653395,
+    32'hcc078d6f,
+    32'h9aa415f2,
+    32'ha1c95357,
+    32'hf9b715da,
+    32'h894f201f,
     32'h1e1d1c1b,
     32'h1a191817,
     32'h16151413,
@@ -41,15 +41,16 @@ localparam [607:0] HREC_KAT_RAW_ALT = {
     32'h0a090807,
     32'h06050403,
     32'h02010100,
-    32'h01000000,
-    32'h01010101,
+    32'h01d50121,
+    32'h01010102,
     32'h55464b52
 };
 localparam [263:0] HREC_KAT_HELPER = 264'h201f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100;
-localparam [223:0] HREC_KAT_KCV    = 224'hb2c85bddc15af3424f241260dd30f2ad726631b04b062adc62fe549b;
-localparam [55:0]  HREC_KAT_CTX    = 56'h01000001010101;
+localparam [223:0] HREC_KAT_KCV    = 224'h7f042f0d4506bb653395cc078d6f9aa415f2a1c95357f9b715da894f;
+localparam [55:0]  HREC_KAT_CTX    = 56'h01d50101010102;
 localparam [7:0]   HREC_KAT_GEN    = 8'h01;
 localparam [7:0]   HREC_KAT_PROFILE = 8'h01;
 localparam [7:0]   HREC_KAT_FE     = 8'h01;
-localparam [7:0]   HREC_KAT_MAPLEN = 8'h00;
-localparam [15:0]  HREC_KAT_MAPTAG = 16'h0000;
+localparam [7:0]   HREC_KAT_MAPLEN_BYTES = 8'h21;
+localparam integer HREC_KAT_MAPLEN_BITS  = 264;
+localparam [15:0]  HREC_KAT_MAPTAG = 16'hd501;

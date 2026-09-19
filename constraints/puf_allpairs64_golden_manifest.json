@@ -70,5 +70,5 @@
   "train_holdout_eligible": false,
   "vivado_version": "2020.1",
   "width": 16,
-  "wire_mapping_len_status": "BLOCKED: mapping_len=264 does not fit the 1-byte helper-record field (max 255); protocol/RTL revision required before on-wire binding"
+  "wire_mapping_len_status": "RESOLVED_HELPER_RECORD_V2: offset 8 is mapping_len_bytes=33 (ceil(264/8)); operational parser v2 accepts only 33 with record_version=2 and mapping_tag=0xd501"
 }

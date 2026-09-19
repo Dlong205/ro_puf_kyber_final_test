@@ -3,7 +3,7 @@
 #define HELPER_RECORD_SPEC_H
 
 #define HREC_MAGIC            0x55464b52u
-#define HREC_RECORD_VERSION   0x01u
+#define HREC_RECORD_VERSION   0x02u
 #define HREC_PROTOCOL_VERSION 0x01u
 #define HREC_BYTES            76u
 #define HREC_HELPER_BYTES     33u
@@ -14,7 +14,7 @@
 #define HREC_OFF_PROTOCOL_VERSION 5u
 #define HREC_OFF_PROFILE          6u
 #define HREC_OFF_FE_PARAM         7u
-#define HREC_OFF_MAPPING_LEN      8u
+#define HREC_OFF_MAPPING_LEN_BYTES 8u
 #define HREC_OFF_MAPPING_TAG      9u
 #define HREC_OFF_GENERATION       11u
 #define HREC_OFF_RESERVED         12u

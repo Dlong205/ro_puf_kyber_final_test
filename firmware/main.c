@@ -65,8 +65,8 @@
 // values the host serialized into the record and the Edge RTL parameters.
 #define EXPECTED_PROFILE  0x01
 #define EXPECTED_FE_PARAM 0x01
-#define EXPECTED_MAPPING_LEN 0x00
-#define EXPECTED_MAPPING_TAG 0x0000
+#define EXPECTED_MAPPING_LEN_BYTES 0x21
+#define EXPECTED_MAPPING_TAG 0xD501
 
 #define SYS_ST_PUF_DONE       (1u << 0)
 #define SYS_ST_FE_DONE        (1u << 1)
@@ -266,7 +266,7 @@ static uint8_t validate_record(const uint8_t *rec) {
         return HREC_ERR_FE_PARAM;
     if (rec[HREC_OFF_RESERVED] != 0)
         return HREC_ERR_RESERVED;
-    if (rec[HREC_OFF_MAPPING_LEN] != EXPECTED_MAPPING_LEN ||
+    if (rec[HREC_OFF_MAPPING_LEN_BYTES] != EXPECTED_MAPPING_LEN_BYTES ||
         rd16_le(rec + HREC_OFF_MAPPING_TAG) != EXPECTED_MAPPING_TAG)
         return HREC_ERR_MAPPING;
     if (rd16_le(rec + HREC_OFF_CRC) !=
@@ -360,7 +360,7 @@ static void process_enroll(void) {
     rec[HREC_OFF_PROTOCOL_VERSION] = HREC_PROTOCOL_VERSION;
     rec[HREC_OFF_PROFILE] = EXPECTED_PROFILE;
     rec[HREC_OFF_FE_PARAM] = EXPECTED_FE_PARAM;
-    rec[HREC_OFF_MAPPING_LEN] = EXPECTED_MAPPING_LEN;
+    rec[HREC_OFF_MAPPING_LEN_BYTES] = EXPECTED_MAPPING_LEN_BYTES;
     rec[HREC_OFF_MAPPING_TAG] = (uint8_t)(EXPECTED_MAPPING_TAG & 0xFF);
     rec[HREC_OFF_MAPPING_TAG + 1] = (uint8_t)((EXPECTED_MAPPING_TAG >> 8) & 0xFF);
     rec[HREC_OFF_GENERATION] = 0x01;

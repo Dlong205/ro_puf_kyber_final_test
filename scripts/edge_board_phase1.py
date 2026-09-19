@@ -118,7 +118,7 @@ def parse_and_validate(record, tag=""):
         (spec.OFF_PROTOCOL_VERSION, "protocol_version", spec.PROTOCOL_VERSION),
         (spec.OFF_PROFILE, "profile", spec.DEFAULT_PROFILE),
         (spec.OFF_FE_PARAM, "fe_param", spec.DEFAULT_FE_PARAM),
-        (spec.OFF_MAPPING_LEN, "mapping_len", spec.DEFAULT_MAPPING_LEN),
+        (spec.OFF_MAPPING_LEN_BYTES, "mapping_len_bytes", spec.DEFAULT_MAPPING_LEN_BYTES),
         (spec.OFF_GENERATION, "generation", spec.DEFAULT_GENERATION),
         (spec.OFF_RESERVED, "reserved", spec.RESERVED),
     ]:
@@ -127,7 +127,7 @@ def parse_and_validate(record, tag=""):
             check(f"{tag} header.{name}", False, detail=f"got 0x{got:02x} want 0x{want:02x}")
             ok = False
     mapping_tag = struct.unpack("<H", record[spec.OFF_MAPPING_TAG:spec.OFF_MAPPING_TAG + 2])[0]
-    check(f"{tag} mapping_tag=0x0000", mapping_tag == spec.DEFAULT_MAPPING_TAG,
+    check(f"{tag} mapping_tag=0x%04x" % spec.DEFAULT_MAPPING_TAG, mapping_tag == spec.DEFAULT_MAPPING_TAG,
           detail=f"0x{mapping_tag:04x}")
     helper = record[spec.OFF_HELPER:spec.OFF_KCV]
     kcv = record[spec.OFF_KCV:spec.OFF_CRC]

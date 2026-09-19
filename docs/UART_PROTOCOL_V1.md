@@ -4,9 +4,9 @@
 > bằng record có version. Định dạng là một nguồn chân lý duy nhất do
 > `scripts/helper_record_spec.py` sinh ra (`rtl/top/helper_record_spec.vh` và
 > `firmware/helper_record_spec.h`). Bố cục: magic(4) + record_version(1) +
-> protocol_version(1) + profile_id(1) + fe_param_id(1) + mapping_len(1) +
+> protocol_version(1) + profile_id(1) + fe_param_id(1) + mapping_len_bytes(1) +
 > mapping_tag(2, LE) + generation(1) + reserved(1) + helper(33) + kcv(28) +
-> crc16(2, LE, CCITT-FALSE trên byte 0..73) = 76 byte.
+> crc16(2, LE, CCITT-FALSE trên byte 0..73) = 76 byte. Với helper-record v2: record_version=0x02, `mapping_len_bytes=33` (264-bit response), `mapping_tag=0xd501`.
 >
 > - `01 ENROLL` release trả `AA` + 76 byte record (thay vì 33 byte). Trên đường
 >   SoC, trường KCV là 0 vì chưa có hardware KCV generator; trên Edge RTL, KCV

@@ -73,7 +73,9 @@
   ],
   "lock_level": "placement+LOCK_PINS+route-fingerprint-fail-closed",
   "mapping_candidate_sha256": "bb46e05ec1c6b7ae5a2c1a226bc0f527d2e7c0ca20824c57d75e04fbe7063b97",
+  "mapping_len_bytes": 33,
   "mapping_length": 264,
+  "mapping_length_bits": 264,
   "mapping_tag": 54529,
   "mapping_tag_byte_order": "little",
   "mapping_tag_hex": "0xd501",
@@ -1218,6 +1220,7 @@
   ],
   "route_fingerprint_sha256": "a35fac78cb736a5edaa3e4ba97c3ca04e92e396c6bc61ba3026433cc7483139c",
   "schema": "ro-puf-final-mapping-public-v1",
+  "selected_pair_count": 264,
   "selection_sha256": "299a089d8493058047ff830921c169b9dafda93b0066ab8ef20c67f8b39afa11",
   "status": "RELIABILITY_QUALIFIED_ZYNQ_A01_GOLDEN_BITSTREAM",
   "thresholds": {
@@ -1255,10 +1258,12 @@
   "train_input_aggregate_sha256": "957f8963d313c2f0f54e0b03cefdebbe5e51846a77c31c9e6ce8852bc66fbb68",
   "wire_encoding": {
     "helper_record": "76-byte record, all multi-byte fields little-endian",
-    "mapping_len": {
-      "blocker": "mapping_len=264 does not fit in the 1-byte u8 field (max 255); a protocol/RTL revision is required and was intentionally NOT made during canonicalization",
+    "helper_record_version": 2,
+    "mapping_len_bytes": {
       "offset": 8,
-      "status": "BLOCKED",
+      "required": "operational parser v2 accepts only 33 for profile=0x01, fe_param=0x01",
+      "semantics": "selected mapping response length in bytes = ceil(mapping_length_bits/8); NOT a pair count",
+      "value": 33,
       "width_bits": 8
     },
     "mapping_tag": {
@@ -1267,6 +1272,7 @@
       "role": "configuration mismatch identifier, NOT a cryptographic collision-resistant binding; the KCV is the same-root check",
       "width_bits": 16
     },
-    "source_of_truth": "scripts/helper_record_spec.py"
+    "source_of_truth": "scripts/helper_record_spec.py",
+    "status": "RESOLVED_HELPER_RECORD_V2"
   }
 }

@@ -14,7 +14,7 @@ module tb_helper_record;
     reg  [8*HREC_BYTES-1:0] raw = HREC_KAT_RAW;
     reg  [7:0]  exp_profile = HREC_KAT_PROFILE;
     reg  [7:0]  exp_fe      = HREC_KAT_FE;
-    reg  [7:0]  exp_maplen  = HREC_KAT_MAPLEN;
+    reg  [7:0]  exp_maplen_bytes = HREC_KAT_MAPLEN_BYTES;
     reg  [15:0] exp_maptag  = HREC_KAT_MAPTAG;
     reg  crc_ok = 1'b1;
     wire [3:0]   status;
@@ -30,7 +30,7 @@ module tb_helper_record;
         .raw(raw),
         .expected_profile(exp_profile),
         .expected_fe_param(exp_fe),
-        .expected_mapping_len(exp_maplen),
+        .expected_mapping_len_bytes(exp_maplen_bytes),
         .expected_mapping_tag(exp_maptag),
         .crc_ok(crc_ok),
         .status(status),
@@ -53,7 +53,7 @@ module tb_helper_record;
 
     task automatic expect_status(
         input [8*HREC_BYTES-1:0] test_raw,
-        input [7:0] profile, fe, maplen,
+        input [7:0] profile, fe, maplen_bytes,
         input [15:0] maptag,
         input crc_good,
         input [3:0] want,
@@ -63,7 +63,7 @@ module tb_helper_record;
             raw = test_raw;
             exp_profile = profile;
             exp_fe = fe;
-            exp_maplen = maplen;
+            exp_maplen_bytes = maplen_bytes;
             exp_maptag = maptag;
             crc_ok = crc_good;
             #1;
@@ -78,7 +78,7 @@ module tb_helper_record;
     initial begin
         // 1. Golden record with valid CRC must validate and expose fields.
         expect_status(HREC_KAT_RAW, HREC_KAT_PROFILE, HREC_KAT_FE,
-                      HREC_KAT_MAPLEN, HREC_KAT_MAPTAG, 1'b1, HREC_OK, "kat");
+                      HREC_KAT_MAPLEN_BYTES, HREC_KAT_MAPTAG, 1'b1, HREC_OK, "kat");
         if (helper !== HREC_KAT_HELPER)
             $fatal(1, "helper field mismatch");
         if (kcv_ref !== HREC_KAT_KCV)
@@ -93,7 +93,7 @@ module tb_helper_record;
         // 2. CRC-valid record with a different helper must still parse; the
         //    parser is integrity-only, same-root is enforced by the KCV gate.
         expect_status(HREC_KAT_RAW_ALT, HREC_KAT_PROFILE, HREC_KAT_FE,
-                      HREC_KAT_MAPLEN, HREC_KAT_MAPTAG, 1'b1, HREC_OK,
+                      HREC_KAT_MAPLEN_BYTES, HREC_KAT_MAPTAG, 1'b1, HREC_OK,
                       "alt-valid");
         if (helper === HREC_KAT_HELPER)
             $fatal(1, "alt helper did not differ");
@@ -102,33 +102,59 @@ module tb_helper_record;
         // 3-8. Header/binding rejections (crc_ok = 1, so the code must be a
         //      header/binding error, not CRC).
         expect_status(with_byte(HREC_KAT_RAW, 0, 8'h00), HREC_KAT_PROFILE,
-                      HREC_KAT_FE, HREC_KAT_MAPLEN, HREC_KAT_MAPTAG, 1'b1,
+                      HREC_KAT_FE, HREC_KAT_MAPLEN_BYTES, HREC_KAT_MAPTAG, 1'b1,
                       HREC_ERR_MAGIC, "magic");
-        expect_status(with_byte(HREC_KAT_RAW, 4, 8'h02), HREC_KAT_PROFILE,
-                      HREC_KAT_FE, HREC_KAT_MAPLEN, HREC_KAT_MAPTAG, 1'b1,
-                      HREC_ERR_RECORD_VER, "recordver");
+        expect_status(with_byte(HREC_KAT_RAW, 4, 8'h01), HREC_KAT_PROFILE,
+                      HREC_KAT_FE, HREC_KAT_MAPLEN_BYTES, HREC_KAT_MAPTAG, 1'b1,
+                      HREC_ERR_RECORD_VER, "v1-reject");
         expect_status(with_byte(HREC_KAT_RAW, 5, 8'h02), HREC_KAT_PROFILE,
-                      HREC_KAT_FE, HREC_KAT_MAPLEN, HREC_KAT_MAPTAG, 1'b1,
+                      HREC_KAT_FE, HREC_KAT_MAPLEN_BYTES, HREC_KAT_MAPTAG, 1'b1,
                       HREC_ERR_PROTOCOL_VER, "protover");
-        expect_status(HREC_KAT_RAW, 8'h02, HREC_KAT_FE, HREC_KAT_MAPLEN,
+        expect_status(HREC_KAT_RAW, 8'h02, HREC_KAT_FE, HREC_KAT_MAPLEN_BYTES,
                       HREC_KAT_MAPTAG, 1'b1, HREC_ERR_PROFILE, "profile");
-        expect_status(HREC_KAT_RAW, HREC_KAT_PROFILE, 8'h02, HREC_KAT_MAPLEN,
+        expect_status(HREC_KAT_RAW, HREC_KAT_PROFILE, 8'h02, HREC_KAT_MAPLEN_BYTES,
                       HREC_KAT_MAPTAG, 1'b1, HREC_ERR_FE_PARAM, "feparam");
         expect_status(with_byte(HREC_KAT_RAW, 12, 8'h01), HREC_KAT_PROFILE,
-                      HREC_KAT_FE, HREC_KAT_MAPLEN, HREC_KAT_MAPTAG, 1'b1,
+                      HREC_KAT_FE, HREC_KAT_MAPLEN_BYTES, HREC_KAT_MAPTAG, 1'b1,
                       HREC_ERR_RESERVED, "reserved");
         expect_status(HREC_KAT_RAW, HREC_KAT_PROFILE, HREC_KAT_FE,
-                      HREC_KAT_MAPLEN, 16'hBEEF, 1'b1, HREC_ERR_MAPPING,
+                      HREC_KAT_MAPLEN_BYTES, 16'hBEEF, 1'b1, HREC_ERR_MAPPING,
                       "mapping");
-        expect_status(with_byte(HREC_KAT_RAW, 9, 8'h01), HREC_KAT_PROFILE,
-                      HREC_KAT_FE, HREC_KAT_MAPLEN, HREC_KAT_MAPTAG, 1'b1,
+        expect_status(with_byte(HREC_KAT_RAW, 9,
+                      HREC_KAT_MAPTAG[7:0] ^ 8'h01), HREC_KAT_PROFILE,
+                      HREC_KAT_FE, HREC_KAT_MAPLEN_BYTES, HREC_KAT_MAPTAG, 1'b1,
                       HREC_ERR_MAPPING, "mappingbyte");
+        expect_status(with_byte(HREC_KAT_RAW, 10,
+                      HREC_KAT_MAPTAG[15:8] ^ 8'h01), HREC_KAT_PROFILE,
+                      HREC_KAT_FE, HREC_KAT_MAPLEN_BYTES, HREC_KAT_MAPTAG, 1'b1,
+                      HREC_ERR_MAPPING, "mappingbytehi");
+        expect_status(HREC_KAT_RAW, HREC_KAT_PROFILE, HREC_KAT_FE,
+                      HREC_KAT_MAPLEN_BYTES, 16'h0000, 1'b1,
+                      HREC_ERR_MAPPING, "tagzero");
+        expect_status(with_byte(HREC_KAT_RAW, 8, 8'h00), HREC_KAT_PROFILE,
+                      HREC_KAT_FE, HREC_KAT_MAPLEN_BYTES, HREC_KAT_MAPTAG, 1'b1,
+                      HREC_ERR_MAPPING, "len0");
+        expect_status(with_byte(HREC_KAT_RAW, 8, 8'h20), HREC_KAT_PROFILE,
+                      HREC_KAT_FE, HREC_KAT_MAPLEN_BYTES, HREC_KAT_MAPTAG, 1'b1,
+                      HREC_ERR_MAPPING, "len32");
+        expect_status(with_byte(HREC_KAT_RAW, 8, 8'h22), HREC_KAT_PROFILE,
+                      HREC_KAT_FE, HREC_KAT_MAPLEN_BYTES, HREC_KAT_MAPTAG, 1'b1,
+                      HREC_ERR_MAPPING, "len34");
+        expect_status(with_byte(HREC_KAT_RAW, 8, 8'hFF), HREC_KAT_PROFILE,
+                      HREC_KAT_FE, HREC_KAT_MAPLEN_BYTES, HREC_KAT_MAPTAG, 1'b1,
+                      HREC_ERR_MAPPING, "len255");
+        if (HREC_KAT_MAPLEN_BITS !== 264)
+            $fatal(1, "KAT mapping length bits %0d != 264", HREC_KAT_MAPLEN_BITS);
+        if (HREC_KAT_MAPLEN_BYTES !== 8'd33)
+            $fatal(1, "KAT mapping len bytes %0d != 33", HREC_KAT_MAPLEN_BYTES);
+        if (HREC_KAT_MAPTAG !== 16'hD501)
+            $fatal(1, "KAT mapping tag %04x != d501", HREC_KAT_MAPTAG);
         $display("RECORD_HEADER_BINDING_OK");
 
         // 9. Valid header but crc_ok = 0 must report CRC error, proving the
         //    CRC decision occupies the last slot in the precedence chain.
         expect_status(HREC_KAT_RAW, HREC_KAT_PROFILE, HREC_KAT_FE,
-                      HREC_KAT_MAPLEN, HREC_KAT_MAPTAG, 1'b0, HREC_ERR_CRC,
+                      HREC_KAT_MAPLEN_BYTES, HREC_KAT_MAPTAG, 1'b0, HREC_ERR_CRC,
                       "crc-slot");
         $display("RECORD_CRC_SLOT_OK");
 

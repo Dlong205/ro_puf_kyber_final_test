@@ -17,7 +17,7 @@ module helper_record_parse (
     input  wire [8*HREC_BYTES-1:0] raw,          // byte 0 in raw[7:0]
     input  wire [7:0]              expected_profile,
     input  wire [7:0]              expected_fe_param,
-    input  wire [7:0]              expected_mapping_len,
+    input  wire [7:0]              expected_mapping_len_bytes,
     input  wire [15:0]             expected_mapping_tag,
     input  wire                    crc_ok,       // running CRC vs stored CRC
     output reg  [3:0]              status,
@@ -40,7 +40,7 @@ module helper_record_parse (
     wire [7:0]  proto_version  = byte_at(5);
     wire [7:0]  profile        = byte_at(6);
     wire [7:0]  fe_param       = byte_at(7);
-    wire [7:0]  mapping_len    = byte_at(8);
+    wire [7:0]  mapping_len_bytes = byte_at(8);
     wire [15:0] mapping_tag    = raw[8*9 +: 16];
     wire [7:0]  generation_r   = byte_at(11);
     wire [7:0]  reserved       = byte_at(12);
@@ -64,7 +64,7 @@ module helper_record_parse (
             status = HREC_ERR_FE_PARAM;
         else if (reserved != 8'h00)
             status = HREC_ERR_RESERVED;
-        else if (mapping_len != expected_mapping_len ||
+        else if (mapping_len_bytes != expected_mapping_len_bytes ||
                  mapping_tag != expected_mapping_tag)
             status = HREC_ERR_MAPPING;
         else if (!crc_ok)

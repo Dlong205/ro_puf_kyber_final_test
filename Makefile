@@ -10,7 +10,7 @@ SOC_REPRO_BIT := build/soc_repro/$(SOC_REPRO_RUN)/kyber_ro_puf_$(SOC_REPRO_RUN).
 # Verilator builds can exhaust RAM on the reference development host.
 .NOTPARALLEL:
 
-.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-margin-characterize puf-allpairs-sim puf-allpairs-project puf-allpairs-bitstream puf-allpairs-program puf-allpairs-characterize puf-allpairs-lock-export puf-allpairs-lock-check puf-allpairs64-sim puf-allpairs64-project puf-allpairs64-bitstream puf-allpairs64-program puf-allpairs64-characterize puf-allpairs64-lock-export puf-allpairs64-lock-check puf-allpairs64-ripple-lock-export puf64-microbench-project puf64-microbench-bitstream puf64-microbench-program puf64-microbench-placement-export puf64-bench-project puf64-bench-bitstream puf64-bench-program puf64-bench-diag puf64-train-boot puf64-holdout-boot puf64-train-select puf64-train-freeze puf64-holdout-eval puf64-holdout-candidate-freeze puf64-holdout-input-freeze puf64-holdout-batch puf64-train-batch puf64-canonicalize-mapping puf-mapping-train arty-puf-characterization-project arty-puf-characterization-bitstream arty-puf-characterization-program arty-puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem edge-uart edge-uart-mlkem edge-root-binding edge-asic-top kyber kyber-invalid axi axi-secure kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-filelist-check asic-manifest-check asic-frontend-check asic-backend-readiness asic-elaboration asic-portability crypto-freeze-check verification-inputs-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
+.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-margin-characterize puf-allpairs-sim puf-allpairs-project puf-allpairs-bitstream puf-allpairs-program puf-allpairs-characterize puf-allpairs-lock-export puf-allpairs-lock-check puf-allpairs64-sim puf-allpairs64-project puf-allpairs64-bitstream puf-allpairs64-program puf-allpairs64-characterize puf-allpairs64-lock-export puf-allpairs64-lock-check puf-allpairs64-ripple-lock-export puf64-microbench-project puf64-microbench-bitstream puf64-microbench-program puf64-microbench-placement-export puf64-bench-project puf64-bench-bitstream puf64-bench-program puf64-bench-diag puf64-train-boot puf64-holdout-boot puf64-mapping-generate puf64-mapping-check puf64-train-select puf64-train-freeze puf64-holdout-eval puf64-holdout-candidate-freeze puf64-holdout-input-freeze puf64-holdout-batch puf64-train-batch puf64-canonicalize-mapping puf-mapping-train arty-puf-characterization-project arty-puf-characterization-bitstream arty-puf-characterization-program arty-puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem edge-uart edge-uart-mlkem edge-root-binding edge-asic-top kyber kyber-invalid axi axi-secure kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-filelist-check asic-manifest-check asic-frontend-check asic-backend-readiness asic-elaboration asic-portability crypto-freeze-check verification-inputs-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
 
 PUF_PORT ?= /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
 ARTY_PUF_PORT ?= $(firstword $(wildcard /dev/serial/by-id/usb-Digilent_Digilent_USB_Device_*-if01-port0))
@@ -290,8 +290,16 @@ edge-uart-mlkem:
 edge-root-binding:
 	python3 scripts/helper_record_spec.py --check
 	python3 scripts/helper_record_spec.py --selftest
+	python3 host/puf64_generate_mapping.py --check
 	$(MAKE) -j1 -C sim/edge_wrapper clean record kcv gate phase1 loopback e2e
 	$(MAKE) -j1 -C sim/edge_uart check negative
+
+# Frozen mapping artifacts: single-source generator + drift gate.
+puf64-mapping-generate:
+	python3 -u host/puf64_generate_mapping.py --emit
+
+puf64-mapping-check:
+	python3 -u host/puf64_generate_mapping.py --check
 
 edge-asic-top:
 	$(MAKE) -j1 -C sim/edge_wrapper asic-top

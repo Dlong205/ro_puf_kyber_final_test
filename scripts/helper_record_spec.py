@@ -13,7 +13,7 @@ Record layout (76 bytes, byte 0 transmitted first):
     5      1    protocol_version
     6      1    profile_id
     7      1    fe_param_id
-    8      1    mapping_len
+    8      1    mapping_len_bytes (33 = ceil(264/8); response bytes)
     9      2    mapping_tag
     11     1    generation
     12     1    reserved (must be 0)
@@ -37,12 +37,13 @@ import sys
 from pathlib import Path
 
 MAGIC = 0x55464B52  # matches docs/PUF_ROOT_BINDING_DESIGN.md ("RKPU")
-RECORD_VERSION = 0x01
+RECORD_VERSION = 0x02
 PROTOCOL_VERSION = 0x01
 DEFAULT_PROFILE = 0x01
 DEFAULT_FE_PARAM = 0x01  # BCH T=8, N=264, DATA=192
-DEFAULT_MAPPING_LEN = 0x00
-DEFAULT_MAPPING_TAG = 0x0000
+DEFAULT_MAPPING_LEN_BYTES = 33
+DEFAULT_MAPPING_LEN_BITS = 264
+DEFAULT_MAPPING_TAG = 0xD501
 DEFAULT_GENERATION = 0x01
 RESERVED = 0x00
 
@@ -59,7 +60,7 @@ OFF_RECORD_VERSION = 4
 OFF_PROTOCOL_VERSION = 5
 OFF_PROFILE = 6
 OFF_FE_PARAM = 7
-OFF_MAPPING_LEN = 8
+OFF_MAPPING_LEN_BYTES = 8
 OFF_MAPPING_TAG = 9
 OFF_GENERATION = 11
 OFF_RESERVED = 12
@@ -164,7 +165,7 @@ def serialize_record(
     protocol_version: int = PROTOCOL_VERSION,
     profile_id: int = DEFAULT_PROFILE,
     fe_param_id: int = DEFAULT_FE_PARAM,
-    mapping_len: int = DEFAULT_MAPPING_LEN,
+    mapping_len_bytes: int = DEFAULT_MAPPING_LEN_BYTES,
     mapping_tag: int = DEFAULT_MAPPING_TAG,
     generation: int = DEFAULT_GENERATION,
     corrupt_crc: bool = False,
@@ -179,7 +180,7 @@ def serialize_record(
     body.append(protocol_version)
     body.append(profile_id)
     body.append(fe_param_id)
-    body.append(mapping_len)
+    body.append(mapping_len_bytes)
     body += struct.pack("<H", mapping_tag)
     body.append(generation)
     body.append(RESERVED)
@@ -196,7 +197,7 @@ def validate_record(
     *,
     expected_profile: int = DEFAULT_PROFILE,
     expected_fe_param: int = DEFAULT_FE_PARAM,
-    expected_mapping_len: int = DEFAULT_MAPPING_LEN,
+    expected_mapping_len_bytes: int = DEFAULT_MAPPING_LEN_BYTES,
     expected_mapping_tag: int = DEFAULT_MAPPING_TAG,
 ) -> tuple[int, int, bytes, bytes]:
     """Return (status, ctx, helper, kcv_bytes); status 0 means valid."""
@@ -215,7 +216,7 @@ def validate_record(
     if record[OFF_RESERVED] != RESERVED:
         return REC_ERR_RESERVED, 0, b"", b""
     if (
-        record[OFF_MAPPING_LEN] != expected_mapping_len
+        record[OFF_MAPPING_LEN_BYTES] != expected_mapping_len_bytes
         or struct.unpack_from("<H", record, OFF_MAPPING_TAG)[0]
         != expected_mapping_tag
     ):
@@ -301,7 +302,7 @@ def _emit_vh() -> str:
         "localparam integer HREC_OFF_PROTOCOL_VERSION = %d;" % OFF_PROTOCOL_VERSION,
         "localparam integer HREC_OFF_PROFILE          = %d;" % OFF_PROFILE,
         "localparam integer HREC_OFF_FE_PARAM         = %d;" % OFF_FE_PARAM,
-        "localparam integer HREC_OFF_MAPPING_LEN      = %d;" % OFF_MAPPING_LEN,
+        "localparam integer HREC_OFF_MAPPING_LEN_BYTES = %d;" % OFF_MAPPING_LEN_BYTES,
         "localparam integer HREC_OFF_MAPPING_TAG      = %d;" % OFF_MAPPING_TAG,
         "localparam integer HREC_OFF_GENERATION       = %d;" % OFF_GENERATION,
         "localparam integer HREC_OFF_RESERVED         = %d;" % OFF_RESERVED,
@@ -385,7 +386,7 @@ def _emit_h() -> str:
             "#define HREC_OFF_PROTOCOL_VERSION %du" % OFF_PROTOCOL_VERSION,
             "#define HREC_OFF_PROFILE          %du" % OFF_PROFILE,
             "#define HREC_OFF_FE_PARAM         %du" % OFF_FE_PARAM,
-            "#define HREC_OFF_MAPPING_LEN      %du" % OFF_MAPPING_LEN,
+            "#define HREC_OFF_MAPPING_LEN_BYTES %du" % OFF_MAPPING_LEN_BYTES,
             "#define HREC_OFF_MAPPING_TAG      %du" % OFF_MAPPING_TAG,
             "#define HREC_OFF_GENERATION       %du" % OFF_GENERATION,
             "#define HREC_OFF_RESERVED         %du" % OFF_RESERVED,
@@ -451,7 +452,8 @@ def _emit_kat_vh() -> str:
         "localparam [7:0]   HREC_KAT_GEN    = 8'h%02x;" % DEFAULT_GENERATION,
         "localparam [7:0]   HREC_KAT_PROFILE = 8'h%02x;" % DEFAULT_PROFILE,
         "localparam [7:0]   HREC_KAT_FE     = 8'h%02x;" % DEFAULT_FE_PARAM,
-        "localparam [7:0]   HREC_KAT_MAPLEN = 8'h%02x;" % DEFAULT_MAPPING_LEN,
+        "localparam [7:0]   HREC_KAT_MAPLEN_BYTES = 8'h%02x;" % DEFAULT_MAPPING_LEN_BYTES,
+        "localparam integer HREC_KAT_MAPLEN_BITS  = %d;" % DEFAULT_MAPPING_LEN_BITS,
         "localparam [15:0]  HREC_KAT_MAPTAG = 16'h%04x;" % DEFAULT_MAPPING_TAG,
         "",
     ]
@@ -498,10 +500,30 @@ def selftest() -> int:
         assert status != REC_OK, "mutation at %d accepted" % i
     # A valid record from a different mapping must be rejected.
     other = serialize_record(
-        TEST_HELPER, TEST_KCV, mapping_len=1, mapping_tag=0xBEEF
+        TEST_HELPER, TEST_KCV, mapping_len_bytes=32, mapping_tag=0xBEEF
     )
     status, _, _, _ = validate_record(other)
     assert status == REC_ERR_MAPPING, ERROR_NAMES[status]
+    # Record v1 (the pre-mapping layout) must be rejected in the v2 spec.
+    legacy = bytearray(TEST_RECORD)
+    legacy[OFF_RECORD_VERSION] = 0x01
+    crc = crc16_ccitt_false(bytes(legacy[:OFF_CRC]))
+    legacy[OFF_CRC] = crc & 0xFF
+    legacy[OFF_CRC + 1] = (crc >> 8) & 0xFF
+    status, _, _, _ = validate_record(bytes(legacy))
+    assert status == REC_ERR_RECORD_VERSION, ERROR_NAMES[status]
+    # Only mapping_len_bytes=33 with tag=0xD501 is accepted for this profile.
+    for bad_len in (0, 1, 32, 34, 255):
+        bad = serialize_record(TEST_HELPER, TEST_KCV,
+                               mapping_len_bytes=bad_len)
+        status, _, _, _ = validate_record(bad)
+        assert status == REC_ERR_MAPPING, (bad_len, ERROR_NAMES[status])
+    for bad_tag in (0x0000, 0x00D5, 0x01D5, 0xD500, 0xFFFF):
+        bad = serialize_record(TEST_HELPER, TEST_KCV, mapping_tag=bad_tag)
+        status, _, _, _ = validate_record(bad)
+        assert status == REC_ERR_MAPPING, (hex(bad_tag), ERROR_NAMES[status])
+    assert DEFAULT_MAPPING_LEN_BITS == 264
+    assert TEST_KCV == kcv(TEST_ROOT_KEY, TEST_CTX)
     # A CRC-valid record with a different helper must still parse: the parser
     # is integrity-only and the KCV gate owns the same-root decision.
     status, _, helper_alt, _ = validate_record(TEST_RECORD_ALT)

@@ -165,8 +165,6 @@ def verify_inputs(golden, mapping, train_input, holdout_input, holdout_report,
     problems = []
     if not golden.get("holdout_eligible"):
         problems.append("golden holdout_eligible is not true")
-    if golden.get("mapping_tag") not in (0, None):
-        problems.append("golden mapping_tag is already nonzero")
     if holdout_report.get("passed") is not True:
         problems.append("holdout report did not PASS")
     if not all(holdout_report.get("gate", {}).values()):
@@ -202,17 +200,22 @@ def derive_public(canonical, digest, tag):
         "mapping_tag_width_bits": MAPPING_TAG_WIDTH_BITS,
         "mapping_tag_byte_order": MAPPING_TAG_BYTE_ORDER,
         "mapping_length": 264,
+        "mapping_length_bits": 264,
+        "selected_pair_count": 264,
+        "mapping_len_bytes": 33,
         "wire_encoding": {
             "source_of_truth": "scripts/helper_record_spec.py",
             "helper_record": "76-byte record, all multi-byte fields little-endian",
-            "mapping_len": {
+            "helper_record_version": 2,
+            "status": "RESOLVED_HELPER_RECORD_V2",
+            "mapping_len_bytes": {
                 "offset": 8,
                 "width_bits": MAPPING_LEN_WIDTH_BITS,
-                "status": "BLOCKED",
-                "blocker": "mapping_len=264 does not fit in the 1-byte u8 "
-                           "field (max 255); a protocol/RTL revision is "
-                           "required and was intentionally NOT made during "
-                           "canonicalization",
+                "value": 33,
+                "semantics": "selected mapping response length in bytes = "
+                             "ceil(mapping_length_bits/8); NOT a pair count",
+                "required": "operational parser v2 accepts only 33 for "
+                            "profile=0x01, fe_param=0x01",
             },
             "mapping_tag": {
                 "offset": 9,
@@ -277,12 +280,13 @@ def main(argv=None):
 
     canonical_path = Path(args.canonical_out)
     public_path = Path(args.public_out)
-    for path, data in ((canonical_path, canonical + b"\n"),
-                       (public_path, public_bytes)):
-        if path.exists():
-            if path.read_bytes() != data:
-                print(f"BLOCKER: existing artifact differs: {path}")
-                return 2
+    # Canonical hashed bytes are immutable: a changed payload would invalidate
+    # the reviewed digest/tag.  The public manifest is derived metadata and may
+    # be re-derived (e.g. to resolve the wire encoding) without touching the
+    # digest.
+    if canonical_path.exists() and canonical_path.read_bytes() != canonical + b"\n":
+        print(f"BLOCKER: existing canonical artifact differs: {canonical_path}")
+        return 2
     write_artifact(canonical_path, canonical + b"\n")
     write_artifact(public_path, public_bytes)
     print(json.dumps({
@@ -295,7 +299,7 @@ def main(argv=None):
         "mapping_tag_hex": public["mapping_tag_hex"],
         "mapping_tag_width_bits": MAPPING_TAG_WIDTH_BITS,
         "mapping_tag_byte_order": MAPPING_TAG_BYTE_ORDER,
-        "wire_mapping_len_status": "BLOCKED",
+        "wire_mapping_len_status": "RESOLVED_HELPER_RECORD_V2",
     }, indent=2))
     return 0
 

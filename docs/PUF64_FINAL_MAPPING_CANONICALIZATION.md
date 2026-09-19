@@ -57,26 +57,42 @@ public manifest adds those derived fields around the canonical payload.
   record, little-endian (`lo` at offset 9, `hi` at offset 10), and is folded
   into the KCV context as `mapping_tag[15:0]`.
 
-## 3. Wire-encoding facts and BLOCKER
+## 3. Wire encoding (helper record v2, blocker resolved)
 
 Read from the single source of truth (`scripts/helper_record_spec.py` →
-`rtl/top/helper_record_spec.vh`, `firmware/helper_record_spec.h`), not assumed:
+`rtl/top/helper_record_spec.vh`, `firmware/helper_record_spec.h`), not assumed.
+The field has no pair-count semantics; it is the mapping response length in
+bytes:
 
-| Field | Offset | Width | Notes |
+| Field | Offset | Width | v2 |
 |---|---|---|---|
-| `mapping_len` | 8 | 8 bit | default 0; compared against `expected_mapping_len` in RTL (`HREC_MAPPING_LEN`), firmware `EXPECTED_MAPPING_LEN`, host serializer |
-| `mapping_tag` | 9 | 16 bit LE | `HREC_MAPPING_TAG` / `EXPECTED_MAPPING_TAG`, default 0 |
+| `record_version` | 4 | 8 bit | `0x02`; v1 is rejected on the operational path |
+| `mapping_len_bytes` | 8 | 8 bit | exactly `33` = ceil(264/8) for `profile=0x01, fe_param=0x01`; NOT a pair count |
+| `mapping_tag` | 9 | 16 bit LE | `0xd501` |
 
-`mapping_len=264` **cannot** be encoded in the 1-byte field (max 255).
-Therefore the on-wire mapping-length binding is **BLOCKED** and no RTL/protocol
-change was made during canonicalization.  Options that require a documented
-protocol revision (not chosen here) include widening the field, encoding a
-length code, or moving the length into the KCV context.
+The operational parser accepts only `record_version=0x02`, `mapping_len_bytes=33`
+and `mapping_tag=0xd501`, and fails before FE/KCV otherwise.  The raw pair count
+(264) is bound by the full mapping digest/public manifest, not by the u8 field.
+The KCV context is unchanged at 56 bit and already carries
+`record_version/fe_param/profile/mapping_tag`, so the length is bound
+transitively; adding it explicitly would require a context redesign and is not
+done.
 
-Until then, the tag identifies the intended configuration (mismatch detection)
-but a device can only be bound with `mapping_len=0` in the current record.
-The KCV remains the same-root security binding.  A 16-bit tag is explicitly
-**not** collision-resistant against an active attacker.
+Frozen mapping bit convention (audited from characterization RTL, host parser,
+train selector and the private train reference cross-check):
+
+| count0 vs count1 | response bit |
+|---|---|
+| `count0 < count1` | `1` |
+| `count0 > count1` | `0` |
+| `count0 == count1` | tie: INVALID, operational path fails closed |
+
+Ordering: ordered pair `j = (a,b)` (0 ≤ a < b < 64) maps to response bit `j`;
+the FE vector packs LSB-first (bit `j` → byte `j/8`, bit `j%8`); RTL
+`PUF64_MAP_PAIRS` stores `{a[5:0], b[5:0]}` per pair with `j=0` at the most
+significant end.  A 16-bit tag is a configuration mismatch identifier, **not**
+collision-resistant against an active attacker; the KCV remains the same-root
+check.
 
 ## 4. Reproducibility
 
@@ -97,8 +113,10 @@ digest/tag derivation (`host/tests/test_puf64_canonicalize_mapping.py`).
   entropy.
 - Response balance 152/112 is an observation, never a selection criterion.
 
-## 6. Next phase (not done)
+## 6. Next phase
 
-Integration into helper record/KCV/operational image changes the netlist.  It
-requires a new build, physical-fingerprint re-check, and a protocol revision for
-`mapping_len`.  It is intentionally out of scope for canonicalization.
+Helper-record v2, the generated mapping artifacts (Phase I1) and the parser /
+transport / firmware / host migration (Phase I2) are done.  Scheduler + FE
+integration (I3) and the operational image build (I4/I5) change the netlist and
+require a physical-fingerprint re-check; they are intentionally out of scope
+for canonicalization.

@@ -174,10 +174,10 @@ Executed after the 10-boot holdout gate PASS.  No RTL/XDC/INFO/bitstream change.
 - Deterministic: canonical bytes and public manifest are byte-identical across
   clean runs; no timestamp/path/randomness in the hashed payload.  Golden-vector
   tests in `host/tests/test_puf64_canonicalize_mapping.py`.
-- **BLOCKER (unchanged on purpose)**: the helper-record `mapping_len` field is
-  1 byte (`scripts/helper_record_spec.py`, `rtl/top/helper_record_spec.vh`,
-  firmware), so `mapping_len=264` cannot be encoded (max 255).  On-wire binding
-  therefore requires a protocol/RTL revision and is **not** part of this step.
+- **Wire blocker resolved in Phase I1/I2**: helper record v2 sets
+  `record_version=0x02`, `mapping_len_bytes=33` (mapping response bytes, not a
+  pair count) and `mapping_tag=0xd501`; the operational parser rejects v1 and
+  any length other than 33 before FE/KCV.
 - Security wording: 20 train cold boots, 10 holdout cold boots, 500 holdout
   frames; 0 observed errors on the selected 264-bit vector and 0 observed FE
   failure on one Zynq + one golden bitstream.  This does not make the true FRR
@@ -186,5 +186,6 @@ Executed after the 10-boot holdout gate PASS.  No RTL/XDC/INFO/bitstream change.
   structural bound, not measured entropy.  Response balance 152/112 is an
   observation only.
 - See `docs/PUF64_FINAL_MAPPING_CANONICALIZATION.md` for the serialization spec.
-- Integration into RTL/helper/KCV/operational image is a **separate phase**
-  (netlist change ⇒ physical fingerprint re-check) and was not performed.
+- Helper-record v2 + generated mapping data are implemented; scheduler/FE
+  integration (Phase I3) and the operational image build (I4/I5) are separate
+  phases (netlist change ⇒ physical fingerprint re-check) and were not performed.

@@ -18,8 +18,8 @@ module edge_uart_transport #(
     parameter integer RX_TIMEOUT = CLKS_PER_BIT * 24,
     parameter [7:0]   HREC_PROFILE = 8'h01,
     parameter [7:0]   HREC_FE_PARAM = 8'h01,
-    parameter [7:0]   HREC_MAPPING_LEN = 8'h00,
-    parameter [15:0]  HREC_MAPPING_TAG = 16'h0000,
+    parameter [7:0]   HREC_MAPPING_LEN_BYTES = 8'd33,
+    parameter [15:0]  HREC_MAPPING_TAG = 16'hD501,
     parameter [7:0]   HREC_GENERATION = 8'h01,
     // Legacy 33-byte helper is a diagnostic-only escape hatch, OFF by default
     // so release builds cannot silently accept a bare helper.
@@ -152,7 +152,7 @@ module edge_uart_transport #(
         .raw(record_eval),
         .expected_profile(HREC_PROFILE),
         .expected_fe_param(HREC_FE_PARAM),
-        .expected_mapping_len(HREC_MAPPING_LEN),
+        .expected_mapping_len_bytes(HREC_MAPPING_LEN_BYTES),
         .expected_mapping_tag(HREC_MAPPING_TAG),
         .crc_ok(crc_ok_calc),
         .status(rec_status),
@@ -222,7 +222,7 @@ module edge_uart_transport #(
                 HREC_OFF_PROTOCOL_VERSION: enroll_byte_fn = HREC_PROTOCOL_VERSION;
                 HREC_OFF_PROFILE:          enroll_byte_fn = HREC_PROFILE;
                 HREC_OFF_FE_PARAM:         enroll_byte_fn = HREC_FE_PARAM;
-                HREC_OFF_MAPPING_LEN:      enroll_byte_fn = HREC_MAPPING_LEN;
+                HREC_OFF_MAPPING_LEN_BYTES: enroll_byte_fn = HREC_MAPPING_LEN_BYTES;
                 HREC_OFF_MAPPING_TAG:      enroll_byte_fn = HREC_MAPPING_TAG[7:0];
                 HREC_OFF_MAPPING_TAG + 1:  enroll_byte_fn = HREC_MAPPING_TAG[15:8];
                 HREC_OFF_GENERATION:       enroll_byte_fn = HREC_GENERATION;

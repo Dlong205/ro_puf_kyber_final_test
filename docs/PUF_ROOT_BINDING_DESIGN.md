@@ -28,8 +28,10 @@ Giới hạn còn lại (không được che):
 - Top ASIC riêng cho chuỗi PUF/FE→KCV→KDF→ML-KEM **chưa tạo**; baseline
   `Kyber_System_Asic_Top` chỉ tie-off port KCV (không có engine).
 - Chưa có NVM monotonic counter → không chống rollback generation.
-- Mapping vẫn `mapping_len=0/tag=0` = **mapping-unbound**, chỉ chấp nhận trong
-  simulation/diagnostic; operational/release phải fail-closed khi còn unbound.
+- Helper-record **v2** và generated mapping data đã có (record_version=0x02,
+  `mapping_len_bytes=33`, `mapping_tag=0xd501`), nhưng scheduler/FE integration
+  (Phase I3) **chưa làm**: operational top vẫn mapping-unbound cho tới I3;
+  operational/release phải fail-closed khi còn unbound.
 
 
 ## 1. Vấn đề và threat model
@@ -78,12 +80,13 @@ hiện có.
 ```text
 offset  size  field
 0       4     magic = 0x55464B52          ("RKPU", byte thấp gửi trước)
-4       1     record_version = 0x01
+4       1     record_version = 0x02            (v1 bị operational path từ chối)
 5       1     protocol_version = 0x01     (Edge helper protocol)
 6       1     profile_id                  (bit7: platform class, bit6..0: profile)
 7       1     fe_param_id                 (FE/BCH T=8, N=264, DATA=192 hiện tại = 0x01)
-8       1     mapping_len                 (0 = không dùng mapping, ràng buộc bằng hash rút gọn)
-9       2     mapping_tag (little-endian) 16 bit rút gọn từ hash mapping, 0 nếu không dùng
+8       1     mapping_len_bytes           (= 33 cho 264-bit response; KHÔNG phải pair count;
+                                           0 chỉ còn ở diagnostic/unbound)
+9       2     mapping_tag (little-endian) = 0xd501, 16 bit rút gọn từ full SHA3-256 digest
 11      1     generation                  (0..255, tăng khi re-enroll; wrap phải re-enroll lại)
 12      1     reserved                    (phải = 0)
 13      33    helper[264]                 (bản helper cũ, LSB-first như hiện tại)

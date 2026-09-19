@@ -124,7 +124,7 @@ class CanonicalizeTest(unittest.TestCase):
         self.assertEqual(len(digest), 64)
         self.assertNotEqual(tag, 0)
 
-    def test_public_marks_wire_mapping_len_blocked(self):
+    def test_public_resolves_wire_mapping_len_v2(self):
         golden, mapping, train_input, holdout_input, report, mapping_sha, \
             report_sha, _ = fixtures(self.tmp)
         payload = CANON.assemble_payload(golden, mapping, train_input,
@@ -135,8 +135,12 @@ class CanonicalizeTest(unittest.TestCase):
         public = CANON.derive_public(canonical, digest, tag)
         self.assertEqual(public["mapping_tag_width_bits"], 16)
         self.assertEqual(public["mapping_tag_byte_order"], "little")
-        self.assertEqual(public["wire_encoding"]["mapping_len"]["status"],
-                         "BLOCKED")
+        self.assertEqual(public["mapping_length_bits"], 264)
+        self.assertEqual(public["selected_pair_count"], 264)
+        self.assertEqual(public["mapping_len_bytes"], 33)
+        wire = public["wire_encoding"]
+        self.assertEqual(wire["status"], "RESOLVED_HELPER_RECORD_V2")
+        self.assertEqual(wire["mapping_len_bytes"]["value"], 33)
         self.assertNotEqual(public["mapping_tag"], 0)
 
     def test_verify_inputs_accepts_and_rejects(self):

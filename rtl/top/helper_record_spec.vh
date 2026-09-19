@@ -3,7 +3,7 @@
 // needs them includes this file exactly once.
 
 localparam [31:0] HREC_MAGIC            = 32'h55464b52;
-localparam [7:0]  HREC_RECORD_VERSION   = 8'h01;
+localparam [7:0]  HREC_RECORD_VERSION   = 8'h02;
 localparam [7:0]  HREC_PROTOCOL_VERSION = 8'h01;
 localparam integer HREC_BYTES          = 76;
 localparam integer HREC_HELPER_BYTES   = 33;
@@ -12,7 +12,7 @@ localparam integer HREC_OFF_RECORD_VERSION   = 4;
 localparam integer HREC_OFF_PROTOCOL_VERSION = 5;
 localparam integer HREC_OFF_PROFILE          = 6;
 localparam integer HREC_OFF_FE_PARAM         = 7;
-localparam integer HREC_OFF_MAPPING_LEN      = 8;
+localparam integer HREC_OFF_MAPPING_LEN_BYTES = 8;
 localparam integer HREC_OFF_MAPPING_TAG      = 9;
 localparam integer HREC_OFF_GENERATION       = 11;
 localparam integer HREC_OFF_RESERVED         = 12;
