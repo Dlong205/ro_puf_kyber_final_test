@@ -37,6 +37,7 @@ reports/puf_characterization/private_*.json
 reports/puf_allpairs_characterization/private_*.json
 reports/puf_allpairs64_characterization/private_*.json
 reports/puf_mapping/private_*.json
+reports/puf64_campaign/
 **/__pycache__/
 *.py[cod]
 
