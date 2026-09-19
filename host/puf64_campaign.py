@@ -49,6 +49,12 @@ def now_utc():
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
 
 
+def verify_board_id(board_id, golden):
+    if board_id != golden.get("board_id"):
+        return [f"board_id {board_id} != golden {golden.get('board_id')}"]
+    return []
+
+
 def verify_device_info(info, golden):
     errors = []
     for key in GOLDEN_TUPLE_KEYS:
@@ -185,7 +191,7 @@ def main():
     golden_sha = sha256_file(golden_path)
 
     bitstream_sha = sha256_file(args.bitstream)
-    errors = []
+    errors = verify_board_id(args.board_id, golden)
     if bitstream_sha != golden["bitstream_sha256"]:
         errors.append(
             f"local bitstream {bitstream_sha} != golden {golden['bitstream_sha256']}"

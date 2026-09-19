@@ -20,7 +20,7 @@ HOLD = load("puf64_holdout_eval")
 RO = 64
 PAIRS = RO * (RO - 1) // 2
 GOLDEN = {
-    "protocol": "3.0", "image_mode": "PUF_CHARACTERIZATION", "image_mode_code": 1,
+    "board_id": "ZYNQ-A01", "protocol": "3.0", "image_mode": "PUF_CHARACTERIZATION", "image_mode_code": 1,
     "topology_id": 0xC0DE, "build_id": 1, "num_ro": RO, "width": 16,
     "pair_count": PAIRS, "ref_cycles": 1023,
     "system_clock_hz": 100000000, "input_clock_hz": 50000000,
@@ -111,6 +111,10 @@ class CampaignValidationTest(unittest.TestCase):
         dev2["mmcm_locked"] = 0
         self.assertTrue(any("MMCM" in e for e in CAMP.verify_device_info(dev2, GOLDEN)))
 
+    def test_wrong_board_id(self):
+        self.assertTrue(CAMP.verify_board_id("ZYNQ-A02", GOLDEN))
+        self.assertEqual(CAMP.verify_board_id("ZYNQ-A01", GOLDEN), [])
+
     def test_freshness_duplicate_and_hash(self):
         sessions = [("/tmp/a.session.json", {
             "board_id": "ZYNQ-A01", "campaign": "train", "boot_index": 101,
@@ -170,6 +174,23 @@ class TrainSelectTest(unittest.TestCase):
         self.assertEqual(sum(1 for d in deg1 if d == 8), 48)
         self.assertEqual(sum(1 for d in deg1 if d == 9), 16)
 
+    def test_selector_ignores_holdout_sessions(self):
+        train = session(101)
+        hold = session(201)
+        hold["manifest"]["campaign"] = "holdout"
+        import tempfile, os
+        with tempfile.TemporaryDirectory() as tmp:
+            for name, sess in (("train_ZYNQ-A01_101", train),
+                               ("holdout_ZYNQ-A01_201", hold)):
+                p = Path(tmp) / f"{name}.session.json"
+                ds = Path(tmp) / f"{name}.dataset.json"
+                ds.write_text(json.dumps(sess["dataset"]))
+                m = dict(sess["manifest"]); m["dataset_path"] = str(ds)
+                p.write_text(json.dumps(m))
+            loaded = SELECT.load_train_sessions(tmp)
+            self.assertEqual(len(loaded), 1)
+            self.assertEqual(loaded[0]["manifest"]["boot_index"], 101)
+
     def test_selection_ignores_response_sign(self):
         c0 = [pair_entry(i) for i in range(PAIRS)]
         c1 = [pair_entry(i, winner=1) for i in range(PAIRS)]
@@ -218,6 +239,24 @@ class HoldoutEvalTest(unittest.TestCase):
         result = HOLD.evaluate(mapping, ref, sessions, GOLDEN)
         self.assertEqual(result["failing_frames"], 0)
         self.assertEqual(result["boot_majority_errors"], [4] * 10)
+
+    def test_eight_errors_allowed(self):
+        mapping, ref, sessions = self.build([8] * 10)
+        result = HOLD.evaluate(mapping, ref, sessions, GOLDEN)
+        self.assertEqual(result["failing_frames"], 0)
+        self.assertEqual(result["boot_majority_errors"], [8] * 10)
+
+    def test_p95_gate_boundary(self):
+        mapping, ref, sessions = self.build([4] * 10)
+        result = HOLD.evaluate(mapping, ref, sessions, GOLDEN)
+        errs = sorted(result["frame_errors"])
+        p95 = errs[max(0, __import__("math").ceil(0.95 * len(errs)) - 1)]
+        self.assertEqual(p95, 4)
+        self.assertTrue(result["failing_frames"] == 0)
+        bad = HOLD.evaluate(*self.build([9] * 10), GOLDEN)
+        errs_bad = sorted(bad["frame_errors"])
+        p95_bad = errs_bad[max(0, __import__("math").ceil(0.95 * len(errs_bad)) - 1)]
+        self.assertGreater(p95_bad, 4)
 
 
 if __name__ == "__main__":
