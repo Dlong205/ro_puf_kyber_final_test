@@ -179,6 +179,18 @@ public:
         require(starts == old_starts + 1, "MARGIN emitted an extra start");
     }
 
+    void crc_golden() {
+        // Independent golden vector for the CRC-16/CCITT-FALSE contract.
+        std::vector<uint8_t> body{0x00, 0x00, 0x00, 0x01,
+                                  0xe8, 0x03, 0x00, 0x00,
+                                  0x08, 0x07, 0x00, 0x00,
+                                  0x20, 0x03, 0x00, 0x00,
+                                  0x41, 0x00};
+        const uint16_t crc = crc16_ccitt(body);
+        require(crc == 0x3050, "CRC golden vector mismatch");
+        std::cout << "PASS CRC-16/CCITT-FALSE golden vector 0x3050\n";
+    }
+
     void raw() {
         std::array<uint8_t, 252> bytes{};
         clear_response();
@@ -240,6 +252,7 @@ int main(int argc, char** argv) {
     try {
         Verilated::commandArgs(argc, argv);
         Test test;
+        test.crc_golden();
         test.info();
         test.info();
         std::cout << "PASS INFO protocol 3.0 exact/repeated (NUM_RO=64, PAIR_COUNT=2016)\n";

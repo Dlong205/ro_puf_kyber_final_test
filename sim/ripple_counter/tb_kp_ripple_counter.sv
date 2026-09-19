@@ -25,10 +25,11 @@ module tb_kp_ripple_counter;
     reg clk = 1'b0;
     reg clear = 1'b1;
     wire [WIDTH-1:0] q;
+    wire overflow;
     wire presc_q;
 
     kp_ripple_counter #(.WIDTH(WIDTH)) dut (
-        .clk(clk), .clear(clear), .q(q), .presc_q(presc_q)
+        .clk(clk), .clear(clear), .q(q), .overflow(overflow), .presc_q(presc_q)
     );
 
     integer failures = 0;
@@ -40,6 +41,27 @@ module tb_kp_ripple_counter;
             expected_q = (n / 2) % MODULO;
         end
     endfunction
+
+    // Overflow is the (WIDTH+1)-th binary stage: bit WIDTH of floor(N/2).
+    // It is high while floor(N/2) lies in [2**WIDTH, 2**(WIDTH+1)-1] and
+    // wraps back to low at 2**(WIDTH+1).  This is a wrap guard, not a
+    // saturating counter: the transmitted count is only WIDTH bits.
+    function integer expected_overflow(input integer n);
+        begin
+            expected_overflow = ((n / 2) >> WIDTH) & 1;
+        end
+    endfunction
+
+    task automatic check_overflow(input [0:0] want, input string label);
+        begin
+            if (overflow !== want) begin
+                failures = failures + 1;
+                $display("FAIL %0s overflow got=%0d exp=%0d", label, overflow, want);
+            end else begin
+                $display("PASS %0s overflow=%0d", label, overflow);
+            end
+        end
+    endtask
 
     task automatic pulse;
         begin
@@ -112,6 +134,23 @@ module tb_kp_ripple_counter;
         do_clear();
         repeat (MODULO - 1) pulse();
         check_q(expected_q(MODULO - 1), "pre_wrap_max");
+
+        // Overflow stage: bit WIDTH of floor(N/2).  With WIDTH=4 the window
+        // is floor(N/2) in [16,31], i.e. edges 32..63.
+        do_clear();
+        repeat (MODULO * 2 - 1) pulse();       // edges=31, floor=15
+        check_overflow(1'b0, "ovf_before_exact_wrap");
+        pulse();                               // edges=32, floor=16
+        check_overflow(1'b1, "ovf_exact_wrap");
+        check_q(expected_q(MODULO * 2), "ovf_exact_wrap_count");
+        pulse();                               // edges=33, floor=16
+        check_overflow(1'b1, "ovf_after_wrap");
+        repeat (MODULO * 2 - 1) pulse();       // edges=64, floor=32 -> wraps
+        check_overflow(1'b0, "ovf_full_wrap");
+        // Clear while overflow is high must asynchronously drop it.
+        clear = 1'b1; #3;
+        check_overflow(1'b0, "clear_drops_overflow");
+        clear = 1'b0; #3;
 
         for (i = 0; i < 30; i = i + 1) begin
             count = $urandom(seed) % 13;
