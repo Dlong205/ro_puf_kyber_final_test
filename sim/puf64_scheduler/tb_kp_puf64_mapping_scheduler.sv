@@ -233,12 +233,27 @@ module tb_kp_puf64_mapping_scheduler;
             if (!mapped_valid || mapped_response !== GOLDEN_PACKED)
                 $fatal(1, "response not held stable under backpressure");
         end
+        // Reset while valid is stalled by ready=0 must erase both the public
+        // output and the internal partial-response bitmap.
+        @(negedge clk); rst_n = 1'b0;
+        repeat (2) @(posedge clk);
+        if (mapped_valid || mapped_response !== 264'd0 ||
+            dut.response_r !== 264'd0 || busy)
+            $fatal(1, "reset while valid/!ready did not erase scheduler state");
+        @(negedge clk); rst_n = 1'b1;
+        repeat (2) @(posedge clk);
+        do_start();
+        run_sweep(-1, 0, -1);
+        wait_valid(4000);
+        if (!mapped_valid || mapped_response !== GOLDEN_PACKED)
+            $fatal(1, "clean rerun after valid/ready reset failed");
         ready = 1'b1;
         @(posedge clk); ready = 1'b0;
         wait_idle(10);
         if (mapped_response !== 264'd0)
             $fatal(1, "response buffer not zeroized after consume");
         $display("SCHED_CLEAN_GOLDEN_OK");
+        $display("SCHED_RESET_VALID_BACKPRESSURE_OK");
 
         // 2. Selected tie -> fail-closed.
         expect_fail(puf64_map_sorted_full(0), 1, "selected tie");

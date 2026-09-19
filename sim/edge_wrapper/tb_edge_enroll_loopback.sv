@@ -58,7 +58,7 @@ module tb_edge_enroll_loopback;
         .clk(clk), .rst_n(rst_n), .uart_rx_i(uart_rx),
         .uart_tx_o(uart_tx), .tx_active(),
         .core_start(core_start), .core_zeroize(core_zeroize),
-        .core_enroll(core_enroll), .helper_in(helper_in),
+        .core_enroll(core_enroll), .core_command_ok(), .helper_in(helper_in),
         .helper_out(helper_out), .core_fe_kcv(core_fe_kcv),
         .core_helper_kcv_valid(core_helper_kcv_valid), .core_helper_kcv(core_helper_kcv),
         .core_kcv_ctx(core_kcv_ctx), .core_enroll_ctx(core_enroll_ctx),
@@ -69,7 +69,8 @@ module tb_edge_enroll_loopback;
         .stream_out_data(stream_out_data), .peer_req_pk(peer_req_pk),
         .peer_ready_c(peer_ready_c), .stream_in_valid(stream_in_valid),
         .stream_in_data(stream_in_data), .secret_valid(secret_valid),
-        .shared_secret(shared_secret)
+        .shared_secret(shared_secret), .core_nonce(),
+        .external_result_valid(1'b0), .external_result_tag(32'd0)
     );
 
     edge_puf_mlkem_core u_core (

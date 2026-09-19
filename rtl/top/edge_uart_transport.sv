@@ -25,7 +25,10 @@ module edge_uart_transport #(
     // so release builds cannot silently accept a bare helper.
     parameter bit     LEGACY_HELPER_ENABLE = 1'b0,
     // Enrollment is only permitted in provisioning/manufacturing lifecycle.
-    parameter bit     ALLOW_ENROLL = 1'b0
+    parameter bit     ALLOW_ENROLL = 1'b0,
+    // In the operational PUF64 boundary the nonce-bound result tag is
+    // computed beside ML-KEM so the shared secret never becomes a top port.
+    parameter bit     EXTERNAL_RESULT_TAG = 1'b0
 ) (
     input  wire         clk,
     input  wire         rst_n,
@@ -36,6 +39,9 @@ module edge_uart_transport #(
     output reg          core_start,
     output reg          core_zeroize,
     output reg          core_enroll,
+    // Set only when one complete v2 record passes every parser check.  The
+    // helper, helper KCV and context below are committed on the same edge.
+    output reg          core_command_ok,
     output reg  [263:0] helper_in,
     input  wire [263:0] helper_out,
     input  wire [223:0] core_fe_kcv,
@@ -48,6 +54,7 @@ module edge_uart_transport #(
     // time core_kcv_ctx is still zero, which used to bind the published KCV
     // to the wrong context (security review finding).
     output wire [55:0]  core_enroll_ctx,
+    output wire [31:0]  core_nonce,
     // Diagnostic record telemetry (characterization builds only).
     output reg  [3:0]   record_status,
     output reg          record_fail,
@@ -66,7 +73,9 @@ module edge_uart_transport #(
     output reg  [31:0]  stream_in_data,
 
     input  wire         secret_valid,
-    input  wire [255:0] shared_secret
+    input  wire [255:0] shared_secret,
+    input  wire         external_result_valid,
+    input  wire [31:0]  external_result_tag
 );
     `include "helper_record_spec.vh"
 
@@ -239,6 +248,7 @@ module edge_uart_transport #(
     assign core_enroll_ctx = {HREC_GENERATION, HREC_MAPPING_TAG,
                               HREC_FE_PARAM, HREC_PROFILE,
                               HREC_PROTOCOL_VERSION, HREC_RECORD_VERSION};
+    assign core_nonce = nonce;
 
     // Legacy 33-byte path (diagnostic only) drives helper_in directly.
     wire legacy_mode = LEGACY_HELPER_ENABLE;
@@ -252,6 +262,7 @@ module edge_uart_transport #(
             core_start      <= 1'b0;
             core_zeroize    <= 1'b0;
             core_enroll     <= 1'b0;
+            core_command_ok <= 1'b0;
             helper_in       <= 264'd0;
             core_helper_kcv_valid <= 1'b0;
             core_helper_kcv <= 224'd0;
@@ -298,6 +309,7 @@ module edge_uart_transport #(
                         state <= S_INFO;
                     end else if (rx_dv && rx_byte == CMD_ENROLL &&
                                  !core_busy && ALLOW_ENROLL) begin
+                        core_command_ok <= 1'b0;
                         core_enroll <= 1'b1;
                         core_start <= 1'b1;
                         // Never let a previous SESSION's record context or
@@ -311,6 +323,10 @@ module edge_uart_transport #(
                     end else if (rx_dv && rx_byte == CMD_SESSION &&
                                  !core_busy) begin
                         core_enroll <= 1'b0;
+                        core_command_ok <= 1'b0;
+                        helper_in <= 264'd0;
+                        core_helper_kcv <= 224'd0;
+                        core_kcv_ctx <= 56'd0;
                         record_status <= 4'd0;
                         record_fail <= 1'b0;
                         // Release build always enforces the KCV gate; the
@@ -318,6 +334,7 @@ module edge_uart_transport #(
                         core_helper_kcv_valid <= !legacy_mode;
                         state <= S_HELPER_MARK;
                     end else if (rx_dv) begin
+                        core_command_ok <= 1'b0;
                         fail_code <= 8'h01; // unsupported command
                         state <= S_FAIL_SEND;
                     end
@@ -405,14 +422,18 @@ module edge_uart_transport #(
                             // with the byte-75 high half.
                             record_status <= rec_status;
                             if (rec_status != HREC_OK) begin
+                                core_command_ok <= 1'b0;
                                 fail_code <= {4'h0, rec_status};
                                 record_fail <= 1'b1;
                                 item_count <= 10'd0;
                                 state <= S_FAIL_SEND;
                             end else begin
+                                // Atomic accepted-record commit.  None of
+                                // these fields can change before core_start.
                                 helper_in <= rec_helper;
                                 core_helper_kcv <= rec_kcv;
                                 core_kcv_ctx <= rec_ctx;
+                                core_command_ok <= 1'b1;
                                 nonce <= 32'd0;
                                 item_count <= 10'd0;
                                 state <= S_NONCE_RX;
@@ -426,6 +447,7 @@ module edge_uart_transport #(
                             item_count <= item_count + 1'b1;
                         end
                     end else if (rx_idle_count >= RX_TIMEOUT) begin
+                        core_command_ok <= 1'b0;
                         fail_code <= FAIL_TIMEOUT;
                         item_count <= 10'd0;
                         state <= S_FAIL_SEND;
@@ -446,6 +468,7 @@ module edge_uart_transport #(
                             item_count <= item_count + 1'b1;
                         end
                     end else if (rx_idle_count >= RX_TIMEOUT) begin
+                        core_command_ok <= 1'b0;
                         fail_code <= FAIL_TIMEOUT;
                         item_count <= 10'd0;
                         state <= S_FAIL_SEND;
@@ -459,10 +482,17 @@ module edge_uart_transport #(
                 // framing error (extra/trailing byte) and aborts fail-closed.
                 S_POST_RECORD: begin
                     if (rx_dv) begin
+                        core_command_ok <= 1'b0;
                         fail_code <= FAIL_TRAILING;
                         item_count <= 10'd0;
                         state <= S_FAIL_SEND;
-                    end else if (rx_idle_count >= CLKS_PER_BIT * 11) begin
+                    end else if (core_busy) begin
+                        core_command_ok <= 1'b0;
+                        fail_code <= 8'h04;
+                        item_count <= 10'd0;
+                        state <= S_FAIL_SEND;
+                    end else if (rx_idle_count >= CLKS_PER_BIT * 11 &&
+                                 core_command_ok) begin
                         core_start <= 1'b1;
                         state <= S_WAIT_PK;
                     end else begin
@@ -585,17 +615,21 @@ module edge_uart_transport #(
                 end
 
                 S_SECRET_WAIT: begin
-                    if (secret_valid) begin
+                    if ((EXTERNAL_RESULT_TAG && external_result_valid) ||
+                        (!EXTERNAL_RESULT_TAG && secret_valid)) begin
                         // Kyber_Server continues to use ready_c after the last
                         // ciphertext word while its NTT enters the CCA path.
                         // Match Kyber_Client: retire ready_c only when the
                         // shared secret is complete.
                         ct_buffer_ready <= 1'b0;
-                        result_tag <= nonce ^ shared_secret[31:0] ^
-                            shared_secret[63:32] ^ shared_secret[95:64] ^
-                            shared_secret[127:96] ^ shared_secret[159:128] ^
-                            shared_secret[191:160] ^ shared_secret[223:192] ^
-                            shared_secret[255:224];
+                        if (EXTERNAL_RESULT_TAG)
+                            result_tag <= external_result_tag;
+                        else
+                            result_tag <= nonce ^ shared_secret[31:0] ^
+                                shared_secret[63:32] ^ shared_secret[95:64] ^
+                                shared_secret[127:96] ^ shared_secret[159:128] ^
+                                shared_secret[191:160] ^ shared_secret[223:192] ^
+                                shared_secret[255:224];
                         item_count <= 10'd0;
                         state <= S_RESULT_SEND;
                     end
@@ -620,6 +654,7 @@ module edge_uart_transport #(
                 S_ZEROIZE: begin
                     core_zeroize <= 1'b1;
                     zeroize_done <= 1'b1;
+                    core_command_ok <= 1'b0;
                     helper_in <= 264'd0;
                     core_helper_kcv_valid <= 1'b0;
                     core_helper_kcv <= 224'd0;
@@ -654,6 +689,13 @@ module edge_uart_transport #(
             endcase
         end
     end
+
+`ifndef SYNTHESIS
+    always @(posedge clk) begin
+        if (core_start && !core_enroll && !legacy_mode && !core_command_ok)
+            $error("reconstruction core_start without an accepted v2 record");
+    end
+`endif
 endmodule
 
 `default_nettype wire

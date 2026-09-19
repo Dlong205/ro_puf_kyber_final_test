@@ -128,7 +128,7 @@ module Edge_Zynq_Diagnostic_100MHz_Top #(
         .clk(clk_100), .rst_n(por_done), .uart_rx_i(UART_RXD),
         .uart_tx_o(UART_TXD), .tx_active(tx_active),
         .core_start(core_start), .core_zeroize(core_zeroize),
-        .core_enroll(core_enroll), .helper_in(helper_in),
+        .core_enroll(core_enroll), .core_command_ok(), .helper_in(helper_in),
         .helper_out(helper_out), .core_fe_kcv(core_fe_kcv),
         .core_helper_kcv_valid(helper_kcv_valid),
         .core_helper_kcv(helper_kcv_ref),
@@ -138,7 +138,8 @@ module Edge_Zynq_Diagnostic_100MHz_Top #(
         .stream_out_data(stream_out_data), .peer_req_pk(peer_req_pk),
         .peer_ready_c(peer_ready_c), .stream_in_valid(stream_in_valid),
         .stream_in_data(stream_in_data), .secret_valid(secret_valid),
-        .shared_secret(shared_secret)
+        .shared_secret(shared_secret), .core_nonce(),
+        .external_result_valid(1'b0), .external_result_tag(32'd0)
     );
 
     assign LED[0] = tx_active;

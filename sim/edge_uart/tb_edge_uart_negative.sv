@@ -40,6 +40,7 @@ module tb_edge_uart_negative;
     reg secret_valid = 1'b0;
     reg [255:0] shared_secret = 256'd0;
     integer start_count = 0;
+    reg [8*HREC_BYTES-1:0] modified_record;
 
     // Operational lifecycle: enrollment must be refused.
     edge_uart_transport #(
@@ -49,6 +50,7 @@ module tb_edge_uart_negative;
         .clk(clk), .rst_n(rst_n), .uart_rx_i(uart_rx),
         .uart_tx_o(uart_tx), .tx_active(), .core_start(core_start),
         .core_zeroize(core_zeroize), .core_enroll(core_enroll),
+        .core_command_ok(),
         .helper_in(helper_in), .helper_out(helper_out),
         .core_fe_kcv(core_fe_kcv), .core_helper_kcv_valid(core_helper_kcv_valid),
         .core_helper_kcv(core_helper_kcv), .core_kcv_ctx(core_kcv_ctx),
@@ -60,7 +62,8 @@ module tb_edge_uart_negative;
         .stream_out_data(stream_out_data), .peer_req_pk(peer_req_pk),
         .peer_ready_c(peer_ready_c), .stream_in_valid(stream_in_valid),
         .stream_in_data(stream_in_data), .secret_valid(secret_valid),
-        .shared_secret(shared_secret)
+        .shared_secret(shared_secret), .core_nonce(),
+        .external_result_valid(1'b0), .external_result_tag(32'd0)
     );
 
     always @(posedge clk)
@@ -141,6 +144,34 @@ module tb_edge_uart_negative;
         end
     endtask
 
+    task automatic send_record(input [8*HREC_BYTES-1:0] raw);
+        integer j;
+        begin
+            send_uart(8'h02);
+            expect_uart(8'h48);
+            tx_log_n = 0;
+            for (j = 0; j < HREC_BYTES; j = j + 1)
+                send_uart(raw[8*j +: 8]);
+        end
+    endtask
+
+    task automatic expect_semantic_reject(
+        input integer offset,
+        input [7:0] value,
+        input [3:0] code,
+        input [127:0] name
+    );
+        reg [15:0] crc;
+        begin
+            modified_record = HREC_KAT_RAW;
+            modified_record[8*offset +: 8] = value;
+            crc = hrec_crc16(modified_record);
+            modified_record[8*HREC_OFF_CRC +: 16] = crc;
+            send_record(modified_record);
+            check_fail({4'h0, code}, name);
+        end
+    endtask
+
     integer index;
     initial begin
         repeat (5) @(posedge clk);
@@ -165,6 +196,19 @@ module tb_edge_uart_negative;
             $fatal(1, "record telemetry not latched");
         $display("NEG_BAD_CRC_OK");
 
+        // Semantic fields must be checked independently of a fresh valid CRC.
+        expect_semantic_reject(HREC_OFF_RECORD_VERSION, 8'h01,
+                               HREC_ERR_RECORD_VER, "v1");
+        expect_semantic_reject(HREC_OFF_MAPPING_LEN_BYTES, 8'h20,
+                               HREC_ERR_MAPPING, "length");
+        expect_semantic_reject(HREC_OFF_MAPPING_TAG, 8'h00,
+                               HREC_ERR_MAPPING, "tag");
+        expect_semantic_reject(HREC_OFF_PROFILE, 8'h02,
+                               HREC_ERR_PROFILE, "profile");
+        expect_semantic_reject(HREC_OFF_FE_PARAM, 8'h02,
+                               HREC_ERR_FE_PARAM, "feparam");
+        $display("NEG_SEMANTIC_FIELDS_OK");
+
         // C. Truncated record must time out fail-closed.
         tx_log_n = 0;
         send_uart(8'h02);
@@ -187,6 +231,15 @@ module tb_edge_uart_negative;
         send_uart(8'he5);
         check_fail(8'hf1, "trailing");
         $display("NEG_TRAILING_OK");
+
+        // A new command while the core is externally busy cannot begin a
+        // record or generate a second start pulse.
+        tx_log_n = 0;
+        core_busy = 1'b1;
+        send_uart(8'h02);
+        check_fail(8'h01, "busy");
+        core_busy = 1'b0;
+        $display("NEG_BUSY_COMMAND_REJECTED_OK");
 
         // E. Record buffer scrubbed after failures.
         repeat (5) @(posedge clk);

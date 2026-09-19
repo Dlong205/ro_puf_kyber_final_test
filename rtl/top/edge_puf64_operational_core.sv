@@ -45,6 +45,10 @@ module edge_puf64_operational_core #(
     output reg  [223:0] fe_kcv,
     output reg          kcv_fail,
     output wire [7:0]   bch_corr_bits,
+    // Internal handoff only.  This port must terminate in edge_mlkem_core
+    // inside the operational integration boundary and must never reach a
+    // board pin, UART or MMIO register.
+    output wire [191:0] downstream_key_internal,
     // Downstream KDF/ML-KEM gate: one-cycle request, completion input.
     output reg          downstream_start,
     input  wire         downstream_done,
@@ -67,6 +71,7 @@ module edge_puf64_operational_core #(
     localparam logic [3:0] S_DOWNSTREAM = 4'd7;
     localparam logic [3:0] S_ERASE      = 4'd8;
     localparam logic [3:0] S_DONE       = 4'd9;
+    localparam logic [3:0] S_DOWN_WAIT  = 4'd10;
 
     logic [3:0] state;
     logic       start_seen;
@@ -75,6 +80,7 @@ module edge_puf64_operational_core #(
     logic       kcv_match_reg;
     logic [263:0] mapped_latched;
     logic         mapped_seen;
+    logic [263:0] helper_latched;
     logic         sched_zeroize;
     wire  start_accept = (state == S_IDLE) && start && !start_seen;
 
@@ -126,13 +132,14 @@ module edge_puf64_operational_core #(
 
     wire fe_busy, fe_done_w, fe_result;
     wire [191:0] fe_key;
+    wire [263:0] fe_helper_out;
     wire fe_zeroize = zeroize || (state == S_ERASE);
 
     fuzzy_extractor u_fe (
         .clk(clk), .rst_n(rst_n), .zeroize(fe_zeroize),
         .start(state == S_FE_START), .mode(!mode_enroll),
         .response_in(mapped_latched), .helper_in(helper_in),
-        .helper_out(helper_out), .key_out(fe_key), .busy(fe_busy),
+        .helper_out(fe_helper_out), .key_out(fe_key), .busy(fe_busy),
         .done(fe_done_w), .success(fe_result),
         .corr_bit_count(bch_corr_bits)
     );
@@ -153,6 +160,8 @@ module edge_puf64_operational_core #(
 
     assign fe_success   = result_success;
     assign kcv_pass     = kcv_match_reg;
+    assign helper_out   = helper_latched;
+    assign downstream_key_internal = fe_key;
     assign busy         = (state != S_IDLE) && (state != S_DONE);
     assign done         = (state == S_DONE);
 
@@ -167,6 +176,7 @@ module edge_puf64_operational_core #(
             kcv_fail       <= 1'b0;
             mapped_latched <= '0;
             mapped_seen    <= 1'b0;
+            helper_latched <= '0;
             mapped_error   <= 1'b0;
             early_reject   <= 1'b0;
             downstream_start <= 1'b0;
@@ -182,6 +192,7 @@ module edge_puf64_operational_core #(
             kcv_fail       <= 1'b0;
             mapped_latched <= '0;
             mapped_seen    <= 1'b0;
+            helper_latched <= '0;
             mapped_error   <= 1'b0;
             early_reject   <= 1'b1;
             downstream_start <= 1'b0;
@@ -206,19 +217,21 @@ module edge_puf64_operational_core #(
                     if (start_accept) begin
                         kcv_match_reg <= 1'b0;
                         kcv_fail <= 1'b0;
+                        fe_kcv <= 224'd0;
+                        helper_latched <= '0;
                         mode_enroll <= enroll;
                         if (enroll) begin
                             if (ALLOW_ENROLL) begin
                                 state <= S_SWEEP;
                             end else begin
                                 early_reject <= 1'b1;
-                                state <= S_DONE;
+                                state <= S_ERASE;
                             end
                         end else if (command_ok && trusted_kcv_valid) begin
                             state <= S_SWEEP;
                         end else begin
                             early_reject <= 1'b1;
-                            state <= S_DONE;
+                            state <= S_ERASE;
                         end
                     end
                 end
@@ -254,6 +267,8 @@ module edge_puf64_operational_core #(
                 S_FE_WAIT: begin
                     if (fe_done_w) begin
                         result_success <= fe_result;
+                        if (mode_enroll && fe_result)
+                            helper_latched <= fe_helper_out;
                         if (mode_enroll && fe_result) state <= S_KCV_GEN;
                         else if (!mode_enroll && fe_result && mapped_seen &&
                                  trusted_kcv_valid) state <= S_KCV_CHECK;
@@ -264,7 +279,7 @@ module edge_puf64_operational_core #(
                 S_KCV_GEN: begin
                     if (kcv_done_w) begin
                         fe_kcv <= kcv_digest;
-                        state  <= S_DONE;
+                        state  <= S_ERASE;
                     end
                 end
 
@@ -279,7 +294,11 @@ module edge_puf64_operational_core #(
 
                 S_DOWNSTREAM: begin
                     downstream_start <= 1'b1;
-                    if (downstream_done) state <= S_DONE;
+                    state <= S_DOWN_WAIT;
+                end
+
+                S_DOWN_WAIT: begin
+                    if (downstream_done) state <= S_ERASE;
                 end
 
                 S_ERASE: begin
@@ -302,6 +321,8 @@ module edge_puf64_operational_core #(
     always @(posedge clk) begin
         if (!zeroize && downstream_start && !(kcv_match_reg))
             $error("KDF/ML-KEM launched without the KCV gate");
+        if (!zeroize && downstream_start && mode_enroll)
+            $error("KDF/ML-KEM launched during enrollment");
         if (!zeroize && (state == S_FE_START) && !mapped_seen)
             $error("FE launched without a latched mapped response");
         if (!zeroize && puf_start_r && (state != S_SWEEP))

@@ -34,6 +34,7 @@ module tb_edge_puf64_operational_core;
     wire mapped_error, early_reject, busy, done;
     wire [8:0] selected_count;
     wire downstream_start;
+    wire [191:0] downstream_key_internal;
 
     // Test-model controls (read by kp_puf64_physical below).
     reg [263:0] src_r = 264'd0;
@@ -51,23 +52,38 @@ module tb_edge_puf64_operational_core;
         .helper_kcv_valid(helper_kcv_valid), .kcv_ctx(kcv_ctx),
         .enroll_ctx(enroll_ctx), .kcv_pass(kcv_pass), .fe_kcv(fe_kcv),
         .kcv_fail(kcv_fail), .bch_corr_bits(bch_corr_bits),
+        .downstream_key_internal(downstream_key_internal),
         .downstream_start(downstream_start), .downstream_done(downstream_done),
         .mapped_error(mapped_error), .early_reject(early_reject),
         .busy(busy), .done(done), .selected_count(selected_count)
     );
 
     integer downstream_seen = 0;
+    integer downstream_pulses = 0;
     integer physical_starts = 0;
+    integer downstream_delay = 1;
+    integer downstream_countdown = 0;
+    reg downstream_start_d = 1'b0;
     always @(posedge clk) begin
-        if (downstream_start || dut.state == 4'd7)
+        downstream_start_d <= downstream_start;
+        if (downstream_start) begin
             downstream_seen = 1;
+            downstream_pulses = downstream_pulses + 1;
+            downstream_countdown = downstream_delay;
+        end
+        if (downstream_start && downstream_start_d)
+            $fatal(1, "downstream_start lasted more than one cycle");
         if (dut.puf_start_r)
             physical_starts = physical_starts + 1;
     end
 
-    // One-cycle downstream completion to release S_DOWNSTREAM.
     always @(posedge clk) begin
-        downstream_done <= downstream_start;
+        downstream_done <= 1'b0;
+        if (downstream_countdown > 0) begin
+            downstream_countdown = downstream_countdown - 1;
+            if (downstream_countdown == 0)
+                downstream_done <= 1'b1;
+        end
     end
 
     integer cycles;
@@ -75,7 +91,8 @@ module tb_edge_puf64_operational_core;
         begin
             while (busy || done) @(posedge clk);
             @(negedge clk);
-            enroll = en; downstream_seen = 0; physical_starts = 0;
+            enroll = en; downstream_seen = 0; downstream_pulses = 0;
+            physical_starts = 0;
             if (fault_kind == 6) mmcm_locked = 1'b0;
             start = 1'b1;
             @(negedge clk); start = 1'b0;
@@ -90,7 +107,38 @@ module tb_edge_puf64_operational_core;
                          dut.u_puf64_scheduler.state, dut.mapped_valid, dut.mapped_error);
                 $fatal(1, "operational transaction timed out");
             end
+            #1;
+            if (dut.mapped_latched !== 264'd0 ||
+                downstream_key_internal !== 192'd0)
+                $fatal(1, "done was exposed before mapped/key erase");
             mmcm_locked = 1'b1;
+        end
+    endtask
+
+    task automatic reset_in_state(input [3:0] target_state,
+                                  input [127:0] label);
+        integer guard;
+        begin
+            while (busy || done) @(posedge clk);
+            @(negedge clk); enroll = 1'b0; start = 1'b1;
+            @(negedge clk); start = 1'b0;
+            guard = 0;
+            while (dut.state != target_state && guard < 200000) begin
+                @(posedge clk);
+                guard = guard + 1;
+            end
+            if (dut.state != target_state)
+                $fatal(1, "%0s: target state not reached", label);
+            @(negedge clk); rst_n = 1'b0; downstream_countdown = 0;
+            repeat (3) @(posedge clk);
+            #1;
+            if (busy || downstream_start || dut.mapped_latched !== 264'd0 ||
+                downstream_key_internal !== 192'd0 ||
+                dut.u_puf64_scheduler.response_r !== 264'd0 ||
+                dut.mapped_response !== 264'd0)
+                $fatal(1, "%0s: reset did not erase secret state", label);
+            @(negedge clk); rst_n = 1'b1;
+            repeat (3) @(posedge clk);
         end
     endtask
 
@@ -100,6 +148,7 @@ module tb_edge_puf64_operational_core;
     reg [263:0] helper0, helper1;
     reg [223:0] kcv0, kcv1;
     integer n, i;
+    integer starts_before_busy_retry;
 
     initial begin
         repeat (4) @(posedge clk);
@@ -128,6 +177,9 @@ module tb_edge_puf64_operational_core;
             $fatal(1, "clean reconstruct did not pass");
         if (downstream_seen != 1)
             $fatal(1, "clean reconstruct did not start downstream");
+        if (downstream_pulses != 1)
+            $fatal(1, "clean reconstruct downstream pulse count=%0d",
+                   downstream_pulses);
         $display("I3A_CLEAN_RECONSTRUCT_OK");
 
         // Noise 0..8 must reconstruct and reach downstream.
@@ -246,6 +298,41 @@ module tb_edge_puf64_operational_core;
         if (!fe_success || !kcv_pass || downstream_seen != 1)
             $fatal(1, "post-reset clean transaction failed");
         $display("I3A_RESET_MID_SWEEP_OK");
+
+        reset_in_state(4'd4, "reset_fe");
+        $display("I3_7_RESET_MID_FE_OK");
+        reset_in_state(4'd6, "reset_kcv");
+        $display("I3_7_RESET_MID_KCV_OK");
+        downstream_delay = 50;
+        reset_in_state(4'd10, "reset_downstream");
+        downstream_delay = 1;
+        pulse_start(1'b0);
+        if (!fe_success || !kcv_pass || downstream_pulses != 1)
+            $fatal(1, "clean transaction after staged resets failed");
+        $display("I3_7_RESET_DOWNSTREAM_AND_RECOVERY_OK");
+
+        // Hold completion off, then try to start a second request while the
+        // first transaction is waiting downstream. It must remain one sweep
+        // and one downstream pulse. A following clean transaction must work.
+        downstream_delay = 20;
+        @(negedge clk); enroll = 1'b0; downstream_seen = 0;
+        downstream_pulses = 0; physical_starts = 0; start = 1'b1;
+        @(negedge clk); start = 1'b0;
+        wait (dut.state == 4'd10);
+        starts_before_busy_retry = physical_starts;
+        @(negedge clk); start = 1'b1;
+        @(negedge clk); start = 1'b0;
+        wait (done);
+        #1;
+        if (physical_starts != starts_before_busy_retry ||
+            downstream_pulses != 1 ||
+            dut.mapped_latched !== 264'd0 || downstream_key_internal !== 192'd0)
+            $fatal(1, "busy start/pulse/erase invariant failed");
+        downstream_delay = 1;
+        pulse_start(1'b0);
+        if (!fe_success || !kcv_pass || downstream_pulses != 1)
+            $fatal(1, "second consecutive clean transaction failed");
+        $display("I3_7_BUSY_START_TWO_TRANSACTIONS_ZEROIZE_OK");
 
         $display("I3A_OPERATIONAL_CORE_PASS");
         $finish;

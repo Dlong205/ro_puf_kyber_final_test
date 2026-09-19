@@ -2,7 +2,7 @@ VERILATOR ?= verilator
 TOP := tb_edge_puf64_operational_core
 OBJ := obj_dir
 
-.PHONY: sim clean
+.PHONY: sim boundary-lint clean
 
 sim:
 	$(VERILATOR) --binary --timing -j 1 --threads 1 \
@@ -47,6 +47,18 @@ sim:
 		../../rtl/top/edge_puf64_operational_core.sv \
 		$(TOP).sv
 	./$(OBJ)/V$(TOP)
+
+boundary-lint:
+	$(VERILATOR) --lint-only --timing --top-module edge_puf64_operational_uart \
+		-Wno-fatal -Wno-WIDTH -Wno-TIMESCALEMOD -Wno-UNUSEDSIGNAL \
+		-Wno-UNUSEDPARAM -Wno-PINCONNECTEMPTY -Wno-DECLFILENAME \
+		-I../../rtl/top \
+		../../rtl/puf/uart_rx.v ../../rtl/puf/uart_tx.v \
+		../../rtl/top/helper_record.sv \
+		../../rtl/top/edge_uart_transport.sv \
+		operational_boundary_stubs.sv \
+		../../rtl/top/edge_puf64_operational_chain.sv \
+		../../rtl/top/edge_puf64_operational_uart.sv
 
 clean:
 	rm -rf $(OBJ)

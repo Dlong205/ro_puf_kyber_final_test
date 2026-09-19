@@ -17,6 +17,7 @@ module tb_edge_uart_transport;
     wire uart_tx;
 
     wire core_start, core_zeroize, core_enroll;
+    wire core_command_ok;
     wire [263:0] helper_in;
     reg  [263:0] helper_out = HREC_KAT_HELPER;
     reg  [223:0] core_fe_kcv = HREC_KAT_KCV;
@@ -33,6 +34,8 @@ module tb_edge_uart_transport;
     wire peer_req_pk, peer_ready_c, stream_in_valid;
     wire [31:0] stream_in_data;
     reg secret_valid = 1'b0;
+    reg external_result_valid = 1'b0;
+    localparam [31:0] EXTERNAL_RESULT_TAG = 32'ha1b2c3d4;
     reg [255:0] shared_secret = {
         32'h77665544, 32'h33221100, 32'hffeeddcc, 32'hbbaa9988,
         32'h76543210, 32'hfedcba98, 32'h89abcdef, 32'h01234567
@@ -45,11 +48,12 @@ module tb_edge_uart_transport;
     edge_uart_transport #(
         .CLKS_PER_BIT(CLKS), .PK_WORDS(2), .CT_WORDS(2),
         // This tb covers both enrollment and reconstruction.
-        .ALLOW_ENROLL(1'b1)
+        .ALLOW_ENROLL(1'b1), .EXTERNAL_RESULT_TAG(1'b1)
     ) dut (
         .clk(clk), .rst_n(rst_n), .uart_rx_i(uart_rx),
         .uart_tx_o(uart_tx), .tx_active(), .core_start(core_start),
         .core_zeroize(core_zeroize), .core_enroll(core_enroll),
+        .core_command_ok(core_command_ok),
         .helper_in(helper_in), .helper_out(helper_out),
         .core_fe_kcv(core_fe_kcv), .core_helper_kcv_valid(core_helper_kcv_valid),
         .core_helper_kcv(core_helper_kcv), .core_kcv_ctx(core_kcv_ctx),
@@ -59,7 +63,9 @@ module tb_edge_uart_transport;
         .stream_out_data(stream_out_data), .peer_req_pk(peer_req_pk),
         .peer_ready_c(peer_ready_c), .stream_in_valid(stream_in_valid),
         .stream_in_data(stream_in_data), .secret_valid(secret_valid),
-        .shared_secret(shared_secret)
+        .shared_secret(shared_secret), .core_nonce(),
+        .external_result_valid(external_result_valid),
+        .external_result_tag(EXTERNAL_RESULT_TAG)
     );
 
     always @(posedge clk)
@@ -70,6 +76,7 @@ module tb_edge_uart_transport;
         core_done <= 1'b0;
         stream_out_valid <= 1'b0;
         secret_valid <= 1'b0;
+        external_result_valid <= 1'b0;
         if (core_zeroize) begin
             core_busy <= 1'b0;
             ready_pk <= 1'b0;
@@ -78,6 +85,8 @@ module tb_edge_uart_transport;
             ct_index <= 0;
             delay_count <= 0;
         end else if (core_start) begin
+            if (!core_enroll && !core_command_ok)
+                $fatal(1, "core_start was not atomically qualified");
             core_busy <= 1'b1;
             delay_count <= 2;
             if (core_enroll) begin
@@ -124,6 +133,7 @@ module tb_edge_uart_transport;
             if (ct_index == 1) begin
                 req_c <= 1'b0;
                 secret_valid <= 1'b1;
+                external_result_valid <= 1'b1;
                 core_done <= 1'b1;
                 core_busy <= 1'b0;
             end
@@ -213,9 +223,7 @@ module tb_edge_uart_transport;
         for (index = 4; index < 8; index = index + 1)
             send_uart(8'ha0 + index[7:0]);
 
-        expected_tag = 32'h12345678 ^ 32'h01234567 ^ 32'h89abcdef ^
-            32'hfedcba98 ^ 32'h76543210 ^ 32'hbbaa9988 ^ 32'hffeeddcc ^
-            32'h33221100 ^ 32'h77665544;
+        expected_tag = EXTERNAL_RESULT_TAG;
         expect_uart(8'haa);
         expect_uart(expected_tag[7:0]); expect_uart(expected_tag[15:8]);
         expect_uart(expected_tag[23:16]); expect_uart(expected_tag[31:24]);
@@ -224,6 +232,8 @@ module tb_edge_uart_transport;
             $fatal(1, "transport did not return idle after zeroize");
         if (start_count != 1)
             $fatal(1, "expected one core start, got %0d", start_count);
+        if (core_command_ok)
+            $fatal(1, "command_ok survived transaction zeroize");
         $display("EDGE_UART_RECORD_TRANSPORT_PASS tag=%08x", expected_tag);
         $finish;
     end
