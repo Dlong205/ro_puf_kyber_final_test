@@ -136,7 +136,8 @@ def probe_image(port):
             raise RuntimeError("record_bytes contradicts NUM_RO")
     else:
         raise RuntimeError(f"unknown all-pairs protocol version {proto:#04x}")
-    info["protocol"] = proto_label
+    info["protocol"] = (f"{info['proto_major']}.{info['proto_minor']}"
+                        if proto == 0x03 else proto_label)
     if ro_count not in (32, 64):
         raise RuntimeError(f"unsupported NUM_RO={ro_count}")
     if pair_count != ro_count * (ro_count - 1) // 2:

@@ -5,15 +5,18 @@ permitted in this campaign.  Raw data is private and git-ignored
 (`reports/puf64_campaign/`).
 
 ## 1. Golden input (immutable)
-Board `ZYNQ-A01`; protocol 3.0; image_mode `PUF_CHARACTERIZATION` (code 1);
-topology `0xC0DE`; build_id 1; NUM_RO 64; PAIR_COUNT 2016; WIDTH 16;
+Board `ZYNQ-A01`; **protocol 3.1** (major 3, minor 1, record_bytes 20, status+CRC);
+image_mode `PUF_CHARACTERIZATION` (code 1); topology `0xC0DE`; **build_id 2**;
+NUM_RO 64; PAIR_COUNT 2016; WIDTH 16; ripple 17 stages/RO (overflow guard);
 input 50 MHz / system 100 MHz; REF_CYCLES 1023; window 10230 ns; prescaler on;
 lock `placement + LOCK_PINS + route-fingerprint fail-closed`, `FIXED_ROUTE=false`.
-Bitstream `5eaebb00…`, routed DCP `91adf5a5…`, route fingerprint `ecc33b53…`
-(see `constraints/puf_allpairs64_golden_manifest.json`).
+Active SHAs are in `constraints/puf_allpairs64_golden_manifest.json`.
 
-The 3 pilot boots are **excluded** from train/holdout.  Any `build_id=1`
-artifact built before commit `eaab60c` is revoked.
+**Revoked**: build_id 1 (bitstream `5eaebb00…`) — no direct status/CRC; its pilot
+reports are historical architecture evidence only and must not qualify build 2.
+The 3 pilot boots are excluded from train/holdout.
+Reporting wording: status/timeout/wrap are **enforced by the record status byte
+and CRC in RTL**; the host checks the status byte + CRC (not an inference).
 
 ## 2. Campaign sizes
 - Train: 20 independent cold boots, `boot_index=101..120`, 50 frames each.

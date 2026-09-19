@@ -22,7 +22,7 @@ set stages [get_cells -quiet -hierarchical \
     -filter {REF_NAME == "FDCE" && NAME =~ "*stage*ff*"}]
 if {[llength $ro_luts] != 256} { error "expected 256 RO LUTs, found [llength $ro_luts]" }
 if {[llength $presc] != 64} { error "expected 64 prescalers, found [llength $presc]" }
-if {[llength $stages] != 1024} { error "expected 1024 ripple stages, found [llength $stages]" }
+if {[llength $stages] != 1088} { error "expected 1088 ripple stages (17 per RO), found [llength $stages]" }
 
 file mkdir [file dirname $out_fp]
 set ch [open $out_place w]
