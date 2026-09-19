@@ -91,6 +91,7 @@ def probe_image(port):
         )
     proto = header[3]
     info = {}
+    proto_label = "2.0" if proto == 0x02 else "3.0"
     if proto == 0x02:
         tail = read_exact(port, 2)
         ro_count, pair_count, capabilities = 32, 496, tail[1]
@@ -114,6 +115,7 @@ def probe_image(port):
         }
     else:
         raise RuntimeError(f"unknown all-pairs protocol version {proto:#04x}")
+    info["protocol"] = proto_label
     if ro_count not in (32, 64):
         raise RuntimeError(f"unsupported NUM_RO={ro_count}")
     if pair_count != ro_count * (ro_count - 1) // 2:
@@ -630,7 +632,8 @@ def main():
         )
         if golden_manifest is not None:
             for key in ("build_id", "topology_id", "width", "ref_cycles",
-                        "system_clock_hz", "input_clock_hz"):
+                        "system_clock_hz", "input_clock_hz", "image_mode",
+                        "protocol"):
                 expected = golden_manifest.get(key)
                 actual = device_info.get(key)
                 if expected is not None and expected != actual:
