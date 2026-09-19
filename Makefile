@@ -10,7 +10,7 @@ SOC_REPRO_BIT := build/soc_repro/$(SOC_REPRO_RUN)/kyber_ro_puf_$(SOC_REPRO_RUN).
 # Verilator builds can exhaust RAM on the reference development host.
 .NOTPARALLEL:
 
-.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-margin-characterize puf-allpairs-sim puf-allpairs-project puf-allpairs-bitstream puf-allpairs-program puf-allpairs-characterize puf-allpairs-lock-export puf-allpairs-lock-check puf-allpairs64-sim puf-allpairs64-project puf-allpairs64-bitstream puf-allpairs64-program puf-allpairs64-characterize puf-allpairs64-lock-export puf-allpairs64-lock-check puf-allpairs64-ripple-lock-export puf64-microbench-project puf64-microbench-bitstream puf64-microbench-program puf64-microbench-placement-export puf64-bench-project puf64-bench-bitstream puf64-bench-program puf64-bench-diag puf64-train-boot puf64-holdout-boot puf64-train-select puf64-train-freeze puf64-holdout-eval puf64-holdout-candidate-freeze puf64-holdout-input-freeze puf64-holdout-batch puf64-train-batch puf-mapping-train arty-puf-characterization-project arty-puf-characterization-bitstream arty-puf-characterization-program arty-puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem edge-uart edge-uart-mlkem edge-root-binding edge-asic-top kyber kyber-invalid axi axi-secure kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-filelist-check asic-manifest-check asic-frontend-check asic-backend-readiness asic-elaboration asic-portability crypto-freeze-check verification-inputs-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
+.PHONY: check firmware ro-puf fuzzy fuzzy-portable puf-stability-proxy puf-characterization-project puf-characterization-bitstream puf-characterization-program puf-raw-characterize puf-margin-characterize puf-allpairs-sim puf-allpairs-project puf-allpairs-bitstream puf-allpairs-program puf-allpairs-characterize puf-allpairs-lock-export puf-allpairs-lock-check puf-allpairs64-sim puf-allpairs64-project puf-allpairs64-bitstream puf-allpairs64-program puf-allpairs64-characterize puf-allpairs64-lock-export puf-allpairs64-lock-check puf-allpairs64-ripple-lock-export puf64-microbench-project puf64-microbench-bitstream puf64-microbench-program puf64-microbench-placement-export puf64-bench-project puf64-bench-bitstream puf64-bench-program puf64-bench-diag puf64-train-boot puf64-holdout-boot puf64-train-select puf64-train-freeze puf64-holdout-eval puf64-holdout-candidate-freeze puf64-holdout-input-freeze puf64-holdout-batch puf64-train-batch puf64-canonicalize-mapping puf-mapping-train arty-puf-characterization-project arty-puf-characterization-bitstream arty-puf-characterization-program arty-puf-raw-characterize puf-characterization-sim fuzzy-characterization puf-metrics-test fips202 kdf mlkem edge-uart edge-uart-mlkem edge-root-binding edge-asic-top kyber kyber-invalid axi axi-secure kyber-strict kyber-long kyber-codec system regression ntt-multiplier xilinx-ro-lint asic-reset-smoke asic-filelist-check asic-manifest-check asic-frontend-check asic-backend-readiness asic-elaboration asic-portability crypto-freeze-check verification-inputs-check crypto-freeze-gate ro-lock-export ro-lock-source-check soc-repro-project soc-repro-build ro-route-repro-check vivado-project synth impl program program-bit soc-repro-program release-check package-internal clean
 
 PUF_PORT ?= /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
 ARTY_PUF_PORT ?= $(firstword $(wildcard /dev/serial/by-id/usb-Digilent_Digilent_USB_Device_*-if01-port0))
@@ -183,6 +183,8 @@ PUF64_TRAIN_INPUT ?= $(PUF64_CAMPAIGN_DIR)/train_input_101_120.json
 PUF64_HOLDOUT_CANDIDATE ?= $(PUF64_CAMPAIGN_DIR)/holdout_candidate_private.json
 PUF64_HOLDOUT_INPUT ?= $(PUF64_CAMPAIGN_DIR)/holdout_input_201_210.json
 PUF64_HOLDOUT_BACKUP ?= $(HOME)/puf64_private_backup/holdout_candidate
+PUF64_FINAL_MAPPING ?= constraints/puf64_final_mapping_manifest.json
+PUF64_FINAL_MAPPING_CANONICAL ?= constraints/puf64_final_mapping.canonical.json
 PUF64_HOLDOUT_BATCH_START ?= 201
 PUF64_HOLDOUT_BATCH_END ?= 210
 PUF64_ALLPAIRS64_BIT ?= build/puf_allpairs64_characterization/puf_allpairs64_zynq7020.runs/impl_1/Puf_AllPairs64_Characterization_Top.bit
@@ -236,6 +238,11 @@ puf64-train-batch:
 		--outdir "$(PUF64_CAMPAIGN_DIR)" --power-off-min $(PUF64_POWER_OFF_MIN) \
 		--warmup $(PUF64_WARMUP) --vivado "$(VIVADO)" \
 		--resume-from 101 $(if $(PUF64_BATCH_RESUME),--resume,)
+
+# Canonicalize the holdout-qualified mapping: public non-secret manifest +
+# canonical hashed bytes + SHA3-256 digest + 16-bit on-wire tag.
+puf64-canonicalize-mapping:
+	python3 -u host/puf64_canonicalize_mapping.py --golden-manifest "$(PUF64_GOLDEN_MANIFEST)" --mapping "$(PUF64_CAMPAIGN_DIR)/train_mapping_candidate.json" --train-input "$(PUF64_TRAIN_INPUT)" --holdout-input "$(PUF64_HOLDOUT_INPUT)" --holdout-report "$(PUF64_CAMPAIGN_DIR)/holdout_report.json" --public-out "$(PUF64_FINAL_MAPPING)" --canonical-out "$(PUF64_FINAL_MAPPING_CANONICAL)"
 
 puf-mapping-train:
 	@test -n "$(PUF_MAPPING_TRAINING)" || { echo "Set PUF_MAPPING_TRAINING to private campaign JSON files" >&2; exit 2; }

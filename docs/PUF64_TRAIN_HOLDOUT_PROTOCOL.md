@@ -154,3 +154,37 @@ only.  `count<60000` is a heuristic, not proof of stability.
   (protocol 3.1, build 2, new SHAs), then a fresh 3-boot pilot before train 101.
 - Reporting: never write "host confirmed timeout/stable/wrap"; write
   "RTL/record status enforce; host checks the status byte + CRC".
+
+## 16. Final mapping canonicalization (holdout PASS)
+
+Executed after the 10-boot holdout gate PASS.  No RTL/XDC/INFO/bitstream change.
+
+- Public manifest: `constraints/puf64_final_mapping_manifest.json`
+  (non-secret); canonical hashed bytes:
+  `constraints/puf64_final_mapping.canonical.json`.
+- Full mapping digest: SHA3-256
+  `01d5d3a77d19c54d4bfb7a71844edd5627b8fa7def775ae82d911a7a706d5858` over
+  the canonical bytes (SHA-256 of those bytes:
+  `a32bd6a4752b8b2145dc5480912cfbb1853fab042dd14b6fe0697c4c18bea71a`).
+- On-wire `mapping_tag = 0xd501` (54529), **16-bit little-endian**, derived as
+  the low 16 bits of the digest; nonzero.  It is a configuration-mismatch
+  identifier, not a cryptographic binding; the KCV owns the same-root check.
+- Selection `299a089d…`, mapping candidate `bb46e05e…`, train-input `957f8963…`,
+  holdout-input `b01ef3da…`, holdout report `53c3855f…`.
+- Deterministic: canonical bytes and public manifest are byte-identical across
+  clean runs; no timestamp/path/randomness in the hashed payload.  Golden-vector
+  tests in `host/tests/test_puf64_canonicalize_mapping.py`.
+- **BLOCKER (unchanged on purpose)**: the helper-record `mapping_len` field is
+  1 byte (`scripts/helper_record_spec.py`, `rtl/top/helper_record_spec.vh`,
+  firmware), so `mapping_len=264` cannot be encoded (max 255).  On-wire binding
+  therefore requires a protocol/RTL revision and is **not** part of this step.
+- Security wording: 20 train cold boots, 10 holdout cold boots, 500 holdout
+  frames; 0 observed errors on the selected 264-bit vector and 0 observed FE
+  failure on one Zynq + one golden bitstream.  This does not make the true FRR
+  zero, does not prove inter-device uniqueness, does not prove 256-bit
+  min-entropy, and does not evaluate PVT.  The `log2(64!)` order ceiling is a
+  structural bound, not measured entropy.  Response balance 152/112 is an
+  observation only.
+- See `docs/PUF64_FINAL_MAPPING_CANONICALIZATION.md` for the serialization spec.
+- Integration into RTL/helper/KCV/operational image is a **separate phase**
+  (netlist change ⇒ physical fingerprint re-check) and was not performed.

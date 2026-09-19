@@ -467,37 +467,10 @@ def main(argv=None):
     Path(args.report_out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.report_out).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
 
-    if passed and args.frozen_out and args.post_review_freeze:
-        identity = {
-            "protocol": golden.get("protocol"),
-            "image_mode": golden.get("image_mode"),
-            "topology_id": golden.get("topology_id"),
-            "build_id": golden.get("build_id"),
-            "num_ro": golden.get("num_ro"),
-            "width": golden.get("width"),
-            "ref_cycles": golden.get("ref_cycles"),
-            "clock_input_hz": golden.get("clock_input_hz"),
-            "clock_system_hz": golden.get("clock_system_hz"),
-            "bitstream_sha256": golden.get("bitstream_sha256"),
-            "route_fingerprint_sha256": golden.get("route_fingerprint_sha256"),
-            "pairs": mapping["pairs"],
-            "algorithm": mapping["algorithm"],
-            "selection_sha256": mapping["selection_sha256"],
-        }
-        mapping_tag = "0x" + sha256_bytes(canonical_json(identity))[:16]
-        frozen = dict(mapping)
-        frozen["identity"] = identity
-        frozen["mapping_tag"] = mapping_tag
-        frozen["status"] = "RELIABILITY_QUALIFIED_ZYNQ_A01_GOLDEN_BITSTREAM"
-        frozen["holdout_summary"] = {
-            "frames": total_frames, "independent_boots": result["valid_sessions"],
-            "p95": p95, "max": max_err, "frr": frr,
-        }
-        frozen["limitations"] = list(mapping.get("limitations", [])) + [
-            "Holdout is power-cycle/time variation on the same ZYNQ-A01 only.",
-        ]
-        Path(args.frozen_out).write_text(json.dumps(frozen, indent=2, sort_keys=True) + "\n")
-        report["mapping_tag"] = mapping_tag
+    if args.post_review_freeze:
+        print("NOTE: mapping canonicalization is owned by "
+              "host/puf64_canonicalize_mapping.py (single source of truth for "
+              "the full digest and the 16-bit on-wire tag); no tag written here.")
 
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0 if passed else 1
