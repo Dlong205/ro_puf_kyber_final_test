@@ -49,6 +49,64 @@ def load_train_sessions(campaign_dir, campaign="train"):
     return sessions
 
 
+TRAIN_INPUT_SCHEMA = "puf64-train-input-v1"
+
+
+def load_frozen_sessions(manifest_path, golden, golden_path):
+    """Load sessions from the frozen private train-input manifest.
+
+    Verifies the schema/identity, the golden-manifest hash, the aggregate
+    train-input hash and every per-file SHA.  Any drift is a hard error; the
+    selector must never fall back to a glob when a frozen input is given.
+    """
+    data = json.loads(Path(manifest_path).read_text())
+    problems = []
+    if data.get("schema") != TRAIN_INPUT_SCHEMA:
+        problems.append(f"unexpected schema {data.get('schema')!r}")
+    for key in ("board_id", "build_id", "protocol", "num_ro", "pair_count",
+                "width", "ref_cycles", "bitstream_sha256"):
+        if data.get(key) != golden.get(key):
+            problems.append(
+                f"{key}: frozen={data.get(key)} golden={golden.get(key)}")
+    if data.get("golden_manifest_sha256") != sha256_file(golden_path):
+        problems.append("golden manifest SHA mismatch")
+    entries = data.get("boots", [])
+    if data.get("aggregate_sha256") != sha256_bytes(canonical_json(entries)):
+        problems.append("aggregate train-input hash mismatch")
+    indices = [entry.get("boot_index") for entry in entries]
+    if len(indices) != len(set(indices)):
+        problems.append("duplicate boot_index in frozen input")
+    if problems:
+        raise ValueError("frozen train input rejected: " + "; ".join(problems))
+
+    sessions = []
+    for entry in entries:
+        try:
+            session_file = Path(entry["session_path"])
+            dataset_file = Path(entry["dataset_path"])
+            raw_file = Path(entry["raw_path"])
+        except KeyError as error:
+            raise ValueError(f"frozen entry missing {error}") from error
+        if sha256_file(session_file) != entry["session_sha256"]:
+            raise ValueError(
+                f"boot {entry['boot_index']}: session SHA changed")
+        if sha256_file(dataset_file) != entry["dataset_sha256"]:
+            raise ValueError(
+                f"boot {entry['boot_index']}: dataset SHA changed")
+        if sha256_file(raw_file) != entry["raw_sha256"]:
+            raise ValueError(
+                f"boot {entry['boot_index']}: raw SHA changed")
+        manifest = json.loads(session_file.read_text())
+        if manifest.get("status") != "VALID":
+            raise ValueError(
+                f"boot {entry['boot_index']}: session not VALID")
+        sessions.append({
+            "manifest": manifest,
+            "dataset": json.loads(dataset_file.read_text()),
+        })
+    return sessions, data["aggregate_sha256"]
+
+
 def build_pair_metrics(sessions, ro_count, pair_count):
     n = len(sessions)
     pairs = [(a, b) for a in range(ro_count) for b in range(a + 1, ro_count)]
@@ -140,6 +198,11 @@ def main():
     parser.add_argument("--golden-manifest", required=True)
     parser.add_argument("--mapping-out", required=True)
     parser.add_argument("--reference-out", required=True)
+    parser.add_argument("--train-input-manifest", default=None,
+                        help="frozen private train-input manifest; selection "
+                             "is bound to this exact session set")
+    parser.add_argument("--report-out", default=None,
+                        help="write the detailed private selection report")
     parser.add_argument("--min-boots", type=int, default=20)
     parser.add_argument("--max-minority-rate", type=float, default=10.0)
     parser.add_argument("--min-margin-p01", type=float, default=4.0)
@@ -151,7 +214,16 @@ def main():
     if not golden.get("train_eligible"):
         print("BLOCKER: golden manifest train_eligible is not true")
         return 2
-    sessions = load_train_sessions(args.campaign_dir)
+    train_input_sha = None
+    if args.train_input_manifest:
+        try:
+            sessions, train_input_sha = load_frozen_sessions(
+                args.train_input_manifest, golden, args.golden_manifest)
+        except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
+            print(f"BLOCKER: {error}")
+            return 2
+    else:
+        sessions = load_train_sessions(args.campaign_dir)
     if len(sessions) < args.min_boots:
         print(f"BLOCKER: only {len(sessions)} valid train sessions, need {args.min_boots}")
         return 2
@@ -196,6 +268,7 @@ def main():
         "golden": {k: golden.get(k) for k in (
             "protocol", "image_mode", "topology_id", "build_id", "num_ro",
             "width", "ref_cycles", "bitstream_sha256", "route_fingerprint_sha256")},
+        "train_input_sha256": train_input_sha,
         "train_boots": train_boots,
         "pairs": ordered_pairs,
         "config": {
@@ -240,6 +313,7 @@ def main():
 
     reference = {
         "selection_sha256": selection_hash,
+        "train_input_sha256": train_input_sha,
         "reference_bit": {str(m["index"]): m["reference_bit"] for m in selected},
         "ineligible_pair_count": len(ineligible_reasons),
         "eligible_pair_count": len(eligible),
@@ -247,12 +321,56 @@ def main():
     Path(args.reference_out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.reference_out).write_text(json.dumps(reference, indent=2, sort_keys=True) + "\n")
 
+    rejection_counts = {}
+    for reasons in ineligible_reasons.values():
+        for reason in reasons:
+            rejection_counts[reason] = rejection_counts.get(reason, 0) + 1
+    reference_ones = sum(1 for m in selected if m["reference_bit"] == 1)
+    degree_histogram = {}
+    for value in degree:
+        degree_histogram[str(value)] = degree_histogram.get(str(value), 0) + 1
+    report = {
+        "schema": "ro-puf-train-selection-report-v1",
+        "algorithm": ALGORITHM_VERSION,
+        "status": mapping["status"],
+        "mapping_tag": mapping["mapping_tag"],
+        "total_pairs": golden.get("pair_count"),
+        "eligible_pairs": len(eligible),
+        "ineligible_pairs": len(ineligible_reasons),
+        "rejection_counts": rejection_counts,
+        "invalid_or_missing_pairs": 0,
+        "selected_pairs": len(selected),
+        "degree_min": min(degree),
+        "degree_max": max(degree),
+        "degree_histogram": degree_histogram,
+        "degree_distribution": mapping["degree_distribution"],
+        "selected_min_margin_p01": min(m["min_margin_p01"] for m in selected),
+        "selected_median_margin_p01": statistics.median(
+            m["min_margin_p01"] for m in selected),
+        "selected_worst_minority_rate": max(
+            m["worst_minority_rate"] for m in selected),
+        "selected_changed_majority_count": sum(
+            1 for m in selected if m["changed_boot_count"] != 0),
+        "response_balance": {"ones": reference_ones,
+                             "zeros": len(selected) - reference_ones,
+                             "selection_criterion": False},
+        "train_boots": train_boots,
+        "train_input_sha256": train_input_sha,
+        "selection_sha256": selection_hash,
+    }
+    if args.report_out:
+        Path(args.report_out).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.report_out).write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n")
+
     print(json.dumps({
         "status": mapping["status"], "mapping": args.mapping_out,
         "selected": len(selected), "eligible": len(eligible),
         "degree_min": min(degree), "degree_max": max(degree),
         "degree_distribution": mapping["degree_distribution"],
         "selection_sha256": selection_hash,
+        "train_input_sha256": train_input_sha,
+        "response_balance": report["response_balance"],
     }, indent=2))
     return 0
 
