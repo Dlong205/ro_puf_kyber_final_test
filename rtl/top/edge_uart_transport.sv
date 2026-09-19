@@ -25,7 +25,7 @@ module edge_uart_transport #(
     // so release builds cannot silently accept a bare helper.
     parameter bit     LEGACY_HELPER_ENABLE = 1'b0,
     // Enrollment is only permitted in provisioning/manufacturing lifecycle.
-    parameter bit     ALLOW_ENROLL = 1'b1
+    parameter bit     ALLOW_ENROLL = 1'b0
 ) (
     input  wire         clk,
     input  wire         rst_n,
@@ -39,8 +39,8 @@ module edge_uart_transport #(
     output reg  [263:0] helper_in,
     input  wire [263:0] helper_out,
     input  wire [223:0] core_fe_kcv,
-    output reg          core_kcv_enable,
-    output reg  [223:0] core_kcv_ref,
+    output reg          core_helper_kcv_valid,
+    output reg  [223:0] core_helper_kcv,
     output reg  [55:0]  core_kcv_ctx,
     // Enrollment context assembled from the exact header parameters the
     // emitted record carries (same source as build_enroll_record).  The core
@@ -253,8 +253,8 @@ module edge_uart_transport #(
             core_zeroize    <= 1'b0;
             core_enroll     <= 1'b0;
             helper_in       <= 264'd0;
-            core_kcv_enable <= 1'b0;
-            core_kcv_ref    <= 224'd0;
+            core_helper_kcv_valid <= 1'b0;
+            core_helper_kcv <= 224'd0;
             core_kcv_ctx    <= 56'd0;
             peer_req_pk     <= 1'b0;
             stream_in_valid <= 1'b0;
@@ -302,8 +302,8 @@ module edge_uart_transport #(
                         core_start <= 1'b1;
                         // Never let a previous SESSION's record context or
                         // reference leak into the enrollment transaction.
-                        core_kcv_enable <= 1'b0;
-                        core_kcv_ref <= 224'd0;
+                        core_helper_kcv_valid <= 1'b0;
+                        core_helper_kcv <= 224'd0;
                         core_kcv_ctx <= 56'd0;
                         record_status <= 4'd0;
                         record_fail <= 1'b0;
@@ -315,7 +315,7 @@ module edge_uart_transport #(
                         record_fail <= 1'b0;
                         // Release build always enforces the KCV gate; the
                         // legacy diagnostic path bypasses the record parser.
-                        core_kcv_enable <= legacy_mode ? 1'b0 : 1'b1;
+                        core_helper_kcv_valid <= !legacy_mode;
                         state <= S_HELPER_MARK;
                     end else if (rx_dv) begin
                         fail_code <= 8'h01; // unsupported command
@@ -411,7 +411,7 @@ module edge_uart_transport #(
                                 state <= S_FAIL_SEND;
                             end else begin
                                 helper_in <= rec_helper;
-                                core_kcv_ref <= rec_kcv;
+                                core_helper_kcv <= rec_kcv;
                                 core_kcv_ctx <= rec_ctx;
                                 nonce <= 32'd0;
                                 item_count <= 10'd0;
@@ -621,8 +621,8 @@ module edge_uart_transport #(
                     core_zeroize <= 1'b1;
                     zeroize_done <= 1'b1;
                     helper_in <= 264'd0;
-                    core_kcv_enable <= 1'b0;
-                    core_kcv_ref <= 224'd0;
+                    core_helper_kcv_valid <= 1'b0;
+                    core_helper_kcv <= 224'd0;
                     core_kcv_ctx <= 56'd0;
                     nonce <= 32'd0;
                     result_tag <= 32'd0;

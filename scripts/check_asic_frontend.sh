@@ -58,6 +58,7 @@ set +e
     "$verilator_bin" --cc --no-skip-identical --timing \
       --top-module "$top_module" \
       --Mdir "$lint_dir/obj_dir" -DKP_TARGET_ASIC \
+      -I"$root_dir/rtl/top" \
       -I"$root_dir/rtl/kyber/ref" \
       -I"$root_dir/rtl/common" \
       -I"$root_dir/rtl/hash_core" \

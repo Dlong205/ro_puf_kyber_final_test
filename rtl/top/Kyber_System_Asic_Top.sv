@@ -75,9 +75,11 @@ module Kyber_System_Asic_Top #(
         .helper_out(helper_soc_to_fe),
         .helper_in(helper_fe_to_soc),
         .kdf_seed(kyber_seed),
-        // The same-root KCV engine is intentionally absent from this baseline
-        // ASIC top (a dedicated edge-ASIC top is introduced separately).  Tie
-        // the new shared-module ports off so the baseline still elaborates.
+        // Frontend-only baseline: the same-root KCV engine is intentionally
+        // absent, so no trusted anchor exists.  kcv_pass is tied 0 below:
+        // every reconstruction fails closed.  An operational integration must
+        // supply an integrity-protected trusted_kcv_ref (ROM/OTP) and must not
+        // claim qualification from this placeholder.
         .kcv_start(),
         .kcv_ref(),
         .kcv_ctx(),

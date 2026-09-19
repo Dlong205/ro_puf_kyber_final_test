@@ -22,8 +22,8 @@ module tb_edge_uart_negative;
     wire [263:0] helper_in;
     reg  [263:0] helper_out = HREC_KAT_HELPER;
     reg  [223:0] core_fe_kcv = HREC_KAT_KCV;
-    wire core_kcv_enable;
-    wire [223:0] core_kcv_ref;
+    wire core_helper_kcv_valid;
+    wire [223:0] core_helper_kcv;
     wire [55:0]  core_kcv_ctx;
     wire [3:0]   record_status;
     wire         record_fail;
@@ -50,8 +50,8 @@ module tb_edge_uart_negative;
         .uart_tx_o(uart_tx), .tx_active(), .core_start(core_start),
         .core_zeroize(core_zeroize), .core_enroll(core_enroll),
         .helper_in(helper_in), .helper_out(helper_out),
-        .core_fe_kcv(core_fe_kcv), .core_kcv_enable(core_kcv_enable),
-        .core_kcv_ref(core_kcv_ref), .core_kcv_ctx(core_kcv_ctx),
+        .core_fe_kcv(core_fe_kcv), .core_helper_kcv_valid(core_helper_kcv_valid),
+        .core_helper_kcv(core_helper_kcv), .core_kcv_ctx(core_kcv_ctx),
         .record_status(record_status), .record_fail(record_fail),
         .zeroize_done(zeroize_done),
         .fe_success(fe_success), .core_done(core_done),

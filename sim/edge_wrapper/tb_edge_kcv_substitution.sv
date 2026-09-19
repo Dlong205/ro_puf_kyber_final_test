@@ -10,8 +10,8 @@
 //   1. enroll R0/R1 -> public helpers and KCVs.
 //   2. codeword delta with the original KCV reference: rejected.
 //   3. codeword delta with the MATCHING (attacker-supplied) KCV reference:
-//      if the gate passes and the KEM starts, the current architecture is
-//      vulnerable to active helper+KCV substitution.
+//      the trusted anchor comes from provisioning, not from the helper, so
+//      the substitution must be rejected.
 module tb_edge_kcv_substitution;
     localparam [55:0] CTX = 56'h01000001010101;
 
@@ -22,7 +22,13 @@ module tb_edge_kcv_substitution;
     reg start = 1'b0;
     reg enroll = 1'b0;
     reg [263:0] helper_in = 264'd0;
-    reg [223:0] kcv_ref = 224'd0;
+    reg [223:0] kcv_ref = 224'd0;      // helper-provided KCV
+    wire [223:0] anchor_ref;
+    wire         anchor_valid_real;
+    wire [223:0] trusted_kcv_ref = anchor_ref;
+    wire         trusted_kcv_valid = anchor_valid_real;
+    reg          enroll_seen = 1'b0;
+    wire         anchor_provision = enroll_seen && done && (|fe_kcv);
     wire done, kcv_pass, kcv_fail;
     wire [7:0] bch_corr_bits;
     wire [263:0] helper_out;
@@ -36,7 +42,10 @@ module tb_edge_kcv_substitution;
         .clk(clk), .rst_n(rst_n), .zeroize(zeroize), .start(start),
         .enroll(enroll), .puf_seed(8'h5a), .helper_in(helper_in),
         .helper_out(helper_out), .fe_success(),
-        .kcv_enable(1'b1), .kcv_ref(kcv_ref), .kcv_ctx(CTX),
+        .enroll_allowed(1'b1),
+        .trusted_kcv_valid(trusted_kcv_valid), .trusted_kcv_ref(trusted_kcv_ref),
+        .helper_kcv_ref(kcv_ref), .helper_kcv_valid(1'b1),
+        .kcv_ctx(CTX),
         .enroll_ctx(CTX), .fe_kcv(fe_kcv),
         .kcv_pass(kcv_pass), .bch_corr_bits(bch_corr_bits),
         .kcv_fail(kcv_fail),
@@ -47,6 +56,20 @@ module tb_edge_kcv_substitution;
         .secret_valid(), .shared_secret()
     );
 
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) enroll_seen <= 1'b0;
+        else if (anchor_provision) enroll_seen <= 1'b0;
+        else if (start && enroll) enroll_seen <= 1'b1;
+    end
+
+    edge_kcv_anchor #(.DIAGNOSTIC(1'b1)) u_anchor (
+        .clk(clk), .rst_n(rst_n), .zeroize(zeroize),
+        .provision(anchor_provision), .provision_ref(fe_kcv),
+        .provision_valid(|fe_kcv),
+        .trusted_kcv_ref(anchor_ref), .trusted_kcv_valid(anchor_valid_real),
+        .anchor_locked(), .anchor_diagnostic()
+    );
     always @(posedge clk) begin
         if (rst_n && dut.edge_start)
             edge_start_count = edge_start_count + 1;
@@ -109,9 +132,9 @@ module tb_edge_kcv_substitution;
         helper_in = helper0; kcv_ref = kcv1;
         run_core(response, helper_in, kcv_ref, fsuccess);
         if (!fsuccess) $fatal(1, "case B: FE did not report success");
-        if (kcv_pass !== 1'b1 || edge_start_count != 1)
-            $fatal(1, "case B: substitution unexpectedly blocked");
-        $display("KCV_ACTIVE_SUBSTITUTION_CONFIRMED helper+kcv both replaced");
+        if (kcv_pass === 1'b1 || edge_start_count != 0)
+            $fatal(1, "case B: substitution accepted; anchor is not trusted");
+        $display("KCV_ACTIVE_SUBSTITUTION_REJECTED helper+kcv both replaced");
 
         // Case C: correct root with the wrong reference must still fail.
         helper_in = helper0; kcv_ref = kcv1;

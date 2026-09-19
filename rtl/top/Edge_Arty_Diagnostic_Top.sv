@@ -42,11 +42,15 @@ module Edge_Arty_Diagnostic_Top #(
     wire secret_valid;
     wire [255:0] shared_secret;
     wire tx_active;
-    wire [223:0] core_kcv_ref;
+    wire [223:0] helper_kcv_ref;
+    wire         helper_kcv_valid;
     wire [55:0]  core_kcv_ctx;
     wire [55:0]  core_enroll_ctx;
-    wire         core_kcv_enable;
     wire [223:0] core_fe_kcv;
+    wire [223:0] trusted_kcv_ref;
+    wire         trusted_kcv_valid;
+    reg          enroll_seen = 1'b0;
+    wire         anchor_provision = enroll_seen && done && (|core_fe_kcv);
     wire zeroize = core_zeroize || SW[0];
 
     edge_puf_mlkem_core u_core (
@@ -54,7 +58,11 @@ module Edge_Arty_Diagnostic_Top #(
         .start(core_start), .enroll(core_enroll), .puf_seed(8'h42),
         .helper_in(helper_in), .helper_out(helper_out),
         .fe_success(fe_success),
-        .kcv_enable(core_kcv_enable), .kcv_ref(core_kcv_ref),
+        .enroll_allowed(1'b1),
+        .trusted_kcv_valid(trusted_kcv_valid),
+        .trusted_kcv_ref(trusted_kcv_ref),
+        .helper_kcv_ref(helper_kcv_ref),
+        .helper_kcv_valid(helper_kcv_valid),
         .kcv_ctx(core_kcv_ctx), .enroll_ctx(core_enroll_ctx),
         .kcv_pass(), .fe_kcv(core_fe_kcv),
         .stream_in_valid(stream_in_valid),
@@ -76,8 +84,10 @@ module Edge_Arty_Diagnostic_Top #(
         .uart_tx_o(UART_TXD), .tx_active(tx_active), .core_start(core_start),
         .core_zeroize(core_zeroize), .core_enroll(core_enroll),
         .helper_in(helper_in), .helper_out(helper_out),
-        .core_fe_kcv(core_fe_kcv), .core_kcv_enable(core_kcv_enable),
-        .core_kcv_ref(core_kcv_ref), .core_kcv_ctx(core_kcv_ctx), .core_enroll_ctx(core_enroll_ctx),
+        .core_fe_kcv(core_fe_kcv),
+        .core_helper_kcv_valid(helper_kcv_valid),
+        .core_helper_kcv(helper_kcv_ref),
+        .core_kcv_ctx(core_kcv_ctx), .core_enroll_ctx(core_enroll_ctx),
         .fe_success(fe_success), .core_done(done), .core_busy(busy),
         .ready_pk(ready_pk), .req_c(req_c),
         .stream_out_valid(stream_out_valid),
@@ -92,6 +102,25 @@ module Edge_Arty_Diagnostic_Top #(
     assign LED[2] = ready_pk || req_c;
     assign LED[3] = scrub_done;
     wire unused_sw = SW[1] ^ protocol_start;
+
+    // Diagnostic KCV anchor: one-shot provisioning from a completed
+    // enrollment, locked afterwards.  A release build must use the ROM anchor
+    // (DIAGNOSTIC=0) and never ship this image operationally.
+    always @(posedge CLK100MHZ or negedge por_done) begin
+        if (!por_done) enroll_seen <= 1'b0;
+        else if (anchor_provision) enroll_seen <= 1'b0;
+        else if (core_start && core_enroll) enroll_seen <= 1'b1;
+    end
+
+    edge_kcv_anchor #(.DIAGNOSTIC(1'b1)) u_kcv_anchor (
+        .clk(CLK100MHZ), .rst_n(por_done), .zeroize(zeroize),
+        .provision(anchor_provision),
+        .provision_ref(core_fe_kcv),
+        .provision_valid(|core_fe_kcv),
+        .trusted_kcv_ref(trusted_kcv_ref),
+        .trusted_kcv_valid(trusted_kcv_valid),
+        .anchor_locked(), .anchor_diagnostic()
+    );
 endmodule
 
 `default_nettype wire

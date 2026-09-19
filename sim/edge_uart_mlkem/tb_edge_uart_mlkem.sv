@@ -70,7 +70,7 @@ module tb_edge_uart_mlkem;
         .uart_tx_o(uart_tx), .tx_active(), .core_start(core_start),
         .core_zeroize(core_zeroize), .core_enroll(core_enroll),
         .helper_in(helper_in), .helper_out(264'd0), .core_fe_kcv(224'd0),
-        .core_kcv_enable(), .core_kcv_ref(), .core_kcv_ctx(),
+        .core_helper_kcv_valid(), .core_helper_kcv(), .core_kcv_ctx(),
         .fe_success(1'b1),
         .core_done(edge_done), .core_busy(edge_busy),
         .ready_pk(ready_pk), .req_c(req_c),

@@ -1,5 +1,10 @@
 module soc_peripherals #(
-    parameter CLKS_PER_BIT = 868
+    parameter CLKS_PER_BIT = 868,
+    // Diagnostic provisioning: allows the CPU to write the KCV reference
+    // register and read the computed digest for the enrollment flow.  An
+    // operational build must set this to 0 so there is no CPU write path to
+    // the trusted reference and no digest oracle (T4).
+    parameter bit DIAGNOSTIC_PROVISION = 1'b0
 )(
     input clk,
     input rstn,
@@ -38,11 +43,15 @@ module soc_peripherals #(
     // top level and taps the FE key directly (never exposed to the CPU); these
     // ports only carry the public reference/context and the result.
     output reg        kcv_start,
-    output reg [223:0] kcv_ref,
+    output wire [223:0] kcv_ref,
     output reg [55:0]  kcv_ctx,
     input             kcv_done,
     input             kcv_pass,
-    input  [223:0]    kcv_out
+    input  [223:0]    kcv_out,
+    // Trusted anchor (ROM/provisioned).  The engine always compares against
+    // this reference, never against a CPU-written register.
+    input             trusted_kcv_valid_i,
+    input  [223:0]    trusted_kcv_ref_i
 );
 
     // Memory-mapped address decoder. Declare these before all logic that
@@ -140,7 +149,9 @@ module soc_peripherals #(
     assign helper_in_words[7] = helper_in_data[255:224];
     assign helper_in_words[8] = {24'd0, helper_in_data[263:256]};
 
-    // KCV public reference (word 0 at [31:0]) and 56-bit context.
+    // Helper KCV shadow (word 0 at [31:0]) and 56-bit context.  The shadow is
+    // CPU-writable but is comparison-only: it can never become the trusted
+    // reference, only cause a mismatch failure.
     reg [31:0] kcv_ref_reg [0:6];
     reg [55:0] kcv_ctx_reg;
     assign kcv_ref = {kcv_ref_reg[6], kcv_ref_reg[5], kcv_ref_reg[4],
@@ -259,10 +270,14 @@ module soc_peripherals #(
                     end else if (sel_helper) begin
                         mem_rdata <= helper_in_words[helper_idx];
                     end else if (sel_kcv_ref) begin
-                        // Enroll path reads the public KCV digest back here.
-                        mem_rdata <= kcv_out[kcv_ref_idx*32 +: 32];
+                        // Enrollment may read the public digest back here.
+                        // Operational builds return no oracle.
+                        mem_rdata <= DIAGNOSTIC_PROVISION
+                                     ? kcv_out[kcv_ref_idx*32 +: 32]
+                                     : 32'd0;
                     end else if (sel_kcv_ctrl) begin
-                        mem_rdata <= {30'd0, kcv_pass_sticky, kcv_done_sticky};
+                        mem_rdata <= {29'd0, trusted_kcv_valid_i,
+                                      kcv_pass_sticky, kcv_done_sticky};
                     end else if (sel_kdf) begin
                         case(kdf_idx)
                             4'd0: mem_rdata <= kdf_seed[31:0];

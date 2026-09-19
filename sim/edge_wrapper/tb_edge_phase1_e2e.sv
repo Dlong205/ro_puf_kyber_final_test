@@ -17,7 +17,17 @@ module tb_edge_phase1_e2e;
     reg start = 1'b0;
     reg enroll = 1'b0;
     reg [263:0] helper_in = 264'd0;
-    reg [223:0] kcv_ref = 224'd0;
+    reg [223:0] kcv_ref = 224'd0;      // helper-provided KCV (consistency only)
+    reg         anchor_override = 1'b0;
+    reg [223:0] anchor_override_ref = 224'd0;
+    reg         anchor_valid_gate = 1'b1;
+    wire [223:0] anchor_ref;
+    wire         anchor_valid_real;
+    wire [223:0] trusted_kcv_ref = anchor_override ? anchor_override_ref
+                                                   : anchor_ref;
+    wire         trusted_kcv_valid = anchor_valid_gate && anchor_valid_real;
+    reg          enroll_seen = 1'b0;
+    wire         anchor_provision = enroll_seen && done && (|fe_kcv);
     wire done, kcv_pass, kcv_fail;
     wire [7:0] bch_corr_bits;
     wire [263:0] helper_out;
@@ -33,7 +43,10 @@ module tb_edge_phase1_e2e;
         .clk(clk), .rst_n(rst_n), .zeroize(zeroize), .start(start),
         .enroll(enroll), .puf_seed(8'h5a), .helper_in(helper_in),
         .helper_out(helper_out), .fe_success(),
-        .kcv_enable(1'b1), .kcv_ref(kcv_ref), .kcv_ctx(CTX),
+        .enroll_allowed(1'b1),
+        .trusted_kcv_valid(trusted_kcv_valid), .trusted_kcv_ref(trusted_kcv_ref),
+        .helper_kcv_ref(kcv_ref), .helper_kcv_valid(1'b1),
+        .kcv_ctx(CTX),
         .enroll_ctx(CTX), .fe_kcv(fe_kcv),
         .kcv_pass(kcv_pass), .bch_corr_bits(bch_corr_bits),
         .kcv_fail(kcv_fail),
@@ -44,6 +57,20 @@ module tb_edge_phase1_e2e;
         .secret_valid(), .shared_secret()
     );
 
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) enroll_seen <= 1'b0;
+        else if (anchor_provision) enroll_seen <= 1'b0;
+        else if (start && enroll) enroll_seen <= 1'b1;
+    end
+
+    edge_kcv_anchor #(.DIAGNOSTIC(1'b1)) u_anchor (
+        .clk(clk), .rst_n(rst_n), .zeroize(zeroize),
+        .provision(anchor_provision), .provision_ref(fe_kcv),
+        .provision_valid(|fe_kcv),
+        .trusted_kcv_ref(anchor_ref), .trusted_kcv_valid(anchor_valid_real),
+        .anchor_locked(), .anchor_diagnostic()
+    );
     always @(posedge clk) begin
         if (rst_n && dut.edge_start)
             edge_start_count = edge_start_count + 1;
@@ -146,6 +173,32 @@ module tb_edge_phase1_e2e;
         if (kcv_fail !== 1'b1)
             $fatal(1, "codeword-delta: kcv_fail telemetry not asserted");
         $display("E2E_CODEWORD_DELTA_REJECTED_OK");
+
+        // 4. Missing/invalid trusted anchor: fail closed, no KEM start.
+        anchor_valid_gate = 1'b0;
+        helper_in = helper0; kcv_ref = kcv0;
+        run_core(1'b0, R0, helper_in, kcv_ref, fsuccess);
+        if (edge_start_count != 0)
+            $fatal(1, "invalid anchor: KEM started");
+        anchor_valid_gate = 1'b1;
+        $display("E2E_ANCHOR_INVALID_REJECTED");
+
+        // 5. Wrong trusted anchor: fail closed.
+        anchor_override = 1'b1; anchor_override_ref = kcv1;
+        helper_in = helper0; kcv_ref = kcv1;
+        run_core(1'b0, R0, helper_in, kcv_ref, fsuccess);
+        if (edge_start_count != 0)
+            $fatal(1, "wrong anchor: KEM started");
+        anchor_override = 1'b0;
+        $display("E2E_WRONG_ANCHOR_REJECTED");
+
+        // 6. Helper KCV inconsistent with the anchor: fail closed even though
+        //    the computed digest matches the anchor.
+        helper_in = helper0; kcv_ref = kcv1;
+        run_core(1'b0, R0, helper_in, kcv_ref, fsuccess);
+        if (edge_start_count != 0)
+            $fatal(1, "helper KCV mismatch: KEM started");
+        $display("E2E_HELPER_KCV_MISMATCH_REJECTED");
 
         $display("EDGE_PHASE1_E2E_PASS");
         $finish;

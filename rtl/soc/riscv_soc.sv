@@ -1,4 +1,5 @@
 module riscv_soc #(
+    parameter bit DIAGNOSTIC_PROVISION = 1'b0,
     parameter CLKS_PER_BIT = 868,
     parameter integer EXPOSE_KYBER_SECRETS = 0,
     parameter integer SECURE_KYBER_SCRUB = 1
@@ -34,6 +35,8 @@ module riscv_soc #(
     // reference/context and the result.
     output        kcv_start,
     output [223:0] kcv_ref,
+    input          trusted_kcv_valid_i,
+    input  [223:0] trusted_kcv_ref_i,
     output [55:0]  kcv_ctx,
     input         kcv_done,
     input         kcv_pass,
@@ -117,7 +120,8 @@ module riscv_soc #(
         .mem_rdata   (bram_rdata)
     );
 
-    soc_peripherals #(.CLKS_PER_BIT(CLKS_PER_BIT)) u_peripherals (
+    soc_peripherals #(
+        .DIAGNOSTIC_PROVISION(DIAGNOSTIC_PROVISION),.CLKS_PER_BIT(CLKS_PER_BIT)) u_peripherals (
         .clk         (clk),
         .rstn        (rstn),
         .mem_valid   (mem_valid && sel_periph_native),
@@ -147,7 +151,9 @@ module riscv_soc #(
         .kcv_ctx     (kcv_ctx),
         .kcv_done    (kcv_done),
         .kcv_pass    (kcv_pass),
-        .kcv_out     (kcv_out)
+        .kcv_out     (kcv_out),
+        .trusted_kcv_valid_i(trusted_kcv_valid_i),
+        .trusted_kcv_ref_i  (trusted_kcv_ref_i)
     );
 
     // ==========================================

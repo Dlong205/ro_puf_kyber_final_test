@@ -28,8 +28,14 @@ module Edge_Puf_Mlkem_Asic_Top (
     input  wire [263:0] helper_in_i,
     output wire [263:0] helper_out_o,
 
-    input  wire         kcv_enable_i,
-    input  wire [223:0] kcv_ref_i,
+    // Trusted KCV anchor supplied by the platform (ROM/OTP/integrity-protected
+    // macro).  The helper KCV is only a consistency input.  With
+    // trusted_kcv_valid_i=0 the core fails closed before KDF/ML-KEM.
+    input  wire         trusted_kcv_valid_i,
+    input  wire [223:0] trusted_kcv_ref_i,
+    input  wire [223:0] helper_kcv_ref_i,
+    input  wire         helper_kcv_valid_i,
+    input  wire         enroll_allowed_i,
     input  wire [55:0]  kcv_ctx_i,
     input  wire [55:0]  enroll_ctx_i,
     output wire         kcv_pass_o,
@@ -88,8 +94,11 @@ module Edge_Puf_Mlkem_Asic_Top (
         .helper_in(helper_in_i),
         .helper_out(helper_out),
         .fe_success(fe_success),
-        .kcv_enable(kcv_enable_i),
-        .kcv_ref(kcv_ref_i),
+        .enroll_allowed(enroll_allowed_i),
+        .trusted_kcv_valid(trusted_kcv_valid_i),
+        .trusted_kcv_ref(trusted_kcv_ref_i),
+        .helper_kcv_ref(helper_kcv_ref_i),
+        .helper_kcv_valid(helper_kcv_valid_i),
         .kcv_ctx(kcv_ctx_i),
         .enroll_ctx(enroll_ctx_i),
         .kcv_pass(kcv_pass),

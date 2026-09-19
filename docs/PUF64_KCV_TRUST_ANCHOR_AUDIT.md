@@ -1,7 +1,7 @@
 # PUF64 KCV trust-anchor audit (Phase I2.5)
 
-Status: `ACTIVE_SUBSTITUTION_BLOCKER`.  No RTL datapath change was made in this
-phase.  Evidence: `sim/edge_wrapper/tb_edge_kcv_substitution.sv`
+Status: `ACTIVE_SUBSTITUTION_BLOCKER` (audit, Phase I2.5).  Resolved by the
+T0-T8 trust-anchor fix; see "Resolution" below.  Evidence: `sim/edge_wrapper/tb_edge_kcv_substitution.sv`
 (`make -C sim/edge_wrapper substitution`).
 
 ## 1. `kcv_ref` provenance per path
@@ -123,3 +123,46 @@ The KCV is a public verifier, not a MAC; it only proves same-root relative to a
 reference that must itself be integrity-protected.  A 16-bit mapping tag is a
 configuration identifier only.  This audit does not change the mapping,
 reference, thresholds or any PUF datapath.
+## 8. Resolution (T0-T8 trust-anchor fix)
+
+Trust model (T0): helper/UART/host input is untrusted; an attacker may rewrite
+the whole helper record and recompute its CRC; the FPGA operational bitstream
+and JTAG/programming flow are trusted in this prototype; the KCV is a public
+verifier, not a secret, so "no secret key in NVM" still holds when only the
+public anchor is stored; bitstream authenticity in a product is a separate
+secure-boot requirement and is not claimed here.
+
+Implemented:
+- `rtl/top/edge_kcv_anchor.sv` + `rtl/top/edge_kcv_anchor_rom.vh` template
+  (default fail-closed): ROM anchor for operational mode, one-shot diagnostic
+  provisioning latch otherwise; reset/zeroize never clears a ROM anchor and
+  no runtime bypass exists.
+- `edge_puf_mlkem_core`: split `trusted_kcv_ref/valid` from `helper_kcv_ref/
+  valid`; the comparator only uses the anchor, the helper KCV is a
+  comparison-only consistency input; `enroll_allowed` gates provisioning;
+  missing anchor fails closed before KDF/ML-KEM.
+- `edge_uart_transport`: exposes `core_helper_kcv[_valid]` and never drives
+  the trusted reference; `ALLOW_ENROLL` default is now 0.
+- SoC: `Kyber_System_Top` instantiates the anchor (diagnostic auto-provision
+  for the research image; ROM for operational), `soc_peripherals` keeps the
+  shadow comparison-only, gates the computed-digest read behind
+  `DIAGNOSTIC_PROVISION`, and exposes anchor-valid in `KCV_CTRL`; firmware
+  reconstruct never writes the trusted reference and refuses when the anchor
+  is unprovisioned.
+- ASIC: `Edge_Puf_Mlkem_Asic_Top` takes `trusted_kcv_valid_i/ref_i` (+ helper
+  consistency inputs); `Kyber_System_Asic_Top` is explicitly frontend-only
+  with no engine and `kcv_pass=0`.
+
+| Top | Trust source |
+|---|---|
+| Edge_Arty_Diagnostic_Top / Edge_Zynq_Diagnostic_100MHz_Top | diagnostic anchor, one-shot from first enrollment |
+| Kyber_System_Top (DIAGNOSTIC_ANCHOR=1, research image) | diagnostic anchor + comparison shadow |
+| Kyber_System_Top (DIAGNOSTIC_ANCHOR=0) | ROM anchor; elaboration fails if ROM_VALID=0 |
+| Edge_Puf_Mlkem_Asic_Top | platform `trusted_kcv_valid_i/ref_i` (ROM/OTP) |
+| Kyber_System_Asic_Top | none (frontend-only, kcv_pass tied 0) |
+
+Evidence: `tb_edge_phase1_e2e` (anchor invalid/wrong/helper-mismatch reject),
+`tb_edge_kcv_substitution` (`KCV_ACTIVE_SUBSTITUTION_REJECTED`),
+`tb_soc_kcv_operational` (no CPU write path to the anchor, no digest oracle in
+operational mode), `sim/system` wrong-root KCV rejection, firmware `-Werror`,
+ASIC frontend elaboration.

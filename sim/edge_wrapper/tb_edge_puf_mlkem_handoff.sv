@@ -92,11 +92,12 @@ module tb_edge_puf_mlkem_handoff;
     always #5 clk = ~clk;
 
     // KAT reference for TEST_KEY above with kcv_ctx all bytes 0x01
-    // (host-computed SHAKE256).  The gate is disabled in this tb; the vector
-    // is kept consistent with tb_edge_kcv_gate.
+    // (host-computed SHAKE256).  There is no gate-disable path anymore: the
+    // trusted anchor must be present and match, so this tb exercises the
+    // normal gate-pass path.
     localparam [223:0] TEST_KCV = 224'hadaf31dbbf9f894024a99ee438675ce991f4c98f2a2c523b15335b7c;
 
-    reg kcv_enable = 1'b0;
+    reg kcv_enable = 1'b1;
     reg [223:0] kcv_ref = TEST_KCV;
     wire kcv_pass;
     integer edge_start_seen;
@@ -105,7 +106,9 @@ module tb_edge_puf_mlkem_handoff;
         .clk(clk), .rst_n(rst_n), .zeroize(zeroize), .start(start),
         .enroll(1'b0), .puf_seed(8'h5a), .helper_in(264'h1),
         .helper_out(), .fe_success(),
-        .kcv_enable(kcv_enable), .kcv_ref(kcv_ref), .kcv_ctx(56'h01010101_010101),
+        .enroll_allowed(1'b1), .trusted_kcv_valid(kcv_enable),
+        .trusted_kcv_ref(kcv_ref), .helper_kcv_ref(kcv_ref),
+        .helper_kcv_valid(kcv_enable), .kcv_ctx(56'h01010101_010101),
         .enroll_ctx(56'h01010101_010101), .fe_kcv(),
         .kcv_pass(),
         .stream_in_valid(1'b0),
@@ -139,7 +142,7 @@ module tb_edge_puf_mlkem_handoff;
         @(posedge clk); start <= 1'b1;
         @(posedge clk); start <= 1'b0;
         cycles = 0;
-        while (!done && cycles < 40) begin
+        while (!done && cycles < 200) begin
             @(posedge clk);
             cycles = cycles + 1;
         end

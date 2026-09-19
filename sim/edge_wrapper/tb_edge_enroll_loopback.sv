@@ -23,8 +23,8 @@ module tb_edge_enroll_loopback;
     wire core_start, core_zeroize, core_enroll;
     wire [263:0] helper_in, helper_out;
     wire [223:0] core_fe_kcv;
-    wire core_kcv_enable;
-    wire [223:0] core_kcv_ref;
+    wire core_helper_kcv_valid;
+    wire [223:0] core_helper_kcv;
     wire [55:0]  core_kcv_ctx;
     wire [55:0]  core_enroll_ctx;
     wire fe_success;
@@ -36,6 +36,10 @@ module tb_edge_enroll_loopback;
     wire secret_valid;
     wire [255:0] shared_secret;
     wire kcv_pass, kcv_fail;
+    wire [223:0] trusted_kcv_ref;
+    wire         trusted_kcv_valid;
+    reg          enroll_seen = 1'b0;
+    wire         anchor_provision = enroll_seen && core_done && (|core_fe_kcv);
     wire [7:0] bch_corr_bits;
     wire scrub_done, protocol_start;
 
@@ -56,7 +60,7 @@ module tb_edge_enroll_loopback;
         .core_start(core_start), .core_zeroize(core_zeroize),
         .core_enroll(core_enroll), .helper_in(helper_in),
         .helper_out(helper_out), .core_fe_kcv(core_fe_kcv),
-        .core_kcv_enable(core_kcv_enable), .core_kcv_ref(core_kcv_ref),
+        .core_helper_kcv_valid(core_helper_kcv_valid), .core_helper_kcv(core_helper_kcv),
         .core_kcv_ctx(core_kcv_ctx), .core_enroll_ctx(core_enroll_ctx),
         .record_status(), .record_fail(), .zeroize_done(),
         .fe_success(fe_success), .core_done(core_done),
@@ -73,7 +77,11 @@ module tb_edge_enroll_loopback;
         .start(core_start), .enroll(core_enroll), .puf_seed(8'h5a),
         .helper_in(helper_in), .helper_out(helper_out),
         .fe_success(fe_success),
-        .kcv_enable(core_kcv_enable), .kcv_ref(core_kcv_ref),
+        .enroll_allowed(1'b1),
+        .trusted_kcv_valid(trusted_kcv_valid),
+        .trusted_kcv_ref(trusted_kcv_ref),
+        .helper_kcv_ref(core_helper_kcv),
+        .helper_kcv_valid(core_helper_kcv_valid),
         .kcv_ctx(core_kcv_ctx), .enroll_ctx(core_enroll_ctx),
         .fe_kcv(core_fe_kcv), .kcv_pass(kcv_pass), .kcv_fail(kcv_fail),
         .bch_corr_bits(bch_corr_bits),
@@ -86,6 +94,20 @@ module tb_edge_enroll_loopback;
         .shared_secret(shared_secret)
     );
 
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) enroll_seen <= 1'b0;
+        else if (anchor_provision) enroll_seen <= 1'b0;
+        else if (core_start && core_enroll) enroll_seen <= 1'b1;
+    end
+
+    edge_kcv_anchor #(.DIAGNOSTIC(1'b1)) u_kcv_anchor (
+        .clk(clk), .rst_n(rst_n), .zeroize(core_zeroize),
+        .provision(anchor_provision), .provision_ref(core_fe_kcv),
+        .provision_valid(|core_fe_kcv),
+        .trusted_kcv_ref(trusted_kcv_ref), .trusted_kcv_valid(trusted_kcv_valid),
+        .anchor_locked(), .anchor_diagnostic()
+    );
     always @(posedge clk) begin
         if (rst_n && u_core.edge_start)
             edge_start_count = edge_start_count + 1;

@@ -10,7 +10,13 @@
 //   0x02 = RECONSTRUCT: Receive Helper Data → Recover Key → Run Kyber
 //-----------------------------------------------------------------------------
 
-module Kyber_System_Top(
+module Kyber_System_Top #(
+    // Diagnostic research image: anchor provisions once from the first
+    // enrollment and locks.  An operational build must set this to 0 and
+    // provision the ROM anchor (rtl/top/edge_kcv_anchor_rom.vh); with
+    // ROM_VALID=0 the elaboration guard below fails.
+    parameter bit DIAGNOSTIC_ANCHOR = 1'b1
+)(
     input  wire CLK100MHZ,
     
     // Use Switch 0 for active-low reset
@@ -76,6 +82,12 @@ module Kyber_System_Top(
     wire        kcv_done;
     wire        kcv_pass;
     wire [223:0] kcv_out;
+    wire [223:0] trusted_kcv_ref;
+    wire         trusted_kcv_valid;
+    wire         anchor_provision = kcv_done && !fe_mode_r && (|kcv_out);
+    // Helper KCV shadow from the SoC record registers: comparison-only.  A
+    // mismatch fails the gate; it can never replace the trusted anchor.
+    wire         helper_kcv_mismatch = (kcv_ref != trusted_kcv_ref);
     
     // The accepted FPGA research image keeps internal key observability for
     // legacy diagnostics. UART release firmware still withholds the secret.
@@ -83,7 +95,8 @@ module Kyber_System_Top(
     riscv_soc #(
         .CLKS_PER_BIT(434),
         .EXPOSE_KYBER_SECRETS(1),
-        .SECURE_KYBER_SCRUB(1)
+        .SECURE_KYBER_SCRUB(1),
+        .DIAGNOSTIC_PROVISION(DIAGNOSTIC_ANCHOR)
     ) u_soc (
         .clk(clk),
         .rstn(rst_n),
@@ -108,8 +121,10 @@ module Kyber_System_Top(
         .kcv_ref(kcv_ref),
         .kcv_ctx(kcv_ctx),
         .kcv_done(kcv_done),
-        .kcv_pass(kcv_pass),
-        .kcv_out(kcv_out)
+        .kcv_pass(kcv_pass && !helper_kcv_mismatch),
+        .kcv_out(kcv_out),
+        .trusted_kcv_valid_i(trusted_kcv_valid),
+        .trusted_kcv_ref_i(trusted_kcv_ref)
     );
 
     // ==========================================
@@ -169,7 +184,7 @@ module Kyber_System_Top(
         .start(kcv_start),
         .root_key(fe_key),
         .kcv_ctx(kcv_ctx),
-        .kcv_ref(kcv_ref),
+        .kcv_ref(trusted_kcv_ref),
         .busy(),
         .done(kcv_done),
         .kcv_pass(kcv_pass),
@@ -179,4 +194,31 @@ module Kyber_System_Top(
     // The full Kyber-512 Server/Client loopback is instantiated inside
     // riscv_soc and controlled by firmware through its AXI-Lite registers.
 
+
+    // Trusted KCV anchor.  Diagnostic images provision once from the first
+    // enrollment digest and lock; operational images must use the ROM anchor.
+    `include "edge_kcv_anchor_rom.vh"
+    edge_kcv_anchor #(
+        .DIAGNOSTIC(DIAGNOSTIC_ANCHOR),
+        .ROM_REF(EDGE_KCV_ROM_REF),
+        .ROM_VALID(EDGE_KCV_ROM_VALID)
+    ) u_kcv_anchor (
+        .clk(clk),
+        .rst_n(rst_n),
+        .zeroize(secure_zeroize),
+        .provision(DIAGNOSTIC_ANCHOR && anchor_provision),
+        .provision_ref(kcv_out),
+        .provision_valid(|kcv_out),
+        .trusted_kcv_ref(trusted_kcv_ref),
+        .trusted_kcv_valid(trusted_kcv_valid),
+        .anchor_locked(),
+        .anchor_diagnostic()
+    );
+
+`ifndef SYNTHESIS
+    initial begin
+        if (!DIAGNOSTIC_ANCHOR && !EDGE_KCV_ROM_VALID)
+            $fatal(1, "operational KCV anchor has no provisioned ROM reference");
+    end
+`endif
 endmodule

@@ -20,8 +20,8 @@ module tb_edge_uart_transport;
     wire [263:0] helper_in;
     reg  [263:0] helper_out = HREC_KAT_HELPER;
     reg  [223:0] core_fe_kcv = HREC_KAT_KCV;
-    wire core_kcv_enable;
-    wire [223:0] core_kcv_ref;
+    wire core_helper_kcv_valid;
+    wire [223:0] core_helper_kcv;
     wire [55:0]  core_kcv_ctx;
     reg fe_success = 1'b0;
     reg core_done = 1'b0;
@@ -43,14 +43,16 @@ module tb_edge_uart_transport;
     integer start_count = 0;
 
     edge_uart_transport #(
-        .CLKS_PER_BIT(CLKS), .PK_WORDS(2), .CT_WORDS(2)
+        .CLKS_PER_BIT(CLKS), .PK_WORDS(2), .CT_WORDS(2),
+        // This tb covers both enrollment and reconstruction.
+        .ALLOW_ENROLL(1'b1)
     ) dut (
         .clk(clk), .rst_n(rst_n), .uart_rx_i(uart_rx),
         .uart_tx_o(uart_tx), .tx_active(), .core_start(core_start),
         .core_zeroize(core_zeroize), .core_enroll(core_enroll),
         .helper_in(helper_in), .helper_out(helper_out),
-        .core_fe_kcv(core_fe_kcv), .core_kcv_enable(core_kcv_enable),
-        .core_kcv_ref(core_kcv_ref), .core_kcv_ctx(core_kcv_ctx),
+        .core_fe_kcv(core_fe_kcv), .core_helper_kcv_valid(core_helper_kcv_valid),
+        .core_helper_kcv(core_helper_kcv), .core_kcv_ctx(core_kcv_ctx),
         .fe_success(fe_success), .core_done(core_done),
         .core_busy(core_busy), .ready_pk(ready_pk), .req_c(req_c),
         .stream_out_valid(stream_out_valid),
@@ -83,11 +85,11 @@ module tb_edge_uart_transport;
             end else begin
                 if (helper_in != HREC_KAT_HELPER)
                     $fatal(1, "parsed helper differs from record");
-                if (core_kcv_ref != HREC_KAT_KCV)
+                if (core_helper_kcv != HREC_KAT_KCV)
                     $fatal(1, "parsed kcv differs from record");
                 if (core_kcv_ctx != HREC_KAT_CTX)
                     $fatal(1, "parsed ctx differs from record");
-                if (!core_kcv_enable)
+                if (!core_helper_kcv_valid)
                     $fatal(1, "record path did not enable the KCV gate");
                 ready_pk <= 1'b0;
                 pk_index <= 0;

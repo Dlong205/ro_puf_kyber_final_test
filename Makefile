@@ -291,7 +291,8 @@ edge-root-binding:
 	python3 scripts/helper_record_spec.py --check
 	python3 scripts/helper_record_spec.py --selftest
 	python3 host/puf64_generate_mapping.py --check
-	$(MAKE) -j1 -C sim/edge_wrapper clean record kcv gate phase1 loopback e2e
+	python3 host/puf64_provision_kcv_anchor.py --check
+	$(MAKE) -j1 -C sim/edge_wrapper clean record kcv gate phase1 loopback e2e substitution soc-kcv all asic-top
 	$(MAKE) -j1 -C sim/edge_uart check negative
 
 # Frozen mapping artifacts: single-source generator + drift gate.

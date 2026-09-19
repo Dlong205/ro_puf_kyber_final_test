@@ -4,7 +4,7 @@ SIM_EXE = V$(TOP)
 
 FLAGS = --cc --exe --timing --top-module $(TOP) --Mdir obj_dir \
         -CFLAGS "-std=c++17 -O2" -LDFLAGS "-lstdc++" \
-        -I../../rtl/kyber/ref -I../../rtl/common -I../../rtl/hash_core \
+        -I../../rtl/top -I../../rtl/kyber/ref -I../../rtl/common -I../../rtl/hash_core \
         -I../fuzzy_extractor/rtl_tcq0 \
         -I../../rtl/puf \
         -Wno-WIDTH -Wno-UNUSEDPARAM -Wno-UNUSEDSIGNAL \
@@ -91,6 +91,7 @@ SOC_SRCS = ../../rtl/soc/picorv32.v \
            ../../rtl/soc/riscv_soc.sv \
            ../../rtl/top/kdf_keccak.sv \
            ../../rtl/top/edge_root_binding.sv \
+           ../../rtl/top/edge_kcv_anchor.sv \
            ../../rtl/top/Kyber_System_Top.sv
 
 ALL_SRCS = $(COMMON_SRCS) $(HASH_SRCS) $(KYBER_SRCS) $(FE_SRCS) $(PUF_SRCS) $(SOC_SRCS)

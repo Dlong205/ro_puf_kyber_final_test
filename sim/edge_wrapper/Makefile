@@ -1,4 +1,4 @@
-.PHONY: all kcv gate record phase1 loopback e2e substitution asic-top clean
+.PHONY: all kcv gate record phase1 loopback e2e substitution soc-kcv asic-top clean
 
 all:
 	verilator --binary --timing -j 1 --Mdir obj_dir \
@@ -88,6 +88,7 @@ loopback:
 		../../rtl/top/edge_root_binding.sv \
 		../../rtl/top/edge_puf_mlkem_core.sv \
 		../../rtl/top/edge_uart_transport.sv \
+		../../rtl/top/edge_kcv_anchor.sv \
 		tb_edge_enroll_loopback.sv
 	./obj_dir_loopback/Vtb_edge_enroll_loopback
 
@@ -131,6 +132,7 @@ e2e: ../fuzzy_extractor/rtl_tcq0/.stamp
 		../fuzzy_extractor/xilinx_carry4_stub.v \
 		../../rtl/top/edge_root_binding.sv \
 		../../rtl/top/edge_puf_mlkem_core.sv \
+		../../rtl/top/edge_kcv_anchor.sv \
 		tb_edge_phase1_e2e.sv
 	./obj_dir_e2e/Vtb_edge_phase1_e2e
 
@@ -174,8 +176,21 @@ substitution: ../fuzzy_extractor/rtl_tcq0/.stamp
 		../fuzzy_extractor/xilinx_carry4_stub.v \
 		../../rtl/top/edge_root_binding.sv \
 		../../rtl/top/edge_puf_mlkem_core.sv \
+		../../rtl/top/edge_kcv_anchor.sv \
 		tb_edge_kcv_substitution.sv
 	./obj_dir_kcvsub/Vtb_edge_kcv_substitution
+
+soc-kcv:
+	verilator --binary --timing -j 1 --Mdir obj_dir_soc_kcv \
+		--top-module tb_soc_kcv_operational -Wall -Wno-fatal \
+		-Wno-DECLFILENAME -Wno-TIMESCALEMOD -Wno-UNUSEDSIGNAL \
+		-Wno-PINCONNECTEMPTY -Wno-PROCASSINIT -Wno-SYNCASYNCNET \
+		-Wno-UNDRIVEN -Wno-UNUSEDPARAM \
+		-I../../rtl/soc -I../../rtl/puf -I../../rtl/top \
+		../../rtl/soc/soc_peripherals.sv ../../rtl/puf/uart_rx.v \
+		../../rtl/puf/uart_tx.v \
+		tb_soc_kcv_operational.sv
+	./obj_dir_soc_kcv/Vtb_soc_kcv_operational
 
 asic-top:
 	verilator --binary --timing -j 1 --Mdir obj_dir_asic_top \

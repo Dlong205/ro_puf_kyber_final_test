@@ -73,6 +73,7 @@ rtl/top/edge_seed_controller.sv
 rtl/top/edge_kem_scrub_controller.sv
 rtl/top/edge_control_plane.sv
 rtl/top/edge_mlkem_core.sv
+rtl/top/edge_kcv_anchor.sv
 rtl/top/edge_puf_mlkem_core.sv
 rtl/top/Edge_Puf_Mlkem_Asic_Top.sv
 rtl/top/Kyber_System_Asic_Top.sv

@@ -60,6 +60,7 @@
 #define ERR_ENROLL_FORBIDDEN 0x0B
 #define ERR_KCV_TIMEOUT  0x0C
 #define ERR_KCV_MISMATCH 0x0D
+#define ERR_KCV_UNPROVISIONED 0x0E
 
 // Provisioned immutable binding for this platform image.  Must match the
 // values the host serialized into the record and the Edge RTL parameters.
@@ -132,17 +133,19 @@ static int wait_sys_status(uint32_t mask) {
     return 0;
 }
 
-static void kcv_write_ctx(uint64_t ctx) {
-    KCV_CTX_LO = (uint32_t)(ctx & 0xFFFFFFFFu);
-    KCV_CTX_HI = (uint32_t)((ctx >> 32) & 0xFFFFFFu);
-}
-
 static void kcv_write_ref(const uint8_t *ref28) {
+    // Comparison-only helper KCV shadow; the trusted anchor lives in hardware
+    // and can never be overwritten by this write.
     for (int w = 0; w < 7; w++)
         KCV_REF(w) = (uint32_t)ref28[w * 4] |
                      ((uint32_t)ref28[w * 4 + 1] << 8) |
                      ((uint32_t)ref28[w * 4 + 2] << 16) |
                      ((uint32_t)ref28[w * 4 + 3] << 24);
+}
+
+static void kcv_write_ctx(uint64_t ctx) {
+    KCV_CTX_LO = (uint32_t)(ctx & 0xFFFFFFFFu);
+    KCV_CTX_HI = (uint32_t)((ctx >> 32) & 0xFFFFFFu);
 }
 
 #if EDGE_ALLOW_ENROLL
@@ -410,8 +413,14 @@ static void process_recon(void) {
     }
 
     // Same-root KCV verification: only a recovered root whose KCV matches the
-    // record's public reference may reach the KDF/ML-KEM.  Fail-closed: on a
-    // mismatch no KDF/Kyber start and the accelerators are zeroized.
+    // hardware trusted anchor may reach the KDF/ML-KEM.  The helper-provided
+    // KCV is not written anywhere; it is only a consistency input in the
+    // anchor comparison.  Fail-closed: if no anchor is provisioned (KCV_CTRL
+    // bit2 = 0) or the digest mismatches, no KDF/Kyber start.
+    if (!(KCV_CTRL & 0x04)) {
+        send_failure(ERR_KCV_UNPROVISIONED, 1);
+        return;
+    }
     kcv_write_ref(&record_buf[HREC_OFF_KCV]);
     kcv_write_ctx(kcv_ctx_from_record());
     KCV_CTRL = 0x01;

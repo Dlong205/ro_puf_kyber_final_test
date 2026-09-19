@@ -20,8 +20,18 @@ module edge_puf_mlkem_core (
     // Same-root binding (docs/PUF_ROOT_BINDING_DESIGN.md).  The reference is
     // a public KCV verifier provisioned with the enrollment; disabling the
     // gate is only allowed in diagnostic builds that never become artifacts.
-    input  wire         kcv_enable,
-    input  wire [223:0] kcv_ref,
+    // Trusted KCV anchor (docs/PUF64_KCV_TRUST_ANCHOR_AUDIT.md).  The
+    // comparator only ever uses the anchor reference; the helper KCV is a
+    // secondary consistency check, never the anchor.
+    input  wire         trusted_kcv_valid,
+    input  wire [223:0] trusted_kcv_ref,
+    input  wire [223:0] helper_kcv_ref,
+    input  wire         helper_kcv_valid,
+    // Enrollment (provisioning) is only permitted in diagnostic/manufacturing
+    // builds; operational builds tie this low so enroll transactions cannot
+    // start the core.
+    input  wire         enroll_allowed,
+    output wire         enroll_mode_o,
     input  wire [55:0]  kcv_ctx,
     input  wire [55:0]  enroll_ctx,
     output wire         kcv_pass,
@@ -94,6 +104,12 @@ module edge_puf_mlkem_core (
 
     assign busy = (state != ST_IDLE) && (state != ST_DONE);
     assign done = state == ST_DONE;
+    assign enroll_mode_o = mode_enroll;
+    // Helper KCV equality is a consistency check only.  The anchor is
+    // always the trusted reference; when no helper KCV is present
+    // (legacy diagnostic helper) only the anchor comparison applies.
+    wire helper_kcv_ok = !helper_kcv_valid ||
+                         (helper_kcv_ref == trusted_kcv_ref);
     assign fe_success = result_success;
     assign kcv_pass = kcv_match_reg;
 
@@ -102,7 +118,7 @@ module edge_puf_mlkem_core (
         .start((state == ST_KCV_CHECK || state == ST_KCV_GEN) && !kcv_done),
         .root_key(fe_key),
         .kcv_ctx(state == ST_KCV_GEN ? enroll_ctx : kcv_ctx),
-        .kcv_ref(kcv_ref),
+        .kcv_ref(trusted_kcv_ref),
         .busy(), .done(kcv_done), .kcv_pass(kcv_match),
         .kcv_out(kcv_digest)
     );
@@ -167,7 +183,7 @@ module edge_puf_mlkem_core (
             case (state)
                 ST_IDLE: begin
                     result_success <= 1'b0;
-                    if (start_accept) begin
+                    if (start_accept && (!enroll || enroll_allowed)) begin
                         kcv_match_reg <= 1'b0;
                         kcv_fail <= 1'b0;
                         mode_enroll <= enroll;
@@ -182,10 +198,8 @@ module edge_puf_mlkem_core (
                         result_success <= fe_result;
                         if (mode_enroll && fe_result)
                             state <= ST_KCV_GEN;
-                        else if (!mode_enroll && fe_result && kcv_enable)
+                        else if (!mode_enroll && fe_result && trusted_kcv_valid)
                             state <= ST_KCV_CHECK;
-                        else if (!mode_enroll && fe_result)
-                            state <= ST_EDGE_START;
                         else
                             state <= ST_FE_ERASE;
                     end
@@ -207,9 +221,10 @@ module edge_puf_mlkem_core (
                 // asserted.
                 ST_KCV_CHECK:
                     if (kcv_done) begin
-                        kcv_match_reg <= kcv_match;
-                        kcv_fail <= ~kcv_match;
-                        state <= kcv_match ? ST_EDGE_START : ST_FE_ERASE;
+                        kcv_match_reg <= kcv_match && helper_kcv_ok;
+                        kcv_fail <= ~(kcv_match && helper_kcv_ok);
+                        state <= (kcv_match && helper_kcv_ok) ? ST_EDGE_START
+                                                              : ST_FE_ERASE;
                     end
                 ST_EDGE_START: state <= ST_EDGE_WAIT;
                 ST_EDGE_WAIT: if (edge_done) state <= ST_DONE;
@@ -226,8 +241,14 @@ module edge_puf_mlkem_core (
             $error("Edge launched without successful reconstruction");
         if (!zeroize && state == ST_EDGE_WAIT && !fe_zeroize)
             $error("FE key was not erased after Edge handoff");
-        if (!zeroize && edge_start && kcv_enable && !kcv_match_reg)
+        if (!zeroize && edge_start && !trusted_kcv_valid)
+            $error("KCV gate bypassed: edge_start without a trusted anchor");
+        if (!zeroize && edge_start && !kcv_match_reg)
             $error("KCV gate bypassed: edge_start without kcv_match");
+        if (!zeroize && start_accept && enroll && !enroll_allowed)
+            $error("enrollment attempted in an operational core");
+        if (!zeroize && edge_start && !helper_kcv_ok)
+            $error("edge_start with a helper KCV inconsistent with the anchor");
     end
 `endif
 endmodule
