@@ -69,7 +69,7 @@ module edge_puf64_operational_uart #(
         .external_result_tag(result_tag)
     );
 
-    edge_puf64_operational_chain u_chain (
+    (* KEEP_HIERARCHY = "yes" *) edge_puf64_operational_chain u_chain (
         .clk(clk), .rst_n(rst_n), .zeroize(core_zeroize),
         .start(core_start), .command_ok(core_command_ok),
         .helper_in(helper_in), .mmcm_locked(mmcm_locked),

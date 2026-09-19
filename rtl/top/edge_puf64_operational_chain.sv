@@ -54,7 +54,7 @@ module edge_puf64_operational_chain #(
     wire         secret_valid_internal;
     wire [255:0] shared_secret_internal;
 
-    edge_puf64_operational_core #(
+    (* KEEP_HIERARCHY = "yes" *) edge_puf64_operational_core #(
         .NUM_RO(NUM_RO), .WIDTH(WIDTH), .REF_CYCLES(REF_CYCLES),
         .CLEAR_CYCLES(CLEAR_CYCLES), .SETTLE_CYCLES(SETTLE_CYCLES),
         .CAPTURE_TIMEOUT(CAPTURE_TIMEOUT), .ALLOW_ENROLL(1'b0)

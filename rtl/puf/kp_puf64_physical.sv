@@ -13,6 +13,7 @@
 //
 // The internal instance name `u_puf` is kept so the qualified physical cell
 // paths keep their shape for the I4 fingerprint flow.
+(* KEEP_HIERARCHY = "yes" *)
 module kp_puf64_physical #(
     parameter integer NUM_RO = 64,
     parameter integer WIDTH = 16,
@@ -46,7 +47,7 @@ module kp_puf64_physical #(
 
     // Physical implementation: the same bench used for build-2
     // characterization/train/holdout.  Do not modify its cells or FSM.
-    puf64_ro_bench #(
+    (* KEEP_HIERARCHY = "yes" *) puf64_ro_bench #(
         .NUM_RO(NUM_RO),
         .WIDTH(WIDTH),
         .REF_CYCLES(REF_CYCLES),

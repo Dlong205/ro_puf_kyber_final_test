@@ -97,7 +97,7 @@ module edge_puf64_operational_core #(
 
     wire puf_zeroize = zeroize || (state == S_ERASE) || (state == S_DONE);
 
-    kp_puf64_physical #(
+    (* KEEP_HIERARCHY = "yes" *) kp_puf64_physical #(
         .NUM_RO(NUM_RO), .WIDTH(WIDTH), .REF_CYCLES(REF_CYCLES),
         .CLEAR_CYCLES(CLEAR_CYCLES), .SETTLE_CYCLES(SETTLE_CYCLES),
         .CAPTURE_TIMEOUT(CAPTURE_TIMEOUT)
