@@ -149,7 +149,7 @@ module kp_puf64_mapping_scheduler #(
                     mapped_response <= response_r;
                     if (count == PUF64_MAP_PAIR_COUNT && !error_sticky) begin
                         mapped_response_valid <= 1'b1;
-                        if (mapped_response_ready) begin
+                        if (mapped_response_valid && mapped_response_ready) begin
                             mapped_response_valid <= 1'b0;
                             mapped_response       <= '0;
                             busy                  <= 1'b0;
