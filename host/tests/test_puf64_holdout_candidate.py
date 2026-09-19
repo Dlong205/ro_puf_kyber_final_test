@@ -16,6 +16,7 @@ def load(name):
 
 
 FREEZE = load("puf64_freeze_holdout_candidate")
+FREEZE_INPUT = load("puf64_freeze_holdout_input")
 HOLD = load("puf64_holdout_eval")
 
 BOARD = "ZYNQ-A01"
@@ -38,6 +39,7 @@ def base_golden():
         "image_mode_code": 1, "topology_id": 0xC0DE, "record_bytes": 20,
         "width": 16, "ref_cycles": 1023, "num_ro": RO, "pair_count": PAIRS,
         "bitstream_sha256": BITSTREAM, "route_fingerprint_sha256": "f" * 64,
+        "clock_system_hz": 100000000, "clock_input_hz": 50000000,
         "train_eligible": True, "holdout_eligible": True,
         "holdout_candidate_selection_sha256": "s" * 64,
         "holdout_candidate_mapping_file_sha256": "m" * 64,
@@ -228,22 +230,40 @@ class EvaluatorNoAutoTagTest(unittest.TestCase):
             manifest = {
                 "campaign": "holdout", "board_id": BOARD, "build_id": 2,
                 "status": "VALID", "boot_index": boot,
-                "frames_requested": 50,
+                "frames_requested": 50, "frames_received": 50,
+                "duplicate_frame_count": 0,
+                "parsed_dataset_sha256": HOLD.sha256_file(dataset),
                 "local_bitstream_sha256": BITSTREAM,
                 "device_info": device, "dataset_path": str(dataset),
             }
             (self.root / f"holdout_{BOARD}_{boot}.session.json").write_text(
                 json.dumps(manifest))
-        return golden_file, mapping_file, reference_file, candidate_file
+        train_input = self.root / "train_input.json"
+        train_input.write_text(json.dumps({
+            "aggregate_sha256": "t" * 64, "bitstream_sha256": BITSTREAM}))
+        holdout_input = self.root / "holdout_input.json"
+        rc = FREEZE_INPUT.main([
+            "--campaign-dir", str(self.root), "--board-id", BOARD,
+            "--start-boot", "201", "--end-boot", "210", "--frames", "50",
+            "--golden-manifest", str(golden_file),
+            "--holdout-candidate", str(candidate_file),
+            "--mapping", str(mapping_file), "--reference", str(reference_file),
+            "--train-input", str(train_input), "--out", str(holdout_input)])
+        if rc != 0:
+            raise RuntimeError("test holdout input freeze failed")
+        return (golden_file, mapping_file, reference_file, candidate_file,
+                holdout_input)
 
     def test_pass_reports_without_mapping_tag(self):
-        golden_file, mapping_file, reference_file, candidate_file = self.build()
+        golden_file, mapping_file, reference_file, candidate_file, \
+            holdout_input = self.build()
         report = self.root / "holdout_report.json"
         frozen = self.root / "frozen_mapping.json"
         rc = HOLD.main([
             "--mapping", str(mapping_file), "--reference", str(reference_file),
-            "--holdout-dir", str(self.root), "--golden-manifest",
-            str(golden_file), "--holdout-candidate", str(candidate_file),
+            "--golden-manifest", str(golden_file),
+            "--holdout-candidate", str(candidate_file),
+            "--holdout-input-manifest", str(holdout_input),
             "--report-out", str(report), "--frozen-out", str(frozen)])
         self.assertEqual(rc, 0)
         data = json.loads(report.read_text())
@@ -251,17 +271,25 @@ class EvaluatorNoAutoTagTest(unittest.TestCase):
         self.assertEqual(data["mapping_tag"], 0)
         self.assertEqual(data["frames_observed"], 500)
         self.assertEqual(data["independent_boots"], 10)
+        self.assertEqual(data["frame_error_histogram"]["errors_0"], 500)
+        self.assertEqual(data["boots_majority_over_bch"], 0)
+        self.assertEqual(data["selected_pair_error_frequency"]
+                         ["pairs_with_any_error"], 0)
+        self.assertEqual(data["selected_response_balance"]
+                         ["selection_criterion"], False)
         self.assertFalse(frozen.exists())  # no automatic tag
 
     def test_tampered_reference_fails_closed(self):
-        golden_file, mapping_file, reference_file, candidate_file = self.build()
+        golden_file, mapping_file, reference_file, candidate_file, \
+            holdout_input = self.build()
         reference = json.loads(reference_file.read_text())
         reference["reference_bit"]["0"] = 1
         reference_file.write_text(json.dumps(reference))
         rc = HOLD.main([
             "--mapping", str(mapping_file), "--reference", str(reference_file),
-            "--holdout-dir", str(self.root), "--golden-manifest",
-            str(golden_file), "--holdout-candidate", str(candidate_file),
+            "--golden-manifest", str(golden_file),
+            "--holdout-candidate", str(candidate_file),
+            "--holdout-input-manifest", str(holdout_input),
             "--report-out", str(self.root / "r.json")])
         self.assertEqual(rc, 2)
 
