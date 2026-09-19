@@ -9,11 +9,19 @@
   "image_mode": "PUF_CHARACTERIZATION",
   "image_mode_code": 1,
   "lock_level": "placement+LOCK_PINS+route-fingerprint-fail-closed",
+  "measurement_architecture_tuple": [
+    "protocol=3.1",
+    "build_id=2",
+    "topology_id=0xC0DE",
+    "ripple_stages=17",
+    "record_bytes=20"
+  ],
   "measurement_window_ns": 10230,
   "num_ro": 64,
   "operational_release": false,
   "pair_count": 2016,
   "part": "xc7z020clg400-2",
+  "pilot_campaign": "pilot_build2",
   "pilot_eligible": true,
   "prescaler": 1,
   "proto_major": 3,
@@ -36,7 +44,8 @@
   "status_layout": "bit0 stable,bit1 timeout,bit2 ovf_a,bit3 ovf_b,bit4 cz_a,bit5 cz_b,bit6 mmcm,bit7 reserved=0",
   "top": "Puf_AllPairs64_Characterization_Top",
   "topology_id": 49374,
-  "train_holdout_eligible": true,
+  "topology_id_semantics": "topology_id=0xC0DE identifies the RO64 oscillator/measurement family only, NOT the counter width/stage count. The full measurement architecture is the tuple: protocol=3.1 + build_id=2 + topology_id=0xC0DE + ripple_stages=17 + record_bytes=20.",
+  "train_holdout_eligible": false,
   "vivado_version": "2020.1",
   "width": 16
 }

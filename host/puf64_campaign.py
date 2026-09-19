@@ -144,13 +144,13 @@ def load_sessions(outdir):
     return sessions
 
 
-def freshness_check(sessions, campaign, board_id, boot_index, session_id, raw_sha):
+def freshness_check(sessions, campaign, board_id, build_id, boot_index, session_id, raw_sha):
     errors = []
     warnings = []
     for path, manifest in sessions:
         key = (manifest.get("board_id"), manifest.get("campaign"),
-               manifest.get("boot_index"))
-        if key == (board_id, campaign, boot_index):
+               manifest.get("build_id"), manifest.get("boot_index"))
+        if key == (board_id, campaign, build_id, boot_index):
             errors.append(f"duplicate session key {key} already in {Path(path).name}")
         if manifest.get("session_uuid") == session_id:
             errors.append(f"duplicate session UUID in {Path(path).name}")
@@ -164,7 +164,7 @@ def freshness_check(sessions, campaign, board_id, boot_index, session_id, raw_sh
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--campaign", required=True, choices=["train", "holdout"])
+    parser.add_argument("--campaign", required=True, choices=["train", "holdout", "pilot_build2"])
     parser.add_argument("--board-id", required=True)
     parser.add_argument("--boot-index", required=True, type=int)
     parser.add_argument("--port", required=True)
@@ -218,7 +218,8 @@ def main():
     raw_sha = raw_payload_sha(measurements) if measurements else ""
     sessions = load_sessions(outdir)
     fresh_errors, fresh_warnings = freshness_check(
-        sessions, args.campaign, args.board_id, args.boot_index, session_id, raw_sha
+        sessions, args.campaign, args.board_id, golden.get("build_id"),
+        args.boot_index, session_id, raw_sha
     )
     all_errors.extend(fresh_errors)
     warnings.extend(fresh_warnings)
@@ -246,8 +247,25 @@ def main():
         }, indent=2, sort_keys=True) + "\n")
 
     status = "VALID" if not all_errors else "INVALID"
+    architecture = {
+        "protocol": golden.get("protocol"),
+        "build_id": golden.get("build_id"),
+        "topology_id": golden.get("topology_id"),
+        "ripple_stages": golden.get("ripple_stages_per_ro"),
+        "record_bytes": golden.get("record_bytes"),
+        "num_ro": golden.get("num_ro"),
+        "pair_count": golden.get("pair_count"),
+        "width": golden.get("width"),
+        "bitstream_sha256": golden.get("bitstream_sha256"),
+    }
     manifest = {
         "campaign": args.campaign, "board_id": args.board_id,
+        "build_id": golden.get("build_id"),
+        "protocol": golden.get("protocol"),
+        "topology_id": golden.get("topology_id"),
+        "ripple_stages": golden.get("ripple_stages_per_ro"),
+        "record_bytes": golden.get("record_bytes"),
+        "architecture": architecture,
         "boot_index": args.boot_index, "session_uuid": session_id,
         "condition_id": args.condition_id,
         "host_start_utc": started, "host_end_utc": now_utc(),

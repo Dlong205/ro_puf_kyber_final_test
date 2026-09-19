@@ -20,8 +20,8 @@ HOLD = load("puf64_holdout_eval")
 RO = 64
 PAIRS = RO * (RO - 1) // 2
 GOLDEN = {
-    "board_id": "ZYNQ-A01", "protocol": "3.0", "image_mode": "PUF_CHARACTERIZATION", "image_mode_code": 1,
-    "topology_id": 0xC0DE, "build_id": 1, "num_ro": RO, "width": 16,
+    "board_id": "ZYNQ-A01", "protocol": "3.1", "image_mode": "PUF_CHARACTERIZATION", "image_mode_code": 1,
+    "topology_id": 0xC0DE, "build_id": 2, "num_ro": RO, "width": 16,
     "pair_count": PAIRS, "ref_cycles": 1023,
     "system_clock_hz": 100000000, "input_clock_hz": 50000000,
     "bitstream_sha256": "a" * 64, "route_fingerprint_sha256": "b" * 64,
@@ -117,10 +117,10 @@ class CampaignValidationTest(unittest.TestCase):
 
     def test_freshness_duplicate_and_hash(self):
         sessions = [("/tmp/a.session.json", {
-            "board_id": "ZYNQ-A01", "campaign": "train", "boot_index": 101,
-            "session_uuid": "u1", "raw_payload_sha256": "deadbeef"})]
+            "board_id": "ZYNQ-A01", "campaign": "pilot_build2", "build_id": 2,
+            "boot_index": 1, "session_uuid": "u1", "raw_payload_sha256": "deadbeef"})]
         errors, warnings = CAMP.freshness_check(
-            sessions, "train", "ZYNQ-A01", 101, "u1", "deadbeef")
+            sessions, "pilot_build2", "ZYNQ-A01", 2, 1, "u1", "deadbeef")
         self.assertTrue(any("duplicate session key" in e for e in errors))
         self.assertTrue(any("duplicate session UUID" in e for e in errors))
         self.assertTrue(any("raw payload hash" in w for w in warnings))
