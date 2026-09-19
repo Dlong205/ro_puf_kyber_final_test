@@ -634,7 +634,12 @@ def main():
             for key in ("build_id", "topology_id", "width", "ref_cycles",
                         "system_clock_hz", "input_clock_hz", "image_mode",
                         "protocol"):
-                expected = golden_manifest.get(key)
+                if key == "image_mode":
+                    expected = golden_manifest.get(
+                        "image_mode_code", golden_manifest.get("image_mode")
+                    )
+                else:
+                    expected = golden_manifest.get(key)
                 actual = device_info.get(key)
                 if expected is not None and expected != actual:
                     print(
