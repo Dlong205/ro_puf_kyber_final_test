@@ -291,6 +291,14 @@ class AllPairsMetricsTest(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             PUF.probe_image(bad)
 
+    def test_campaign_device_info_augments_probe_tuple(self):
+        probe = {"image_mode": 1, "mmcm_locked": 1, "protocol": "3.1", "build_id": 2}
+        merged = PUF.campaign_device_info(probe, 64, 2016)
+        self.assertEqual(merged["image_mode_code"], 1)
+        self.assertEqual(merged["num_ro"], 64)
+        self.assertEqual(merged["pair_count"], 2016)
+        self.assertNotIn("num_ro", probe)  # caller dict is not mutated
+
     def test_puf64_analysis_ceiling_passes_128_bit(self):
         result = analyze(
             [make_frame(0, ro_count=64), make_frame(1, ro_count=64)],

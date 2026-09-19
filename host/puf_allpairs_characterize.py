@@ -78,6 +78,21 @@ def protocol_label(ro_count):
     return "2.0" if ro_count == 32 else "3.0"
 
 
+def campaign_device_info(info, ro_count, pair_count):
+    """Augment a probe_image dict into the campaign golden-tuple shape.
+
+    The device reports ``image_mode``; the campaign tuple names the same field
+    ``image_mode_code`` and also enforces ``num_ro``/``pair_count`` as device
+    self-reports.  Keeping this pure makes the enforcement testable without a
+    serial port.
+    """
+    merged = dict(info)
+    merged["num_ro"] = ro_count
+    merged["pair_count"] = pair_count
+    merged.setdefault("image_mode_code", merged.get("image_mode"))
+    return merged
+
+
 def ro_bits(ro_count):
     return max(1, (ro_count - 1).bit_length())
 
@@ -385,6 +400,9 @@ def collect(port_name, count, timeout, ro_count):
             measurements.append(read_margin(port, ro_count, pair_count))
             if (index + 1) % 10 == 0 or index + 1 == count:
                 print(f"[{index + 1}/{count}] all-pairs frames collected", flush=True)
+    # The device reports image_mode; the campaign tuple also names it
+    # image_mode_code and enforces num_ro/pair_count as device self-reports.
+    device_info = campaign_device_info(device_info, detected_ro, detected_pairs)
     return measurements, time.perf_counter() - started, device_info
 
 

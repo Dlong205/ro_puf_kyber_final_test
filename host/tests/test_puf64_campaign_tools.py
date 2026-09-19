@@ -111,6 +111,20 @@ class CampaignValidationTest(unittest.TestCase):
         dev2["mmcm_locked"] = 0
         self.assertTrue(any("MMCM" in e for e in CAMP.verify_device_info(dev2, GOLDEN)))
 
+    def test_device_tuple_accepts_probe_shape(self):
+        # probe_image reports image_mode and returns num_ro/pair_count out of
+        # band; campaign_device_info must fold them into the enforced tuple.
+        probe = {"image_mode": 1, "mmcm_locked": 1, "protocol": "3.1",
+                 "topology_id": 0xC0DE, "build_id": 2, "ref_cycles": 1023,
+                 "system_clock_hz": 100000000, "input_clock_hz": 50000000,
+                 "width": 16}
+        dev = CAMP.PUF.campaign_device_info(probe, RO, PAIRS)
+        self.assertEqual(CAMP.verify_device_info(dev, GOLDEN), [])
+        bad = dict(dev)
+        bad["build_id"] = 1
+        self.assertTrue(any("build_id" in e
+                            for e in CAMP.verify_device_info(bad, GOLDEN)))
+
     def test_wrong_board_id(self):
         self.assertTrue(CAMP.verify_board_id("ZYNQ-A02", GOLDEN))
         self.assertEqual(CAMP.verify_board_id("ZYNQ-A01", GOLDEN), [])
