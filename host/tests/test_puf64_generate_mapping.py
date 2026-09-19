@@ -38,6 +38,26 @@ class GenerateMappingTest(unittest.TestCase):
         self.assertEqual(GEN_HOST.MAPPING_LEN_BITS, 264)
         self.assertEqual(GEN_HOST.MAPPING_LEN_BYTES, 33)
 
+    def test_sorted_lookup_table(self):
+        manifest = json.loads(MANIFEST.read_text())
+        lookup = GEN.sorted_lookup(manifest)
+        self.assertEqual(lookup, [list(entry) for entry in GEN_HOST.SORTED_LOOKUP])
+        self.assertEqual(len(lookup), 264)
+        self.assertEqual(lookup, sorted(lookup))
+        fulls = [full for full, _ in lookup]
+        dests = [dest for _, dest in lookup]
+        self.assertEqual(len(set(fulls)), 264)
+        self.assertEqual(sorted(dests), list(range(264)))
+        self.assertTrue(all(0 <= full < 2016 for full in fulls))
+        self.assertEqual(GEN.lookup_hash(lookup), GEN_HOST.SORTED_LOOKUP_SHA256)
+        self.assertEqual(GEN_HOST.SORTED_LOOKUP_SHA256,
+                         "beb1e395bdee5d6a8e87071644aa15f0f5396c3280bfe0334f1a3ce4ef187a09")
+        for dest, pair in enumerate(manifest["pairs"]):
+            self.assertEqual(GEN.canonical_index(pair),
+                             next(f for f, d in lookup if d == dest))
+        self.assertEqual(GEN_HOST.ORDERED_PAIRS[-1],
+                         tuple(manifest["pairs"][-1]))
+
     def test_mapping_bit_truth_table(self):
         self.assertEqual(GEN.mapping_bit(10, 11), 1)
         self.assertEqual(GEN.mapping_bit(11, 10), 0)

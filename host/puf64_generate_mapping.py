@@ -80,6 +80,20 @@ def load_manifest(path):
         problems.append(f"degree_histogram {histogram} != 48x8/16x9")
     if manifest.get("holdout_passed") is not True:
         problems.append("public manifest is not holdout PASS")
+    if not problems:
+        entries = sorted_lookup(manifest)
+        fulls = [e[0] for e in entries]
+        dests = [e[1] for e in entries]
+        if len(set(fulls)) != EXPECTED_PAIR_COUNT or \
+                any(not (0 <= f < EXPECTED_NUM_RO * (EXPECTED_NUM_RO - 1) // 2)
+                    for f in fulls):
+            problems.append("sorted lookup full indices are not unique/in range")
+        if sorted(dests) != list(range(EXPECTED_PAIR_COUNT)):
+            problems.append("sorted lookup destinations are not a permutation")
+        for dest, pair in enumerate(manifest["pairs"]):
+            if entries_dest(entries, dest) != canonical_index(pair):
+                problems.append("sorted lookup destination mapping is inconsistent")
+                break
     for key in ("full_mapping_digest_sha3_256", "selection_sha256",
                 "bitstream_sha256"):
         value = manifest.get(key)
@@ -91,6 +105,40 @@ def load_manifest(path):
             print(f"  - {problem}")
         return None
     return manifest
+
+
+def canonical_index(pair):
+    a, b = pair
+    return a * (2 * EXPECTED_NUM_RO - a - 1) // 2 + (b - a - 1)
+
+
+def sorted_lookup(manifest):
+    """(full_pair_index, mapping_destination_index) sorted by full index.
+
+    The canonical sweep (0..2015) uses this table as a single pointer: when the
+    current canonical index matches sorted_lookup[ptr].full it stores the bit
+    at the destination; otherwise the response is discarded.
+    """
+    entries = []
+    for dest, pair in enumerate(manifest["pairs"]):
+        entries.append([canonical_index(pair), dest])
+    entries.sort()
+    return entries
+
+
+def entries_dest(entries, dest):
+    for full, entry_dest in entries:
+        if entry_dest == dest:
+            return full
+    return None
+
+
+def lookup_hash(entries):
+    return hashlib.sha256(canonical_json_bytes(entries)).hexdigest()
+
+
+def canonical_json_bytes(value):
+    return json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
 
 
 def pairs_payload_bits(pairs):
@@ -138,6 +186,14 @@ def golden_vector():
 def render_rtl(manifest):
     pairs = manifest["pairs"]
     packed = ("%x" % pairs_payload_bits(pairs)).zfill(3168 // 4)
+    lookup = sorted_lookup(manifest)
+    full_bits = 0
+    dest_bits = 0
+    for full, dest in lookup:
+        full_bits = (full_bits << 11) | (full & 0x7FF)
+        dest_bits = (dest_bits << 9) | (dest & 0x1FF)
+    full_packed = ("%x" % full_bits).zfill(2904 // 4)
+    dest_packed = ("%x" % dest_bits).zfill(2376 // 4)
     digest = manifest["full_mapping_digest_sha3_256"]
     selection = manifest["selection_sha256"]
     return "\n".join([
@@ -155,6 +211,15 @@ def render_rtl(manifest):
         "localparam [255:0] PUF64_MAP_SELECTION_SHA256 = 256'h%s;" % selection,
         "// {a[5:0], b[5:0]} per pair, pair 0 at the most significant end.",
         "localparam [3167:0] PUF64_MAP_PAIRS = 3168'h%s;" % packed,
+        "// Sorted canonical-sweep lookup: (full_pair_index[10:0], dest[7:0]).",
+        "localparam [2903:0] PUF64_MAP_SORTED_FULL = 2904'h%s;" % full_packed,
+        "localparam [2375:0] PUF64_MAP_SORTED_DEST = 2376'h%s;" % dest_packed,
+        "function automatic [10:0] puf64_map_sorted_full(input integer j);",
+        "    puf64_map_sorted_full = PUF64_MAP_SORTED_FULL[2904-1 - 11*j -: 11];",
+        "endfunction",
+        "function automatic [8:0] puf64_map_sorted_dest(input integer j);",
+        "    puf64_map_sorted_dest = PUF64_MAP_SORTED_DEST[2376-1 - 9*j -: 9];",
+        "endfunction",
         "function automatic [5:0] puf64_map_pair_a(input integer j);",
         "    puf64_map_pair_a = PUF64_MAP_PAIRS[3168-1 - 12*j -: 6];",
         "endfunction",
@@ -184,6 +249,13 @@ def render_host(manifest):
         lines.append("    (%d, %d)," % (a, b))
     lines += [
         ")",
+        "SORTED_LOOKUP = (",
+    ]
+    for full, dest in sorted_lookup(manifest):
+        lines.append("    (%d, %d)," % (full, dest))
+    lines += [
+        ")",
+        'SORTED_LOOKUP_SHA256 = "%s"' % lookup_hash(sorted_lookup(manifest)),
         "",
         "",
         "def mapping_bit(count0, count1):",
