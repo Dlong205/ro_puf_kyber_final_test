@@ -148,6 +148,9 @@ def main():
     args = parser.parse_args()
 
     golden = json.loads(Path(args.golden_manifest).read_text())
+    if not golden.get("train_eligible"):
+        print("BLOCKER: golden manifest train_eligible is not true")
+        return 2
     sessions = load_train_sessions(args.campaign_dir)
     if len(sessions) < args.min_boots:
         print(f"BLOCKER: only {len(sessions)} valid train sessions, need {args.min_boots}")

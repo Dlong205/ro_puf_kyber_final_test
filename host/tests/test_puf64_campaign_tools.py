@@ -139,6 +139,54 @@ class CampaignValidationTest(unittest.TestCase):
         self.assertTrue(any("duplicate session UUID" in e for e in errors))
         self.assertTrue(any("raw payload hash" in w for w in warnings))
 
+    def test_frame_identity_counts(self):
+        frame = make_frame()
+        distinct, duplicate = CAMP.frame_identity_counts(
+            [frame, frame, make_frame(margin=65)])
+        self.assertEqual(distinct, 2)
+        self.assertEqual(duplicate, 1)
+        self.assertEqual(CAMP.frame_identity_counts([make_frame()]), (1, 0))
+
+    def test_count_summary_labels_match_data(self):
+        summary = CAMP.count_summary([make_frame(margin=64)])
+        self.assertEqual(summary["count0"]["min"], 1000)
+        self.assertEqual(summary["count0"]["max"], 1000 + PAIRS - 1)
+        self.assertEqual(summary["count1"]["min"], 1000 + 64)
+        self.assertLessEqual(summary["count0"]["min"], summary["count0"]["p50"])
+        self.assertLessEqual(summary["count0"]["p50"], summary["count0"]["max"])
+
+    def test_campaign_eligibility_gate_separates_train_and_holdout(self):
+        golden = dict(GOLDEN)
+        golden.update({"pilot_eligible": True, "train_eligible": True,
+                       "holdout_eligible": False})
+        self.assertIsNone(CAMP.campaign_eligibility_error("pilot_build2", golden))
+        self.assertIsNone(CAMP.campaign_eligibility_error("train", golden))
+        self.assertTrue(CAMP.campaign_eligibility_error("holdout", golden))
+        no_train = dict(golden)
+        no_train["train_eligible"] = False
+        self.assertTrue(CAMP.campaign_eligibility_error("train", no_train))
+
+    def test_train_and_holdout_loaders_ignore_pilot(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            for name, camp in (("train_ZYNQ-A01_101", "train"),
+                               ("holdout_ZYNQ-A01_201", "holdout"),
+                               ("pilot_build2_ZYNQ-A01_1", "pilot_build2")):
+                sess = session(1)
+                sess["manifest"]["campaign"] = camp
+                ds = Path(tmp) / f"{name}.dataset.json"
+                ds.write_text(json.dumps(sess["dataset"]))
+                raw = Path(tmp) / f"{name}.raw.json"
+                raw.write_text(json.dumps({"frames_winners_hex": ["00"]}))
+                manifest = dict(sess["manifest"])
+                manifest["dataset_path"] = str(ds)
+                (Path(tmp) / f"{name}.session.json").write_text(
+                    json.dumps(manifest))
+            train = SELECT.load_train_sessions(tmp)
+            self.assertEqual([s["manifest"]["campaign"] for s in train], ["train"])
+            holdout = HOLD.load_holdout(tmp)
+            self.assertEqual([s[0]["campaign"] for s in holdout], ["holdout"])
+
 
 class TrainSelectTest(unittest.TestCase):
     def metrics(self, sessions):

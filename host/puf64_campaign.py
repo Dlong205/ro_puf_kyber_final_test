@@ -90,6 +90,53 @@ def raw_payload_sha(measurements):
     return digest.hexdigest()
 
 
+def frame_identity_counts(measurements):
+    """Return (distinct, duplicate) whole-frame counts for one boot.
+
+    Frames are compared by their canonical record tuple, so two frames that
+    agree on every index/winner/margin/count are duplicates.  Duplicates do
+    NOT invalidate a session (a PUF can be very stable) but they are not
+    independent samples and must be reported as such.
+    """
+    identities = [canonical_json(frame) for frame in measurements]
+    distinct = len(set(identities))
+    return distinct, len(identities) - distinct
+
+
+def count_summary(measurements):
+    """min/p50/max of every transmitted count, labelled to match the data."""
+    count0 = [record[4] for frame in measurements for record in frame]
+    count1 = [record[5] for frame in measurements for record in frame]
+
+    def stats(values):
+        if not values:
+            return {"min": None, "p50": None, "max": None}
+        return {
+            "min": min(values),
+            "p50": int(PUF.percentile_nearest_rank(values, 0.50)),
+            "max": max(values),
+        }
+
+    return {"count0": stats(count0), "count1": stats(count1)}
+
+
+def campaign_eligibility_error(campaign, golden):
+    """Metadata gate: never run a campaign the golden manifest forbids.
+
+    ``train_holdout_eligible`` is intentionally NOT used as the switch for
+    either campaign; train and holdout have separate flags so that holdout can
+    only be enabled after the train mapping has been frozen.
+    """
+    gate = {
+        "train": "train_eligible",
+        "holdout": "holdout_eligible",
+        "pilot_build2": "pilot_eligible",
+    }[campaign]
+    if not golden.get(gate):
+        return f"golden manifest {gate} is not true; {campaign} is not allowed"
+    return None
+
+
 def validate_measurements(measurements, frames_requested, golden):
     errors = []
     pair_count = golden["pair_count"]
@@ -192,6 +239,9 @@ def main():
 
     bitstream_sha = sha256_file(args.bitstream)
     errors = verify_board_id(args.board_id, golden)
+    eligibility_error = campaign_eligibility_error(args.campaign, golden)
+    if eligibility_error:
+        errors.append(eligibility_error)
     if bitstream_sha != golden["bitstream_sha256"]:
         errors.append(
             f"local bitstream {bitstream_sha} != golden {golden['bitstream_sha256']}"
@@ -216,6 +266,16 @@ def main():
             all_errors.extend(validate_measurements(measurements, args.frames, golden))
 
     raw_sha = raw_payload_sha(measurements) if measurements else ""
+    distinct_frames = None
+    duplicate_frames = None
+    counts = count_summary(measurements) if measurements else {"count0": {}, "count1": {}}
+    if measurements:
+        distinct_frames, duplicate_frames = frame_identity_counts(measurements)
+        if duplicate_frames:
+            warnings.append(
+                f"{duplicate_frames} duplicate frame(s) within this boot; the PUF "
+                "can be very stable, but repeated frames are NOT independent samples"
+            )
     sessions = load_sessions(outdir)
     fresh_errors, fresh_warnings = freshness_check(
         sessions, args.campaign, args.board_id, golden.get("build_id"),
@@ -279,6 +339,9 @@ def main():
         "host_tooling_commit": PUF.git_commit_hash(),
         "frames_requested": args.frames,
         "frames_received": len(measurements),
+        "distinct_frame_count": distinct_frames,
+        "duplicate_frame_count": duplicate_frames,
+        "count_summary": counts,
         "raw_payload_sha256": raw_sha,
         "parsed_dataset_sha256": sha256_file(dataset_path) if dataset_path else "",
         "dataset_path": str(dataset_path) if dataset_path else "",
@@ -289,7 +352,11 @@ def main():
 
     print(json.dumps({
         "status": status, "manifest": str(manifest_path),
-        "frames": len(measurements), "errors": all_errors, "warnings": warnings,
+        "frames": len(measurements),
+        "distinct_frame_count": distinct_frames,
+        "duplicate_frame_count": duplicate_frames,
+        "count_summary": counts,
+        "errors": all_errors, "warnings": warnings,
     }, indent=2))
     return 0 if status == "VALID" else 1
 

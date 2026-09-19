@@ -765,6 +765,16 @@ def main():
     print(f"=== RO-PUF {ro_count}-RO ALL-PAIRS CHARACTERIZATION (protocol "
           f"{protocol_label(ro_count)}) ===")
     print(f"samples={result['sample_count']} pairs={result['pair_count']}")
+    if measurements:
+        count0 = [record[4] for frame in measurements for record in frame]
+        count1 = [record[5] for frame in measurements for record in frame]
+        print(
+            "count0 min/p50/max=%d/%d/%d count1 min/p50/max=%d/%d/%d"
+            % (
+                min(count0), int(percentile_nearest_rank(count0, 0.50)), max(count0),
+                min(count1), int(percentile_nearest_rank(count1, 0.50)), max(count1),
+            )
+        )
     for sweep in result["threshold_sweep"]:
         print(
             "threshold=%d accepted=%d N264=%s"

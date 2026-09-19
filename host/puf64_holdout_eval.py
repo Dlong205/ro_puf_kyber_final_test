@@ -131,6 +131,9 @@ def main():
     mapping = json.loads(Path(args.mapping).read_text())
     reference = json.loads(Path(args.reference).read_text())
     golden = json.loads(Path(args.golden_manifest).read_text())
+    if not golden.get("holdout_eligible"):
+        print("BLOCKER: golden manifest holdout_eligible is not true")
+        return 2
     if mapping.get("status") != "TRAIN_SELECTED_NOT_HOLDOUT_QUALIFIED":
         print("BLOCKER: mapping is not a frozen train candidate")
         return 2
