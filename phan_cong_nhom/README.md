@@ -1,6 +1,6 @@
 # Phân công và tiến độ nhóm
 
-Bằng chứng cập nhật đến **2026-09-16**; phân công đồng bộ cho nhánh tích hợp
+Bằng chứng cập nhật đến **2026-09-25**; phân công đồng bộ cho nhánh tích hợp
 `codex/asic-frontend-mlkem512`, tách từ `codex/fips202-mlkem`. Source RTL
 chính thức chỉ nằm trong `rtl/`; không copy RTL vào thư mục cá nhân. Đạt, Tùng,
 Minh và Việt Anh thực hiện nghiên cứu/đối chiếu/review; Long là người thực hiện
@@ -48,7 +48,7 @@ chưa có full Edge/SPI/ASIC sign-off mới.
 | Tùng | Vi kiến trúc Kyber/ML-KEM: Client/Server, NTT, codec, FIFO/BRAM/AXI, liveness và single-attempt | Regression 1.024 raw + board 10.000 PASS | Review assertion/invariant, latency/resource và không starvation/underflow |
 | Minh | Threat model, lưu khóa, helper, access policy, provisioning và zeroization | V4 accelerator scrub/deep AXI tests PASS offline | Review boundary CPU/bus/SoC RAM/scan, reset/lỗi/timeout/tamper/storage |
 | Việt Anh | KDF, Keccak, FIPS 202, domain separation và byte ordering | 50/50 FIPS 202 + KDF fixed-profile PASS | Review độc lập mapping H/G/J/PRF/XOF và ranh giới serialization |
-| Long | Toàn bộ implementation/tích hợp/release, fuzzy extractor, firmware/UART/host, RO-PUF, FPGA và ASIC portability | V4 offline/Vivado/board PASS; count-margin Zynq PASS bước instrumentation; RC1 root vẫn là artifact đã chấp nhận | Mở rộng candidate pool, same-root/PVT/nhiều board và PDK/macro ASIC |
+| Long | Toàn bộ implementation/tích hợp/release, fuzzy extractor, firmware/UART/host, RO-PUF, FPGA và ASIC portability | R7 RELEASED 2026-09-29: holdout 10/10, release A/B MATCH, formal E2E 3/3 PASS, freeze; RC1 root vẫn là artifact đã chấp nhận | Review độc lập, multi-board/PVT, PDK/macro ASIC, dọn commit |
 
 Chi tiết từng phần:
 

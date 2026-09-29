@@ -6,11 +6,14 @@
 > bị chặn bởi quyền phân phối Kyber RTL và top-level license. Kết quả hiện tại
 > không phải chứng nhận CAVP/FIPS 140-3 và không phải module mật mã production.
 
-Trạng thái dưới đây dùng bằng chứng đến **2026-09-17**. Nhánh FPGA hiện tại là
-`codex/fpga-v2-split`. Tag `fpga-rc4-baseline` giữ mốc Kyber/FPGA cũ để đối
+Trạng thái dưới đây dùng bằng chứng đến **2026-09-25**. Nhánh FPGA hiện tại là
+`codex/fpga-v2-split` (HEAD `103e5e1`, worktree còn 14 modified + 131
+untracked, chưa commit). Tag `fpga-rc4-baseline` giữ mốc Kyber/FPGA cũ để đối
 chiếu; tag `fpga-mlkem512-0.2.0-rc1` là artifact ML-KEM-512 hiện được chấp nhận.
 Các commit sau tag RC1 bổ sung characterization và khóa vật lý miền RO, không
-âm thầm thay thế bitstream RC1 ở root.
+âm thầm thay thế bitstream RC1 ở root. Từ 2026-09-23 đến 2026-09-25 đã chạy
+xong holdout R6 10/10 trên qual image, rebuild final C/D sạch, và phát hiện
+final image (plain, không PicoRV32) FAIL board ở FE — xem cập nhật bên dưới.
 
 Nhánh tích hợp đã hoàn tất cổng FIPS 202 byte-oriented và cổng functional
 bit-exact cho KeyGen, Encaps, Decaps và implicit rejection của ML-KEM-512.
@@ -96,6 +99,9 @@ SESSION và stress 100/100 trên board. Xem
 | FPGA implementation | **PASS** candidate v4 ở 50 MHz; artifact root được chấp nhận vẫn là RC1 |
 | Edge trên Arty A7-35T | **OOC 100 MHz + RO LOCK PASS**, nhưng **full board top + UART NO-FIT**: v08 OOC WNS +0,053 ns, WHS +0,046 ns; board top cần 26.815/20.800 Slice LUT; PUF-only board vẫn PASS |
 | Edge trên Zynq-7020 | **FULL BOARD PASS 100 MHz**: 20.974 LUT, WNS +0,562 ns, WHS +0,045 ns; INFO/ENROLL/SESSION và stress 100/100 PASS |
+| R6 holdout operational (qual image A) | **10/10 PASS 2026-09-24/25**: pilot 502 + train 503–522 frozen + holdout 601–610, 500/500 frame, 0 lỗi selected, BCH 0; chỉ qualify qual image, chưa phải final |
+| Final plain (không PicoRV32, uart_v2) | **BLOCKED 2026-09-25**: rebuild C/D sạch (WNS +0,263 ns, fingerprint MATCH, lifecycle PASS) nhưng board FAIL deterministic `0x32` BCH (corr 0, 10/10 trial) cùng helper/board mà qual PASS — placement-noise, chờ quyết định quiet-sweep+requalify hoặc chuyển picorv32-final |
+| R7 final-path mapping (tag 0x81B7) | **RELEASED 2026-09-29**: re-select qua đường final (128/264 lỗi mapping cũ → 0/500 holdout), release pair A/B MATCH (WNS +0,306 ns), formal E2E 3/3 cold boot PASS, freeze `R7_RELEASE_FREEZE.json`; BIT release là B (`ab075bfd...`) |
 | Tái lập vật lý miền RO | **PASS** hai build sạch và một campaign board với image route-lock |
 | Qualification RO-PUF | **TOOL MAPPING PASS, CHƯA FREEZE**: 496 cặp/100 frame trên Zynq, đủ pool N=264; workflow train/holdout đã test nhưng một-board data chỉ provisional; còn thiếu tối thiểu 3+2 board, same-root, PVT và power-cycle |
 | Same-root binding (Phase 1) | **OFFLINE REGRESSION PASS sau review** (KCV 224 bit, enroll ctx, CRC tuần tự, SoC KCV gate, e2e FE thật); **CHƯA** synth bitstream mới/board, chưa ASIC top riêng |

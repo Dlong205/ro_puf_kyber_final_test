@@ -1,7 +1,8 @@
 # Trạng thái xác minh — integration `0.2.0-rc2-dev`, artifact `0.2.0-rc1`
 
-Bằng chứng cập nhật đến **2026-09-18**. Nhánh phát triển FPGA hiện tại là
-`codex/fpga-v2-split`; artifact FPGA được chấp nhận nằm tại tag
+Bằng chứng cập nhật đến **2026-09-29**. Nhánh phát triển FPGA hiện tại là
+`codex/fpga-v2-split` (HEAD `103e5e1`, worktree 14 modified + 131 untracked,
+chưa commit); artifact FPGA được chấp nhận nằm tại tag
 `fpga-mlkem512-0.2.0-rc1`. Tag `fpga-rc4-baseline` chỉ được giữ làm mốc so
 sánh Kyber/FPGA cũ. Các kết quả characterization và physical route-lock sau
 RC1 là bằng chứng bổ sung, không phải một phiên bản production mới.
@@ -15,6 +16,29 @@ FE → KCV → KDF → ML-KEM mô phỏng qua boundary, elaborate Verilator vớ
 ASIC; chưa triển khai synthesis standard-cell, STA, floorplan hay backend.
 Nhánh ASIC tạm dừng; giai đoạn kế tiếp là chọn/khóa mapping và kiểm chứng độ
 ổn định RO-PUF thực tế trên 1 Zynq + 2 Arty, rồi mới FE thật và end-to-end ML-KEM.
+
+**Checkpoint 2026-09-29 (R7 RELEASED — first release E2E PASS):**
+R7 re-selection qua đường final đóng blocker `0x32`: holdout char 10/10
+(500 frame, 0 lỗi, auth `c6842f18...`); release pair A (`bfbff188...`) / B
+(`ab075bfd...`) route/timing/lifecycle/fingerprint PASS, WNS `+0,306 ns`,
+A==B MATCH; formal E2E trên đúng image B + helper R7: 3/3 cold boot PASS,
+pk ổn định `9311c3c3...`, negative fail-closed; freeze
+`R7_RELEASE_FREEZE.json` (`4b48deba...`). BIT release là B. Xem
+`PUF64_R7_FINALCHAR_2026-09-29.md`. Còn mở: review độc lập,
+multi-board/PVT/aging, license (public/production NO-GO).
+
+**Checkpoint 2026-09-25 (R6 holdout xong, final plain BLOCKED):**
+holdout R6 trên qual image A PASS 10/10 cold boot (601–610, 500/500 frame,
+0 selected error, BCH 0) — xem `PUF64_R6_COLD_RESUME_2026-09-23.md` (đã đóng
+closure, chỉ qualify qual image). Rebuild final plain (uart_v2) C/D sạch:
+route đủ, WNS `+0,263 ns`, lifecycle + fingerprint MATCH, reproducibility
+C==D. Nhưng board FAIL deterministic `0x32` BCH (corr 0, 10/10 trial) cùng
+helper/board mà qual SESSION PASS — systematic placement-noise, khớp bệnh G2.
+Trên đường đi đã fix 2 bug thật: transport tag `0xD501`→`0x81B5` và nối status
+chain→transport trong uart_v2; image diagnostic G bench-only đã đo xong.
+Quyết định còn nợ: quiet-sweep + requalify qua đường final, hoặc chuyển
+vehicle sang picorv32-final (đã E2E PASS). Board hiện rút cáp, giữ image
+diagnostic G volatile (mất khi mất nguồn).
 
 ## Tóm tắt theo cổng quyết định
 

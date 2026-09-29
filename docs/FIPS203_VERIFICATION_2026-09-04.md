@@ -88,3 +88,24 @@ make -j1 asic-elaboration
 
 Xem checklist và quy tắc change-control tại
 [`CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md`](CRYPTO_RTL_FREEZE_CANDIDATE_2026-09-04.md).
+
+## Bổ sung corpus differential 2026-09-29 (không thay kết luận trên)
+
+Giữ nguyên 25/25/25 vector NIST ACVP (TCID 1–25) ở đầu mỗi file, bổ sung
+vector differential từ pq-crystals/kyber reference commit `3edd5af` (cùng
+commit với oracle cũ), sinh bằng `sim/mlkem/extend_fips203_corpus.py`
+(seed 203, idempotent theo TCID):
+
+- KeyGen 100/100: 25 ACVP + 75 khóa mới (3 edge `d,z` all-zero/all-FF/
+  alternating + 72 random), `ek`/`dk` bit-exact, cycle 4204 cố định.
+- Encaps 100/100: 25 ACVP + 75 `(m, ek)` mới, ciphertext/K bit-exact,
+  cycle 5985 cố định.
+- Decaps 50/50 valid + 350/350 rejection (25 block cũ + 25 block khóa mới,
+  mỗi block 7 vị trí mutation cũ), K/J bit-exact, cycle valid/invalid
+  12288 cố định trên mọi vector (xác nhận timing đều trên 250 ca).
+
+file vector mở rộng nằm tại `sim/mlkem/mlkem512_*` và harness
+(`mlkem_*_main.cpp`) nay yêu cầu tối thiểu 25 vector thay vì đúng 25.
+Corpus gốc (25/25/25) vẫn khôi phục được từ git history; script mở rộng
+idempotent theo TCID nên chạy lại không nhân đôi vector.
+Đây vẫn là cổng functional nội bộ, chưa phải chứng nhận CAVP/FIPS 140-3.
