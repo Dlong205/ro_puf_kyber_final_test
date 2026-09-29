@@ -173,8 +173,8 @@ int main(int argc, char** argv) {
         std::fprintf(stderr, "FAIL: %s\n", error.what());
         return 2;
     }
-    if (vectors.size() != 25) {
-        std::fprintf(stderr, "FAIL: loaded %zu Encaps vectors, expected 25\n",
+    if (vectors.size() < 25) {
+        std::fprintf(stderr, "FAIL: loaded %zu Encaps vectors, expected at least 25\n",
                      vectors.size());
         return 2;
     }
@@ -187,8 +187,8 @@ int main(int argc, char** argv) {
         min_cycle = std::min(min_cycle, cycle);
         max_cycle = std::max(max_cycle, cycle);
     }
-    std::printf("PASS: ML-KEM-512 Encaps 25/25 NIST ACVP vectors; "
+    std::printf("PASS: ML-KEM-512 Encaps %zu/%zu vectors (25 NIST ACVP + differential); "
                 "ciphertext/K bit-exact (cycles %d..%d)\n",
-                min_cycle, max_cycle);
+                vectors.size(), vectors.size(), min_cycle, max_cycle);
     return 0;
 }

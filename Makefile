@@ -447,3 +447,137 @@ clean:
 	$(MAKE) -C sim/puf_allpairs clean
 	$(MAKE) -C sim/puf_allpairs64 clean
 	$(MAKE) -C sim/puf_allpairs_uart clean
+
+# R1 macro-V2 equivalence sims + OOC synthesis census.
+puf64-macro-v2-sim:
+	$(MAKE) -j1 -C sim/puf64_macro_v2 sim
+
+puf64-macro-v2-ports:
+	python3 scripts/check_puf64_macro_v2_ports.py
+
+puf64-macro-v2-ooc-synth:
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/synth_puf64_macro_v2_ooc.tcl
+
+puf64-macro-v2-route:
+	$(VIVADO) -mode batch -log build/puf64_macro_v2/route_session.log -journal build/puf64_macro_v2/route_session.jou -source scripts/route_puf64_macro_v2_ooc.tcl
+	python3 scripts/check_macro_v2_freeze.py build/puf64_macro_v2
+
+# R3 macro-V2 characterization image (NEW; golden untouched).
+puf64-macrov2-ids:
+	python3 scripts/check_puf64_macrov2_ids.py
+
+puf64-macrov2-project:
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/create_puf64_macrov2_char_project.tcl
+
+puf64-macrov2-build:
+	@test -f build/puf64_macrov2_characterization/puf64_macrov2_char_zynq7020.xpr || $(MAKE) -j1 puf64-macrov2-project VIVADO=$(VIVADO)
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/build_puf64_macrov2_char.tcl
+
+puf64-macrov2-fp-compare:
+	python3 scripts/compare_puf64_macro_v2_fingerprint.py build/puf64_macro_v2/macro_v2_fingerprint.tsv reports/puf64_macrov2_characterization/char_v2_fingerprint.tsv
+
+puf64-macrov2-reports:
+	python3 scripts/check_v2_image_reports.py build/puf64_macrov2_characterization/puf64_macrov2_char_zynq7020.runs reports/puf64_macrov2_characterization clk_sys_100mhz u_macro/u_bench/
+
+# R4 macro-V2 board campaign (operator power-cycles; single checklist per phase).
+V2_CHAR_BIT := build/puf64_macrov2_characterization/puf64_macrov2_char_zynq7020.runs/impl_1/Puf64_MacroV2_Characterization_Top.bit
+V2_CTX := reports/puf64_macrov2_campaign/v2_context_manifest.json
+V2_CAMPAIGN_DIR := reports/puf64_macrov2_campaign
+V2_DEVICE ?= /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
+VIVADO_ABS ?= /media/donglong/tools/Xilinx/Vivado/2020.1/bin/vivado
+
+puf64-macrov2-pilot:
+	python3 -u host/puf64_macrov2_batch.py --board-id ZYNQ-A01 --campaign pilot --build-id 3 --start-boot 300 --end-boot 300 --frames 50 --context-manifest "$(V2_CTX)" --bitstream "$(V2_CHAR_BIT)" --device "$(V2_DEVICE)" --outdir "$(V2_CAMPAIGN_DIR)" --vivado "$(VIVADO_ABS)"
+
+puf64-macrov2-train:
+	python3 -u host/puf64_macrov2_batch.py --board-id ZYNQ-A01 --campaign train --build-id 3 --start-boot 301 --end-boot 320 --frames 50 --context-manifest "$(V2_CTX)" --bitstream "$(V2_CHAR_BIT)" --device "$(V2_DEVICE)" --outdir "$(V2_CAMPAIGN_DIR)" --vivado "$(VIVADO_ABS)"
+
+puf64-macrov2-holdout:
+	python3 -u host/puf64_macrov2_batch.py --board-id ZYNQ-A01 --campaign holdout --build-id 3 --start-boot 401 --end-boot 410 --frames 50 --context-manifest "$(V2_CTX)" --bitstream "$(V2_CHAR_BIT)" --device "$(V2_DEVICE)" --outdir "$(V2_CAMPAIGN_DIR)" --vivado "$(VIVADO_ABS)"
+
+# R5-shell operational-V2 construction (NON-RELEASE, never programmed).
+puf64-operational-v2-construction-check:
+	python3 scripts/check_operational_v2_construction.py
+
+puf64-operational-v2-project:
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/create_puf64_operational_v2_project.tcl
+
+puf64-operational-v2-build:
+	@test -f build/puf64_operational_v2/puf64_operational_v2_zynq7020.xpr || $(MAKE) -j1 puf64-operational-v2-project VIVADO=$(VIVADO)
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/build_puf64_operational_v2.tcl
+
+puf64-operational-v2-fp-compare:
+	python3 scripts/compare_puf64_macro_v2_fingerprint.py build/puf64_macro_v2/macro_v2_fingerprint.tsv reports/puf64_operational_v2/shell_v2_fingerprint.tsv
+
+puf64-operational-v2-reports:
+	python3 scripts/check_v2_image_reports.py build/puf64_operational_v2/puf64_operational_v2_zynq7020.runs reports/puf64_operational_v2 clk_sys_100mhz u_macro/u_bench/ --profile operational
+
+# Operational FINAL with PicoRV32 as a mandatory non-secret supervisor.
+puf64-picorv32-final-sim:
+	$(MAKE) -C sim/puf64_picorv32 sim
+
+puf64-picorv32-final-static:
+	python3 scripts/check_picorv32_final_static.py
+
+puf64-picorv32-final-project: puf64-picorv32-final-static
+	PUF64_PICORV32_FINAL=1 $(VIVADO) -mode batch -nolog -nojournal -source scripts/create_puf64_operational_final_project.tcl
+
+puf64-picorv32-final-build:
+	@test -f build/puf64_picorv32_final/puf64_picorv32_final_zynq7020.xpr || $(MAKE) -j1 puf64-picorv32-final-project VIVADO=$(VIVADO)
+	PUF64_PICORV32_FINAL=1 $(VIVADO) -mode batch -nolog -nojournal -source scripts/build_puf64_operational_final.tcl
+
+puf64-picorv32-final-fp-compare:
+	python3 scripts/compare_puf64_macro_v2_fingerprint.py build/puf64_macro_v2/macro_v2_fingerprint.tsv reports/puf64_picorv32_final/picorv32_final_fingerprint.tsv
+
+puf64-picorv32-final-reports:
+	python3 scripts/check_final_image_reports.py build/puf64_picorv32_final/puf64_picorv32_final_zynq7020.runs reports/puf64_picorv32_final clk_sys_100mhz u_operational_uart/u_chain/u_puf64_core/u_macro/u_bench/ --profile picorv32
+
+puf64-picorv32-final-netlist:
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/check_picorv32_final_netlist.tcl -tclargs build/puf64_picorv32_final/puf64_picorv32_final_zynq7020.runs/impl_1/Edge_Puf64_Zynq_PicoRV32_Final_100MHz_Top_routed.dcp
+
+puf64-picorv32-final-repro:
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/compare_picorv32_final_repro.tcl -tclargs reports/puf64_picorv32_final/repro_A/final_A_routed.dcp reports/puf64_picorv32_final/repro_B/final_B_routed.dcp
+	python3 scripts/compare_puf64_macro_v2_fingerprint.py reports/puf64_picorv32_final/repro_A/final_A_fingerprint.tsv reports/puf64_picorv32_final/repro_B/final_B_fingerprint.tsv
+
+puf64-picorv32-final-program:
+	@test -n "$(BIT_SHA)" || (echo "BIT_SHA=<qualified sha256> is required"; exit 2)
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/program_puf64_picorv32_final.tcl -tclargs "$(BIT_SHA)"
+
+puf64-picorv32-final-e2e:
+	python3 -u host/puf64_picorv32_operational_e2e.py
+
+# Non-release board diagnostic: same frozen macro/helper/anchor, but UART
+# failure byte identifies only the failing stage (never raw/key/KCV data).
+puf64-picorv32-diagnostic-project: puf64-picorv32-final-static
+	PUF64_PICORV32_DIAGNOSTIC=1 $(VIVADO) -mode batch -nolog -nojournal -source scripts/create_puf64_operational_final_project.tcl
+
+puf64-picorv32-diagnostic-build:
+	@test -f build/puf64_picorv32_diagnostic/puf64_picorv32_diagnostic_zynq7020.xpr || $(MAKE) -j1 puf64-picorv32-diagnostic-project VIVADO=$(VIVADO)
+	PUF64_PICORV32_DIAGNOSTIC=1 $(VIVADO) -mode batch -nolog -nojournal -source scripts/build_puf64_operational_final.tcl
+
+puf64-picorv32-diagnostic-program:
+	@test -n "$(BIT_SHA)" || (echo "BIT_SHA=<diagnostic sha256> is required"; exit 2)
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/program_puf64_picorv32_diagnostic.tcl -tclargs "$(BIT_SHA)"
+# I4.2 preservation gates (Vivado 2020.1 only; no board program here).
+PUF64_OP_XPR := build/puf64_operational_preservation/puf64_operational_zynq7020.xpr
+PUF64_OP_GOLDEN_FP := reports/puf64_operational_preservation/golden_expanded_fingerprint.tsv
+PUF64_OP_CAND_FP := reports/puf64_operational_preservation/candidate_expanded_fingerprint.tsv
+PUF64_GOLDEN_DCP := build/puf_allpairs64_characterization/puf_allpairs64_zynq7020.runs/impl_1/Puf_AllPairs64_Characterization_Top_routed.dcp
+
+puf64-i42-gate:
+	python3 scripts/check_puf64_operational_shell.py
+	python3 scripts/check_puf64_i42_gate.py
+
+puf64-operational-project:
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/create_puf64_operational_project.tcl
+
+puf64-operational-golden-fp:
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/export_puf64_operational_expanded_fingerprint.tcl -tclargs "$(PUF64_GOLDEN_DCP)" "$(PUF64_OP_GOLDEN_FP)"
+
+puf64-operational-build:
+	@test -f $(PUF64_OP_XPR) || $(MAKE) -j1 puf64-operational-project VIVADO=$(VIVADO)
+	@test -f $(PUF64_OP_GOLDEN_FP) || { echo "Run make puf64-operational-golden-fp first" >&2; exit 2; }
+	$(VIVADO) -mode batch -nolog -nojournal -source scripts/build_puf64_operational.tcl
+
+puf64-operational-fp-compare:
+	python3 scripts/compare_puf64_operational_fingerprint.py "$(PUF64_OP_GOLDEN_FP)" "$(PUF64_OP_CAND_FP)"

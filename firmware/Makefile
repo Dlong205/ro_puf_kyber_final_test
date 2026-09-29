@@ -13,6 +13,23 @@ CFLAGS = -march=rv32i -mabi=ilp32 -O2 -nostartfiles -nostdlib -ffreestanding \
 
 all: firmware.hex
 
+SUP_CC ?= riscv32-unknown-elf-gcc
+SUP_OBJCOPY ?= riscv32-unknown-elf-objcopy
+SUP_CFLAGS = -march=rv32i -mabi=ilp32 -Os -nostartfiles -nostdlib \
+	-ffreestanding -Wall -Wextra -Werror -Wl,-Tpuf64_supervisor.ld
+
+.PHONY: supervisor
+supervisor: puf64_supervisor.hex
+
+puf64_supervisor.elf: start.S puf64_supervisor.c puf64_supervisor.ld
+	$(SUP_CC) $(SUP_CFLAGS) start.S puf64_supervisor.c -o $@
+
+puf64_supervisor.bin: puf64_supervisor.elf
+	$(SUP_OBJCOPY) -O binary $< $@
+
+puf64_supervisor.hex: puf64_supervisor.bin
+	hexdump -v -e '1/4 "%08x\n"' $< > $@
+
 .mode_op:
 	rm -f firmware.elf firmware.bin firmware.hex
 	touch $@
@@ -40,4 +57,5 @@ firmware_diag.hex: firmware_diag.bin
 	hexdump -v -e '1/4 "%08x\n"' firmware_diag.bin > firmware_diag.hex
 
 clean:
-	rm -f .mode_* firmware*.elf firmware*.bin firmware*.hex
+	rm -f .mode_* firmware*.elf firmware*.bin firmware*.hex \
+		puf64_supervisor.elf puf64_supervisor.bin puf64_supervisor.hex

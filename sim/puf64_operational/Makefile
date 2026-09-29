@@ -1,6 +1,12 @@
 VERILATOR ?= verilator
 TOP := tb_edge_puf64_operational_core
 OBJ := obj_dir
+# Active mapping generation include wins over the stale legacy rtl/top copy.
+ifeq ($(PUF64_MAPPING_G2),1)
+MAPDIR := ../../rtl/puf/v2_mapping_g2
+else
+MAPDIR := ../../rtl/puf/v2_mapping_frozen
+endif
 
 .PHONY: sim boundary-lint clean
 
@@ -10,7 +16,7 @@ sim:
 		-Wno-fatal -Wno-WIDTH -Wno-TIMESCALEMOD -Wno-UNUSEDSIGNAL \
 		-Wno-PINCONNECTEMPTY -Wno-PROCASSINIT -Wno-SYNCASYNCNET \
 		-Wno-UNDRIVEN -Wno-UNUSEDPARAM -Wno-MULTIDRIVEN \
-		-I../../rtl/top -I../../rtl/common -I../../rtl/hash_core \
+		-I$(MAPDIR) -I../../rtl/top -I../../rtl/common -I../../rtl/hash_core \
 		-I../../rtl/kyber/ref -I../fuzzy_extractor/rtl_tcq0 \
 		../../rtl/common/generic_blk_mem_wrapper.sv \
 		../../rtl/common/generic_c_shift_ram_wrapper.sv \
@@ -52,7 +58,7 @@ boundary-lint:
 	$(VERILATOR) --lint-only --timing --top-module edge_puf64_operational_uart \
 		-Wno-fatal -Wno-WIDTH -Wno-TIMESCALEMOD -Wno-UNUSEDSIGNAL \
 		-Wno-UNUSEDPARAM -Wno-PINCONNECTEMPTY -Wno-DECLFILENAME \
-		-I../../rtl/top \
+		-I$(MAPDIR) -I../../rtl/top \
 		../../rtl/puf/uart_rx.v ../../rtl/puf/uart_tx.v \
 		../../rtl/top/helper_record.sv \
 		../../rtl/top/edge_uart_transport.sv \

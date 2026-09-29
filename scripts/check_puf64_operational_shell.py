@@ -44,10 +44,17 @@ def main() -> int:
     ], "project", errors)
     if "puf_allpairs64_ripple_route.xdc" in project or "set_property FIXED_ROUTE" in project:
         errors.append("project: fixed routes entered I4.1 harness")
-    if "Kyber_System_Top.sv" in project:
-        errors.append("project: legacy top entered isolated source list")
-    if "Puf_AllPairs64_Characterization_Top.sv" in project:
-        errors.append("project: characterization top entered isolated source list")
+    # Fail-closed guards in create_puf64_operational_project.tcl intentionally
+    # name the forbidden tops inside error strings.  Only flag an actual
+    # inclusion (add_files / source list entry), not the guard text itself.
+    for line in project.splitlines():
+        if "Kyber_System_Top.sv" in line and "I4 top gate" not in line and "add_files" in line:
+            errors.append("project: legacy top entered isolated source list")
+            break
+    for line in project.splitlines():
+        if "Puf_AllPairs64_Characterization_Top.sv" in line and "I4 top gate" not in line and "add_files" in line:
+            errors.append("project: characterization top entered isolated source list")
+            break
     if not CHAR_TOP.is_file() or not LEGACY_TOP.is_file():
         errors.append("protected legacy/characterization top is missing")
 

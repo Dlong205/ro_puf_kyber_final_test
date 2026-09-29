@@ -1,5 +1,14 @@
 # Vivado projects and generated products
 build/
+# Routed DCPs are 25-30 MB each and reproducible via the build scripts +
+# frozen macro DCP; keep BITs, fingerprints, reports and freeze manifests.
+reports/**/*routed.dcp
+# Sim I/O hexes derived from private enrollment material (response/helper/
+# key/KCV) must never be committed; regenerate via enroll scripts + sim.
+sim/puf64_enroll/*.hex
+# Firmware build artifacts (keep committed .hex inputs + sources only).
+firmware/*.bin
+firmware/*.elf
 release/
 .Xil/
 *.jou
@@ -38,6 +47,13 @@ reports/puf_allpairs_characterization/private_*.json
 reports/puf_allpairs64_characterization/private_*.json
 reports/puf_mapping/private_*.json
 reports/puf64_campaign/
+reports/puf64_macrov2_campaign/*_private.json
+reports/puf64_macrov2_campaign/private_*.json
+reports/puf64_macrov2_campaign/*.helper_record
+reports/puf64_macrov2_campaign/*.record
+reports/puf64_macrov2_campaign/*.bin
+reports/puf64_operational_native_campaign/
+reports/puf64_finalchar_campaign/
 **/__pycache__/
 *.py[cod]
 

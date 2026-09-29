@@ -175,8 +175,8 @@ int main(int argc, char** argv) {
         std::fprintf(stderr, "FAIL: %s\n", error.what());
         return 2;
     }
-    if (vectors.size() != 25) {
-        std::fprintf(stderr, "FAIL: loaded %zu Decaps vectors, expected 25\n",
+    if (vectors.size() < 25) {
+        std::fprintf(stderr, "FAIL: loaded %zu Decaps vectors, expected at least 25\n",
                      vectors.size());
         return 2;
     }
@@ -242,8 +242,9 @@ int main(int argc, char** argv) {
         max_cycle = std::max(max_cycle, valid.cycle);
     }
 
-    std::printf("PASS: ML-KEM-512 Decaps 25/25 valid and %d/%d implicit-"
+    std::printf("PASS: ML-KEM-512 Decaps %zu/%zu valid (25 NIST/oracle + differential) and %d/%d implicit-"
                 "rejection vectors; K/J exact, timing equal (cycles %d..%d)\n",
+                vectors.size(), vectors.size(),
                 rejection_count,
                 static_cast<int>(vectors.size() *
                                  (sizeof(kMutations) / sizeof(kMutations[0]))),

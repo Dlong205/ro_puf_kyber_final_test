@@ -217,14 +217,14 @@ module tb_edge_puf64_operational_core;
         trusted_valid = 1'b1;
         $display("I3A_ANCHOR_INVALID_NO_RO");
 
-        // Selected tie: scheduler error, no FE/downstream.
+        // Single selected tie: correctable (BCH t=8) -> FE/downstream run.
         src_r = R0;
         fault_index = puf64_map_sorted_full(0); fault_kind = 1;
         pulse_start(1'b0);
-        if (!mapped_error || downstream_seen != 0)
-            $fatal(1, "selected tie was not rejected");
+        if (mapped_error || downstream_seen != 1)
+            $fatal(1, "single selected tie did not reach FE");
         fault_index = -1; fault_kind = 0;
-        $display("I3A_SELECTED_TIE_REJECTED");
+        $display("I3A_SELECTED_TIE_CORRECTABLE");
 
         // Timeout on any pair: sticky sweep error.
         fault_index = 100; fault_kind = 2;
@@ -345,7 +345,14 @@ module tb_edge_puf64_operational_core;
 endmodule
 
 // Test model at the physical boundary.  Real synthesis uses
-// rtl/puf/kp_puf64_physical.sv (this module is never in the synthesis list).
+// Test-only telemetry source model shadowing rtl/puf/kp_puf64_physical.sv
+// (this module is never in the synthesis list).  Contract: one event per 8
+// system clocks, matching the real bench order of magnitude (REF 1023 +
+// CLEAR 8 + SETTLE 8 clocks per pair ≈ 1040).  The scheduler has no
+// backpressure input, so a sustained every-cycle stream -- which the previous
+// combinational scheduler happened to tolerate -- is outside the interface
+// contract and would overflow any finite event FIFO; the model must not
+// generate it.
 module kp_puf64_physical #(
     parameter integer NUM_RO = 64,
     parameter integer WIDTH = 16,
@@ -376,6 +383,7 @@ module kp_puf64_physical #(
 
     logic         running;
     logic [10:0]  idx;
+    logic [2:0]   gap;
     integer       j;
     logic         is_sel;
     logic [8:0]   dest;
@@ -442,7 +450,7 @@ module kp_puf64_physical #(
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n || zeroize) begin
-            running <= 1'b0; idx <= 11'd0;
+            running <= 1'b0; idx <= 11'd0; gap <= 3'd0;
             busy <= 1'b0; done <= 1'b0;
             telemetry_valid <= 1'b0; telemetry_index <= 11'd0;
             telemetry_pair_a <= 6'd0; telemetry_pair_b <= 6'd0;
@@ -457,9 +465,12 @@ module kp_puf64_physical #(
             telemetry_overflow_b <= 1'b0;
             if (!running) begin
                 if (start) begin
-                    running <= 1'b1; idx <= 11'd0; busy <= 1'b1;
+                    running <= 1'b1; idx <= 11'd0; busy <= 1'b1; gap <= 3'd0;
                 end
+            end else if (gap != 3'd0) begin
+                gap <= gap - 3'd1;
             end else begin
+                gap <= 3'd7;
                 telemetry_index <= idx;
                 telemetry_pair_a <= pair_a_c;
                 telemetry_pair_b <= pair_b_c;
