@@ -1,0 +1,325 @@
+
+****** Vivado v2020.1 (64-bit)
+  **** SW Build 2902540 on Wed May 27 19:54:35 MDT 2020
+  **** IP Build 2902112 on Wed May 27 22:43:36 MDT 2020
+    ** Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+
+source scripts/program_puf64_operational_final_r7.tcl
+# set script_dir [file dirname [file normalize [info script]]]
+# set root_dir [file normalize [file join $script_dir ..]]
+# source [file join $script_dir ro_physical_common.tcl]
+## proc ro_normalize_space {value} {
+##     regsub -all {\s+} [string trim $value] { } normalized
+##     return $normalized
+## }
+## proc ro_canonical_object_name {value} {
+##     # Vivado's numeric n_0_<number> stem is allocated from the complete
+##     # synthesized netlist and changes when unrelated SoC logic changes.  The
+##     # hierarchy, lane suffix and physical properties are the stable identity
+##     # of these four measurement-mux endpoints.  Preserve the accepted RC1
+##     # spelling in the serialized fingerprint so byte-for-byte comparisons
+##     # still measure physical equivalence instead of an auto-name artifact.
+##     regsub -all \
+##         {u_puf/lfsr_inst/n_0_[0-9]+_BUFG_inst_i_([2-5])} \
+##         $value {u_puf/lfsr_inst/n_0_45840_BUFG_inst_i_\1} canonical
+##     return $canonical
+## }
+## proc ro_sha256_file {path} {
+##     if {![file isfile $path]} {
+##         error "Cannot hash missing file: $path"
+##     }
+##     set output [exec sha256sum -- $path]
+##     set digest [lindex $output 0]
+##     if {![regexp {^[0-9a-f]{64}$} $digest]} {
+##         error "Unexpected sha256sum output for $path: $output"
+##     }
+##     return $digest
+## }
+## proc ro_find_route_net {cell} {
+##     set output_pins [get_pins -quiet -of_objects $cell \
+##         -filter {DIRECTION == OUT}]
+##     if {[llength $output_pins] != 1} {
+##         error "Expected one output pin on $cell, found [llength $output_pins]"
+##     }
+## 
+##     # A signal crossing hierarchy has several aliases (t3, o, ro_out...).
+##     # Select the canonical top net for that physical group so the exported
+##     # constraint resolves to one stable object on the next implementation.
+##     set route_nets [lsort -unique -dictionary [get_nets -quiet -segments \
+##         -top_net_of_hierarchical_group -of_objects $output_pins]]
+##     if {[llength $route_nets] != 1} {
+##         error "Expected one ROUTE-bearing net for $cell, found $route_nets"
+##     }
+##     return [lindex $route_nets 0]
+## }
+## proc ro_actual_input_pin_map {cell} {
+##     set mappings {}
+##     foreach pin [lsort -dictionary [get_pins -quiet -of_objects $cell \
+##             -filter {DIRECTION == IN}]] {
+##         set site_pins [get_site_pins -quiet -of_objects $pin]
+##         if {[llength $site_pins] == 0} {
+##             continue
+##         }
+##         if {[llength $site_pins] != 1} {
+##             error "Ambiguous site-pin mapping for $pin: $site_pins"
+##         }
+##         set logical_pin [file tail $pin]
+##         set physical_pin [file tail [lindex $site_pins 0]]
+##         lappend mappings "${logical_pin}:${physical_pin}"
+##     }
+##     return [lsort -dictionary $mappings]
+## }
+## proc ro_lock_input_pin_map {cell} {
+##     # LOCK_PINS uses LUT-relative A1..A6 names even when the selected BEL is a
+##     # B/C/D LUT. The fingerprint retains the true site pin (for example B6),
+##     # while this form is suitable for an XDC LOCK_PINS property.
+##     set mappings {}
+##     foreach mapping [ro_actual_input_pin_map $cell] {
+##         lassign [split $mapping :] logical_pin site_pin
+##         if {![regexp {^[A-D]([1-6])$} $site_pin unused pin_index]} {
+##             error "Unsupported LUT site pin for $cell: $site_pin"
+##         }
+##         lappend mappings "${logical_pin}:A${pin_index}"
+##     }
+##     return [lsort -dictionary $mappings]
+## }
+## proc ro_collect_physical_inventory {{expected_ro_luts 128}} {
+##     set ro_luts [lsort -dictionary [get_cells -quiet -hierarchical \
+##         -filter {NAME =~ "*u_puf*ring*LUT6*"}]]
+##     if {[llength $ro_luts] != $expected_ro_luts} {
+##         error "Expected $expected_ro_luts physical RO LUTs, found [llength $ro_luts]"
+##     }
+## 
+##     set net_set [dict create]
+##     foreach cell $ro_luts {
+##         dict set net_set [ro_find_route_net $cell] 1
+##     }
+##     set ro_nets [lsort -dictionary [dict keys $net_set]]
+##     if {[llength $ro_nets] != $expected_ro_luts} {
+##         error "Expected $expected_ro_luts unique physical RO nets, found [llength $ro_nets]"
+##     }
+## 
+##     set endpoint_set [dict create]
+##     foreach net $ro_nets {
+##         set segments [get_nets -quiet -segments $net]
+##         set leaf_pins [get_pins -quiet -leaf -of_objects $segments]
+##         foreach cell [get_cells -quiet -of_objects $leaf_pins] {
+##             dict set endpoint_set $cell 1
+##         }
+##     }
+##     set endpoint_cells [lsort -dictionary [dict keys $endpoint_set]]
+## 
+##     return [dict create \
+##         ro_luts $ro_luts \
+##         ro_nets $ro_nets \
+##         endpoint_cells $endpoint_cells]
+## }
+## proc ro_write_physical_fingerprint {path inventory} {
+##     set channel [open $path w]
+##     set ro_luts [dict get $inventory ro_luts]
+##     set ro_nets [dict get $inventory ro_nets]
+##     set endpoint_cells [dict get $inventory endpoint_cells]
+## 
+##     puts $channel "RO_PHYSICAL_FINGERPRINT_V2"
+##     puts $channel "SUMMARY\tro_luts=[llength $ro_luts]\tro_nets=[llength $ro_nets]\tendpoint_cells=[llength $endpoint_cells]"
+## 
+##     foreach cell $endpoint_cells {
+##         set ref_name [get_property REF_NAME $cell]
+##         set init [get_property INIT $cell]
+##         set loc [get_property LOC $cell]
+##         set bel [get_property BEL $cell]
+##         if {$ref_name eq "" || $init eq "" || $loc eq "" || $bel eq ""} {
+##             close $channel
+##             error "Endpoint cell inventory is incomplete: $cell REF=$ref_name INIT=$init LOC=$loc BEL=$bel"
+##         }
+##         set pin_map [join [ro_actual_input_pin_map $cell] ,]
+##         if {$pin_map eq ""} {
+##             close $channel
+##             error "Endpoint cell has no physical input-pin mapping: $cell"
+##         }
+##         set canonical_cell [ro_canonical_object_name $cell]
+##         puts $channel "CELL\t$canonical_cell\t$ref_name\t$init\t$loc\t$bel\t$pin_map"
+##     }
+## 
+##     foreach net $ro_nets {
+##         set segments [get_nets -quiet -segments $net]
+##         set pins [lsort -dictionary [get_pins -quiet -leaf -of_objects $segments]]
+##         set route [ro_normalize_space [get_property ROUTE $net]]
+##         if {$route eq ""} {
+##             close $channel
+##             error "RO net is not routed: $net"
+##         }
+##         set canonical_net [ro_canonical_object_name $net]
+##         set canonical_pins {}
+##         foreach pin $pins {
+##             lappend canonical_pins [ro_canonical_object_name $pin]
+##         }
+##         puts $channel "NET\t$canonical_net\t[join $canonical_pins ,]\t$route"
+##     }
+##     close $channel
+## }
+## proc ro_collect_ro_only_inventory {{expected_ro_luts 128} {pattern "*u_puf*ring*LUT6_*"}} {
+##     set ro_luts [lsort -dictionary [get_cells -quiet -hierarchical \
+##         -filter "NAME =~ \"$pattern\""]]
+##     if {[llength $ro_luts] != $expected_ro_luts} {
+##         error "Expected $expected_ro_luts physical RO LUTs, found [llength $ro_luts]"
+##     }
+##     set net_set [dict create]
+##     foreach cell $ro_luts {
+##         dict set net_set [ro_find_route_net $cell] 1
+##     }
+##     set ro_nets [lsort -dictionary [dict keys $net_set]]
+##     if {[llength $ro_nets] != $expected_ro_luts} {
+##         error "Expected $expected_ro_luts unique RO nets, found [llength $ro_nets]"
+##     }
+##     set tap_set [dict create]
+##     foreach net $ro_nets {
+##         set segments [get_nets -quiet -segments $net]
+##         set leaf_pins [get_pins -quiet -leaf -of_objects $segments]
+##         foreach cell [get_cells -quiet -of_objects $leaf_pins] {
+##             if {![string match "*u_puf*ring*LUT6_*" $cell]} {
+##                 dict set tap_set $cell 1
+##             }
+##         }
+##     }
+##     set tap_cells [lsort -dictionary [dict keys $tap_set]]
+##     return [dict create ro_luts $ro_luts ro_nets $ro_nets tap_cells $tap_cells]
+## }
+## proc ro_write_ro_only_fingerprint {path inventory} {
+##     set channel [open $path w]
+##     set ro_luts [dict get $inventory ro_luts]
+##     set ro_nets [dict get $inventory ro_nets]
+##     set tap_cells {}
+##     if {[dict exists $inventory tap_cells]} {
+##         set tap_cells [dict get $inventory tap_cells]
+##     }
+##     puts $channel "RO_PHYSICAL_FINGERPRINT_V2"
+##     puts $channel "SUMMARY\tro_luts=[llength $ro_luts]\tro_nets=[llength $ro_nets]\tendpoint_cells=[llength $tap_cells]"
+##     foreach cell [concat $ro_luts $tap_cells] {
+##         set ref_name [get_property REF_NAME $cell]
+##         set init [get_property INIT $cell]
+##         set loc [get_property LOC $cell]
+##         set bel [get_property BEL $cell]
+##         if {$ref_name eq "" || $init eq "" || $loc eq "" || $bel eq ""} {
+##             close $channel
+##             error "RO cell inventory is incomplete: $cell"
+##         }
+##         set pin_map ""
+##         if {[string match "LUT*" $ref_name]} {
+##             set pin_map [join [ro_actual_input_pin_map $cell] ,]
+##         }
+##         set canonical_cell [ro_canonical_object_name $cell]
+##         puts $channel "CELL\t$canonical_cell\t$ref_name\t$init\t$loc\t$bel\t$pin_map"
+##     }
+##     foreach net $ro_nets {
+##         set segments [get_nets -quiet -segments $net]
+##         set pins [lsort -dictionary [get_pins -quiet -leaf -of_objects $segments]]
+##         set route [ro_normalize_space [get_property ROUTE $net]]
+##         if {$route eq ""} {
+##             close $channel
+##             error "RO net is not routed: $net"
+##         }
+##         set canonical_net [ro_canonical_object_name $net]
+##         set canonical_pins {}
+##         foreach pin $pins {
+##             lappend canonical_pins [ro_canonical_object_name $pin]
+##         }
+##         puts $channel "NET\t$canonical_net\t[join $canonical_pins ,]\t$route"
+##     }
+##     close $channel
+## }
+## proc ro_compare_physical_fingerprints {golden_path actual_path} {
+##     set golden_channel [open $golden_path r]
+##     set golden [read $golden_channel]
+##     close $golden_channel
+##     set actual_channel [open $actual_path r]
+##     set actual [read $actual_channel]
+##     close $actual_channel
+## 
+##     if {$golden eq $actual} {
+##         return
+##     }
+## 
+##     set golden_lines [split $golden "\n"]
+##     set actual_lines [split $actual "\n"]
+##     set limit [expr {min([llength $golden_lines], [llength $actual_lines])}]
+##     for {set index 0} {$index < $limit} {incr index} {
+##         if {[lindex $golden_lines $index] ne [lindex $actual_lines $index]} {
+##             puts "RO_FINGERPRINT_EXPECTED=[lindex $golden_lines $index]"
+##             puts "RO_FINGERPRINT_ACTUAL=[lindex $actual_lines $index]"
+##             break
+##         }
+##     }
+##     error "RO physical fingerprint differs from the accepted RC1 baseline"
+## }
+# if {[llength $argv] != 1 || ![regexp {^[0-9a-f]{64}$} [lindex $argv 0]]} {
+#     error "usage: program_puf64_operational_final_r7.tcl <expected-bitstream-sha256>"
+# }
+# set expected_sha [lindex $argv 0]
+# set bit_file [file join $root_dir build puf64_operational_final_r7 \
+#     puf64_operational_final_r7_zynq7020.runs impl_1 \
+#     Edge_Puf64_Zynq_Operational_Final_100MHz_Top.bit]
+# if {![file isfile $bit_file]} { error "R7 release bitstream missing: $bit_file" }
+# set actual_sha [ro_sha256_file $bit_file]
+# if {$actual_sha ne $expected_sha} {
+#     error "R7 release SHA mismatch: expected=$expected_sha actual=$actual_sha"
+# }
+# puts "R7_RELEASE_PROGRAM_SHA_OK=$actual_sha"
+R7_RELEASE_PROGRAM_SHA_OK=ab075bfbd28b5d8e0a18f0a9bfba0bdfeb6ee1dec1dbea0bd381b41a7cba4dea
+# open_hw_manager
+# connect_hw_server
+INFO: [Labtools 27-2285] Connecting to hw_server url TCP:localhost:3121
+INFO: [Labtools 27-2222] Launching hw_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+****** Xilinx hw_server v2020.1
+  **** Build date : May 27 2020 at 20:33:44
+    ** Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+
+
+INFO: [Labtools 27-3415] Connecting to cs_server url TCP:localhost:3042
+INFO: [Labtools 27-3417] Launching cs_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+
+****** Xilinx cs_server v2020.1.0
+  **** Build date : May 14 2020-08:10:29
+    ** Copyright 2017-2020 Xilinx, Inc. All Rights Reserved.
+
+
+
+# set targets [get_hw_targets -quiet]
+# if {[llength $targets] != 1} {
+#     close_hw_manager
+#     error "Expected exactly one JTAG target, found [llength $targets]"
+# }
+# current_hw_target [lindex $targets 0]
+# open_hw_target [lindex $targets 0]
+INFO: [Labtoolstcl 44-466] Opening hw_target localhost:3121/xilinx_tcf/Digilent/260515110006
+# set devices [get_hw_devices -quiet -filter {PART =~ "xc7z020*"}]
+# if {[llength $devices] != 1} {
+#     close_hw_manager
+#     error "Expected exactly one XC7Z020, found [llength $devices]"
+# }
+# set device [lindex $devices 0]
+# current_hw_device $device
+# refresh_hw_device $device
+INFO: [Labtools 27-1435] Device xc7z020 (JTAG device index = 1) is not programmed (DONE status = 0).
+# puts "R7_RELEASE_PROGRAM_DEVICE part=[get_property PART $device] idcode=[get_property IDCODE $device]"
+R7_RELEASE_PROGRAM_DEVICE part=xc7z020 idcode=00100011011100100111000010010011
+# set_property PROGRAM.FILE $bit_file $device
+# program_hw_devices $device
+INFO: [Labtools 27-3164] End of startup status: HIGH
+# refresh_hw_device $device
+INFO: [Labtools 27-1434] Device xc7z020 (JTAG device index = 1) is programmed with a design that has no supported debug core(s) in it.
+# puts "R7_RELEASE_PROGRAM_PASS device=$device sha=$actual_sha"
+R7_RELEASE_PROGRAM_PASS device=xc7z020_1 sha=ab075bfbd28b5d8e0a18f0a9bfba0bdfeb6ee1dec1dbea0bd381b41a7cba4dea
+# close_hw_manager
+****** Webtalk v2020.1 (64-bit)
+  **** SW Build 2902540 on Wed May 27 19:54:35 MDT 2020
+  **** IP Build 2902112 on Wed May 27 22:43:36 MDT 2020
+    ** Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+
+source /home/donglong/Documents/Duy_prj/KECCAK_OPTIMIZE_POWER/OPTIMIZE_POWER/kyber_puf_mlkem_novelty/.Xil/Vivado-321856-donglong-P7xxTM-1/webtalk/labtool_webtalk.tcl -notrace
+INFO: [Common 17-206] Exiting Webtalk at Tue Sep 29 12:45:56 2026...
+INFO: [Common 17-206] Exiting Vivado at Tue Sep 29 12:45:56 2026...
