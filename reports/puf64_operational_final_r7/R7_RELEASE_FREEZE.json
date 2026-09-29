@@ -1,0 +1,27 @@
+{
+ "anchor_sha256": "a41df11d4d9b80892ad869d04c17e371aba0972a1288ca23de4c21bca4fa9a76",
+ "bit_A_sha256": "bfbff188b5c98c5f8f0139d6778fc904508f55d5b425bbf2ca0d3a1d081713d7",
+ "bit_B_sha256": "ab075bfbd28b5d8e0a18f0a9bfba0bdfeb6ee1dec1dbea0bd381b41a7cba4dea",
+ "board_id": "ZYNQ-A01",
+ "fingerprint_AB": "MATCH 3713 lines",
+ "formal_e2e": {
+  "boots": 3,
+  "e2e_logs_sha256": [
+   "701d16431b5de081af88692443d3a7c719d08a9cdf4a8c24fcc3332d96177f0c",
+   "701d16431b5de081af88692443d3a7c719d08a9cdf4a8c24fcc3332d96177f0c",
+   "701d16431b5de081af88692443d3a7c719d08a9cdf4a8c24fcc3332d96177f0c"
+  ],
+  "pk_sha256": "9311c3c3e24af8f0",
+  "result": "3/3 PASS"
+ },
+ "frozen_utc": "2026-09-29T05:51:24.819020+00:00",
+ "helper_sha256": "55bf55881afd93ba8a58f310c107eceabf2df293e7193972f7e48de3d61c7a81",
+ "holdout_auth_sha256": "c6842f18fa749222b0dc1e5c64853812dfc4409983c8f94708bc257d85c8c328",
+ "mapping_digest_sha3": "95186338708b34c4fdb4ed653e2264592fc9321c6c381ced66d45bfe785c3aab",
+ "mapping_tag": "0x81B7",
+ "release_bit": "B (ab075bfd, programmed for formal E2E)",
+ "schema": "r7-release-freeze-v1",
+ "selection_sha256": "b1b2b076d7059bd95f5a2e9c6783e9fe7248bbdfc13eccda0ee66abe7d56bf5b",
+ "timing": "WNS +0.306ns / WHS +0.051ns, 0 failing @100MHz (A and B identical)",
+ "train_freeze_sha256": "7af51c0923bc73a795c25e68c337618af3a28796da9c255087d6546b7c486728"
+}
