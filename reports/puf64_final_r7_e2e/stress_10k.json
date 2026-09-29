@@ -1,0 +1,7 @@
+{
+ "sessions": 10000,
+ "fails": 0,
+ "distinct_pk": 1,
+ "distinct_tags": 10000,
+ "elapsed_s": 3227.7
+}
