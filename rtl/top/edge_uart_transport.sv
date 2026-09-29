@@ -16,6 +16,9 @@ module edge_uart_transport #(
     parameter integer PK_WORDS = 200,
     parameter integer CT_WORDS = 192,
     parameter integer RX_TIMEOUT = CLKS_PER_BIT * 24,
+    // Non-release board diagnosis only.  This exposes stage identity, never
+    // raw PUF response, FE key, KCV value or ML-KEM secret.
+    parameter bit DIAGNOSTIC_FAILURE_CODES = 1'b0,
     parameter [7:0]   HREC_PROFILE = 8'h01,
     parameter [7:0]   HREC_FE_PARAM = 8'h01,
     parameter [7:0]   HREC_MAPPING_LEN_BYTES = 8'd33,
@@ -28,7 +31,15 @@ module edge_uart_transport #(
     parameter bit     ALLOW_ENROLL = 1'b0,
     // In the operational PUF64 boundary the nonce-bound result tag is
     // computed beside ML-KEM so the shared secret never becomes a top port.
-    parameter bit     EXTERNAL_RESULT_TAG = 1'b0
+    parameter bit     EXTERNAL_RESULT_TAG = 1'b0,
+    // R6.1 qualification telemetry readout.  1 = qualification image
+    // (NONRELEASE): private command 0x70 streams the captured sweep frame.
+    // 0 = final/release: 0x70 is rejected exactly like any unsupported
+    // command (fail 0x01); capture hardware still runs with identical loads.
+    parameter bit     QUAL_TELEMETRY_ENABLE = 1'b0,
+    // R6.1 image marker: release INFO byte is 0x0f; qualification images use
+    // 0x71 ('q') so a qual image can never be mistaken for final on the bench.
+    parameter [7:0]   QUAL_INFO_MARKER = 8'h0f
 ) (
     input  wire         clk,
     input  wire         rst_n,
@@ -62,6 +73,11 @@ module edge_uart_transport #(
     input  wire         fe_success,
     input  wire         core_done,
     input  wire         core_busy,
+    input  wire         core_mapped_error,
+    input  wire [3:0]   core_mapped_error_reason,
+    input  wire [7:0]   core_bch_corr,
+    input  wire         core_kcv_fail,
+    input  wire         core_early_reject,
 
     input  wire         ready_pk,
     input  wire         req_c,
@@ -75,13 +91,29 @@ module edge_uart_transport #(
     input  wire         secret_valid,
     input  wire [255:0] shared_secret,
     input  wire         external_result_valid,
-    input  wire [31:0]  external_result_tag
+    input  wire [31:0]  external_result_tag,
+    // R6.1 qualification readout tap (sniffer-owned BRAM, transport FSM).
+    // In final builds the sniffer zeroes these; the 0x70 command is gated
+    // off by QUAL_TELEMETRY_ENABLE so no private data can be addressed.
+    input  wire [81:0]  qual_rd_data,
+    input  wire [31:0]  qual_frame_seq,
+    input  wire [11:0]  qual_entry_count,
+    input  wire [7:0]   qual_hdr_bch_corr,
+    input  wire [7:0]   qual_hdr_status,
+    input  wire         qual_frame_valid,
+    output reg          qual_rd_en,
+    output reg  [10:0]  qual_rd_addr
 );
     `include "helper_record_spec.vh"
 
     localparam [7:0] CMD_INFO    = 8'h00;
     localparam [7:0] CMD_ENROLL  = 8'h01;
     localparam [7:0] CMD_SESSION = 8'h02;
+    // R6.1 private qualification telemetry readout (qual images only).
+    localparam [7:0] CMD_QUAL_TEL = 8'h70;
+    localparam [7:0] QUAL_MARK    = 8'h51; // 'Q'
+    // Full-sweep frame size (2016-pair RO64 all-pairs sweep).
+    localparam integer QUAL_PAIRS = 2016;
     localparam [7:0] STATUS_OK   = 8'haa;
     localparam [7:0] STATUS_FAIL = 8'hff;
 
@@ -110,6 +142,13 @@ module edge_uart_transport #(
     localparam [4:0] S_NONCE_RX     = 5'd19;
     localparam [4:0] S_RECORD_RX    = 5'd20;
     localparam [4:0] S_POST_RECORD  = 5'd21;
+    // R6.1 qualification readout states (qual images only).
+    localparam [4:0] S_QUAL_MARK    = 5'd22;
+    localparam [4:0] S_QUAL_HDR     = 5'd23;
+    localparam [4:0] S_QUAL_RD      = 5'd24;
+    localparam [4:0] S_QUAL_WAIT    = 5'd25;
+    localparam [4:0] S_QUAL_SEND    = 5'd26;
+    localparam [4:0] S_QUAL_CRC     = 5'd27;
 
     wire       rx_dv;
     wire [7:0] rx_byte;
@@ -131,6 +170,15 @@ module edge_uart_transport #(
 
     reg  [8*HREC_BYTES-1:0] record_raw;
     reg  [7:0] fail_code;
+    // R6.1 qualification readout cursor/state (qual images only; inert in
+    // final: 0x70 never reaches these states when QUAL_TELEMETRY_ENABLE=0).
+    reg [11:0] qual_addr;
+    reg [3:0]  qual_byte;
+    reg [87:0] qual_word;
+    reg [15:0] qual_crc;
+    // Diagnostic-only extra byte: BCH correction count latched with a 0x32
+    // failure. Count metadata only, never response/helper/key material.
+    reg  [7:0] fail_extra;
     reg  [31:0] rx_idle_count;
     // Sequential CRC state: advanced one byte per received/sent UART byte.
     reg  [15:0] rx_crc;
@@ -209,7 +257,9 @@ module edge_uart_transport #(
                 3'd2: info_byte = 8'h01;
                 3'd3: info_byte = 8'h01; // protocol minor: helper-record v1
                 // bit2 accelerator zeroize, bit3 versioned helper record.
-                default: info_byte = 8'h0f;
+                // R6.1: qualification images mark byte4 0x71 ('q'); release
+                // images keep 0x0f via the QUAL_INFO_MARKER default.
+                default: info_byte = QUAL_INFO_MARKER;
             endcase
         end
     endfunction
@@ -241,6 +291,23 @@ module edge_uart_transport #(
                 10'd2: enroll_byte_fn = HREC_MAGIC[23:16];
                 10'd3: enroll_byte_fn = HREC_MAGIC[31:24];
                 default: enroll_byte_fn = 8'h00;
+            endcase
+        end
+    endfunction
+
+    function automatic [7:0] qual_hdr_byte;
+        input [9:0] idx;
+        begin
+            case (idx)
+                10'd0: qual_hdr_byte = qual_frame_seq[7:0];
+                10'd1: qual_hdr_byte = qual_frame_seq[15:8];
+                10'd2: qual_hdr_byte = qual_frame_seq[23:16];
+                10'd3: qual_hdr_byte = qual_frame_seq[31:24];
+                10'd4: qual_hdr_byte = qual_entry_count[7:0];
+                10'd5: qual_hdr_byte = {4'd0, qual_entry_count[11:8]};
+                10'd6: qual_hdr_byte = qual_hdr_bch_corr;
+                10'd7: qual_hdr_byte = qual_hdr_status;
+                default: qual_hdr_byte = 8'h00;
             endcase
         end
     endfunction
@@ -282,6 +349,13 @@ module edge_uart_transport #(
             ct_buffer_ready <= 1'b0;
             record_raw      <= {(8*HREC_BYTES){1'b0}};
             fail_code       <= 8'h00;
+            qual_addr       <= 12'd0;
+            qual_byte       <= 4'd0;
+            qual_word       <= 88'd0;
+            qual_crc        <= 16'hFFFF;
+            qual_rd_en      <= 1'b0;
+            qual_rd_addr    <= 11'd0;
+            fail_extra      <= 8'h00;
             rx_idle_count   <= 32'd0;
             record_status   <= 4'd0;
             record_fail     <= 1'b0;
@@ -297,6 +371,7 @@ module edge_uart_transport #(
             tx_dv           <= 1'b0;
             tx_done_d       <= tx_done;
             zeroize_done    <= 1'b0;
+            qual_rd_en      <= 1'b0;
             if (tx_done_pulse)
                 tx_inflight <= 1'b0;
 
@@ -321,8 +396,7 @@ module edge_uart_transport #(
                         record_fail <= 1'b0;
                         state <= S_ENROLL_WAIT;
                     end else if (rx_dv && rx_byte == CMD_SESSION &&
-                                 !core_busy) begin
-                        core_enroll <= 1'b0;
+                                 !core_busy) begin                        core_enroll <= 1'b0;
                         core_command_ok <= 1'b0;
                         helper_in <= 264'd0;
                         core_helper_kcv <= 224'd0;
@@ -333,6 +407,16 @@ module edge_uart_transport #(
                         // legacy diagnostic path bypasses the record parser.
                         core_helper_kcv_valid <= !legacy_mode;
                         state <= S_HELPER_MARK;
+                    end else if (rx_dv && rx_byte == CMD_QUAL_TEL &&
+                                 !core_busy && QUAL_TELEMETRY_ENABLE) begin
+                        // R6.1 private frame readout (qual images only).
+                        // Final builds (QUAL=0) fall through to the
+                        // unsupported-command fail below, byte-identical to
+                        // release handling of any unknown command.
+                        qual_addr <= 12'd0;
+                        qual_byte <= 4'd0;
+                        qual_crc <= 16'hFFFF;
+                        state <= S_QUAL_MARK;
                     end else if (rx_dv) begin
                         core_command_ok <= 1'b0;
                         fail_code <= 8'h01; // unsupported command
@@ -520,7 +604,25 @@ module edge_uart_transport #(
                         item_count <= 10'd0;
                         state <= S_PK_MARK;
                     end else if (core_done) begin
-                        fail_code <= 8'h03; // reconstruction failed
+                        if (DIAGNOSTIC_FAILURE_CODES) begin
+                            if (core_mapped_error)
+                                fail_code <= (core_mapped_error_reason == 4'h0)
+                                           ? 8'h31
+                                           : {4'h4, core_mapped_error_reason};
+                            else if (!fe_success) begin
+                                fail_code <= 8'h32; // BCH reconstruction
+                                fail_extra <= core_bch_corr;
+                            end
+                            else if (core_kcv_fail)
+                                fail_code <= 8'h33; // trusted KCV gate
+                            else if (core_early_reject)
+                                fail_code <= 8'h34; // lifecycle gate
+                            else
+                                fail_code <= 8'h35; // downstream before PK
+                        end else begin
+                            fail_code <= 8'h03; // generic fail-closed release
+                            fail_extra <= 8'h00;
+                        end
                         item_count <= 10'd0;
                         state <= S_FAIL_SEND;
                     end
@@ -651,6 +753,107 @@ module edge_uart_transport #(
                     end
                 end
 
+                // R6.1 private qualification frame readout (qual images
+                // only; unreachable in final: S_IDLE never enters here when
+                // QUAL_TELEMETRY_ENABLE=0).  Streams 'Q' + 10-byte header +
+                // 2016 x 11-byte entries {c0,c1,a,b,flags} + CRC16.  Never
+                // touches the release SESSION path; returns to S_IDLE without
+                // zeroize so the frame survives for re-read.
+                S_QUAL_MARK: begin
+                    if (!tx_inflight) begin
+                        tx_byte <= QUAL_MARK;
+                        tx_dv <= 1'b1;
+                        tx_inflight <= 1'b1;
+                    end
+                    if (tx_done_pulse) begin
+                        item_count <= 10'd0;
+                        state <= S_QUAL_HDR;
+                    end
+                end
+
+                S_QUAL_HDR: begin
+                    if (!tx_inflight) begin
+                        tx_byte <= qual_hdr_byte(item_count);
+                        tx_dv <= 1'b1;
+                        tx_inflight <= 1'b1;
+                        qual_crc <= hrec_crc16_step(qual_crc,
+                            qual_hdr_byte(item_count));
+                    end
+                    if (tx_done_pulse) begin
+                        if (item_count == 10'd9) begin
+                            item_count <= 10'd0;
+                            qual_addr <= 12'd0;
+                            state <= S_QUAL_RD;
+                        end else begin
+                            item_count <= item_count + 1'b1;
+                        end
+                    end
+                end
+
+                S_QUAL_RD: begin
+                    qual_rd_en <= 1'b1;
+                    qual_rd_addr <= qual_addr[10:0];
+                    state <= S_QUAL_WAIT;
+                end
+
+                S_QUAL_WAIT: begin
+                    // Hold the read address; BRAM data lands in rd_q at the
+                    // end of this cycle.  qual_byte=15 marks "word not yet
+                    // loaded" for S_QUAL_SEND.
+                    qual_rd_en <= 1'b1;
+                    qual_rd_addr <= qual_addr[10:0];
+                    qual_byte <= 4'd15;
+                    state <= S_QUAL_SEND;
+                end
+
+                S_QUAL_SEND: begin
+                    if (qual_byte == 4'd15) begin
+                        qual_word <= {{2'b00, qual_rd_data[5], qual_rd_data[4],
+                                       qual_rd_data[3], qual_rd_data[2],
+                                       qual_rd_data[1], qual_rd_data[0]},
+                                      {2'b00, qual_rd_data[11:6]},
+                                      {2'b00, qual_rd_data[17:12]},
+                                      qual_rd_data[49:18], qual_rd_data[81:50]};
+                        qual_byte <= 4'd0;
+                    end else begin
+                        if (!tx_inflight) begin
+                            tx_byte <= qual_word[8*qual_byte +: 8];
+                            tx_dv <= 1'b1;
+                            tx_inflight <= 1'b1;
+                            qual_crc <= hrec_crc16_step(qual_crc,
+                                qual_word[8*qual_byte +: 8]);
+                        end
+                        if (tx_done_pulse) begin
+                            if (qual_byte == 4'd10) begin
+                                if (qual_addr == 12'(QUAL_PAIRS - 1)) begin
+                                    item_count <= 10'd0;
+                                    state <= S_QUAL_CRC;
+                                end else begin
+                                    qual_addr <= qual_addr + 1'b1;
+                                    state <= S_QUAL_RD;
+                                end
+                            end else begin
+                                qual_byte <= qual_byte + 1'b1;
+                            end
+                        end
+                    end
+                end
+
+                S_QUAL_CRC: begin
+                    if (!tx_inflight) begin
+                        tx_byte <= item_count == 0 ? qual_crc[7:0]
+                                                   : qual_crc[15:8];
+                        tx_dv <= 1'b1;
+                        tx_inflight <= 1'b1;
+                    end
+                    if (tx_done_pulse) begin
+                        if (item_count == 10'd0)
+                            item_count <= 10'd1;
+                        else
+                            state <= S_IDLE;
+                    end
+                end
+
                 S_ZEROIZE: begin
                     core_zeroize <= 1'b1;
                     zeroize_done <= 1'b1;
@@ -670,15 +873,23 @@ module edge_uart_transport #(
                 end
 
                 // STATUS_FAIL plus a failure code byte (record validation
-                // code, transport timeout, or command error).
+                // code, transport timeout, or command error). Diagnostic
+                // images append the BCH correction count after a 0x32 so
+                // the host can tell marginal noise from a systematic
+                // shift; release images always send exactly 2 bytes.
                 S_FAIL_SEND: begin
                     if (!tx_inflight) begin
-                        tx_byte <= item_count == 0 ? STATUS_FAIL : fail_code;
+                        tx_byte <= item_count == 0 ? STATUS_FAIL :
+                                   item_count == 1 ? fail_code : fail_extra;
                         tx_dv <= 1'b1;
                         tx_inflight <= 1'b1;
                     end
                     if (tx_done_pulse) begin
-                        if (item_count == 10'd1)
+                        if (DIAGNOSTIC_FAILURE_CODES && fail_code == 8'h32 &&
+                            item_count == 10'd1)
+                            item_count <= 10'd2;
+                        else if (item_count == 10'd1 ||
+                                 item_count == 10'd2)
                             state <= S_ZEROIZE;
                         else
                             item_count <= item_count + 1'b1;

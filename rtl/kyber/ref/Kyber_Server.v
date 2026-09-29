@@ -302,7 +302,13 @@ always @* case(state)
 	// waiting for the last data-dependent coefficients.
 	6'h 2f: next_state = (fifo_GENA_ctr[7] && matrix_stream_active) ?
 				state + 1'h 1 : state;
-	6'h 30: next_state = NTT_finish ? 6'h 9 : state;
+	// One-cycle hard-init buffer between NTT completion and the final-KDF
+	// absorb state.  Retiming the 1600-bit sponge clear onto a plain
+	// registered-state decode (state == 6'h32) cuts the combinational cone
+	// FIFO/full-compare -> next_state -> hard_init -> squeeze_reg[*]/R while
+	// keeping keccak_init and keccak_init_hard asserted on the same cycle.
+	6'h 30: next_state = NTT_finish ? 6'h 32 : state;
+	6'h 32: next_state = 6'h 9;
 	6'h 31: next_state = squeeze_ctr == 3'h 7 ? 6'h 0 : state;
 	6'h 3e: next_state = rot_ctr == 3'h 7 ? state + 1'h 1 : state;
 	6'h 3f: next_state = 6'h 10;
@@ -605,9 +611,11 @@ always @(*) case(state)
 	6'h 1a : keccak_init = 1'h 1;
 	6'h 22 : keccak_init = 1'h 1;
 	// The CCA re-encryption leaves wr_idx at the end of its last stream.
-	// Clear the sponge on the transition out of compare, one cycle before
-	// state 7/9 starts writing K-bar/z for the final KDF.
-	6'h 30 : keccak_init = (next_state != state);
+	// The 0x30 -> 0x32 -> 0x09 arc clears the sponge in the dedicated 0x32
+	// buffer state, one cycle before state 7/9 starts writing K-bar/z for
+	// the final KDF.  Asserting keccak_init from a pure registered-state
+	// decode keeps it cycle-aligned with keccak_init_hard (both 6'h32).
+	6'h 32 : keccak_init = 1'h 1;
 	default : keccak_init = 1'h 0;
 endcase
 always @(*) case(state)
@@ -920,7 +928,7 @@ hash_core_Server hash(
 .keccak_init(keccak_init),
 .keccak_init_hard((state == 6'h1) || (state == 6'h1a) ||
 				  (state == 6'h22) ||
-				  (state == 6'h30 && next_state != state)),
+				  (state == 6'h32)),
 .squeeze_init(squeeze_init_early),
 .extend(extend),
 .patt_bit((state == 6'h 2f) ? 1'b0 : patt_bit),

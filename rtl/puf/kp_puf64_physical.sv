@@ -22,10 +22,10 @@ module kp_puf64_physical #(
     parameter integer SETTLE_CYCLES = 8,
     parameter integer CAPTURE_TIMEOUT = 1024
 )(
-    input  logic         clk,
-    input  logic         rst_n,
-    input  logic         zeroize,
-    input  logic         start,
+    input  wire logic         clk,
+    input  wire logic         rst_n,
+    input  wire logic         zeroize,
+    input  wire logic         start,
     output logic         busy,
     output logic         done,
 
