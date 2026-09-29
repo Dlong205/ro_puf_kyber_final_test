@@ -90,6 +90,6 @@ nhận. Phạm vi: image release R7-B (`ab075bfd...`) + helper R7 trên
 
 ## Kết luận và ký
 
-Ngày ..../..../........ — Người review: ........................
-Kết luận: [ ] ĐẠT final FPGA nội bộ (1 board, self-review) [ ] CHƯA ĐẠT
-Ghi chú tồn đọng: .....................................................
+Ngày 29/09/2026 — Người review: Đồng Trường Long (chủ dự án tự ký xác nhận qua chat, agent điền hộ).
+Kết luận: [x] ĐẠT final FPGA nội bộ (1 board, self-review) [ ] CHƯA ĐẠT
+Ghi chú tồn đọng: chờ multi-board/PVT khi có phần cứng; public/production vẫn NO-GO (license + review độc lập).
